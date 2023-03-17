@@ -1,0 +1,25 @@
+version: '3'
+
+tasks:
+  build:
+    cmds:
+      - goreleaser build --clean --skip-validate --single-target --output dist/thing --snapshot
+        #vars:
+        #  BIN_NAME: |
+        #    pkg
+
+  check:
+    cmds:
+      - go fmt ./...
+      - go vet ./...
+      - staticcheck ./...
+      - gosec ./...
+      - goimports -w ./
+
+  test:
+    cmds:
+      - go test -v
+
+  tidy:
+    cmds:
+      - go mod tidy
