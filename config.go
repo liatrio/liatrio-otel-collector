@@ -10,7 +10,10 @@ import (
 //)
 
 type Config struct {
-	Interval string `mapstructure:"interval"`
+	Interval       string `mapstructure:"interval"`
+	ASMEnabled     bool   `mapstructure:"asm_enabled"`
+	UserSecretName string `mapstructure:"user_secret_name"`
+	PassSecretName string `mapstructure:"pass_secret_name"`
 }
 
 func (cfg *Config) Validate() error {

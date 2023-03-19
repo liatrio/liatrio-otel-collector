@@ -7,6 +7,10 @@ tasks:
         #vars:
         #  BIN_NAME: |
         #    pkg
+        #
+  build-col:
+    cmds:
+      - ./ocb --config builder-config.yaml
 
   check:
     cmds:
@@ -23,3 +27,21 @@ tasks:
   tidy:
     cmds:
       - go mod tidy
+
+  run:
+    cmds:
+      - cd dev-otelcol && ./dev-otelcol --config ../testdata/config.yaml
+
+        #dev-setup:
+        #  cmds:
+        #    - task: 
+        #
+  debug:
+    cmds:
+      - |
+        cd dev-otelcol \
+        && dlv --listen=:2345 --headless=true --api-version=2 \
+          --accept-multiclient --log \
+          exec ./dev-otelcol -- --config ../testdata/config.yaml
+
+      #dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient --log exec .otel-collector-binary -- --config otel-collector-config.yaml
