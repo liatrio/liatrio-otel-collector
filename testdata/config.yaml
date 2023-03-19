@@ -1,0 +1,37 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+  ldap:
+    interval: 10s
+        #ldap:
+        #  interval: "10"
+        #      #ldapreceiver:
+        #      #  interval: 10
+
+     
+processors:
+  
+exporters:
+  logging:
+    verbosity: detailed
+
+  jaeger:
+    endpoint: localhost:14250
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp, ldap]
+        #receivers: [ldapreceiver]
+      processors: []
+      exporters: [logging]
+        #traces:
+        #  receivers: [otlp]
+        #  processors: []
+        #  exporters: [jaeger, logging]
+  telemetry:
+    logs:
+      level: debug
