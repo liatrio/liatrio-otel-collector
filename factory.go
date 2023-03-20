@@ -22,18 +22,21 @@ var (
 	ldapConfigNotValid = errors.New("config is not a valid ldap receiver configuration")
 )
 
+// Create ethe default config based on the const(s) defined above.
 func createDefaultConfig() component.Config {
 	return &Config{
 		Interval: fmt.Sprint(defaultInterval),
 	}
 }
 
+// Create the metrics receiver according to the OTEL conventions taking in the
+// context, receiver params, configuration from the component, and consumer (process or exporter)
 func createMetricsReceiver(
 	ctx context.Context,
 	params receiver.CreateSettings,
 	cfg component.Config,
-	consumer consumer.Metrics,
-) (receiver.Metrics, error) {
+	consumer consumer.Metrics) (receiver.Metrics, error) {
+
 	// if the next consumer (processer or exporter) in the pipeline has an issue
 	// or is passed as nil then through the next consumer error
 	if consumer == nil {
@@ -52,14 +55,6 @@ func createMetricsReceiver(
 		nextConsumer: consumer,
 		config:       ldapCfg,
 	}
-
-	//httpcheckScraper := newScraper(cfg, params)
-	//scraper, err := scraperhelper.NewScraper(typeStr, httpcheckScraper.scrape, scraperhelper.WithStart(httpcheckScraper.start))
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	//return scraperhelper.NewScraperControllerReceiver(&cfg.ScraperControllerSettings, params, consumer, scraperhelper.AddScraper(scraper))
 
 	return ldapRcvr, nil
 }
