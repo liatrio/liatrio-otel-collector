@@ -203,7 +203,10 @@ From there you can open one of the files generated in the collector folder & run
 
 Used this container image: 
 
-[GitHub - osixia/docker-openldap: OpenLDAP container image 🐳🌴](https://github.com/osixia/docker-openldap#quick-start)
+[GitHub - osixia/docker-openldap: O   penLDAP container image 🐳🌴](https://github.com/osixia/docker-openldap#quick-start)
+
+- Example Command(_Disables TLS verification_): 
+  - `docker run -e LDAP_TLS_VERIFY_CLIENT=never -p 389:389 -p 636:636 osixia/openldap:<ver>`
 
 Left off at being able to connect via LDAPS through the go code, and need to populate with a couple groups & users to test the search functionality. 
 
