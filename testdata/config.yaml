@@ -10,6 +10,7 @@ receivers:
     user: "cn=admin,dc=example,dc=org"
     pw: "admin"
     base_dn: "DC=LUV,DC=AD,DC=SWACORP,DC=com"
+    ignore_tls: true
 
         #ldap:
         #  interval: "10"
