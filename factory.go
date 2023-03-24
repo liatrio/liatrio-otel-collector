@@ -12,10 +12,11 @@ import (
 )
 
 const (
-	typeStr         = "ldap"
-	defaultInterval = 10 * time.Second
-	defaultTimeout  = 10 * time.Second
-	stability       = component.StabilityLevelAlpha
+	typeStr          = "ldap"
+	defaultInterval  = 10 * time.Second
+	defaultIgnoreTLS = false
+	defaultTimeout   = 10 * time.Second
+	stability        = component.StabilityLevelAlpha
 )
 
 var (
@@ -25,7 +26,8 @@ var (
 // Create ethe default config based on the const(s) defined above.
 func createDefaultConfig() component.Config {
 	return &Config{
-		Interval: fmt.Sprint(defaultInterval),
+		Interval:           fmt.Sprint(defaultInterval),
+		InsecureSkipVerify: defaultIgnoreTLS,
 	}
 }
 

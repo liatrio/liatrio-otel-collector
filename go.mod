@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/go-ldap/ldap/v3 v3.4.4
+	github.com/go-playground/assert/v2 v2.2.0
 	go.opentelemetry.io/collector/component v0.73.0
 	go.opentelemetry.io/collector/consumer v0.73.0
 	go.opentelemetry.io/collector/receiver v0.73.0

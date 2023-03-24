@@ -4,6 +4,13 @@ receivers:
       grpc:
   ldap:
     interval: 10s
+    search_filter: "(&(objectClass=group)(|MyGroup*))"
+    endpoint: "localhost"
+    # TODO: use basic auth
+    user: "cn=admin,dc=example,dc=org"
+    pw: "admin"
+    base_dn: "DC=LUV,DC=AD,DC=SWACORP,DC=com"
+
         #ldap:
         #  interval: "10"
         #      #ldapreceiver:

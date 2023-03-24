@@ -3,6 +3,8 @@ package ldapreceiver
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/go-ldap/ldap/v3"
@@ -21,16 +23,13 @@ type ldapReceiver struct {
 
 // Insantiate the client connection to LDAP
 func ldapClient(ldapRcvr *ldapReceiver) *ldap.Conn {
-	//user := strings.Join([]string{"LUV", creds.Username}, "\\")
-	//pw := creds.Password
-	// TODO: replace with what is above coming from OTEL config
-	user := "cn=admin,dc=example,dc=org"
-	pw := "admin"
+	// TODO: replace with basic auth through OTel configuration
+	user := ldapRcvr.config.User
+	pw := ldapRcvr.config.Pw
 
 	//#nosec G402 (CWE-295)  ignore InsecureSkipVerify TLS setting due to self-signed certificates and network isolation
-	// TODO: LDAP config should come from OTEL config.yaml
-	//connection, err := ldap.DialURL("ldaps://<configured>:636", ldap.DialWithTLSConfig(&tls.Config{InsecureSkipVerify: SkipTlsVerification}))
-	connection, err := ldap.DialURL("ldaps://localhost:636", ldap.DialWithTLSConfig(&tls.Config{InsecureSkipVerify: true}))
+	endpoint := fmt.Sprint("ldaps://", ldapRcvr.config.Endpoint, ":636")
+	connection, err := ldap.DialURL(endpoint, ldap.DialWithTLSConfig(&tls.Config{InsecureSkipVerify: ldapRcvr.config.InsecureSkipVerify}))
 	if err != nil {
 		ldapRcvr.logger.Sugar().Fatalf("Error dialing ldap server %v", err)
 	}
@@ -43,6 +42,34 @@ func ldapClient(ldapRcvr *ldapReceiver) *ldap.Conn {
 	ldapRcvr.logger.Sugar().Debugf("ldaps client succesfully bound")
 
 	return connection
+}
+
+// Get the results from an ldapsearch by making a connection to LDAP and returning the search
+func getResults(conn *ldap.Conn, ldapRcvr *ldapReceiver) (search *ldap.SearchResult) {
+	search = performSearch(conn, fmt.Sprint(ldapRcvr.config.SearchFilter), ldapRcvr)
+
+	ldapRcvr.logger.Sugar().Debugf("Number of returned Entries: %d", len(search.Entries))
+
+	return
+}
+
+// Perform a search query in LDAP and return the result
+func performSearch(conn *ldap.Conn, query string, ldapRcvr *ldapReceiver) (result *ldap.SearchResult) {
+	sr := ldap.NewSearchRequest(
+		ldapRcvr.config.BaseDN,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0,
+		false,
+		query,
+		[]string{"member"},
+		nil,
+	)
+
+	result, err := conn.Search(sr)
+	if err != nil {
+		log.Fatalf("error with searching request: %v", err)
+	}
+
+	return result
 }
 
 func (ldapRcvr *ldapReceiver) Start(ctx context.Context, host component.Host) error {
@@ -62,6 +89,7 @@ func (ldapRcvr *ldapReceiver) Start(ctx context.Context, host component.Host) er
 			select {
 			case <-ticker.C:
 				ldapRcvr.logger.Info("Processing metrics..")
+				getResults(ldapConn, ldapRcvr)
 			case <-ctx.Done():
 				return
 			}
