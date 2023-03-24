@@ -46,6 +46,8 @@ func ldapClient(ldapRcvr *ldapReceiver) *ldap.Conn {
 
 // Get the results from an ldapsearch by making a connection to LDAP and returning the search
 func getResults(conn *ldap.Conn, ldapRcvr *ldapReceiver) (search *ldap.SearchResult) {
+	ldapRcvr.logger.Sugar().Debugf("search filter is: %v", ldapRcvr.config.SearchFilter)
+
 	search = performSearch(conn, fmt.Sprint(ldapRcvr.config.SearchFilter), ldapRcvr)
 
 	ldapRcvr.logger.Sugar().Debugf("Number of returned Entries: %d", len(search.Entries))
