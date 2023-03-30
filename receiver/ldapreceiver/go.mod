@@ -1,9 +1,10 @@
-module github.com/liatrio/ldapreceiver
+module github.com/liatrio/otel-liatrio-contrib/receiver/ldapreceiver
 
 go 1.20
 
 require (
 	github.com/go-ldap/ldap/v3 v3.4.4
+	github.com/stretchr/testify v1.8.2
 	go.opentelemetry.io/collector/component v0.74.0
 	go.opentelemetry.io/collector/consumer v0.74.0
 	go.opentelemetry.io/collector/receiver v0.74.0
@@ -12,6 +13,7 @@ require (
 
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -22,6 +24,8 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	go.opentelemetry.io/collector v0.74.0 // indirect
 	go.opentelemetry.io/collector/confmap v0.74.0 // indirect
 	go.opentelemetry.io/collector/featuregate v0.74.0 // indirect
@@ -38,4 +42,5 @@ require (
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
 	google.golang.org/grpc v1.53.0 // indirect
 	google.golang.org/protobuf v1.29.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
