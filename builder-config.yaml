@@ -19,10 +19,10 @@ processors:
 receivers:
   - gomod:
       go.opentelemetry.io/collector/receiver/otlpreceiver v0.73.0
-  - gomod: github.com/liatrio/ldapreceiver v0.1.0
+  - gomod: github.com/liatrio/otel-liatrio-contrib/receiver/ldapreceiver v0.1.0
 
 
 replaces:
-  - github.com/liatrio/ldapreceiver => /Users/adrielperkins/dev/observability/ldapreceiver/ 
+  - github.com/liatrio/otel-liatrio-contrib/receiver/ldapreceiver => /Users/adrielperkins/dev/observability/otel-liatrio-contrib/receiver/ldapreceiver/
       #- gomod:
       #    github.com/adrielp/otelreceivertest v0.1.0
