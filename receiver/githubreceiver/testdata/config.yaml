@@ -1,0 +1,39 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+  ldap:
+    interval: 10s
+    search_filter: "(objectclass=*)"
+    endpoint: "localhost"
+    # TODO: use basic auth
+    user: "cn=admin,dc=example,dc=org"
+    pw: "admin"
+    base_dn: "dc=example,dc=org"
+    ignore_tls: true
+     
+processors:
+  
+exporters:
+  logging:
+    verbosity: detailed
+
+  jaeger:
+    endpoint: localhost:14250
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp, ldap]
+        #receivers: [ldapreceiver]
+      processors: []
+      exporters: [logging]
+        #traces:
+        #  receivers: [otlp]
+        #  processors: []
+        #  exporters: [jaeger, logging]
+  telemetry:
+    logs:
+      level: debug
