@@ -2,8 +2,10 @@ version: '3'
 
 tasks:
   build:
+    dir: '{{.USER_WORKING_DIR}}'
     cmds:
-      - goreleaser build --clean --skip-validate --single-target --output dist/thing --snapshot
+      - go build -v .
+        # - goreleaser build --clean --skip-validate --single-target --output dist/thing --snapshot
         #vars:
         #  BIN_NAME: |
         #    pkg
@@ -13,6 +15,7 @@ tasks:
       - ./ocb --config builder-config.yaml
 
   check:
+    dir: '{{.USER_WORKING_DIR}}'
     cmds:
       - go fmt ./...
       - go vet ./...
@@ -21,10 +24,12 @@ tasks:
       - goimports -w ./
 
   test:
+    dir: '{{.USER_WORKING_DIR}}'
     cmds:
       - go test -v
 
   tidy:
+    dir: '{{.USER_WORKING_DIR}}'
     cmds:
       - go mod tidy
 
