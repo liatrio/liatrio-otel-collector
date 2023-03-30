@@ -11,8 +11,11 @@ tasks:
         #    pkg
         #
   build-col:
+    #dir: '{{.USER_WORKING_DIR}}'
+    preconditions:
+      - test -f ocb
     cmds:
-      - ./ocb --config builder-config.yaml
+      - ./ocb --config testconfig/builder-config.yaml
 
   check:
     dir: '{{.USER_WORKING_DIR}}'
@@ -34,8 +37,10 @@ tasks:
       - go mod tidy
 
   run:
+    preconditions:
+      - test -d dev-otelcol
     cmds:
-      - cd dev-otelcol && ./dev-otelcol --config ../testdata/config.yaml
+      - cd dev-otelcol && ./dev-otelcol --config ../testconfig/config.yaml
 
         #dev-setup:
         #  cmds:
