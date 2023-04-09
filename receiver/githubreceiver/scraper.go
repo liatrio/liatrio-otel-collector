@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/go-github/v50/github"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.uber.org/zap"
@@ -17,6 +18,11 @@ type ghReceiver struct {
 	config       *Config
 }
 
+func ghClient(ghRcvr *ghReceiver) (client *github.Client){
+	client = github.NewClient(nil)
+	return
+}
+
 func (ghRcvr *ghReceiver) Start(ctx context.Context, host component.Host) error {
 	ghRcvr.host = host
 	ctx = context.Background()
@@ -25,8 +31,7 @@ func (ghRcvr *ghReceiver) Start(ctx context.Context, host component.Host) error 
 	interval, _ := time.ParseDuration(ghRcvr.config.Interval)
 
 	go func() {
-		//ghConn := ghClient(ghRcvr)
-		//defer ghConn.Close()
+        ghClient := ghClient(ghRcvr)
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
@@ -34,7 +39,17 @@ func (ghRcvr *ghReceiver) Start(ctx context.Context, host component.Host) error 
 			select {
 			case <-ticker.C:
 				ghRcvr.logger.Info("Proccessing GitHub metrics...")
-				//getResults(ghConn, ghRcvr)
+                orgs, _, err := ghClient.Organizations.List(ctx, "adrielp", nil)
+                if err != nil {
+                    ghRcvr.logger.Error("Error getting organizations", zap.Error(err))
+                }
+                ghRcvr.logger.Info("Organizations", zap.Any("orgs", orgs))
+
+                repos, _, err := ghClient.Repositories.List(ctx, "adrielp", nil)
+                if err != nil {
+                    ghRcvr.logger.Error("Error getting repositories", zap.Error(err))
+                }
+                ghRcvr.logger.Info("Repositories", zap.Any("repos", repos))
 			case <-ctx.Done():
 				return
 			}
