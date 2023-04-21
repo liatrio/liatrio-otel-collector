@@ -2,49 +2,79 @@ package githubreceiver // import "github.com/liatrio/otel-liatrio-contrib/receiv
 
 import (
 	"context"
+	"github.com/liatrio/otel-liatrio-contrib/receiver/githubreceiver/internal/metadata"
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config/confighttp"
 	"testing"
+	"time"
+	"go.opentelemetry.io/collector/receiver/scraperhelper"
 
+	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"go.opentelemetry.io/collector/receiver"
+	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
 func TestNewFactory(t *testing.T) {
-	factory := NewFactory()
-	if factory == nil {
-		t.Error("NewFactory() should not return nil")
+	tc := []struct {
+		desc string
+		tf   func(*testing.T)
+	}{
+		{
+			desc: "create new factory with the correct type",
+			tf: func(t *testing.T) {
+				f := NewFactory()
+				assert.EqualValues(t, typeStr, f.Type())
+			},
+		},
+		{
+			desc: "create new factory with default config",
+			tf: func(t *testing.T) {
+				factory := NewFactory()
+
+				var expectefCfg component.Config = &Config{
+					ScraperControllerSettings: scraperhelper.ScraperControllerSettings{
+						CollectionInterval: 10 * time.Second,
+					},
+					HTTPClientSettings: confighttp.HTTPClientSettings{
+						Timeout: 15 * time.Second,
+					},
+					MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
+				}
+				assert.Equal(t, expectefCfg, factory.CreateDefaultConfig())
+			},
+		},
+        {
+            desc: "create new factory and metric receiver without returing an error",
+            tf: func(t *testing.T) {
+                factory := NewFactory()
+                cfg := factory.CreateDefaultConfig()
+                _, err := factory.CreateMetricsReceiver(
+                    context.Background(), 
+                    receivertest.NewNopCreateSettings(), 
+                    cfg, 
+                    consumertest.NewNop(),
+                )
+                assert.NoError(t, err)
+            },
+        },
+        {
+            desc: "create new factory and metric receiver returning errors and invalid config",
+            tf: func(t *testing.T) {
+                factory := NewFactory()
+                _, err := factory.CreateMetricsReceiver(
+                    context.Background(), 
+                    receivertest.NewNopCreateSettings(), 
+                    nil, 
+                    consumertest.NewNop(),
+                )
+                assert.ErrorIs(t, err, ghConfigNotValid)
+
+
+            },
+        },
 	}
 
-	cfg := factory.CreateDefaultConfig()
-	if cfg == nil {
-		t.Error("CreateDefaultConfig() should not return nil")
-	}
-
-	typ := factory.Type()
-	if typ != typeStr {
-		t.Errorf("factory.Type() should return %s, got %s", typeStr, typ)
-	}
-}
-
-func TestCreateMetricsReceiver(t *testing.T) {
-	factory := NewFactory()
-	cfg := factory.CreateDefaultConfig()
-	r, err := factory.CreateMetricsReceiver(context.Background(), receiver.CreateSettings{}, cfg, consumertest.NewNop())
-
-	if err != nil {
-		t.Errorf("failed to create metrics receiver: %v", err)
-	}
-
-	if r == nil {
-		t.Error("CreateMetricsReceiver() should not return nil")
-	}
-}
-
-func TestCreateMetricsReceiverNilNextConsumer(t *testing.T) {
-	factory := NewFactory()
-	cfg := factory.CreateDefaultConfig()
-	_, err := factory.CreateMetricsReceiver(context.Background(), receiver.CreateSettings{}, cfg, nil)
-
-	if err == nil {
-		t.Error("CreateMetricsReceiver() should return an error when next consumer is nil")
+	for _, tt := range tc {
+		t.Run(tt.desc, tt.tf)
 	}
 }

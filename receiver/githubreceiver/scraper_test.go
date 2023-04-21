@@ -1,5 +1,4 @@
 package githubreceiver // import "github.com/liatrio/otel-liatrio-contrib/receiver/githubreceiver"
-
 //import (
 //	"testing"
 //

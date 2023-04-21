@@ -4,21 +4,31 @@ dist:
   output_path: ./dev-otelcol
   debug_compilation: true
 
+extensions:
+  - gomod:
+      github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension
+      v0.75.0
     
+      #go.opentelemetry.io/collector/extension/auth
 exporters:
   - gomod:
-      go.opentelemetry.io/collector/exporter/loggingexporter v0.73.0
+      go.opentelemetry.io/collector/exporter/loggingexporter v0.75.0
+  - gomod:
+      go.opentelemetry.io/collector/exporter/otlphttpexporter v0.75.0
   - gomod:
       github.com/open-telemetry/opentelemetry-collector-contrib/exporter/jaegerexporter
-      v0.73.0
+      v0.75.0
+  - gomod:
+      github.com/open-telemetry/opentelemetry-collector-contrib/exporter/influxdbexporter
+      v0.75.0
 
 processors:
   - gomod:
-      go.opentelemetry.io/collector/processor/batchprocessor v0.73.0
+      go.opentelemetry.io/collector/processor/batchprocessor v0.75.0
 
 receivers:
   - gomod:
-      go.opentelemetry.io/collector/receiver/otlpreceiver v0.73.0
+      go.opentelemetry.io/collector/receiver/otlpreceiver v0.75.0
   - gomod: github.com/liatrio/otel-liatrio-contrib/receiver/ldapreceiver v0.1.0
   - gomod: github.com/liatrio/otel-liatrio-contrib/receiver/githubreceiver v0.1.0
 

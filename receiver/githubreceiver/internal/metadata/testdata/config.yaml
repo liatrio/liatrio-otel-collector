@@ -1,0 +1,11 @@
+default:
+all_set:
+  metrics:
+    gh.repo.count:
+      enabled: true
+  resource_attributes:
+none_set:
+  metrics:
+    gh.repo.count:
+      enabled: false
+  resource_attributes:

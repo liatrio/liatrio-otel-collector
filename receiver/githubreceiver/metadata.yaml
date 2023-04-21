@@ -1,0 +1,83 @@
+name: githubreceiver
+
+status:
+  type: receiver
+  stability: alpha
+  pipelines: [metrics]
+  warnings: []
+
+resource_attributes:
+
+
+attributes:
+  #gh.repo:
+  #  description: "The full name of the GitHub repository"
+  #  type: string
+  gh.org:
+    description: "The organization owning the repository"
+    type: string
+
+metrics:
+  gh.repo.count:
+    enabled: true
+    description: "Number of repositories that exist in an organization"
+    unit: "ratio"
+    gauge:
+      value_type: int
+        #monotonic: false
+        #aggregation: delta
+    attributes: [gh.org]
+      #gh.repo.branches:
+      #  enabled: true
+      #  description: "Number of branches that exist in the repository"
+      #  unit: 1
+      #  sum:
+      #    value_type: int
+      #    monotonic: false
+      #    aggregation: delta
+      #  attributes: [gh.repo, gh.org]
+      #gh.repo.prMeanLife:
+      #  enabled: true
+      #  description: "The mean amount of time that PRs have been open"
+      #  unit: 1
+      #  sum:
+      #    value_type: int
+      #    monotonic: true
+      #    aggregation: delta
+      #  attributes: [gh.repo, gh.org]
+      #gh.repo.prStdDev:
+      #  enabled: true
+      #  description: "The standard deviation of a the PR lifetimes"
+      #  unit: 1
+      #  sum:
+      #    value_type: int
+      #    monotonic: false
+      #      #aggregation: delta
+      #  attributes: [gh.repo, gh.org]
+      #gh.repo.branchMeanAge:
+      #  enabled: true
+      #  description: "The mean age of the branches in the repository"
+      #  unit: 1
+      #  sum:
+      #    value_type: int
+      #    monotonic: true
+      #    aggregation: delta
+      #  attributes: [gh.repo, gh.org]
+      #gh.repo.branchTotalAge:
+      #  enabled: true
+      #  description: "Total age of the open branches"
+      #  unit: 1
+      #  sum:
+      #    value_type: int
+      #    monotonic: true
+      #    aggregation: delta
+      #  attributes: [gh.repo, gh.org]
+      #gh.repo.numContributors:
+      #  enabled: true
+      #  description: "Total number of unique contributors to this repository"
+      #  unit: 1
+      #  sum:
+      #    value_type: int
+      #    monotonic: true
+      #    aggregation: delta
+      #  attributes: [gh.repo, gh.org]

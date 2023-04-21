@@ -3,12 +3,21 @@ package githubreceiver // import "github.com/liatrio/otel-liatrio-contrib/receiv
 import (
 	"fmt"
 	"time"
+
+	"github.com/liatrio/otel-liatrio-contrib/receiver/githubreceiver/internal/metadata"
+	"go.opentelemetry.io/collector/config/confighttp"
+	"go.opentelemetry.io/collector/receiver/scraperhelper"
 )
 
 // Configuration that is exposed to this github receiver through the OTEL config.yaml
 type Config struct {
-	Interval  string `mapstructure:"interval"`
-	GitHubOrg string `mapstructure:"github_org"`
+	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
+	confighttp.HTTPClientSettings           `mapstructure:",squash"`
+	//TODO: define this
+	//MetricsBuilderConfig `mapstructure:",squash"`
+	metadata.MetricsBuilderConfig `mapstructure:",squash"`
+	Interval                      string `mapstructure:"interval"`
+	GitHubOrg                     string `mapstructure:"github_org"`
 	//Endpoint           string `mapstructure:"endpoint"`
 }
 
