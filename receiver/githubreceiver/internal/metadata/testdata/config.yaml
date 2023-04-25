@@ -1,11 +1,23 @@
 default:
 all_set:
   metrics:
+    gh.repo.branch.commits.count:
+      enabled: true
+    gh.repo.branches.count:
+      enabled: true
+    gh.repo.contributors.count:
+      enabled: true
     gh.repo.count:
       enabled: true
   resource_attributes:
 none_set:
   metrics:
+    gh.repo.branch.commits.count:
+      enabled: false
+    gh.repo.branches.count:
+      enabled: false
+    gh.repo.contributors.count:
+      enabled: false
     gh.repo.count:
       enabled: false
   resource_attributes:

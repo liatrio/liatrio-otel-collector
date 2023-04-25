@@ -10,9 +10,12 @@ resource_attributes:
 
 
 attributes:
-  #gh.repo:
-  #  description: "The full name of the GitHub repository"
-  #  type: string
+  gh.repo.name:
+    description: "The full name of the GitHub repository"
+    type: string
+  gh.repo.branch.name:
+    description: "The name of the branch in a given repository"
+    type: string
   gh.org:
     description: "The organization owning the repository"
     type: string
@@ -27,15 +30,42 @@ metrics:
         #monotonic: false
         #aggregation: delta
     attributes: [gh.org]
-      #gh.repo.branches:
+  gh.repo.branches.count:
+    enabled: true
+    description: "Number of branches that exist in the repository"
+    unit: "ratio"
+    gauge:
+      value_type: int
+        #monotonic: false
+        #aggregation: delta
+    attributes: [gh.repo.name, gh.org]
+  gh.repo.contributors.count:
+    enabled: true
+    description: "Total number of unique contributors to this repository"
+    unit: "ratio"
+    gauge:
+      value_type: int
+        #monotonic: true
+        #aggregation: delta
+    attributes: [gh.repo.name, gh.org]
+  gh.repo.branch.commits.count:
+    enabled: true
+    description: "The total number of commits on a given branch"
+    unit: 1
+    gauge:
+      value_type: int
+    attributes: [gh.repo.name, gh.org, gh.repo.branch.name]
+
+      ## Additional metrics that would be added based on the original SDC collector
+      #gh.repo.branch.total_age:
       #  enabled: true
-      #  description: "Number of branches that exist in the repository"
+      #  description: "Total age of the open branches"
       #  unit: 1
-      #  sum:
+      #  gauge:
       #    value_type: int
-      #    monotonic: false
-      #    aggregation: delta
-      #  attributes: [gh.repo, gh.org]
+      #      #monotonic: true
+      #      #aggregation: delta
+      #  attributes: [gh.repo.name, gh.org, gh.repo.branch.name]
       #gh.repo.prMeanLife:
       #  enabled: true
       #  description: "The mean amount of time that PRs have been open"
@@ -57,24 +87,6 @@ metrics:
       #gh.repo.branchMeanAge:
       #  enabled: true
       #  description: "The mean age of the branches in the repository"
-      #  unit: 1
-      #  sum:
-      #    value_type: int
-      #    monotonic: true
-      #    aggregation: delta
-      #  attributes: [gh.repo, gh.org]
-      #gh.repo.branchTotalAge:
-      #  enabled: true
-      #  description: "Total age of the open branches"
-      #  unit: 1
-      #  sum:
-      #    value_type: int
-      #    monotonic: true
-      #    aggregation: delta
-      #  attributes: [gh.repo, gh.org]
-      #gh.repo.numContributors:
-      #  enabled: true
-      #  description: "Total number of unique contributors to this repository"
       #  unit: 1
       #  sum:
       #    value_type: int

@@ -60,6 +60,18 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
+			mb.RecordGhRepoBranchCommitsCountDataPoint(ts, 1, "attr-val", "attr-val", "attr-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordGhRepoBranchesCountDataPoint(ts, 1, "attr-val", "attr-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordGhRepoContributorsCountDataPoint(ts, 1, "attr-val", "attr-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
 			mb.RecordGhRepoCountDataPoint(ts, 1, "attr-val")
 
 			metrics := mb.Emit()
@@ -87,6 +99,63 @@ func TestMetricsBuilder(t *testing.T) {
 			validatedMetrics := make(map[string]bool)
 			for i := 0; i < ms.Len(); i++ {
 				switch ms.At(i).Name() {
+				case "gh.repo.branch.commits.count":
+					assert.False(t, validatedMetrics["gh.repo.branch.commits.count"], "Found a duplicate in the metrics slice: gh.repo.branch.commits.count")
+					validatedMetrics["gh.repo.branch.commits.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The total number of commits on a given branch", ms.At(i).Description())
+					assert.Equal(t, "1", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("gh.repo.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("gh.org")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("gh.repo.branch.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+				case "gh.repo.branches.count":
+					assert.False(t, validatedMetrics["gh.repo.branches.count"], "Found a duplicate in the metrics slice: gh.repo.branches.count")
+					validatedMetrics["gh.repo.branches.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Number of branches that exist in the repository", ms.At(i).Description())
+					assert.Equal(t, "ratio", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("gh.repo.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("gh.org")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+				case "gh.repo.contributors.count":
+					assert.False(t, validatedMetrics["gh.repo.contributors.count"], "Found a duplicate in the metrics slice: gh.repo.contributors.count")
+					validatedMetrics["gh.repo.contributors.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Total number of unique contributors to this repository", ms.At(i).Description())
+					assert.Equal(t, "ratio", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("gh.repo.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("gh.org")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
 				case "gh.repo.count":
 					assert.False(t, validatedMetrics["gh.repo.count"], "Found a duplicate in the metrics slice: gh.repo.count")
 					validatedMetrics["gh.repo.count"] = true

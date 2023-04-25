@@ -12,6 +12,52 @@ metrics:
     enabled: false
 ```
 
+### gh.repo.branch.commits.count
+
+The total number of commits on a given branch
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| gh.repo.name | The full name of the GitHub repository | Any Str |
+| gh.org | The organization owning the repository | Any Str |
+| gh.repo.branch.name | The name of the branch in a given repository | Any Str |
+
+### gh.repo.branches.count
+
+Number of branches that exist in the repository
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| ratio | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| gh.repo.name | The full name of the GitHub repository | Any Str |
+| gh.org | The organization owning the repository | Any Str |
+
+### gh.repo.contributors.count
+
+Total number of unique contributors to this repository
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| ratio | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| gh.repo.name | The full name of the GitHub repository | Any Str |
+| gh.org | The organization owning the repository | Any Str |
+
 ### gh.repo.count
 
 Number of repositories that exist in an organization
