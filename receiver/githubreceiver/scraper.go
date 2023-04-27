@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v50/github"
+	"github.com/shurcooL/githubv4"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -26,12 +27,6 @@ type ghScraper struct {
 	settings component.TelemetrySettings
 	logger   *zap.Logger
 	mb       *metadata.MetricsBuilder
-}
-
-func ghClient(ghs *ghScraper) (client *github.Client) {
-	ghs.logger.Sugar().Info("Creating the github client")
-	client = github.NewClient(nil)
-	return
 }
 
 func (ghs *ghScraper) start(ctx context.Context, host component.Host) (err error) {
@@ -89,56 +84,111 @@ func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	ghs.mb.RecordGhRepoCountDataPoint(now, int64(len(repos)), ghs.cfg.GitHubOrg)
 
+	graphqlClient := githubv4.NewClient(ghs.client)
+
+	type commit struct {
+		Node struct {
+			CommittedDate string
+		}
+	}
+
+	type ref struct {
+		Name   string
+		Target struct {
+			Commit struct {
+				History struct {
+					TotalCount int
+					Edges      []commit
+					PageInfo   struct {
+						EndCursor string
+					}
+				}
+			} `graphql:"... on Commit"`
+		}
+	}
+
+	var branchQuery struct {
+		Repository struct {
+			Refs struct {
+				TotalCount int
+				Nodes      []ref
+			} `graphql:"refs(refPrefix: \"refs/heads/\", first: 100)"`
+		} `graphql:"repository(name: $repoName, owner: $owner)"`
+	}
+
 	for _, repo := range repos {
 		// branch list
-		branches, _, err := client.Repositories.ListBranches(ctx, ghs.cfg.GitHubOrg, *repo.Name, nil)
-		if err != nil {
-			ghs.logger.Sugar().Errorf("Error getting branches", zap.Error(err))
-		}
-		ghs.mb.RecordGhRepoBranchesCountDataPoint(now, int64(len(branches)), *repo.Name, ghs.cfg.GitHubOrg)
-
+		ghs.logger.Sugar().Debugf("Repo Name: %v", *repo.Name)
 		defaultBranch := *repo.DefaultBranch
 
-		// For each branch, get some additional metrics and associate them with the branch
-		for _, branch := range branches {
-			if *branch.Name != defaultBranch {
-				cmts, _, err := client.Repositories.ListCommits(ctx, ghs.cfg.GitHubOrg, *repo.Name, &github.CommitsListOptions{SHA: *branch.Name})
-				if err != nil {
-					ghs.logger.Sugar().Errorf("Error getting commits", zap.Error(err))
+		queryVars := map[string]interface{}{
+			"repoName": githubv4.String(*repo.Name),
+			"owner":    githubv4.String(ghs.cfg.GitHubOrg),
+		}
+
+		queryErr := graphqlClient.Query(context.Background(), &branchQuery, queryVars)
+
+		if queryErr != nil {
+			ghs.logger.Sugar().Errorf("Error getting branch details", zap.Error(err))
+		}
+
+		numOfBranches := branchQuery.Repository.Refs.TotalCount
+		ghs.logger.Sugar().Debugf("Num of Branches: %v", numOfBranches)
+
+		ghs.mb.RecordGhRepoBranchesCountDataPoint(now, int64(numOfBranches), *repo.Name, ghs.cfg.GitHubOrg)
+
+		for _, branch := range branchQuery.Repository.Refs.Nodes {
+			if branch.Name != defaultBranch {
+				ghs.logger.Sugar().Debugf("Commit Count: %v", branch.Target.Commit.History.TotalCount)
+
+				cursor := branch.Target.Commit.History.PageInfo.EndCursor
+
+				var oldestCommitQuery struct {
+					Repository struct {
+						Ref struct {
+							Target struct {
+								Commit struct {
+									History struct {
+										Edges []commit
+									} `graphql:"history(last: 1, before: $endCursor)"`
+								} `graphql:"... on Commit"`
+							}
+						} `graphql:"ref(qualifiedName: $branchName)"`
+					} `graphql:"repository(name: $repoName, owner: $owner)"`
 				}
 
-				numCommits := int64(len(cmts))
-				ghs.mb.RecordGhRepoBranchCommitsCountDataPoint(now, numCommits, *repo.Name, ghs.cfg.GitHubOrg, *branch.Name)
+				commitQueryVars := map[string]interface{}{
+					"repoName":   githubv4.String(*repo.Name),
+					"owner":      githubv4.String(ghs.cfg.GitHubOrg),
+					"branchName": githubv4.String(branch.Name),
+					"endCursor":  githubv4.String(cursor),
+				}
 
-				// TODO: this should be a goroutine in order to maximize efficiency
-				// TODO: there's a could potential for leveraging the graphql API for github
-				// Commenting this out for now given the above, leverages the diverged func
-				// instead of the REST API
-				//for _, cmt := range cmts {
-				//    sha := cmt.SHA
-				//    diverged, err := diverges(ctx, client, ghs.cfg.GitHubOrg, *repo.Name, defaultBranch, *sha)
-				//    if err != nil {
-				//        ghs.logger.Sugar().Errorf("error when checking if the commit has diverged from the default branch: %v", zap.Error(err))
-				//    }
+				ghs.logger.Sugar().Debugf("Repo Name: %v", *repo.Name)
+				ghs.logger.Sugar().Debugf("Owner: %v", ghs.cfg.GitHubOrg)
+				ghs.logger.Sugar().Debugf("Branch Name: %v", branch.Name)
 
-				//    if len(cmt.Parents) == 1 && !diverged {
-				//        createdDate := cmt.Commit.Author.Date.Time
-				//        ageDelta := now.AsTime().Sub(createdDate)
-				//        ghs.mb.RecordGhRepoBranchTotalAgeDataPoint(now, int64(ageDelta.Hours()), *repo.Name, ghs.cfg.GitHubOrg, *branch.Name)
-				//    }
-				//}
+				queryErr := graphqlClient.Query(context.Background(), &oldestCommitQuery, commitQueryVars)
+
+				if queryErr != nil {
+					ghs.logger.Sugar().Errorf("Error getting oldest commit", zap.Error(err))
+					ghs.logger.Sugar().Errorf("Branch Name: %v", branch.Name)
+					ghs.logger.Sugar().Errorf("Owner: %v", ghs.cfg.GitHubOrg)
+					ghs.logger.Sugar().Errorf("Repo Name: %v", *repo.Name)
+				}
+
+				oldestCommit, err := time.Parse(time.RFC3339, oldestCommitQuery.Repository.Ref.Target.Commit.History.Edges[0].Node.CommittedDate)
+
+				if err != nil {
+					ghs.logger.Sugar().Errorf("Error converting timestamp for oldest commit", zap.Error(err))
+				}
+
+				ghs.logger.Sugar().Debugf("Branch Age: %v", time.Now().Sub(oldestCommit).Hours())
+
 			}
-		}
 
-		// contributor list
-		contribs, _, err := client.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, *repo.Name, nil)
-		if err != nil {
-			ghs.logger.Sugar().Errorf("Error getting contributors", zap.Error(err))
 		}
-		ghs.mb.RecordGhRepoContributorsCountDataPoint(now, int64(len(contribs)), *repo.Name, ghs.cfg.GitHubOrg)
-		//ghs.mb.RecordGhRepoBranchesCountDataPoint(now, int64(repo.Bran))
 	}
-	ghs.logger.Sugar().Debugf("repos: %v", repos)
 
 	ghs.logger.Sugar().Debugf("metrics: %v", ghs.cfg.Metrics.GhRepoCount)
 	return ghs.mb.Emit(), nil
