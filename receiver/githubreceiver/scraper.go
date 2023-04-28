@@ -21,6 +21,32 @@ var (
 	clientNotInitErr = errors.New("http client not initialized")
 )
 
+type Commit struct {
+	Date string
+}
+
+type Branch struct {
+	Name            string
+	CommitCount     int
+	CreatedDate     time.Time
+	LastUpdatedDate string
+	EndCursor       string
+}
+
+type PullRequest struct {
+	Title       string
+	CreatedDate string
+	ClosedDate  string
+}
+
+type Repo struct {
+	Name          string
+	Owner         string
+	DefaultBranch string
+	Branches      []Branch
+	PullRequests  []PullRequest
+}
+
 type ghScraper struct {
 	client   *http.Client
 	cfg      *Config
@@ -41,6 +67,160 @@ func newScraper(cfg *Config, settings receiver.CreateSettings) *ghScraper {
 		settings: settings.TelemetrySettings,
 		logger:   settings.Logger,
 		mb:       metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, settings),
+	}
+}
+
+func (ghs *ghScraper) getRepoBranchInformation(repo *Repo) {
+	graphqlClient := githubv4.NewClient(ghs.client)
+
+	var query struct {
+		Repository struct {
+			Refs struct {
+				TotalCount int
+				Nodes      []struct {
+					Name   string
+					Target struct {
+						Commit struct {
+							History struct {
+								TotalCount int
+								Edges      []struct {
+									Node struct {
+										CommittedDate string
+									}
+								}
+								PageInfo struct {
+									EndCursor string
+								}
+							}
+						} `graphql:"... on Commit"`
+					}
+				}
+			} `graphql:"refs(refPrefix: \"refs/heads/\", first: 100)"`
+		} `graphql:"repository(name: $repoName, owner: $owner)"`
+	}
+
+	variables := map[string]interface{}{
+		"repoName": githubv4.String(repo.Name),
+		"owner":    githubv4.String(repo.Owner),
+	}
+
+	err := graphqlClient.Query(context.Background(), &query, variables)
+
+	if err != nil {
+		ghs.logger.Sugar().Errorf("Error getting branch details", zap.Error(err))
+	}
+
+	for _, branch := range query.Repository.Refs.Nodes {
+		newBranch := &Branch{
+			Name:            branch.Name,
+			CommitCount:     branch.Target.Commit.History.TotalCount,
+			LastUpdatedDate: branch.Target.Commit.History.Edges[0].Node.CommittedDate,
+			EndCursor:       branch.Target.Commit.History.PageInfo.EndCursor,
+		}
+		repo.Branches = append(repo.Branches, *newBranch)
+	}
+}
+
+func (ghs *ghScraper) getOldestBranchCommit(repo *Repo, branch *Branch) {
+	graphqlClient := githubv4.NewClient(ghs.client)
+
+	var query struct {
+		Repository struct {
+			Ref struct {
+				Target struct {
+					Commit struct {
+						History struct {
+							Edges []struct {
+								Node struct {
+									CommittedDate string
+								}
+							}
+							PageInfo struct {
+								EndCursor string
+							}
+						} `graphql:"history(last: 1, before: $endCursor)"`
+					} `graphql:"... on Commit"`
+				}
+			} `graphql:"ref(qualifiedName: $branchName)"`
+		} `graphql:"repository(name: $repoName, owner: $owner)"`
+	}
+
+	variables := map[string]interface{}{
+		"repoName":   githubv4.String(repo.Name),
+		"owner":      githubv4.String(repo.Owner),
+		"branchName": githubv4.String(branch.Name),
+		"endCursor":  githubv4.String(branch.EndCursor),
+	}
+
+	err := graphqlClient.Query(context.Background(), &query, variables)
+
+	if err != nil {
+		ghs.logger.Sugar().Errorf("Error getting oldest commit", zap.Error(err))
+	}
+
+	oldestCommit, err := time.Parse(time.RFC3339, query.Repository.Ref.Target.Commit.History.Edges[0].Node.CommittedDate)
+
+	if err != nil {
+		ghs.logger.Sugar().Errorf("Error converting timestamp for oldest commit", zap.Error(err))
+	}
+
+	branch.CreatedDate = oldestCommit
+}
+
+func (ghs *ghScraper) getRepoPullRequestInformation(repo *Repo) {
+	graphqlClient := githubv4.NewClient(ghs.client)
+
+	type PullRequestNode struct {
+		Node struct {
+			Title     string
+			CreatedAt string
+			ClosedAt  string
+		}
+	}
+
+	var query struct {
+		Repository struct {
+			PullRequests struct {
+				Edges    []PullRequestNode
+				PageInfo struct {
+					EndCursor   githubv4.String
+					HasNextPage bool
+				}
+			} `graphql:"pullRequests(first: 100, after: $prCursor)"`
+		} `graphql:"repository(name: $repoName, owner: $owner)"`
+	}
+
+	variables := map[string]interface{}{
+		"repoName": githubv4.String(repo.Name),
+		"owner":    githubv4.String(repo.Owner),
+		"prCursor": (*githubv4.String)(nil),
+	}
+
+	var pullRequestsResults []PullRequestNode
+	for {
+		err := graphqlClient.Query(context.Background(), &query, variables)
+
+		if err != nil {
+			ghs.logger.Sugar().Errorf("Error getting branch details", zap.Error(err))
+		}
+
+		pullRequestsResults = append(pullRequestsResults, query.Repository.PullRequests.Edges...)
+
+		if !query.Repository.PullRequests.PageInfo.HasNextPage {
+			break
+		}
+
+		variables["prCursor"] = githubv4.NewString(query.Repository.PullRequests.PageInfo.EndCursor)
+	}
+
+	for _, prNode := range pullRequestsResults {
+
+		pullRequest := &PullRequest{
+			Title:       prNode.Node.Title,
+			CreatedDate: prNode.Node.CreatedAt,
+			ClosedDate:  prNode.Node.ClosedAt,
+		}
+		repo.PullRequests = append(repo.PullRequests, *pullRequest)
 	}
 }
 
@@ -68,106 +248,25 @@ func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	ghs.mb.RecordGhRepoCountDataPoint(now, int64(len(repos)), ghs.cfg.GitHubOrg)
 
 	for _, repo := range repos {
-		// branch list
-		ghs.logger.Sugar().Debugf("Repo Name: %v", *repo.Name)
-		defaultBranch := *repo.DefaultBranch
+		repoInfo := &Repo{Name: *repo.Name, Owner: ghs.cfg.GitHubOrg, DefaultBranch: *repo.DefaultBranch}
 
-		graphqlClient := githubv4.NewClient(ghs.client)
+		ghs.getRepoBranchInformation(repoInfo)
 
-		var branchQuery struct {
-			Repository struct {
-				Refs struct {
-					TotalCount int
-					Nodes      []struct {
-						Name   string
-						Target struct {
-							Commit struct {
-								History struct {
-									TotalCount int
-									Edges      []struct {
-										Node struct {
-											CommittedDate string
-										}
-									}
-									PageInfo struct {
-										EndCursor string
-									}
-								}
-							} `graphql:"... on Commit"`
-						}
-					}
-				} `graphql:"refs(refPrefix: \"refs/heads/\", first: 100)"`
-			} `graphql:"repository(name: $repoName, owner: $owner)"`
-		}
+		numOfBranches := len(repoInfo.Branches)
 
-		queryVars := map[string]interface{}{
-			"repoName": githubv4.String(*repo.Name),
-			"owner":    githubv4.String(ghs.cfg.GitHubOrg),
-		}
-
-		queryErr := graphqlClient.Query(context.Background(), &branchQuery, queryVars)
-
-		if queryErr != nil {
-			ghs.logger.Sugar().Errorf("Error getting branch details", zap.Error(err))
-		}
-
-		numOfBranches := branchQuery.Repository.Refs.TotalCount
+		ghs.logger.Sugar().Debugf("Repo Name: %v", repoInfo.Name)
 		ghs.logger.Sugar().Debugf("Num of Branches: %v", numOfBranches)
 
-		//ghs.mb.RecordGhRepoBranchesCountDataPoint(now, int64(numOfBranches), *repo.Name, ghs.cfg.GitHubOrg)
+		ghs.mb.RecordGhRepoBranchesCountDataPoint(now, int64(numOfBranches), repoInfo.Name, repoInfo.Owner)
 
 		var totalBranchLife float64
-		for _, branch := range branchQuery.Repository.Refs.Nodes {
-			if branch.Name != defaultBranch {
-				ghs.logger.Sugar().Debugf("Commit Count: %v", branch.Target.Commit.History.TotalCount)
+		for _, branch := range repoInfo.Branches {
+			if branch.Name != repoInfo.DefaultBranch {
+				ghs.logger.Sugar().Debugf("Commit Count: %v", branch.CommitCount)
 
-				cursor := branch.Target.Commit.History.PageInfo.EndCursor
+				ghs.getOldestBranchCommit(repoInfo, &branch)
+				branchAge := time.Now().Sub(branch.CreatedDate).Hours()
 
-				var oldestCommitQuery struct {
-					Repository struct {
-						Ref struct {
-							Target struct {
-								Commit struct {
-									History struct {
-										Edges []struct {
-											Node struct {
-												CommittedDate string
-											}
-										}
-										PageInfo struct {
-											EndCursor string
-										}
-									} `graphql:"history(last: 1, before: $endCursor)"`
-								} `graphql:"... on Commit"`
-							}
-						} `graphql:"ref(qualifiedName: $branchName)"`
-					} `graphql:"repository(name: $repoName, owner: $owner)"`
-				}
-
-				commitQueryVars := map[string]interface{}{
-					"repoName":   githubv4.String(*repo.Name),
-					"owner":      githubv4.String(ghs.cfg.GitHubOrg),
-					"branchName": githubv4.String(branch.Name),
-					"endCursor":  githubv4.String(cursor),
-				}
-
-				ghs.logger.Sugar().Debugf("Repo Name: %v", *repo.Name)
-				ghs.logger.Sugar().Debugf("Owner: %v", ghs.cfg.GitHubOrg)
-				ghs.logger.Sugar().Debugf("Branch Name: %v", branch.Name)
-
-				queryErr := graphqlClient.Query(context.Background(), &oldestCommitQuery, commitQueryVars)
-
-				if queryErr != nil {
-					ghs.logger.Sugar().Errorf("Error getting oldest commit", zap.Error(err))
-				}
-
-				oldestCommit, err := time.Parse(time.RFC3339, oldestCommitQuery.Repository.Ref.Target.Commit.History.Edges[0].Node.CommittedDate)
-
-				if err != nil {
-					ghs.logger.Sugar().Errorf("Error converting timestamp for oldest commit", zap.Error(err))
-				}
-
-				branchAge := time.Now().Sub(oldestCommit).Hours()
 				ghs.logger.Sugar().Debugf("Branch Age: %v", branchAge)
 
 				totalBranchLife += branchAge
@@ -175,48 +274,9 @@ func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}
 		ghs.logger.Sugar().Debugf("Mean Branch Age: %v", totalBranchLife/float64(numOfBranches))
 
-		type PullRequest struct {
-			Node struct {
-				CreatedAt string
-				ClosedAt  string
-			}
-		}
+		ghs.getRepoPullRequestInformation(repoInfo)
 
-		var prQuery struct {
-			Repository struct {
-				PullRequests struct {
-					Edges    []PullRequest
-					PageInfo struct {
-						EndCursor   githubv4.String
-						HasNextPage bool
-					}
-				} `graphql:"pullRequests(first: 100, after: $prCursor)"`
-			} `graphql:"repository(name: $repoName, owner: $owner)"`
-		}
-
-		queryVars = map[string]interface{}{
-			"repoName": githubv4.String(*repo.Name),
-			"owner":    githubv4.String(ghs.cfg.GitHubOrg),
-			"prCursor": (*githubv4.String)(nil),
-		}
-
-		var pullRequests []PullRequest
-		for {
-			queryErr := graphqlClient.Query(context.Background(), &prQuery, queryVars)
-
-			if queryErr != nil {
-				ghs.logger.Sugar().Errorf("Error getting branch details", zap.Error(err))
-			}
-
-
-			pullRequests = append(pullRequests, prQuery.Repository.PullRequests.Edges...)
-			if !prQuery.Repository.PullRequests.PageInfo.HasNextPage {
-				break
-			}
-
-			queryVars["prCursor"] = githubv4.NewString(prQuery.Repository.PullRequests.PageInfo.EndCursor)
-		}
-
+		ghs.logger.Sugar().Debugf("PRs: %v", repoInfo.PullRequests)
 	}
 
 	ghs.logger.Sugar().Debugf("metrics: %v", ghs.cfg.Metrics.GhRepoCount)
