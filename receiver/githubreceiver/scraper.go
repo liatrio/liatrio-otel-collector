@@ -44,23 +44,6 @@ func newScraper(cfg *Config, settings receiver.CreateSettings) *ghScraper {
 	}
 }
 
-// TODO: This is pretty bad because it's making an API call per commit
-// TODO: This needs to be unit tested & might not be the best way to do this
-// TODO: Commenting this out for now given the slowness and rate limiting of the GitHub API
-// Checks if the commit paassed is in the parent branch to determine if the
-// branch at given point of commit is divergent.
-//func diverges(ctx context.Context, client *github.Client, org string, repo string, parentBranch string, commit string) (bool, error) {
-//    comparison, resp, err := client.Repositories.CompareCommits(ctx, org, repo, parentBranch, commit, nil)
-//    if err != nil {
-//        // 404 is returned when the commit doesn't exist in the parent branch
-//        if resp.StatusCode == 404 {
-//            return true , nil
-//        }
-//        return false, err
-//    }
-//    return comparison.GetStatus() != "identical", nil
-//}
-
 // scrape and return metrics
 func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	ghs.logger.Sugar().Debug("checking if client is initialized")
@@ -84,42 +67,38 @@ func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	ghs.mb.RecordGhRepoCountDataPoint(now, int64(len(repos)), ghs.cfg.GitHubOrg)
 
-	graphqlClient := githubv4.NewClient(ghs.client)
-
-	type commit struct {
-		Node struct {
-			CommittedDate string
-		}
-	}
-
-	type ref struct {
-		Name   string
-		Target struct {
-			Commit struct {
-				History struct {
-					TotalCount int
-					Edges      []commit
-					PageInfo   struct {
-						EndCursor string
-					}
-				}
-			} `graphql:"... on Commit"`
-		}
-	}
-
-	var branchQuery struct {
-		Repository struct {
-			Refs struct {
-				TotalCount int
-				Nodes      []ref
-			} `graphql:"refs(refPrefix: \"refs/heads/\", first: 100)"`
-		} `graphql:"repository(name: $repoName, owner: $owner)"`
-	}
-
 	for _, repo := range repos {
 		// branch list
 		ghs.logger.Sugar().Debugf("Repo Name: %v", *repo.Name)
 		defaultBranch := *repo.DefaultBranch
+
+		graphqlClient := githubv4.NewClient(ghs.client)
+
+		var branchQuery struct {
+			Repository struct {
+				Refs struct {
+					TotalCount int
+					Nodes      []struct {
+						Name   string
+						Target struct {
+							Commit struct {
+								History struct {
+									TotalCount int
+									Edges      []struct {
+										Node struct {
+											CommittedDate string
+										}
+									}
+									PageInfo struct {
+										EndCursor string
+									}
+								}
+							} `graphql:"... on Commit"`
+						}
+					}
+				} `graphql:"refs(refPrefix: \"refs/heads/\", first: 100)"`
+			} `graphql:"repository(name: $repoName, owner: $owner)"`
+		}
 
 		queryVars := map[string]interface{}{
 			"repoName": githubv4.String(*repo.Name),
@@ -135,8 +114,9 @@ func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		numOfBranches := branchQuery.Repository.Refs.TotalCount
 		ghs.logger.Sugar().Debugf("Num of Branches: %v", numOfBranches)
 
-		ghs.mb.RecordGhRepoBranchesCountDataPoint(now, int64(numOfBranches), *repo.Name, ghs.cfg.GitHubOrg)
+		//ghs.mb.RecordGhRepoBranchesCountDataPoint(now, int64(numOfBranches), *repo.Name, ghs.cfg.GitHubOrg)
 
+		var totalBranchLife float64
 		for _, branch := range branchQuery.Repository.Refs.Nodes {
 			if branch.Name != defaultBranch {
 				ghs.logger.Sugar().Debugf("Commit Count: %v", branch.Target.Commit.History.TotalCount)
@@ -149,7 +129,14 @@ func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 							Target struct {
 								Commit struct {
 									History struct {
-										Edges []commit
+										Edges []struct {
+											Node struct {
+												CommittedDate string
+											}
+										}
+										PageInfo struct {
+											EndCursor string
+										}
 									} `graphql:"history(last: 1, before: $endCursor)"`
 								} `graphql:"... on Commit"`
 							}
@@ -172,9 +159,6 @@ func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 				if queryErr != nil {
 					ghs.logger.Sugar().Errorf("Error getting oldest commit", zap.Error(err))
-					ghs.logger.Sugar().Errorf("Branch Name: %v", branch.Name)
-					ghs.logger.Sugar().Errorf("Owner: %v", ghs.cfg.GitHubOrg)
-					ghs.logger.Sugar().Errorf("Repo Name: %v", *repo.Name)
 				}
 
 				oldestCommit, err := time.Parse(time.RFC3339, oldestCommitQuery.Repository.Ref.Target.Commit.History.Edges[0].Node.CommittedDate)
@@ -183,11 +167,56 @@ func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					ghs.logger.Sugar().Errorf("Error converting timestamp for oldest commit", zap.Error(err))
 				}
 
-				ghs.logger.Sugar().Debugf("Branch Age: %v", time.Now().Sub(oldestCommit).Hours())
+				branchAge := time.Now().Sub(oldestCommit).Hours()
+				ghs.logger.Sugar().Debugf("Branch Age: %v", branchAge)
 
+				totalBranchLife += branchAge
+			}
+		}
+		ghs.logger.Sugar().Debugf("Mean Branch Age: %v", totalBranchLife/float64(numOfBranches))
+
+		type PullRequest struct {
+			Node struct {
+				CreatedAt string
+				ClosedAt  string
+			}
+		}
+
+		var prQuery struct {
+			Repository struct {
+				PullRequests struct {
+					Edges    []PullRequest
+					PageInfo struct {
+						EndCursor   githubv4.String
+						HasNextPage bool
+					}
+				} `graphql:"pullRequests(first: 100, after: $prCursor)"`
+			} `graphql:"repository(name: $repoName, owner: $owner)"`
+		}
+
+		queryVars = map[string]interface{}{
+			"repoName": githubv4.String(*repo.Name),
+			"owner":    githubv4.String(ghs.cfg.GitHubOrg),
+			"prCursor": (*githubv4.String)(nil),
+		}
+
+		var pullRequests []PullRequest
+		for {
+			queryErr := graphqlClient.Query(context.Background(), &prQuery, queryVars)
+
+			if queryErr != nil {
+				ghs.logger.Sugar().Errorf("Error getting branch details", zap.Error(err))
 			}
 
+
+			pullRequests = append(pullRequests, prQuery.Repository.PullRequests.Edges...)
+			if !prQuery.Repository.PullRequests.PageInfo.HasNextPage {
+				break
+			}
+
+			queryVars["prCursor"] = githubv4.NewString(prQuery.Repository.PullRequests.PageInfo.EndCursor)
 		}
+
 	}
 
 	ghs.logger.Sugar().Debugf("metrics: %v", ghs.cfg.Metrics.GhRepoCount)
