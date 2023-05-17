@@ -34,9 +34,12 @@ func (ms *MetricSettings) Unmarshal(parser *confmap.Conf) error {
 // MetricsSettings provides settings for githubreceiver metrics.
 type MetricsSettings struct {
 	GhRepoBranchCommitsCount MetricSettings `mapstructure:"gh.repo.branch.commits.count"`
+	GhRepoBranchTotalAge     MetricSettings `mapstructure:"gh.repo.branch.total_age"`
+	GhRepoBranchMeanAge      MetricSettings `mapstructure:"gh.repo.branchMeanAge"`
 	GhRepoBranchesCount      MetricSettings `mapstructure:"gh.repo.branches.count"`
-	GhRepoContributorsCount  MetricSettings `mapstructure:"gh.repo.contributors.count"`
 	GhRepoCount              MetricSettings `mapstructure:"gh.repo.count"`
+	GhRepoPrMeanLife         MetricSettings `mapstructure:"gh.repo.prMeanLife"`
+	GhRepoPrStdDev           MetricSettings `mapstructure:"gh.repo.prStdDev"`
 }
 
 func DefaultMetricsSettings() MetricsSettings {
@@ -44,24 +47,33 @@ func DefaultMetricsSettings() MetricsSettings {
 		GhRepoBranchCommitsCount: MetricSettings{
 			Enabled: true,
 		},
-		GhRepoBranchesCount: MetricSettings{
+		GhRepoBranchTotalAge: MetricSettings{
 			Enabled: true,
 		},
-		GhRepoContributorsCount: MetricSettings{
+		GhRepoBranchMeanAge: MetricSettings{
+			Enabled: true,
+		},
+		GhRepoBranchesCount: MetricSettings{
 			Enabled: true,
 		},
 		GhRepoCount: MetricSettings{
 			Enabled: true,
 		},
+		GhRepoPrMeanLife: MetricSettings{
+			Enabled: true,
+		},
+		GhRepoPrStdDev: MetricSettings{
+			Enabled: true,
+		},
 	}
 }
 
-// ResourceAttributeSettings provides common settings for a particular metric.
+// ResourceAttributeSettings provides common settings for a particular resource attribute.
 type ResourceAttributeSettings struct {
 	Enabled bool `mapstructure:"enabled"`
 }
 
-// ResourceAttributesSettings provides settings for githubreceiver metrics.
+// ResourceAttributesSettings provides settings for githubreceiver resource attributes.
 type ResourceAttributesSettings struct {
 }
 
@@ -122,6 +134,113 @@ func newMetricGhRepoBranchCommitsCount(settings MetricSettings) metricGhRepoBran
 	return m
 }
 
+type metricGhRepoBranchTotalAge struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills gh.repo.branch.total_age metric with initial data.
+func (m *metricGhRepoBranchTotalAge) init() {
+	m.data.SetName("gh.repo.branch.total_age")
+	m.data.SetDescription("Total age of a branch")
+	m.data.SetUnit("1")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricGhRepoBranchTotalAge) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, ghRepoNameAttributeValue string, ghOrgAttributeValue string, ghRepoBranchNameAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("gh.repo.name", ghRepoNameAttributeValue)
+	dp.Attributes().PutStr("gh.org", ghOrgAttributeValue)
+	dp.Attributes().PutStr("gh.repo.branch.name", ghRepoBranchNameAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricGhRepoBranchTotalAge) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricGhRepoBranchTotalAge) emit(metrics pmetric.MetricSlice) {
+	if m.settings.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricGhRepoBranchTotalAge(settings MetricSettings) metricGhRepoBranchTotalAge {
+	m := metricGhRepoBranchTotalAge{settings: settings}
+	if settings.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricGhRepoBranchMeanAge struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills gh.repo.branchMeanAge metric with initial data.
+func (m *metricGhRepoBranchMeanAge) init() {
+	m.data.SetName("gh.repo.branchMeanAge")
+	m.data.SetDescription("The mean age of the branches in the repository")
+	m.data.SetUnit("1")
+	m.data.SetEmptySum()
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityDelta)
+	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricGhRepoBranchMeanAge) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, ghRepoNameAttributeValue string, ghOrgAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("gh.repo.name", ghRepoNameAttributeValue)
+	dp.Attributes().PutStr("gh.org", ghOrgAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricGhRepoBranchMeanAge) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricGhRepoBranchMeanAge) emit(metrics pmetric.MetricSlice) {
+	if m.settings.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricGhRepoBranchMeanAge(settings MetricSettings) metricGhRepoBranchMeanAge {
+	m := metricGhRepoBranchMeanAge{settings: settings}
+	if settings.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 type metricGhRepoBranchesCount struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	settings MetricSettings // metric settings provided by user.
@@ -167,58 +286,6 @@ func (m *metricGhRepoBranchesCount) emit(metrics pmetric.MetricSlice) {
 
 func newMetricGhRepoBranchesCount(settings MetricSettings) metricGhRepoBranchesCount {
 	m := metricGhRepoBranchesCount{settings: settings}
-	if settings.Enabled {
-		m.data = pmetric.NewMetric()
-		m.init()
-	}
-	return m
-}
-
-type metricGhRepoContributorsCount struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	settings MetricSettings // metric settings provided by user.
-	capacity int            // max observed number of data points added to the metric.
-}
-
-// init fills gh.repo.contributors.count metric with initial data.
-func (m *metricGhRepoContributorsCount) init() {
-	m.data.SetName("gh.repo.contributors.count")
-	m.data.SetDescription("Total number of unique contributors to this repository")
-	m.data.SetUnit("ratio")
-	m.data.SetEmptyGauge()
-	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
-}
-
-func (m *metricGhRepoContributorsCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, ghRepoNameAttributeValue string, ghOrgAttributeValue string) {
-	if !m.settings.Enabled {
-		return
-	}
-	dp := m.data.Gauge().DataPoints().AppendEmpty()
-	dp.SetStartTimestamp(start)
-	dp.SetTimestamp(ts)
-	dp.SetIntValue(val)
-	dp.Attributes().PutStr("gh.repo.name", ghRepoNameAttributeValue)
-	dp.Attributes().PutStr("gh.org", ghOrgAttributeValue)
-}
-
-// updateCapacity saves max length of data point slices that will be used for the slice capacity.
-func (m *metricGhRepoContributorsCount) updateCapacity() {
-	if m.data.Gauge().DataPoints().Len() > m.capacity {
-		m.capacity = m.data.Gauge().DataPoints().Len()
-	}
-}
-
-// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
-func (m *metricGhRepoContributorsCount) emit(metrics pmetric.MetricSlice) {
-	if m.settings.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
-		m.updateCapacity()
-		m.data.MoveTo(metrics.AppendEmpty())
-		m.init()
-	}
-}
-
-func newMetricGhRepoContributorsCount(settings MetricSettings) metricGhRepoContributorsCount {
-	m := metricGhRepoContributorsCount{settings: settings}
 	if settings.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -277,6 +344,114 @@ func newMetricGhRepoCount(settings MetricSettings) metricGhRepoCount {
 	return m
 }
 
+type metricGhRepoPrMeanLife struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills gh.repo.prMeanLife metric with initial data.
+func (m *metricGhRepoPrMeanLife) init() {
+	m.data.SetName("gh.repo.prMeanLife")
+	m.data.SetDescription("The mean amount of time that PRs have been open")
+	m.data.SetUnit("1")
+	m.data.SetEmptySum()
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityDelta)
+	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricGhRepoPrMeanLife) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, ghRepoNameAttributeValue string, ghOrgAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("gh.repo.name", ghRepoNameAttributeValue)
+	dp.Attributes().PutStr("gh.org", ghOrgAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricGhRepoPrMeanLife) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricGhRepoPrMeanLife) emit(metrics pmetric.MetricSlice) {
+	if m.settings.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricGhRepoPrMeanLife(settings MetricSettings) metricGhRepoPrMeanLife {
+	m := metricGhRepoPrMeanLife{settings: settings}
+	if settings.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricGhRepoPrStdDev struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills gh.repo.prStdDev metric with initial data.
+func (m *metricGhRepoPrStdDev) init() {
+	m.data.SetName("gh.repo.prStdDev")
+	m.data.SetDescription("The standard deviation of a the PR lifetimes")
+	m.data.SetUnit("1")
+	m.data.SetEmptySum()
+	m.data.Sum().SetIsMonotonic(false)
+	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityUnspecified)
+	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricGhRepoPrStdDev) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, ghRepoNameAttributeValue string, ghOrgAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("gh.repo.name", ghRepoNameAttributeValue)
+	dp.Attributes().PutStr("gh.org", ghOrgAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricGhRepoPrStdDev) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricGhRepoPrStdDev) emit(metrics pmetric.MetricSlice) {
+	if m.settings.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricGhRepoPrStdDev(settings MetricSettings) metricGhRepoPrStdDev {
+	m := metricGhRepoPrStdDev{settings: settings}
+	if settings.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 // MetricsBuilderConfig is a structural subset of an otherwise 1-1 copy of metadata.yaml
 type MetricsBuilderConfig struct {
 	Metrics            MetricsSettings            `mapstructure:"metrics"`
@@ -293,9 +468,12 @@ type MetricsBuilder struct {
 	buildInfo                      component.BuildInfo // contains version information
 	resourceAttributesSettings     ResourceAttributesSettings
 	metricGhRepoBranchCommitsCount metricGhRepoBranchCommitsCount
+	metricGhRepoBranchTotalAge     metricGhRepoBranchTotalAge
+	metricGhRepoBranchMeanAge      metricGhRepoBranchMeanAge
 	metricGhRepoBranchesCount      metricGhRepoBranchesCount
-	metricGhRepoContributorsCount  metricGhRepoContributorsCount
 	metricGhRepoCount              metricGhRepoCount
+	metricGhRepoPrMeanLife         metricGhRepoPrMeanLife
+	metricGhRepoPrStdDev           metricGhRepoPrStdDev
 }
 
 // metricBuilderOption applies changes to default metrics builder.
@@ -329,9 +507,12 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.CreateSetting
 		buildInfo:                      settings.BuildInfo,
 		resourceAttributesSettings:     mbc.ResourceAttributes,
 		metricGhRepoBranchCommitsCount: newMetricGhRepoBranchCommitsCount(mbc.Metrics.GhRepoBranchCommitsCount),
+		metricGhRepoBranchTotalAge:     newMetricGhRepoBranchTotalAge(mbc.Metrics.GhRepoBranchTotalAge),
+		metricGhRepoBranchMeanAge:      newMetricGhRepoBranchMeanAge(mbc.Metrics.GhRepoBranchMeanAge),
 		metricGhRepoBranchesCount:      newMetricGhRepoBranchesCount(mbc.Metrics.GhRepoBranchesCount),
-		metricGhRepoContributorsCount:  newMetricGhRepoContributorsCount(mbc.Metrics.GhRepoContributorsCount),
 		metricGhRepoCount:              newMetricGhRepoCount(mbc.Metrics.GhRepoCount),
+		metricGhRepoPrMeanLife:         newMetricGhRepoPrMeanLife(mbc.Metrics.GhRepoPrMeanLife),
+		metricGhRepoPrStdDev:           newMetricGhRepoPrStdDev(mbc.Metrics.GhRepoPrStdDev),
 	}
 	for _, op := range options {
 		op(mb)
@@ -385,9 +566,12 @@ func (mb *MetricsBuilder) EmitForResource(rmo ...ResourceMetricsOption) {
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
 	mb.metricGhRepoBranchCommitsCount.emit(ils.Metrics())
+	mb.metricGhRepoBranchTotalAge.emit(ils.Metrics())
+	mb.metricGhRepoBranchMeanAge.emit(ils.Metrics())
 	mb.metricGhRepoBranchesCount.emit(ils.Metrics())
-	mb.metricGhRepoContributorsCount.emit(ils.Metrics())
 	mb.metricGhRepoCount.emit(ils.Metrics())
+	mb.metricGhRepoPrMeanLife.emit(ils.Metrics())
+	mb.metricGhRepoPrStdDev.emit(ils.Metrics())
 
 	for _, op := range rmo {
 		op(mb.resourceAttributesSettings, rm)
@@ -413,19 +597,34 @@ func (mb *MetricsBuilder) RecordGhRepoBranchCommitsCountDataPoint(ts pcommon.Tim
 	mb.metricGhRepoBranchCommitsCount.recordDataPoint(mb.startTime, ts, val, ghRepoNameAttributeValue, ghOrgAttributeValue, ghRepoBranchNameAttributeValue)
 }
 
+// RecordGhRepoBranchTotalAgeDataPoint adds a data point to gh.repo.branch.total_age metric.
+func (mb *MetricsBuilder) RecordGhRepoBranchTotalAgeDataPoint(ts pcommon.Timestamp, val int64, ghRepoNameAttributeValue string, ghOrgAttributeValue string, ghRepoBranchNameAttributeValue string) {
+	mb.metricGhRepoBranchTotalAge.recordDataPoint(mb.startTime, ts, val, ghRepoNameAttributeValue, ghOrgAttributeValue, ghRepoBranchNameAttributeValue)
+}
+
+// RecordGhRepoBranchMeanAgeDataPoint adds a data point to gh.repo.branchMeanAge metric.
+func (mb *MetricsBuilder) RecordGhRepoBranchMeanAgeDataPoint(ts pcommon.Timestamp, val int64, ghRepoNameAttributeValue string, ghOrgAttributeValue string) {
+	mb.metricGhRepoBranchMeanAge.recordDataPoint(mb.startTime, ts, val, ghRepoNameAttributeValue, ghOrgAttributeValue)
+}
+
 // RecordGhRepoBranchesCountDataPoint adds a data point to gh.repo.branches.count metric.
 func (mb *MetricsBuilder) RecordGhRepoBranchesCountDataPoint(ts pcommon.Timestamp, val int64, ghRepoNameAttributeValue string, ghOrgAttributeValue string) {
 	mb.metricGhRepoBranchesCount.recordDataPoint(mb.startTime, ts, val, ghRepoNameAttributeValue, ghOrgAttributeValue)
 }
 
-// RecordGhRepoContributorsCountDataPoint adds a data point to gh.repo.contributors.count metric.
-func (mb *MetricsBuilder) RecordGhRepoContributorsCountDataPoint(ts pcommon.Timestamp, val int64, ghRepoNameAttributeValue string, ghOrgAttributeValue string) {
-	mb.metricGhRepoContributorsCount.recordDataPoint(mb.startTime, ts, val, ghRepoNameAttributeValue, ghOrgAttributeValue)
-}
-
 // RecordGhRepoCountDataPoint adds a data point to gh.repo.count metric.
 func (mb *MetricsBuilder) RecordGhRepoCountDataPoint(ts pcommon.Timestamp, val int64, ghOrgAttributeValue string) {
 	mb.metricGhRepoCount.recordDataPoint(mb.startTime, ts, val, ghOrgAttributeValue)
+}
+
+// RecordGhRepoPrMeanLifeDataPoint adds a data point to gh.repo.prMeanLife metric.
+func (mb *MetricsBuilder) RecordGhRepoPrMeanLifeDataPoint(ts pcommon.Timestamp, val int64, ghRepoNameAttributeValue string, ghOrgAttributeValue string) {
+	mb.metricGhRepoPrMeanLife.recordDataPoint(mb.startTime, ts, val, ghRepoNameAttributeValue, ghOrgAttributeValue)
+}
+
+// RecordGhRepoPrStdDevDataPoint adds a data point to gh.repo.prStdDev metric.
+func (mb *MetricsBuilder) RecordGhRepoPrStdDevDataPoint(ts pcommon.Timestamp, val int64, ghRepoNameAttributeValue string, ghOrgAttributeValue string) {
+	mb.metricGhRepoPrStdDev.recordDataPoint(mb.startTime, ts, val, ghRepoNameAttributeValue, ghOrgAttributeValue)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

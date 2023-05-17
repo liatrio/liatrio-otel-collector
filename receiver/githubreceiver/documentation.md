@@ -28,13 +28,29 @@ The total number of commits on a given branch
 | gh.org | The organization owning the repository | Any Str |
 | gh.repo.branch.name | The name of the branch in a given repository | Any Str |
 
-### gh.repo.branches.count
+### gh.repo.branch.total_age
 
-Number of branches that exist in the repository
+Total age of a branch
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| ratio | Gauge | Int |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| gh.repo.name | The full name of the GitHub repository | Any Str |
+| gh.org | The organization owning the repository | Any Str |
+| gh.repo.branch.name | The name of the branch in a given repository | Any Str |
+
+### gh.repo.branchMeanAge
+
+The mean age of the branches in the repository
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic |
+| ---- | ----------- | ---------- | ----------------------- | --------- |
+| 1 | Sum | Int | Delta | true |
 
 #### Attributes
 
@@ -43,9 +59,9 @@ Number of branches that exist in the repository
 | gh.repo.name | The full name of the GitHub repository | Any Str |
 | gh.org | The organization owning the repository | Any Str |
 
-### gh.repo.contributors.count
+### gh.repo.branches.count
 
-Total number of unique contributors to this repository
+Number of branches that exist in the repository
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
@@ -70,4 +86,34 @@ Number of repositories that exist in an organization
 
 | Name | Description | Values |
 | ---- | ----------- | ------ |
+| gh.org | The organization owning the repository | Any Str |
+
+### gh.repo.prMeanLife
+
+The mean amount of time that PRs have been open
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic |
+| ---- | ----------- | ---------- | ----------------------- | --------- |
+| 1 | Sum | Int | Delta | true |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| gh.repo.name | The full name of the GitHub repository | Any Str |
+| gh.org | The organization owning the repository | Any Str |
+
+### gh.repo.prStdDev
+
+The standard deviation of a the PR lifetimes
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic |
+| ---- | ----------- | ---------- | ----------------------- | --------- |
+| 1 | Sum | Int | Unspecified | false |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| gh.repo.name | The full name of the GitHub repository | Any Str |
 | gh.org | The organization owning the repository | Any Str |

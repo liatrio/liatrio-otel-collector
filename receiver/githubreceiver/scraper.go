@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
+	"gonum.org/v1/gonum/stat"
 
 	"github.com/liatrio/otel-liatrio-contrib/receiver/githubreceiver/internal/metadata"
 	"go.opentelemetry.io/collector/receiver"
@@ -35,8 +36,8 @@ type Branch struct {
 
 type PullRequest struct {
 	Title       string
-	CreatedDate string
-	ClosedDate  string
+	CreatedDate time.Time
+	ClosedDate  time.Time
 }
 
 type Repo struct {
@@ -214,11 +215,26 @@ func (ghs *ghScraper) getRepoPullRequestInformation(repo *Repo) {
 	}
 
 	for _, prNode := range pullRequestsResults {
+		var closedDate time.Time
+
+		creationDate, err := time.Parse(time.RFC3339, prNode.Node.CreatedAt)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("Error converting timestamp for PR creation date", zap.Error(err))
+		}
+
+		if prNode.Node.ClosedAt != "" {
+			closedDate, err = time.Parse(time.RFC3339, prNode.Node.ClosedAt)
+			if err != nil {
+				ghs.logger.Sugar().Errorf("Error converting timestamp for PR closed date", zap.Error(err))
+			}
+		} else {
+			closedDate = time.Now()
+		}
 
 		pullRequest := &PullRequest{
 			Title:       prNode.Node.Title,
-			CreatedDate: prNode.Node.CreatedAt,
-			ClosedDate:  prNode.Node.ClosedAt,
+			CreatedDate: creationDate,
+			ClosedDate:  closedDate,
 		}
 		repo.PullRequests = append(repo.PullRequests, *pullRequest)
 	}
@@ -259,24 +275,44 @@ func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 		ghs.mb.RecordGhRepoBranchesCountDataPoint(now, int64(numOfBranches), repoInfo.Name, repoInfo.Owner)
 
-		var totalBranchLife float64
+		var branchAges []float64
 		for _, branch := range repoInfo.Branches {
 			if branch.Name != repoInfo.DefaultBranch {
 				ghs.logger.Sugar().Debugf("Commit Count: %v", branch.CommitCount)
+				ghs.mb.RecordGhRepoBranchCommitsCountDataPoint(now, int64(branch.CommitCount), repoInfo.Name, repoInfo.Owner, branch.Name)
 
 				ghs.getOldestBranchCommit(repoInfo, &branch)
-				branchAge := time.Now().Sub(branch.CreatedDate).Hours()
-
-				ghs.logger.Sugar().Debugf("Branch Age: %v", branchAge)
-
-				totalBranchLife += branchAge
+				branchAge := int64(time.Now().Sub(branch.CreatedDate).Hours())
+				ghs.mb.RecordGhRepoBranchTotalAgeDataPoint(now, branchAge, repoInfo.Name, repoInfo.Owner, branch.Name)
+				branchAges = append(branchAges, time.Now().Sub(branch.CreatedDate).Hours())
 			}
 		}
-		ghs.logger.Sugar().Debugf("Mean Branch Age: %v", totalBranchLife/float64(numOfBranches))
+
+		if len(repoInfo.Branches) > 1 {
+			meanAge := int64(stat.Mean(branchAges, nil))
+			ghs.logger.Sugar().Debugf("Mean Branch Age: %v", meanAge)
+			ghs.mb.RecordGhRepoBranchMeanAgeDataPoint(now, meanAge, repoInfo.Name, repoInfo.Owner)
+		}
 
 		ghs.getRepoPullRequestInformation(repoInfo)
 
-		ghs.logger.Sugar().Debugf("PRs: %v", repoInfo.PullRequests)
+		var prAges []float64
+		for _, pr := range repoInfo.PullRequests {
+			ghs.logger.Sugar().Debugf("PR Creation Date: %v PR Closed Date %v", pr.CreatedDate.Format(time.RFC3339), pr.ClosedDate.Format(time.RFC3339))
+			prAges = append(prAges, pr.ClosedDate.Sub(pr.CreatedDate).Hours())
+		}
+
+		if len(repoInfo.PullRequests) > 1 {
+			prMeanAge := int64(stat.Mean(prAges, nil))
+			prStdDev := int64(stat.StdDev(prAges, nil))
+
+			ghs.logger.Sugar().Debugf("PR Avg Age %v", prMeanAge)
+			ghs.logger.Sugar().Debugf("PR Age Std Dev %v", prStdDev)
+
+			ghs.mb.RecordGhRepoPrMeanLifeDataPoint(now, prMeanAge, repoInfo.Name, repoInfo.Owner)
+			ghs.mb.RecordGhRepoPrStdDevDataPoint(now, prStdDev, repoInfo.Name, repoInfo.Owner)
+		}
+
 	}
 
 	ghs.logger.Sugar().Debugf("metrics: %v", ghs.cfg.Metrics.GhRepoCount)

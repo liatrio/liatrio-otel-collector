@@ -64,15 +64,27 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
+			mb.RecordGhRepoBranchTotalAgeDataPoint(ts, 1, "attr-val", "attr-val", "attr-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordGhRepoBranchMeanAgeDataPoint(ts, 1, "attr-val", "attr-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
 			mb.RecordGhRepoBranchesCountDataPoint(ts, 1, "attr-val", "attr-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordGhRepoContributorsCountDataPoint(ts, 1, "attr-val", "attr-val")
+			mb.RecordGhRepoCountDataPoint(ts, 1, "attr-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordGhRepoCountDataPoint(ts, 1, "attr-val")
+			mb.RecordGhRepoPrMeanLifeDataPoint(ts, 1, "attr-val", "attr-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordGhRepoPrStdDevDataPoint(ts, 1, "attr-val", "attr-val")
 
 			metrics := mb.Emit()
 
@@ -120,13 +132,13 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("gh.repo.branch.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "attr-val", attrVal.Str())
-				case "gh.repo.branches.count":
-					assert.False(t, validatedMetrics["gh.repo.branches.count"], "Found a duplicate in the metrics slice: gh.repo.branches.count")
-					validatedMetrics["gh.repo.branches.count"] = true
+				case "gh.repo.branch.total_age":
+					assert.False(t, validatedMetrics["gh.repo.branch.total_age"], "Found a duplicate in the metrics slice: gh.repo.branch.total_age")
+					validatedMetrics["gh.repo.branch.total_age"] = true
 					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "Number of branches that exist in the repository", ms.At(i).Description())
-					assert.Equal(t, "ratio", ms.At(i).Unit())
+					assert.Equal(t, "Total age of a branch", ms.At(i).Description())
+					assert.Equal(t, "1", ms.At(i).Unit())
 					dp := ms.At(i).Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
 					assert.Equal(t, ts, dp.Timestamp())
@@ -138,12 +150,35 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("gh.org")
 					assert.True(t, ok)
 					assert.EqualValues(t, "attr-val", attrVal.Str())
-				case "gh.repo.contributors.count":
-					assert.False(t, validatedMetrics["gh.repo.contributors.count"], "Found a duplicate in the metrics slice: gh.repo.contributors.count")
-					validatedMetrics["gh.repo.contributors.count"] = true
+					attrVal, ok = dp.Attributes().Get("gh.repo.branch.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+				case "gh.repo.branchMeanAge":
+					assert.False(t, validatedMetrics["gh.repo.branchMeanAge"], "Found a duplicate in the metrics slice: gh.repo.branchMeanAge")
+					validatedMetrics["gh.repo.branchMeanAge"] = true
+					assert.Equal(t, pmetric.MetricTypeSum, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Sum().DataPoints().Len())
+					assert.Equal(t, "The mean age of the branches in the repository", ms.At(i).Description())
+					assert.Equal(t, "1", ms.At(i).Unit())
+					assert.Equal(t, true, ms.At(i).Sum().IsMonotonic())
+					assert.Equal(t, pmetric.AggregationTemporalityDelta, ms.At(i).Sum().AggregationTemporality())
+					dp := ms.At(i).Sum().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("gh.repo.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("gh.org")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+				case "gh.repo.branches.count":
+					assert.False(t, validatedMetrics["gh.repo.branches.count"], "Found a duplicate in the metrics slice: gh.repo.branches.count")
+					validatedMetrics["gh.repo.branches.count"] = true
 					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "Total number of unique contributors to this repository", ms.At(i).Description())
+					assert.Equal(t, "Number of branches that exist in the repository", ms.At(i).Description())
 					assert.Equal(t, "ratio", ms.At(i).Unit())
 					dp := ms.At(i).Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
@@ -169,6 +204,46 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
 					attrVal, ok := dp.Attributes().Get("gh.org")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+				case "gh.repo.prMeanLife":
+					assert.False(t, validatedMetrics["gh.repo.prMeanLife"], "Found a duplicate in the metrics slice: gh.repo.prMeanLife")
+					validatedMetrics["gh.repo.prMeanLife"] = true
+					assert.Equal(t, pmetric.MetricTypeSum, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Sum().DataPoints().Len())
+					assert.Equal(t, "The mean amount of time that PRs have been open", ms.At(i).Description())
+					assert.Equal(t, "1", ms.At(i).Unit())
+					assert.Equal(t, true, ms.At(i).Sum().IsMonotonic())
+					assert.Equal(t, pmetric.AggregationTemporalityDelta, ms.At(i).Sum().AggregationTemporality())
+					dp := ms.At(i).Sum().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("gh.repo.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("gh.org")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+				case "gh.repo.prStdDev":
+					assert.False(t, validatedMetrics["gh.repo.prStdDev"], "Found a duplicate in the metrics slice: gh.repo.prStdDev")
+					validatedMetrics["gh.repo.prStdDev"] = true
+					assert.Equal(t, pmetric.MetricTypeSum, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Sum().DataPoints().Len())
+					assert.Equal(t, "The standard deviation of a the PR lifetimes", ms.At(i).Description())
+					assert.Equal(t, "1", ms.At(i).Unit())
+					assert.Equal(t, false, ms.At(i).Sum().IsMonotonic())
+					assert.Equal(t, pmetric.AggregationTemporalityUnspecified, ms.At(i).Sum().AggregationTemporality())
+					dp := ms.At(i).Sum().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("gh.repo.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "attr-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("gh.org")
 					assert.True(t, ok)
 					assert.EqualValues(t, "attr-val", attrVal.Str())
 				}
