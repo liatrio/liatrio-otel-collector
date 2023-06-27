@@ -1,4 +1,7 @@
-package githubreceiver // import "github.com/liatrio/otel-liatrio-contrib/receiver/githubreceiver"
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+package githubscraper // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/gitproviderreceiver/internal/scraper/githubscraper"
 
 import (
 	"context"
@@ -11,15 +14,14 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
-	"gonum.org/v1/gonum/stat"
-
-	"github.com/liatrio/otel-liatrio-contrib/receiver/githubreceiver/internal/metadata"
 	"go.opentelemetry.io/collector/receiver"
 	"go.uber.org/zap"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/gitproviderreceiver/internal/metadata"
 )
 
 var (
-	clientNotInitErr = errors.New("http client not initialized")
+	errClientNotInitErr = errors.New("http client not initialized")
 )
 
 type Commit struct {
@@ -48,7 +50,7 @@ type Repo struct {
 	PullRequests  []PullRequest
 }
 
-type ghScraper struct {
+type githubScraper struct {
 	client   *http.Client
 	cfg      *Config
 	settings component.TelemetrySettings
@@ -56,14 +58,19 @@ type ghScraper struct {
 	mb       *metadata.MetricsBuilder
 }
 
-func (ghs *ghScraper) start(ctx context.Context, host component.Host) (err error) {
+func (ghs *githubScraper) start(_ context.Context, host component.Host) (err error) {
 	ghs.logger.Sugar().Info("Starting the scraper inside scraper.go")
+	// TODO: Fix the ToClient configuration
 	ghs.client, err = ghs.cfg.ToClient(host, ghs.settings)
 	return
 }
 
-func newScraper(cfg *Config, settings receiver.CreateSettings) *ghScraper {
-	return &ghScraper{
+func newGitHubScraper(
+	_ context.Context,
+	settings receiver.CreateSettings,
+	cfg *Config,
+) *githubScraper {
+	return &githubScraper{
 		cfg:      cfg,
 		settings: settings.TelemetrySettings,
 		logger:   settings.Logger,
@@ -71,7 +78,7 @@ func newScraper(cfg *Config, settings receiver.CreateSettings) *ghScraper {
 	}
 }
 
-func (ghs *ghScraper) getRepoBranchInformation(repo *Repo) {
+func (ghs *githubScraper) getRepoBranchInformation(repo *Repo) {
 	graphqlClient := githubv4.NewClient(ghs.client)
 
 	var query struct {
@@ -122,7 +129,8 @@ func (ghs *ghScraper) getRepoBranchInformation(repo *Repo) {
 	}
 }
 
-func (ghs *ghScraper) getOldestBranchCommit(repo *Repo, branch *Branch) {
+// func (ghs *githubScraper) getOldestBranchCommit(repo *Repo, branch *Branch) {
+func (ghs *githubScraper) getOldestBranchCommit(repo *Repo, branch *Branch) {
 	graphqlClient := githubv4.NewClient(ghs.client)
 
 	var query struct {
@@ -168,7 +176,7 @@ func (ghs *ghScraper) getOldestBranchCommit(repo *Repo, branch *Branch) {
 	branch.CreatedDate = oldestCommit
 }
 
-func (ghs *ghScraper) getRepoPullRequestInformation(repo *Repo) {
+func (ghs *githubScraper) getRepoPullRequestInformation(repo *Repo) {
 	graphqlClient := githubv4.NewClient(ghs.client)
 
 	type PullRequestNode struct {
@@ -241,10 +249,10 @@ func (ghs *ghScraper) getRepoPullRequestInformation(repo *Repo) {
 }
 
 // scrape and return metrics
-func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
+func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	ghs.logger.Sugar().Debug("checking if client is initialized")
 	if ghs.client == nil {
-		return pmetric.NewMetrics(), clientNotInitErr
+		return pmetric.NewMetrics(), errClientNotInitErr
 	}
 
 	now := pcommon.NewTimestampFromTime(time.Now())
@@ -261,7 +269,7 @@ func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		ghs.logger.Sugar().Errorf("Error getting repos", zap.Error(err))
 	}
 
-	ghs.mb.RecordGhRepoCountDataPoint(now, int64(len(repos)), ghs.cfg.GitHubOrg)
+	ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(len(repos)))
 
 	for _, repo := range repos {
 		repoInfo := &Repo{Name: *repo.Name, Owner: ghs.cfg.GitHubOrg, DefaultBranch: *repo.DefaultBranch}
@@ -273,48 +281,24 @@ func (ghs *ghScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		ghs.logger.Sugar().Debugf("Repo Name: %v", repoInfo.Name)
 		ghs.logger.Sugar().Debugf("Num of Branches: %v", numOfBranches)
 
-		ghs.mb.RecordGhRepoBranchesCountDataPoint(now, int64(numOfBranches), repoInfo.Name, repoInfo.Owner)
+		ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(numOfBranches), repoInfo.Name)
 
-		var branchAges []float64
 		for _, branch := range repoInfo.Branches {
 			if branch.Name != repoInfo.DefaultBranch {
-				ghs.logger.Sugar().Debugf("Commit Count: %v", branch.CommitCount)
-				ghs.mb.RecordGhRepoBranchCommitsCountDataPoint(now, int64(branch.CommitCount), repoInfo.Name, repoInfo.Owner, branch.Name)
-
+				branch := branch
 				ghs.getOldestBranchCommit(repoInfo, &branch)
-				branchAge := int64(time.Now().Sub(branch.CreatedDate).Hours())
-				ghs.mb.RecordGhRepoBranchTotalAgeDataPoint(now, branchAge, repoInfo.Name, repoInfo.Owner, branch.Name)
-				branchAges = append(branchAges, time.Now().Sub(branch.CreatedDate).Hours())
+				branchAge := int64(time.Since(branch.CreatedDate).Hours())
+				ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, branch.Name, repoInfo.Name)
 			}
-		}
-
-		if len(repoInfo.Branches) > 1 {
-			meanAge := int64(stat.Mean(branchAges, nil))
-			ghs.logger.Sugar().Debugf("Mean Branch Age: %v", meanAge)
-			ghs.mb.RecordGhRepoBranchMeanAgeDataPoint(now, meanAge, repoInfo.Name, repoInfo.Owner)
 		}
 
 		ghs.getRepoPullRequestInformation(repoInfo)
 
-		var prAges []float64
 		for _, pr := range repoInfo.PullRequests {
 			ghs.logger.Sugar().Debugf("PR Creation Date: %v PR Closed Date %v", pr.CreatedDate.Format(time.RFC3339), pr.ClosedDate.Format(time.RFC3339))
-			prAges = append(prAges, pr.ClosedDate.Sub(pr.CreatedDate).Hours())
 		}
-
-		if len(repoInfo.PullRequests) > 1 {
-			prMeanAge := int64(stat.Mean(prAges, nil))
-			prStdDev := int64(stat.StdDev(prAges, nil))
-
-			ghs.logger.Sugar().Debugf("PR Avg Age %v", prMeanAge)
-			ghs.logger.Sugar().Debugf("PR Age Std Dev %v", prStdDev)
-
-			ghs.mb.RecordGhRepoPrMeanLifeDataPoint(now, prMeanAge, repoInfo.Name, repoInfo.Owner)
-			ghs.mb.RecordGhRepoPrStdDevDataPoint(now, prStdDev, repoInfo.Name, repoInfo.Owner)
-		}
-
 	}
 
-	ghs.logger.Sugar().Debugf("metrics: %v", ghs.cfg.Metrics.GhRepoCount)
+	ghs.logger.Sugar().Debugf("metrics: %v", ghs.cfg.Metrics.GitRepositoryCount)
 	return ghs.mb.Emit(), nil
 }
