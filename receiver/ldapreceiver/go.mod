@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/go-ldap/ldap/v3 v3.4.4
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.4
 	go.opentelemetry.io/collector/component v0.74.0
 	go.opentelemetry.io/collector/consumer v0.74.0
 	go.opentelemetry.io/collector/receiver v0.74.0
