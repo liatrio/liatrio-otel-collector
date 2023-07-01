@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package gitproviderreceiver // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/gitproviderreceiver"
+package gitproviderreceiver // import "github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver"
 
 import (
 	"errors"
@@ -11,8 +11,8 @@ import (
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/gitproviderreceiver/internal"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/gitproviderreceiver/internal/metadata"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
 )
 
 const (

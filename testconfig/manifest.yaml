@@ -1,0 +1,29 @@
+dist:
+  name: otelcol-custom
+  description: Basic OTel Collector distribution for Developers
+  otelcol_version: 0.80.0
+    # version: 0.80.0
+  output_path: ./build
+  debug_compilation: false
+
+extensions:
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension v0.80.0
+    
+exporters:
+  - gomod: go.opentelemetry.io/collector/exporter/loggingexporter v0.80.0
+  - gomod: go.opentelemetry.io/collector/exporter/otlphttpexporter v0.80.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/jaegerexporter v0.80.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/influxdbexporter v0.80.0
+
+processors:
+  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.80.0
+
+receivers:
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.80.0
+  - gomod: github.com/liatrio/liatrio-otel-collector/receiver/ldapreceiver v0.1.0
+  - gomod: github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver v0.1.0
+
+
+replaces:
+  - github.com/liatrio/liatrio-otel-collector/receiver/ldapreceiver => ../receiver/ldapreceiver/
+  - github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver => ../receiver/gitproviderreceiver/

@@ -1,7 +1,17 @@
-# otel-liatrio-contrib
+# liatrio-otel-collector
 
 A repository containing custom OpenTelemetry (otel) packages to be used when
 building and configuring custom collectors.
+
+
+## Quick Start
+
+1. Create a PAT for GitHub with read access only
+2. Run `export GH_USER=<user>` and `export GH_PAT=<pat>`
+3. Run `make run`
+
+> If you want to kill the terminal, `ctl+c` works well. Might just take a sec right
+> now to gracefully exit.
 
 ## OTEL Intro
 

@@ -11,8 +11,8 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/gitproviderreceiver/internal"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/gitproviderreceiver/internal/metadata"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
 )
 
 // This file implements factory for the GitHub Scraper as part of the  Git Provider Receiver
