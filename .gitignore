@@ -16,6 +16,7 @@
 
 otelcol
 build/*
-!build/.vscode/**
+!build/.vscode
+!build/.vscode/*
 ocb
 tmp
