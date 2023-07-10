@@ -3,6 +3,10 @@ extensions:
     client_auth:
       username: ${env:GH_USER}
       password: ${env:GH_PAT}
+  #basicauth/grafana:
+  #  client_auth:
+  #    username: ${env:GRAF_USER}
+  #    password: ${env:GRAF_PAT}
 
 receivers:
   otlp:
@@ -14,7 +18,7 @@ receivers:
     collection_interval: 60s
     scrapers:
       github:
-        github_org: adrielp
+        github_org: liatrio
         auth:
           authenticator: basicauth/github
 
@@ -31,6 +35,12 @@ exporters:
   logging:
     verbosity: detailed
 
+  #otlphttp:
+  #  auth:
+  #    authenticator: basicauth/grafana
+  #  endpoint: https://otlp-gateway-prod-us-central-0.grafana.net/otlp
+
+
   jaeger:
     endpoint: localhost:14250
     tls:
@@ -38,11 +48,15 @@ exporters:
 
 service:
   extensions: [basicauth/github]
+  #extensions: [basicauth/github, basicauth/grafana]
+  
   pipelines:
     metrics:
       receivers: [otlp, gitprovider]
       processors: []
       exporters: [logging]
+      #exporters: [logging, otlphttp]
+      
   telemetry:
     logs:
       level: debug

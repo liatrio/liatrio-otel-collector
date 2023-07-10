@@ -13,6 +13,41 @@ building and configuring custom collectors.
 > If you want to kill the terminal, `ctl+c` works well. Might just take a sec right
 > now to gracefully exit.
 
+### Exporting to Grafana Cloud
+If you want to export your data to Grafana Cloud through their OTLP endpoint, 
+there's a couple of extra things you'll need to do.
+
+1. Run `export GRAF_USER` and `export GRAF_PAT` with your instance id and cloud api key
+2. Update the [testconfig/config.yaml](./testconfig/config.yaml) file with the following:
+```
+extensions:
+  ...
+
+  basicauth/grafana:
+    client_auth:
+      username: ${env:GRAF_USER}
+      password: ${env:GRAF_PAT}
+...
+
+exporters:
+  ...
+  otlphttp:
+    auth:
+      authenticator: basicauth/grafana
+    endpoint: https://otlp-gateway-prod-us-central-0.grafana.net/otlp
+
+...
+
+service:
+  extensions: [..., basicauth/grafana]
+  pipelines:
+    metrics:
+      receivers: [otlp, gitprovider]
+      processors: []
+      exporters: [..., otlphttp]
+
+```
+
 ### Debugging
 To debug through `vscode`:
 * run `make build-debug`

@@ -288,7 +288,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				branch := branch
 				ghs.getOldestBranchCommit(repoInfo, &branch)
 				branchAge := int64(time.Since(branch.CreatedDate).Hours())
-				ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, branch.Name, repoInfo.Name)
+				ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, repoInfo.Name, branch.Name)
 			}
 		}
 
