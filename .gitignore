@@ -14,5 +14,9 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-dev-otelcol/
+otelcol
+build/*
+!build/.vscode
+!build/.vscode/*
 ocb
+tmp

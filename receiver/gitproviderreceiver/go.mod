@@ -1,4 +1,4 @@
-module github.com/open-telemetry/opentelemetry-collector-contrib/receiver/gitproviderreceiver
+module github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver
 
 go 1.19
 

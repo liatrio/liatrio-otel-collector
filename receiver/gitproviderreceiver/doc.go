@@ -3,4 +3,4 @@
 
 //go:generate mdatagen metadata.yaml
 
-package gitproviderreceiver // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/gitproviderreceiver"
+package gitproviderreceiver // import "github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver"

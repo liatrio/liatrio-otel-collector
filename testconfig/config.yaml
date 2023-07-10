@@ -1,22 +1,27 @@
-#extensions:
-#  basicauth/server:
-#    client_auth:
-#      username: "cn=admin,dc=example,dc=org"
-#      password: admin
+extensions:
+  basicauth/github:
+    client_auth:
+      username: ${env:GH_USER}
+      password: ${env:GH_PAT}
 
 receivers:
   otlp:
     protocols:
       grpc:
-  github:
-    interval: 10s
+
+  gitprovider:
+    initial_delay: 1s
+    collection_interval: 60s
+    scrapers:
+      github:
+        github_org: adrielp
+        auth:
+          authenticator: basicauth/github
+
   ldap:
     interval: 10s
     search_filter: "(objectclass=*)"
     endpoint: "localhost"
-    # TODO: use basic auth
-    #user: "cn=admin,dc=example,dc=org"
-    #pw: "admin"
     base_dn: "dc=example,dc=org"
     ignore_tls: true
   
@@ -32,17 +37,12 @@ exporters:
       insecure: true
 
 service:
+  extensions: [basicauth/github]
   pipelines:
     metrics:
-      receivers: [otlp, github]
-      #receivers: [otlp, github]
-        #receivers: [ldapreceiver]
+      receivers: [otlp, gitprovider]
       processors: []
       exporters: [logging]
-        #traces:
-        #  receivers: [otlp]
-        #  processors: []
-        #  exporters: [jaeger, logging]
   telemetry:
     logs:
       level: debug
