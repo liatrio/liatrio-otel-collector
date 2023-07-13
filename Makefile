@@ -2,7 +2,7 @@
 
 CUSTOM_COL_DIR ?= $(CURDIR)/build
 OCB_PATH ?= $(CURDIR)/tmp
-OCB_VERSION ?= 0.80.0
+OCB_VERSION ?= 0.81.0
 OCB_URL = https://github.com/open-telemetry/opentelemetry-collector/releases/download/cmd%2Fbuilder%2F
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 ARCH := $(shell uname -m)
