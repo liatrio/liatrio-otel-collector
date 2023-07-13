@@ -3,23 +3,33 @@
 A repository containing custom OpenTelemetry (otel) packages to be used when
 building and configuring custom collectors.
 
-
 ## Quick Start
 
+TODO: Add more details here, bit of a preamble...
+
+1. `brew install go`
+1. `brew install pre-commit`
+1. `brew install talisman`
+1. `pre-commit install --hook-type pre-push`
+1. `pre-commit install --hook-type commit-msg`
+1. `pre-commit install --hook-type pre-commit`
+1. `pre-commit install --hook-type prepare-commit-msg`
 1. Create a PAT for GitHub with read access only
-2. Run `export GH_USER=<user>` and `export GH_PAT=<pat>`
-3. Run `make run`
+1. Run `export GH_USER=<user>` and `export GH_PAT=<pat>`
+1. Run `make run`
 
 > If you want to kill the terminal, `ctl+c` works well. Might just take a sec right
 > now to gracefully exit.
 
 ### Exporting to Grafana Cloud
+
 If you want to export your data to Grafana Cloud through their OTLP endpoint, 
 there's a couple of extra things you'll need to do.
 
 1. Run `export GRAF_USER` and `export GRAF_PAT` with your instance id and cloud api key
 2. Update the [testconfig/config.yaml](./testconfig/config.yaml) file with the following:
-```
+
+```yaml
 extensions:
   ...
 
@@ -49,37 +59,39 @@ service:
 ```
 
 ### Debugging
+
 To debug through `vscode`:
+
 * run `make build-debug`
 * run `cd build && code .`
 * run vscode debugger for go
 
 ## OTEL Intro
 
-OTEL is a protocol used for distributed logging, tracing, and metrics. 
-To collect metrics from various services, we need to configure receivers. 
-OTEL provides many built-in receivers, but in certain cases, we may need to 
+OTEL is a protocol used for distributed logging, tracing, and metrics.
+To collect metrics from various services, we need to configure receivers.
+OTEL provides many built-in receivers, but in certain cases, we may need to
 create custom receivers to meet our specific requirements.
 
-A custom receiver in OTEL is a program that listens to a specific endpoint and 
-receives incoming log, metrics, or trace data. This receiver then pipes the 
+A custom receiver in OTEL is a program that listens to a specific endpoint and
+receives incoming log, metrics, or trace data. This receiver then pipes the
 content to a process, for it to then be exported to a data backend.
 
-Creating a custom receiver in OTEL involves implementing the receiver interface 
-and defining the endpoint where the receiver will listen for incoming trace data. 
-Once the receiver is implemented, it can be deployed to a specific location and 
+Creating a custom receiver in OTEL involves implementing the receiver interface
+and defining the endpoint where the receiver will listen for incoming trace data.
+Once the receiver is implemented, it can be deployed to a specific location and
 configured to start receiving trace data.
 
 ### Prereqs
 
-There is currently a guide to build a custom trace receiver. It is a long read, 
-requires a fairly deep understanding, and is slightly out of date due to 
-non-backwards compatible internal API breaking changes. This document and 
-receiver example attempts to simplify that to an extent. 
+There is currently a guide to build a custom trace receiver. It is a long read,
+requires a fairly deep understanding, and is slightly out of date due to
+non-backwards compatible internal API breaking changes. This document and
+receiver example attempts to simplify that to an extent.
 
 There are a few main concepts that should help you get started:
 
-1. Get familiar with the `ocb` tool. It is used to build custom collectors using a `build-config.yaml` file. 
+1. Get familiar with the `ocb` tool. It is used to build custom collectors using a `build-config.yaml` file.
 2. Get familiar with `Go` & the `Factory` design pattern.
 3. Clearly define what outcome you want before building a customization.
 4. Get familiar with `Go interfaces`.
