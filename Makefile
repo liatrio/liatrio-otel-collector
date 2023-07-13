@@ -25,7 +25,7 @@ build-debug: check_prep
 
 .PHONY: check_prep
 check_prep:
-	@if [ ! -f $(OCB_PATH/ocb) ]; then make prep; fi
+	@if [ ! -f $(OCB_PATH)/ocb ]; then make prep; fi
 
 .PHONY: prep
 prep:
@@ -39,3 +39,5 @@ prep:
 run: build
 	$(CUSTOM_COL_DIR)/otelcol-custom --config testconfig/config.yaml
 	
+.PHONY: checks
+checks:
