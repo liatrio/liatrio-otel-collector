@@ -9,7 +9,6 @@ TODO: Add more details here, bit of a preamble...
 
 1. `brew install go`
 1. `brew install pre-commit`
-1. `brew install talisman`
 1. `pre-commit install --hook-type pre-push`
 1. `pre-commit install --hook-type commit-msg`
 1. `pre-commit install --hook-type pre-commit`

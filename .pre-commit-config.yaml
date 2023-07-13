@@ -6,12 +6,6 @@ repos:
           - id: conventional-pre-commit
             stages: [commit-msg]
             args: []
-    - repo: https://github.com/thoughtworks/talisman
-      rev: v1.29.1
-      hooks:
-          - id: talisman-commit
-            entry: cmd --githook pre-commit --checksum="*-lock.json"
-            stages: [commit]
 
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v4.3.0
