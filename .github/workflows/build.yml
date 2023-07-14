@@ -62,3 +62,4 @@ jobs:
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   changelog-generator-opt: emojis=true
+                  allow-initial-development-versions: true
