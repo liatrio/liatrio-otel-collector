@@ -8,6 +8,7 @@ OTEL_CONTRIB_REPO = https://github.com/open-telemetry/opentelemetry-collector-co
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 ARCH := $(shell uname -m)
 GORELEASER_VERSION = 1.19.2
+GOLANGCI_LINT_VERSION ?= v1.53.2
 
 # Arguments for getting directories & executing commands against them
 PKG_RECEIVER_DIRS = $(shell find ./pkg/receiver/* -type f -name "go.mod" -print -exec dirname {} \; | sort | uniq)
@@ -66,7 +67,7 @@ $(PKG_RECEIVER_DIRS):
 
 .PHONY: golangci-lint-all
 golangci-lint-all:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.53.3
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 	@$(MAKE) for-all CMD="make golangci-lint-all"
 	
 # Taken from opentelemetry-collector-contrib
