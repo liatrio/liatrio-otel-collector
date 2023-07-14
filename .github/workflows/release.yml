@@ -1,0 +1,38 @@
+---
+name: Release
+
+on:
+    push:
+        branches:
+            - main
+        tags:
+            - '*'
+
+jobs:
+    release:
+        if: ${{ github.ref == 'refs/heads/main' }}
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+
+            - name: Fetch all tags
+              run: git fetch --force --tags
+
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: 1.19
+
+            - name: Run GoReleaser
+              uses: goreleaser/goreleaser-action@v4
+              with:
+                  distribution: goreleaser
+                  version: latest
+                  args: release --clean
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
