@@ -58,8 +58,9 @@ jobs:
       steps:
         - name: Run go-semantic-release
           uses: go-semantic-release/action@v1
-          env:
+          with:
             github_token: ${{ secrets.GITHUB_TOKEN }}
+            changelog-generate-opt: "emojis=true"
 
     goreleaser:
       if: ${{ github.ref == 'refs/heads/main' }}
