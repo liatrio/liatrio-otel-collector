@@ -1,13 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package githubscraper // import "github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/scraper/githubscraper"
+package githubscraper
 
 import (
 	"go.opentelemetry.io/collector/config/confighttp"
 
-	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal"
-	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
+	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal"
+	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
 )
 
 // Config relating to Github Metric Scraper.

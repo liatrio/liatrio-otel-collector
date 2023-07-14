@@ -1,30 +1,29 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package gitproviderreceiver // import "github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver"
+package gitproviderreceiver // import "github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver"
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
 
-	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal"
-	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
-	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/scraper/githubscraper"
+	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal"
+	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
+	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/scraper/githubscraper"
 )
 
 // This file implements a factory for the git provider receiver
 
-const (
-	defaultInterval = 30 * time.Second
-	defaultTimeout  = 15 * time.Second
-)
+//const (
+//	defaultInterval = 30 * time.Second
+//	defaultTimeout  = 15 * time.Second
+//)
 
 var (
 	scraperFactories = map[string]internal.ScraperFactory{
