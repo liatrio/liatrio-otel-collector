@@ -8,9 +8,11 @@ OTEL_CONTRIB_REPO = https://github.com/open-telemetry/opentelemetry-collector-co
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 ARCH := $(shell uname -m)
 GORELEASER_VERSION = 1.19.2
+GOLANGCI_LINT_VERSION ?= v1.53.2
 
 # Arguments for getting directories & executing commands against them
-PKG_RECEIVER_DIRS = $(shell find ./pkg/receiver/* -type f -name "go.mod" -print -exec dirname {} \; | sort | uniq)
+# PKG_RECEIVER_DIRS = $(shell find ./pkg/receiver/* -type f -name "go.mod" -print -exec dirname {} \; | sort | uniq)
+PKG_RECEIVER_DIRS = $(shell find ./pkg/receiver/* -type f -name '*go.mod*' | sed -r 's|/[^/]+$$||' |sort | uniq )
 
 # set ARCH var based on output
 ifeq ($(ARCH),x86_64)
@@ -57,9 +59,10 @@ install-tools:
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 	go install github.com/securego/gosec/v2/cmd/gosec@latest
 	go install golang.org/x/tools/cmd/goimports@latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 	
-.PHONY: checks $(PKG_RECEIVER_DIRS)
-checks: $(PKG_RECEIVER_DIRS)
+.PHONY: lint-all $(PKG_RECEIVER_DIRS)
+lint-all: $(PKG_RECEIVER_DIRS)
 	
 $(PKG_RECEIVER_DIRS):
 	$(MAKE) -C $@ lint
@@ -69,7 +72,8 @@ $(PKG_RECEIVER_DIRS):
 for-all:
 	@echo "running $${CMD} in root"
 	@$${CMD}
-	@set -e; for dir in $(NONROOT_MODS); do \
+	@set -e; for dir in $(PKG_RECEIVER_DIRS); do \
+	@echo "running $${CMD} in $${dir}"
 	  (cd "$${dir}" && \
 	  	echo "running $${CMD} in $${dir}" && \
 	 	$${CMD} ); \

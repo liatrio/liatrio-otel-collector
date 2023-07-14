@@ -14,13 +14,9 @@ SRC_ROOT := $(shell git rev-parse --show-toplevel)
 
 .PHONY: lint
 lint: 
-	@go fmt ./...
-	@go vet ./...
-	@staticcheck ./...
-	@gosec ./...
-	@goimports -w ./
+	golangci-lint run
 	
 .PHONY: tidy
 tidy: 
-	@rm go.sum 
-	@go mod tidy -compat=1.19
+	rm go.sum 
+	go mod tidy -compat=1.19

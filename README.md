@@ -9,7 +9,7 @@ TODO: Add more details here, bit of a preamble...
 
 1. `brew install go`
 2. `brew install pre-commit`
-3. `pre-commit install
+3. `pre-commit install`
 4. Create a PAT for GitHub with read access only
 5. Run `export GH_USER=<user>` and `export GH_PAT=<pat>`
 6. Run `make run`
