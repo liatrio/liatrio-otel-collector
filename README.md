@@ -5,17 +5,14 @@ building and configuring custom collectors.
 
 ## Quick Start
 
-TODO: Add more details here, bit of a preamble...
+TODO: Add more details here, bit of a preamble... 
 
 1. `brew install go`
-1. `brew install pre-commit`
-1. `pre-commit install --hook-type pre-push`
-1. `pre-commit install --hook-type commit-msg`
-1. `pre-commit install --hook-type pre-commit`
-1. `pre-commit install --hook-type prepare-commit-msg`
-1. Create a PAT for GitHub with read access only
-1. Run `export GH_USER=<user>` and `export GH_PAT=<pat>`
-1. Run `make run`
+2. `brew install pre-commit`
+3. `pre-commit install
+4. Create a PAT for GitHub with read access only
+5. Run `export GH_USER=<user>` and `export GH_PAT=<pat>`
+6. Run `make run`
 
 > If you want to kill the terminal, `ctl+c` works well. Might just take a sec right
 > now to gracefully exit.

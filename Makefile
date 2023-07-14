@@ -79,3 +79,7 @@ for-all:
 metagen: check-prep
 	@cd tmp/opentelemetry-collector-contrib/cmd/mdatagen && go install .
 	@$(MAKE) for-all CMD="go generate ./..."
+
+.PHONY: cibuild
+cibuild: check-prep
+	$(OCB_PATH)/ocb --config testconfig/manifest.yaml --skip-compilation
