@@ -7,6 +7,7 @@ OCB_URL = https://github.com/open-telemetry/opentelemetry-collector/releases/dow
 OTEL_CONTRIB_REPO = https://github.com/open-telemetry/opentelemetry-collector-contrib.git
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 ARCH := $(shell uname -m)
+GORELEASER_VERSION = 1.19.2
 
 # Arguments for getting directories & executing commands against them
 PKG_RECEIVER_DIRS = $(shell find ./pkg/receiver/* -type f -name "go.mod" -print -exec dirname {} \; | sort | uniq)
@@ -20,25 +21,31 @@ ifeq ($(ARCH),aarch64)
 endif
 
 .PHONY: build
-build: check_prep
+build: check-prep
 	$(OCB_PATH)/ocb --config testconfig/manifest.yaml
 
 .PHONY: build-debug
-build-debug: check_prep
+build-debug: check-prep
 	$(OCB_PATH)/ocb --config testconfig/manifest-debug.yaml
 
-.PHONY: check_prep
-check_prep:
-	@if [[ ! -f $(OCB_PATH)/ocb  || ! -d $(OCB_PATH)/opentelemetry-collector-contrib ]]; then make prep; fi
+.PHONY: release
+release: check-prep
+	$(OCB_PATH)/ocb --config testconfig/manifest.yaml --skip-compilation
+	curl -sfL https://goreleaser.com/static/run | VERSION=v$(GORELEASER_VERSION) DISTRIBUTION=oss bash \
+		-s -- --clean --skip-validate --skip-publish --snapshot
+
+.PHONY: check-prep
+check-prep:
+	if [[ ! -f $(OCB_PATH)/ocb  || ! -d $(OCB_PATH)/opentelemetry-collector-contrib ]]; then make prep; fi
 
 .PHONY: prep
 prep:
-	@echo "Downloading OpenTelemetry Collector Build"
-	@mkdir -p $(OCB_PATH)
-	@curl -LO $(OCB_URL)v$(OCB_VERSION)/ocb_$(OCB_VERSION)_$(OS)_$(ARCH)
-	@mv ocb_$(OCB_VERSION)_$(OS)_$(ARCH) $(OCB_PATH)/ocb
-	@chmod +x $(OCB_PATH)/ocb
-	@ cd $(OCB_PATH) && git clone --depth 1 $(OTEL_CONTRIB_REPO); \
+	echo "Downloading OpenTelemetry Collector Build"
+	mkdir -p $(OCB_PATH)
+	curl -LO $(OCB_URL)v$(OCB_VERSION)/ocb_$(OCB_VERSION)_$(OS)_$(ARCH)
+	mv ocb_$(OCB_VERSION)_$(OS)_$(ARCH) $(OCB_PATH)/ocb
+	chmod +x $(OCB_PATH)/ocb
+	cd $(OCB_PATH) && git clone --depth 1 $(OTEL_CONTRIB_REPO); \
 		cd opentelemetry-collector-contrib && git fetch --depth 1 origin v$(OCB_VERSION) && git checkout FETCH_HEAD;
 
 .PHONY: run
@@ -47,10 +54,9 @@ run: build
 	
 .PHONY: install-tools
 install-tools:
-	@go install honnef.co/go/tools/cmd/staticcheck@latest
-	@go install github.com/securego/gosec/v2/cmd/gosec@latest
-	@go install golang.org/x/tools/cmd/goimports@latest
-
+	go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install github.com/securego/gosec/v2/cmd/gosec@latest
+	go install golang.org/x/tools/cmd/goimports@latest
 	
 .PHONY: checks $(PKG_RECEIVER_DIRS)
 checks: $(PKG_RECEIVER_DIRS)
@@ -70,11 +76,6 @@ for-all:
 	done
 
 .PHONY: metagen
-metagen: check_prep
+metagen: check-prep
 	@cd tmp/opentelemetry-collector-contrib/cmd/mdatagen && go install .
 	@$(MAKE) for-all CMD="go generate ./..."
-	
-# TODO: move testconfig -> configs given that it's now beyond just test configurations
-.PHONY: cibuild
-cibuild: check_prep
-	$(OCB_PATH)/ocb --config testconfig/manifest.yaml --skip-compilation
