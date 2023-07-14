@@ -3,7 +3,8 @@ name: Lint, Build, Test and Release
 on:
   pull_request:
     branches: [main]
-  workflow_call:
+  push:
+    branches: [main]
 
 jobs:
     lint:
