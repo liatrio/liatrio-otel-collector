@@ -19,8 +19,10 @@ jobs:
             with:
               go-version: ${{ matrix.go }}
               cache: false
+          - name: Install golangci-lint
+            run: make install-tools
           - name: Run golangci-lint
-            run: make golangci-lint-all
+            run: make lint-all
 
     make-checks:
       runs-on: ubuntu-latest
