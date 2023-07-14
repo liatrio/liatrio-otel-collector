@@ -63,6 +63,11 @@ checks: $(PKG_RECEIVER_DIRS)
 	
 $(PKG_RECEIVER_DIRS):
 	$(MAKE) -C $@ lint
+
+.PHONY: golangci-lint-all
+golangci-lint-all:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.53.3
+	@$(MAKE) for-all CMD="make golangci-lint-all"
 	
 # Taken from opentelemetry-collector-contrib
 .PHONY: for-all
