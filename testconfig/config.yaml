@@ -1,39 +1,39 @@
+---
 extensions:
-  basicauth/github:
-    client_auth:
-      username: ${env:GH_USER}
-      password: ${env:GH_PAT}
+    basicauth/github:
+        client_auth:
+            username: ${env:GH_USER}
+            password: ${env:GH_PAT}
   #basicauth/grafana:
   #  client_auth:
   #    username: ${env:GRAF_USER}
   #    password: ${env:GRAF_PAT}
 
 receivers:
-  otlp:
-    protocols:
-      grpc:
+    otlp:
+        protocols:
+            grpc:
 
-  gitprovider:
-    initial_delay: 1s
-    collection_interval: 60s
-    scrapers:
-      github:
-        github_org: liatrio
-        auth:
-          authenticator: basicauth/github
+    gitprovider:
+        initial_delay: 1s
+        collection_interval: 60s
+        scrapers:
+            github:
+                github_org: liatrio
+                auth:
+                    authenticator: basicauth/github
 
-  ldap:
-    interval: 10s
-    search_filter: "(objectclass=*)"
-    endpoint: "localhost"
-    base_dn: "dc=example,dc=org"
-    ignore_tls: true
-  
+    ldap:
+        interval: 10s
+        search_filter: (objectclass=*)
+        endpoint: localhost
+        base_dn: dc=example,dc=org
+        ignore_tls: true
+
 processors:
-  
 exporters:
-  logging:
-    verbosity: detailed
+    logging:
+        verbosity: detailed
 
   #otlphttp:
   #  auth:
@@ -41,22 +41,20 @@ exporters:
   #  endpoint: https://otlp-gateway-prod-us-central-0.grafana.net/otlp
 
 
-  jaeger:
-    endpoint: localhost:14250
-    tls:
-      insecure: true
+    jaeger:
+        endpoint: localhost:14250
+        tls:
+            insecure: true
 
 service:
-  extensions: [basicauth/github]
+    extensions: [basicauth/github]
   #extensions: [basicauth/github, basicauth/grafana]
-  
-  pipelines:
-    metrics:
-      receivers: [otlp, gitprovider]
-      processors: []
-      exporters: [logging]
+    pipelines:
+        metrics:
+            receivers: [otlp, gitprovider]
+            processors: []
+            exporters: [logging]
       #exporters: [logging, otlphttp]
-      
-  telemetry:
-    logs:
-      level: debug
+    telemetry:
+        logs:
+            level: debug
