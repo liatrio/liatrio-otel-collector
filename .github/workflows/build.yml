@@ -1,9 +1,9 @@
-name: Build, Test and Release
+name: Lint, Build and Test
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    branches: [main]
+  workflow_call:
 
 jobs:
     golangci:
@@ -43,6 +43,7 @@ jobs:
               # install-mode: "goinstall"
               
     make-build-checks:
+      needs: [golangci]
       runs-on: ubuntu-latest
       steps:
 
@@ -63,7 +64,9 @@ jobs:
         - name: Run Checks
           run: make checks
 
-    go-semnatic-release:
+    go-semantic-release:
+      if: ${{ github.ref == 'refs/heads/main' }}
+      needs: [make-build-checks]
       runs-on: ubuntu-latest
       permissions:
         contents: write
@@ -74,6 +77,8 @@ jobs:
             github_token: ${{ secrets.GITHUB_TOKEN }}
 
     goreleaser:
+      if: ${{ github.ref == 'refs/heads/main' }}
+      needs: [go-semantic-release]
       runs-on: ubuntu-latest
       permissions:
         contents: write
