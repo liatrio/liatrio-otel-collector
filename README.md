@@ -1,3 +1,8 @@
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/liatrio/liatrio-otel-collector/badge)](https://api.securityscorecards.dev/projects/github.com/liatrio/liatrio-otel-collector)
+![CodeQL](https://github.com/liatrio/liatrio-otel-collector/workflows/CodeQL/badge.svg?branch=main)
+[![Go Report Card](https://goreportcard.com/badge/github.com/liatrio/liatrio-otel-collector)](https://goreportcard.com/report/github.com/liatrio/liatrio-otel-collector)
+![Tests Passing](https://github.com/liatrio/liatrio-otel-collector/workflows/Build%20and%20Test/badge.svg)
+
 # liatrio-otel-collector
 
 A repository containing custom OpenTelemetry (otel) packages to be used when
