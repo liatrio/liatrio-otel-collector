@@ -1,7 +1,21 @@
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/liatrio/liatrio-otel-collector/badge)](https://api.securityscorecards.dev/projects/github.com/liatrio/liatrio-otel-collector)
-![CodeQL](https://github.com/liatrio/liatrio-otel-collector/workflows/CodeQL/badge.svg?branch=main)
-[![Go Report Card](https://goreportcard.com/badge/github.com/liatrio/liatrio-otel-collector)](https://goreportcard.com/report/github.com/liatrio/liatrio-otel-collector)
-![Tests Passing](https://github.com/liatrio/liatrio-otel-collector/workflows/Build%20and%20Test/badge.svg)
+---
+
+<p align="center">
+  <a href="https://github.com/liatrio/liatrio-otel-collector/actions/workflows/build.yml?query=branch%3Amain">
+    <img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/liatrio/liatrio-otel-collector/build.yml?branch=main&style=for-the-badge">
+  </a>
+  <a href="https://goreportcard.com/report/github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver">
+    <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver?style=for-the-badge">
+  </a>
+  <a href="https://github.com/liatrio/liatrio-otel-collector/releases">
+    <img alt="GitHub release" src="https://img.shields.io/github/v/release/liatrio/liatrio-otel-collector?include_prereleases&style=for-the-badge">
+  </a>
+  <a href="https://api.securityscorecards.dev/projects/github.com/liatrio/liatrio-otel-collector/badge">
+    <img alt="OpenSSF Scorecard" src="https://img.shields.io/ossf-scorecard/github.com/liatrio/liatrio-otel-collector?label=openssf%20scorecard&style=for-the-badge">
+  </a>
+</p>
+
+---
 
 # liatrio-otel-collector
 
