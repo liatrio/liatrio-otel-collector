@@ -24,15 +24,15 @@ endif
 
 .PHONY: build
 build: check-prep
-	$(OCB_PATH)/ocb --config testconfig/manifest.yaml
+	$(OCB_PATH)/ocb --config config/manifest.yaml
 
 .PHONY: build-debug
 build-debug: check-prep
-	$(OCB_PATH)/ocb --config testconfig/manifest-debug.yaml
+	$(OCB_PATH)/ocb --config config/manifest-debug.yaml
 
 .PHONY: release
 release: check-prep
-	$(OCB_PATH)/ocb --config testconfig/manifest.yaml --skip-compilation
+	$(OCB_PATH)/ocb --config config/manifest.yaml --skip-compilation
 	curl -sfL https://goreleaser.com/static/run | VERSION=v$(GORELEASER_VERSION) DISTRIBUTION=oss bash \
 		-s -- --clean --skip-validate --skip-publish --snapshot
 
@@ -52,7 +52,7 @@ prep:
 
 .PHONY: run
 run: build
-	$(CUSTOM_COL_DIR)/otelcol-custom --config testconfig/config.yaml
+	$(CUSTOM_COL_DIR)/otelcol-custom --config config/config.yaml
 	
 .PHONY: install-tools
 install-tools:
@@ -86,8 +86,8 @@ metagen: check-prep
 
 .PHONY: cibuild
 cibuild: check-prep
-	$(OCB_PATH)/ocb --config testconfig/manifest.yaml --skip-compilation
+	$(OCB_PATH)/ocb --config config/manifest.yaml --skip-compilation
 
 .PHONY: dockerbuild
 dockerbuild: check-prep
-	goreleaser release --snapshot --skip-publish --clean
+	goreleaser release --snapshot --clean
