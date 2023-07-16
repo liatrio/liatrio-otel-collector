@@ -47,8 +47,15 @@ jobs:
                   go-version: '1.19'
                   cache: false
 
-            - name: Make cibuild
-              run: make cibuild
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v2
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v2
+
+            - name: Make dockerbuild
+              run: make dockerbuild
+
 
     go-semantic-release:
         if: ${{ github.ref == 'refs/heads/main' }}
