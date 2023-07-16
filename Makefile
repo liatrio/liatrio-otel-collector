@@ -87,3 +87,7 @@ metagen: check-prep
 .PHONY: cibuild
 cibuild: check-prep
 	$(OCB_PATH)/ocb --config testconfig/manifest.yaml --skip-compilation
+
+.PHONY: dockerbuild
+dockerbuild: check-prep
+	goreleaser release --snapshot --skip-publish --clean
