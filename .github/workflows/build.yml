@@ -32,7 +32,7 @@ jobs:
         strategy:
             matrix:
                 go: ['1.19']
-                os: [ubuntu-latest, macos-latest]
+                os: [ubuntu-latest]
         name: build
         runs-on: ${{ matrix.os }}
         steps:
@@ -48,8 +48,8 @@ jobs:
                   cache: false
 
             ## TODO: fails on macos matrics, remove this entirely if neccessary 
-            #- name: Set up QEMU
-            #  uses: docker/setup-qemu-action@v2
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v2
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v2
