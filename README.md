@@ -22,19 +22,46 @@
 A repository containing custom OpenTelemetry (otel) packages to be used when
 building and configuring custom collectors.
 
-## Quick Start
+## Quick Start Guide
 
-TODO: Add more details here, bit of a preamble... 
+Before diving into the codebase, you'll need to set up a few things. This guide is designed to help you get up and running in no time!
 
-1. `brew install go`
-2. `brew install pre-commit`
-3. `pre-commit install`
-4. Create a PAT for GitHub with read access only
-5. Run `export GH_USER=<user>` and `export GH_PAT=<pat>`
-6. Run `make run`
+Here are the steps to quickly get started with this project:
 
-> If you want to kill the terminal, `ctl+c` works well. Might just take a sec right
-> now to gracefully exit.
+1. **Install Go:** Use Homebrew to install Go with the following command:
+
+    ```bash
+    brew install go
+    ```
+
+2. **Install pre-commit:** With the help of Homebrew, install the pre-commit as follows:
+
+    ```bash
+    brew install pre-commit
+    ```
+
+3. **Initialize pre-commit:** Once installed, initiate pre-commit by running:
+
+    ```bash
+    pre-commit install
+    ```
+
+4. **Generate a Personal Access Token (PAT) for GitHub:** Ensure it only has read access.
+
+5. **Set your GitHub username and PAT as environment variables:** Replace `<user>` with your GitHub username and `<pat>` with your generated PAT, then run the following commands:
+
+    ```bash
+    export GH_USER=<user>
+    export GH_PAT=<pat>
+    ```
+
+6. **Start the collector:** Finally, initiate the program:
+
+    ```bash
+    make run
+    ```
+
+> **Note:** If you wish to terminate the program, you can use the `ctrl+c` command in the terminal. Keep in mind that it might take a few moments for the program to exit gracefully. 
 
 ### Exporting to Grafana Cloud
 
