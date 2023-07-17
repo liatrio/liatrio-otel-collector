@@ -8,15 +8,17 @@ on:
         branches: [main]
 
 jobs:
-    lint:
+    prep-env:
         strategy:
             matrix:
                 go: ['1.19']
                 os: [ubuntu-latest, macos-latest]
-        name: lint
         runs-on: ${{ matrix.os }}
+        name: prepare environment
         steps:
             - uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
             - uses: actions/setup-go@v4
               with:
                   go-version: ${{ matrix.go }}
@@ -25,14 +27,63 @@ jobs:
             - name: Make install-tools
               run: make install-tools
 
-            - name: Make lint-all
-              run: make lint-all
+            - name: Make cibuild
+              run: make cibuild
 
-    build:
+            - name: Cache directories
+              uses: actions/cache@v2
+              with:
+                  path: |
+                      ~/.docker/cli-plugins/
+                      ~/go/bin
+                      ~/go/pkg/mod
+                      ./build
+                  key: ${{ runner.os }}-make-${{ hashFiles('**/Makefile') }}
+                  restore-keys: |
+                      ${{ runner.os }}-make-
+
+    lint:
+        needs: [prep-env]
         strategy:
             matrix:
                 go: ['1.19']
-                os: [ubuntu-latest]
+                os: [ubuntu-latest, macos-latest]
+        name: lint
+        runs-on: ${{ matrix.os }}
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+
+            - name: Restore cache
+              uses: actions/cache@v2
+              with:
+                  path: |
+                      ~/.docker/cli-plugins/
+                      ~/go/bin
+                      ~/go/pkg/mod
+                      ./build
+                  key: ${{ runner.os }}-make-${{ hashFiles('**/Makefile') }}
+                  restore-keys: |
+                      ${{ runner.os }}-make-
+
+            - name: Make lint-all
+              run: make lint-all
+
+            #- uses: actions/setup-go@v4
+            #  with:
+            #      go-version: ${{ matrix.go }}
+            #      cache: false
+
+            #- name: Make install-tools
+            #  run: make install-tools
+
+    build:
+        needs: [prep-env]
+        strategy:
+            matrix:
+                go: ['1.19']
+                os: [ubuntu-latest, macos-latest]
         name: build
         runs-on: ${{ matrix.os }}
         steps:
@@ -62,6 +113,8 @@ jobs:
                   args: release --clean --snapshot --skip-publish
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                #GOOS: [linux, darwin]
+                #GOARCH: [amd64, arm64]
 
 
     go-semantic-release:
