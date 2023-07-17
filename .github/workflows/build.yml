@@ -135,6 +135,7 @@ jobs:
                   args: release --clean --snapshot
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GR_DOCKER_BUILD: default
 
     go-semantic-release:
         if: ${{ github.ref == 'refs/heads/main' }}
