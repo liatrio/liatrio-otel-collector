@@ -9,12 +9,11 @@ on:
 
 jobs:
     prep-env:
+        name: prepare environment
         strategy:
             matrix:
                 go: ['1.19']
-                os: [ubuntu-latest, macos-latest]
-        runs-on: ${{ matrix.os }}
-        name: prepare environment
+        runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
               with:
@@ -47,53 +46,14 @@ jobs:
         needs: [prep-env]
         strategy:
             matrix:
-                os: [ubuntu-latest, macos-latest]
+                go: ['1.19']
         name: lint
-        runs-on: ${{ matrix.os }}
+        runs-on: unbuntu-latest
         steps:
             - uses: actions/checkout@v3
               with:
                   fetch-depth: 0
 
-            - name: Restore cache
-              uses: actions/cache@v2
-              with:
-                  path: |
-                      ~/go/bin
-                      ./build
-                      ./tmp
-                      /usr/local/bin
-                  key: ${{ runner.os }}-make-${{ hashFiles('**/Makefile') }}
-                  restore-keys: |
-                      ${{ runner.os }}-make-
-
-            - name: Make lint-all
-              run: make lint-all
-
-            #- uses: actions/setup-go@v4
-            #  with:
-            #      go-version: ${{ matrix.go }}
-            #      cache: false
-
-            #- name: Make install-tools
-            #  run: make install-tools
-
-    build:
-        needs: [prep-env]
-        strategy:
-            matrix:
-                go: ['1.19']
-                os: [ubuntu-latest, macos-latest]
-        name: build
-        runs-on: ${{ matrix.os }}
-        steps:
-            - name: Check out code
-              uses: actions/checkout@v3
-              with:
-                  fetch-depth: 0
-            ## Commenting out for now
-            ## MacOs for multi-platform builds through QEMU isn't currently supported
-            ## because the runner doesn't use docker desktop and just uses the cli
             - name: Set up Go
               uses: actions/setup-go@v4
               with:
@@ -112,35 +72,23 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-make-
 
+            - name: Make lint-all
+              run: make lint-all
 
-            ## TODO: fails on macos matrics, remove this entirely if neccessary 
-            ## MacOs for multi-platform builds through QEMU isn't currently supported
-            ## because the runner doesn't use docker desktop and just uses the cli
-            #- name: Set up QEMU
-            #  uses: docker/setup-qemu-action@v2
-
-            ## TODO: fails on macos matrics, remove this entirely if neccessary 
-            #- name: Set up Docker Buildx
-            #  uses: docker/setup-buildx-action@v2
-
-            - name: Run GoReleaser
-              uses: goreleaser/goreleaser-action@v4
-              with:
-                  distribution: goreleaser
-                  version: latest
-                  args: release --clean --snapshot --skip-publish --skip-docker
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                #GOOS: [linux, darwin]
-                #GOARCH: [amd64, arm64]
-    build-docker:
+    build:
+        name: build
         needs: [prep-env]
         strategy:
             matrix:
                 go: ['1.19']
-                os: [ubuntu-latest]
-        name: build-docker
-        runs-on: ${{ matrix.os }}
+                GOOS: [linux, darwin, windows]
+                GOARCH: ['386', amd64, arm64]
+                exclude:
+                    - GOOS: darwin
+                      GOARCH: '386'
+                    - GOOS: windows
+                      GOARCH: arm64
+        runs-on: unbuntu-latest
         steps:
             - name: Check out code
               uses: actions/checkout@v3
@@ -174,6 +122,8 @@ jobs:
             ## because the runner doesn't use docker desktop and just uses the cli
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v2
+              with:
+                  platforms: arm64,"386"
 
             ## TODO: fails on macos matrics, remove this entirely if neccessary 
             - name: Set up Docker Buildx
@@ -184,12 +134,11 @@ jobs:
               with:
                   distribution: goreleaser
                   version: latest
-                  args: release --clean --snapshot --skip-publish
+                  args: release --clean --snapshot --split
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                #GOOS: [linux, darwin]
-                #GOARCH: [amd64, arm64]
-
+                  GOOS: ${{ matrix.GOOS }}
+                  GOARCH: ${{ matrix.GOARCH }}
 
     go-semantic-release:
         if: ${{ github.ref == 'refs/heads/main' }}
