@@ -25,6 +25,7 @@ dockers:
           - ghcr.io/liatrio/liatrio-otel-collector:latest-386
       extra_files:
           - config/config.yaml
+      use: buildx
       build_flag_templates:
           - --pull
           - --platform=linux/386
@@ -40,6 +41,7 @@ dockers:
           - ghcr.io/liatrio/liatrio-otel-collector:latest-amd64
       extra_files:
           - config/config.yaml
+      use: buildx
       build_flag_templates:
           - --pull
           - --platform=linux/amd64
@@ -55,6 +57,7 @@ dockers:
           - ghcr.io/liatrio/liatrio-otel-collector:latest-arm64
       extra_files:
           - config/config.yaml
+      use: buildx
       build_flag_templates:
           - --pull
           - --platform=linux/arm64

@@ -112,11 +112,6 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-make-
 
-            ## TODO: fails on macos matrics, remove this entirely if neccessary 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v2
-              #with:
-              #    platforms: linux/amd64,linux/arm64,linux/386
 
             ## TODO: fails on macos matrics, remove this entirely if neccessary 
             ## MacOs for multi-platform builds through QEMU isn't currently supported
@@ -126,6 +121,11 @@ jobs:
               #with:
               #    platforms: all
 
+            ## TODO: fails on macos matrics, remove this entirely if neccessary 
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v2
+              #with:
+              #    platforms: linux/amd64,linux/arm64,linux/386
 
             - name: Run GoReleaser
               uses: goreleaser/goreleaser-action@v4
