@@ -134,7 +134,7 @@ jobs:
               with:
                   distribution: goreleaser
                   version: latest
-                  args: release --clean --snapshot --split
+                  args: release --clean --snapshot
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   GOOS: ${{ matrix.GOOS }}
