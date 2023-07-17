@@ -13,8 +13,8 @@ jobs:
         strategy:
             matrix:
                 go: ['1.19']
-        runs-on: 
-          group: bigger
+        runs-on:
+            group: bigger
         steps:
             - uses: actions/checkout@v3
               with:
@@ -50,7 +50,7 @@ jobs:
                 go: ['1.19']
         name: lint
         runs-on:
-          group: bigger
+            group: bigger
         steps:
             - uses: actions/checkout@v3
               with:
@@ -83,15 +83,8 @@ jobs:
         strategy:
             matrix:
                 go: ['1.19']
-                GOOS: [linux, darwin, windows]
-                GOARCH: ['386', amd64, arm64]
-                exclude:
-                    - GOOS: darwin
-                      GOARCH: '386'
-                    - GOOS: windows
-                      GOARCH: arm64
         runs-on:
-          group: bigger
+            group: bigger
         steps:
             - name: Check out code
               uses: actions/checkout@v3
@@ -140,14 +133,12 @@ jobs:
                   args: release --clean --snapshot
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  GOOS: ${{ matrix.GOOS }}
-                  GOARCH: ${{ matrix.GOARCH }}
 
     go-semantic-release:
         if: ${{ github.ref == 'refs/heads/main' }}
         needs: [lint, build]
         runs-on:
-          group: bigger
+            group: bigger
         permissions:
             contents: write
         steps:
