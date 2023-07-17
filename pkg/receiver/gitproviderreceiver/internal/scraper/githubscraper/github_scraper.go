@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/go-github/v50/github"
 	"github.com/shurcooL/githubv4"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -261,18 +260,65 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	currentDate := time.Now().Day()
 	ghs.logger.Sugar().Debugf("current date: %v", currentDate)
 
+	// This is a problem. api does now return private repos
 	ghs.logger.Sugar().Debug("creating a new github client")
-	client := github.NewClient(ghs.client)
+	//client := github.NewClient(ghs.client) //old
+	graphqlClient := githubv4.NewClient(ghs.client) //new
 
-	repos, _, err := client.Repositories.List(ctx, ghs.cfg.GitHubOrg, nil)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("Error getting repos", zap.Error(err))
+	// convert this section to graphql
+
+	// old
+	// repos, _, err := client.Repositories.List(ctx, ghs.cfg.GitHubOrg, nil)
+	// if err != nil {
+	// 	ghs.logger.Sugar().Errorf("Error getting repos", zap.Error(err))
+	// }
+
+	// ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(len(repos)))
+	// old
+
+	// new
+
+	variables := map[string]interface{}{
+		"owner": githubv4.String(ghs.cfg.GitHubOrg),
 	}
 
-	ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(len(repos)))
+	type RepositoryNode struct {
+		Name             string
+		DefaultBranchRef struct {
+			Name string
+		}
+	}
+
+	var query struct {
+		Viewer struct {
+			Repositories struct {
+				TotalCount int
+				PageInfo   struct {
+					EndCursor   githubv4.String
+					HasNextPage bool
+				}
+				Nodes []RepositoryNode
+			} // `graphql:"repositories(first: 100, affiliations: [OWNER])"`
+		}
+	}
+
+	var repos []RepositoryNode
+	for {
+		err := graphqlClient.Query(context.Background(), &query, variables)
+
+		if err != nil {
+			ghs.logger.Sugar().Errorf("Error getting all Repositories", zap.Error(err))
+		}
+
+		repos = append(repos, query.Viewer.Repositories.Nodes...)
+
+		if !query.Viewer.Repositories.PageInfo.HasNextPage {
+			break
+		}
+	}
 
 	for _, repo := range repos {
-		repoInfo := &Repo{Name: *repo.Name, Owner: ghs.cfg.GitHubOrg, DefaultBranch: *repo.DefaultBranch}
+		repoInfo := &Repo{Name: repo.Name, Owner: ghs.cfg.GitHubOrg, DefaultBranch: repo.DefaultBranchRef.Name}
 
 		ghs.getRepoBranchInformation(repoInfo)
 
