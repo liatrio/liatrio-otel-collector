@@ -112,20 +112,20 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-make-
 
+            ## TODO: fails on macos matrics, remove this entirely if neccessary 
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v2
+              #with:
+              #    platforms: linux/amd64,linux/arm64,linux/386
 
             ## TODO: fails on macos matrics, remove this entirely if neccessary 
             ## MacOs for multi-platform builds through QEMU isn't currently supported
             ## because the runner doesn't use docker desktop and just uses the cli
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v2
-              with:
-                  platforms: all
+              #with:
+              #    platforms: all
 
-            ## TODO: fails on macos matrics, remove this entirely if neccessary 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v2
-              with:
-                  platforms: linux/amd64,linux/arm64,linux/386
 
             - name: Run GoReleaser
               uses: goreleaser/goreleaser-action@v4
