@@ -11,6 +11,7 @@ jobs:
     prep-env:
         strategy:
             matrix:
+                go: ['1.19']
                 os: [ubuntu-latest, macos-latest]
         runs-on: ${{ matrix.os }}
         name: prepare environment
@@ -21,7 +22,7 @@ jobs:
 
             - uses: actions/setup-go@v4
               with:
-                  go: ['1.19']
+                  go-version: ${{ matrix.go }}
                   cache: false
 
             - name: Make install-tools
@@ -81,6 +82,7 @@ jobs:
         needs: [prep-env]
         strategy:
             matrix:
+                go: ['1.19']
                 os: [ubuntu-latest, macos-latest]
         name: build
         runs-on: ${{ matrix.os }}
@@ -95,7 +97,7 @@ jobs:
             - name: Set up Go
               uses: actions/setup-go@v4
               with:
-                  go: '1.19'
+                  go-version: ${{ matrix.go }}
                   cache: false
 
             - name: Restore cache
@@ -135,6 +137,7 @@ jobs:
         needs: [prep-env]
         strategy:
             matrix:
+                go: ['1.19']
                 os: [ubuntu-latest]
         name: build-docker
         runs-on: ${{ matrix.os }}
@@ -150,7 +153,7 @@ jobs:
             - name: Set up Go
               uses: actions/setup-go@v4
               with:
-                  go: '1.19'
+                  go-version: ${{ matrix.go }}
                   cache: false
 
             - name: Restore cache
