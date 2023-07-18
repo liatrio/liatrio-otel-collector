@@ -17,7 +17,7 @@ resource_attributes:
         type: string
     git.vendor.name:
         enabled: true
-        description:
+        description: The name of the Git vendor/provider (ie. GitHub / GitLab)
         type: string
 
       # github, gitlab, bitbucket, gittea

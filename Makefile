@@ -29,7 +29,8 @@ build: check-prep
 
 .PHONY: build-debug
 build-debug: check-prep
-	$(OCB_PATH)/ocb --config config/manifest-debug.yaml
+	sed 's/debug_compilation: false/debug_compilation: true/g' config/manifest.yaml > $(OCB_PATH)/manifest-debug.yaml
+	$(OCB_PATH)/ocb --config $(OCB_PATH)/manifest-debug.yaml
 
 .PHONY: release
 release: check-prep
@@ -50,6 +51,7 @@ prep:
 	chmod +x $(OCB_PATH)/ocb
 	cd $(OCB_PATH) && git clone --depth 1 $(OTEL_CONTRIB_REPO); \
 		cd opentelemetry-collector-contrib && git fetch --depth 1 origin v$(OCB_VERSION) && git checkout FETCH_HEAD;
+	cd $(OCB_PATH)/opentelemetry-collector-contrib/cmd/mdatagen && go install .
 
 .PHONY: run
 run: build
@@ -67,23 +69,11 @@ lint-all: $(PKG_RECEIVER_DIRS)
 	
 $(PKG_RECEIVER_DIRS):
 	$(MAKE) -C $@ lint
-	
-# Taken from opentelemetry-collector-contrib
-.PHONY: for-all
-for-all:
-	@echo "running $${CMD} in root"
-	@$${CMD}
-	@set -e; for dir in $(PKG_RECEIVER_DIRS); do \
-	@echo "running $${CMD} in $${dir}"
-	  (cd "$${dir}" && \
-	  	echo "running $${CMD} in $${dir}" && \
-	 	$${CMD} ); \
-	done
 
-.PHONY: metagen
-metagen: check-prep
-	@cd tmp/opentelemetry-collector-contrib/cmd/mdatagen && go install .
-	@$(MAKE) for-all CMD="go generate ./..."
+.PHONY: metagen-all
+metagen-all: check-prep
+	cd tmp/opentelemetry-collector-contrib/cmd/mdatagen && go install .
+	$(MAKE) -C $(PKG_RECEIVER_DIRS) metagen
 
 .PHONY: cibuild
 cibuild: check-prep
