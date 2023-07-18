@@ -20,3 +20,11 @@ lint:
 tidy: 
 	rm go.sum 
 	go mod tidy -compat=1.19
+
+.PHONY: metagen
+metagen:
+	go generate ./...
+
+.PHONY: test
+test:
+	go test -v ./...

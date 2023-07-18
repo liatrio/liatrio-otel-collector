@@ -69,7 +69,7 @@ If you want to export your data to Grafana Cloud through their OTLP endpoint,
 there's a couple of extra things you'll need to do.
 
 1. Run `export GRAF_USER` and `export GRAF_PAT` with your instance id and cloud api key
-2. Update the [testconfig/config.yaml](./testconfig/config.yaml) file with the following:
+2. Update the [config/config.yaml](./config/config.yaml) file with the following:
 
 ```yaml
 extensions:

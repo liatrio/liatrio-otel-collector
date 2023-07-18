@@ -82,5 +82,5 @@ Time the PR has been open
 
 | Name | Description | Values | Enabled |
 | ---- | ----------- | ------ | ------- |
-| git.vendor.name |  | Any Str | true |
+| git.vendor.name | The name of the Git vendor/provider (ie. GitHub / GitLab) | Any Str | true |
 | organization.name | Git Organization or Project Name | Any Str | true |

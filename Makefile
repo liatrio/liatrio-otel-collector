@@ -24,15 +24,16 @@ endif
 
 .PHONY: build
 build: check-prep
-	$(OCB_PATH)/ocb --config testconfig/manifest.yaml
+	$(OCB_PATH)/ocb --config config/manifest.yaml
 
 .PHONY: build-debug
 build-debug: check-prep
-	$(OCB_PATH)/ocb --config testconfig/manifest-debug.yaml
+	sed 's/debug_compilation: false/debug_compilation: true/g' config/manifest.yaml > $(OCB_PATH)/manifest-debug.yaml
+	$(OCB_PATH)/ocb --config $(OCB_PATH)/manifest-debug.yaml
 
 .PHONY: release
 release: check-prep
-	$(OCB_PATH)/ocb --config testconfig/manifest.yaml --skip-compilation
+	$(OCB_PATH)/ocb --config config/manifest.yaml --skip-compilation
 	curl -sfL https://goreleaser.com/static/run | VERSION=v$(GORELEASER_VERSION) DISTRIBUTION=oss bash \
 		-s -- --clean --skip-validate --skip-publish --snapshot
 
@@ -49,10 +50,11 @@ prep:
 	chmod +x $(OCB_PATH)/ocb
 	cd $(OCB_PATH) && git clone --depth 1 $(OTEL_CONTRIB_REPO); \
 		cd opentelemetry-collector-contrib && git fetch --depth 1 origin v$(OCB_VERSION) && git checkout FETCH_HEAD;
+	cd $(OCB_PATH)/opentelemetry-collector-contrib/cmd/mdatagen && go install .
 
 .PHONY: run
 run: build
-	$(CUSTOM_COL_DIR)/otelcol-custom --config testconfig/config.yaml
+	$(CUSTOM_COL_DIR)/otelcol-custom --config config/config.yaml
 	
 .PHONY: install-tools
 install-tools:
@@ -65,25 +67,21 @@ install-tools:
 lint-all: $(PKG_RECEIVER_DIRS)
 	
 $(PKG_RECEIVER_DIRS):
-	$(MAKE) -C $@ lint
-	
-# Taken from opentelemetry-collector-contrib
-.PHONY: for-all
-for-all:
-	@echo "running $${CMD} in root"
-	@$${CMD}
-	@set -e; for dir in $(PKG_RECEIVER_DIRS); do \
-	@echo "running $${CMD} in $${dir}"
-	  (cd "$${dir}" && \
-	  	echo "running $${CMD} in $${dir}" && \
-	 	$${CMD} ); \
-	done
+	$(MAKE) -j 4 -C $@ lint
 
-.PHONY: metagen
-metagen: check-prep
-	@cd tmp/opentelemetry-collector-contrib/cmd/mdatagen && go install .
-	@$(MAKE) for-all CMD="go generate ./..."
+.PHONY: metagen-all
+metagen-all: check-prep
+	cd tmp/opentelemetry-collector-contrib/cmd/mdatagen && go install .
+	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) metagen
+
+.PHONY: test-all
+test-all: 
+	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) test
 
 .PHONY: cibuild
 cibuild: check-prep
-	$(OCB_PATH)/ocb --config testconfig/manifest.yaml --skip-compilation
+	$(OCB_PATH)/ocb --config config/manifest.yaml --skip-compilation
+
+.PHONY: dockerbuild
+dockerbuild: build
+	docker build . -t liatrio/liatrio-otel-collector:localdev --build-arg BIN_PATH="./build/otelcol-custom"

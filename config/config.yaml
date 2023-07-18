@@ -1,0 +1,76 @@
+---
+extensions:
+    health_check:
+    pprof:
+        endpoint: 0.0.0.0:1777
+    zpages:
+        endpoint: 0.0.0.0:55679
+  ## Uncomment below if you want to enable authentication to GitHub
+  ## Presume that GH_USER and GH_PAT are set as env variables.
+  #basicauth/github:
+  #    client_auth:
+  #        username: ${env:GH_USER}
+  #        password: ${env:GH_PAT}
+  #basicauth/grafana:
+  #  client_auth:
+  #    username: ${env:GRAF_USER}
+  #    password: ${env:GRAF_PAT}
+
+receivers:
+    otlp:
+        protocols:
+            grpc:
+            http:
+
+    ## Collect own metrics based on example from OTEL Contrib Dockerfile
+    ## https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/configs/otelcol-contrib.yaml
+    prometheus:
+        config:
+            scrape_configs:
+                - job_name: liatrio-otel-collector
+                  scrape_interval: 10s
+                  static_configs:
+                      - targets: [0.0.0.0:8888]
+
+    gitprovider:
+        initial_delay: 1s
+        collection_interval: 60s
+        scrapers:
+            github:
+                github_org: ${env:GITHUB_ORG}
+              ## Uncomment if you want to view private authentication required
+              ## GitHub data or and decrease rate limiting.
+              #auth:
+              #    authenticator: basicauth/github
+
+processors:
+    batch:
+
+exporters:
+    logging:
+        verbosity: detailed
+
+    ## Uncomment if you want to use OTLP exportation to Grafana cloud
+    ## and update with your region
+    #otlphttp:
+    #  auth:
+    #    authenticator: basicauth/grafana
+    #  endpoint: https://otlp-gateway-prod-us-central-0.grafana.net/otlp
+
+service:
+    ## Add basicauth/* if you want to use basic auth extensions
+    extensions: [health_check, pprof, zpages]
+    pipelines:
+        metrics:
+            receivers: [otlp, gitprovider]
+            processors: [batch]
+            exporters: [logging]
+
+        traces:
+            receivers: [otlp]
+            processors: [batch]
+            exporters: [logging]
+
+    telemetry:
+        logs:
+            level: debug
