@@ -68,7 +68,6 @@ jobs:
                       ~/go/bin
                       ./build
                       ./tmp
-                      /usr/local/bin
                   key: ${{ runner.os }}-make-${{ hashFiles('**/Makefile') }}
                   restore-keys: |
                       ${{ runner.os }}-make-
@@ -103,7 +102,6 @@ jobs:
                       ~/go/bin
                       ./build
                       ./tmp
-                      /usr/local/bin
                   key: ${{ runner.os }}-make-${{ hashFiles('**/Makefile') }}
                   restore-keys: |
                       ${{ runner.os }}-make-
