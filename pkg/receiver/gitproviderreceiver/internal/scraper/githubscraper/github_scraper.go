@@ -350,7 +350,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				break
 			}
 		}
-
 	}
 
 	for _, repo := range repos {
