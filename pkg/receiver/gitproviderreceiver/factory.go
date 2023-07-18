@@ -16,6 +16,7 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal"
 	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
 	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/scraper/githubscraper"
+	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/scraper/gitlabscraper"
 )
 
 // This file implements a factory for the git provider receiver
@@ -28,6 +29,7 @@ import (
 var (
 	scraperFactories = map[string]internal.ScraperFactory{
 		githubscraper.TypeStr: &githubscraper.Factory{},
+		gitlabscraper.TypeStr: &gitlabscraper.Factory{},
 	}
 
 	errConfigNotValid = errors.New("configuration is not valid for the git provider receiver")
