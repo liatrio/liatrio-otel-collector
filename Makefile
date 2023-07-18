@@ -5,7 +5,6 @@ OCB_PATH ?= $(CURDIR)/tmp
 OCB_VERSION ?= 0.81.0
 OCB_URL = https://github.com/open-telemetry/opentelemetry-collector/releases/download/cmd%2Fbuilder%2F
 OTEL_CONTRIB_REPO = https://github.com/open-telemetry/opentelemetry-collector-contrib.git
-DOCKER_CONTEXT = $(shell docker buildx ls 2> /dev/null | awk 'NR==3 {print $1}')
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 ARCH := $(shell uname -m)
 GORELEASER_VERSION = 1.19.2
