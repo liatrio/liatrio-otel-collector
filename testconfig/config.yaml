@@ -19,7 +19,7 @@ receivers:
         collection_interval: 60s
         scrapers:
             github:
-                github_org: amber-beasley-liatrio
+                github_org: liatrio
                 auth:
                     authenticator: basicauth/github
 
