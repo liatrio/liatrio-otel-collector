@@ -27,7 +27,6 @@ dockers:
           - config/config.yaml
       use: buildx
       build_flag_templates:
-          - --builder={{.Env.GR_DOCKER_BUILD}}
           - --pull
           - --platform=linux/386
           - --label=org.opencontainers.image.created={{.Date}}
@@ -44,7 +43,6 @@ dockers:
           - config/config.yaml
       use: buildx
       build_flag_templates:
-          - --builder={{.Env.GR_DOCKER_BUILD}}
           - --pull
           - --platform=linux/amd64
           - --label=org.opencontainers.image.created={{.Date}}
@@ -61,7 +59,6 @@ dockers:
           - config/config.yaml
       use: buildx
       build_flag_templates:
-          - --builder={{.Env.GR_DOCKER_BUILD}}
           - --pull
           - --platform=linux/arm64
           - --label=org.opencontainers.image.created={{.Date}}

@@ -5,6 +5,7 @@ OCB_PATH ?= $(CURDIR)/tmp
 OCB_VERSION ?= 0.81.0
 OCB_URL = https://github.com/open-telemetry/opentelemetry-collector/releases/download/cmd%2Fbuilder%2F
 OTEL_CONTRIB_REPO = https://github.com/open-telemetry/opentelemetry-collector-contrib.git
+DOCKER_CONTEXT = $(shell docker buildx ls 2> /dev/null | awk 'NR==3 {print $1}')
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 ARCH := $(shell uname -m)
 GORELEASER_VERSION = 1.19.2
@@ -89,5 +90,5 @@ cibuild: check-prep
 	$(OCB_PATH)/ocb --config config/manifest.yaml --skip-compilation
 
 .PHONY: dockerbuild
-dockerbuild: check-prep
-	goreleaser release --snapshot --clean
+dockerbuild: build
+	docker build . -t liatrio/liatrio-otel-collector:localdev --build-arg BIN_PATH="./build/otelcol-custom"
