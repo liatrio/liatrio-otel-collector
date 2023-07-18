@@ -57,6 +57,23 @@ type githubScraper struct {
 	mb       *metadata.MetricsBuilder
 }
 
+type PullRequestNode struct {
+	Node struct {
+		Title     string
+		CreatedAt string
+		ClosedAt  string
+	}
+}
+
+type RepositoryEdge struct {
+	Node struct {
+		Name             string
+		DefaultBranchRef struct {
+			Name string
+		}
+	}
+}
+
 func (ghs *githubScraper) start(_ context.Context, host component.Host) (err error) {
 	ghs.logger.Sugar().Info("Starting the scraper inside scraper.go")
 	// TODO: Fix the ToClient configuration
@@ -178,14 +195,6 @@ func (ghs *githubScraper) getOldestBranchCommit(repo *Repo, branch *Branch) {
 func (ghs *githubScraper) getRepoPullRequestInformation(repo *Repo) {
 	graphqlClient := githubv4.NewClient(ghs.client)
 
-	type PullRequestNode struct {
-		Node struct {
-			Title     string
-			CreatedAt string
-			ClosedAt  string
-		}
-	}
-
 	var query struct {
 		Repository struct {
 			PullRequests struct {
@@ -260,65 +269,92 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	currentDate := time.Now().Day()
 	ghs.logger.Sugar().Debugf("current date: %v", currentDate)
 
-	// This is a problem. api does now return private repos
 	ghs.logger.Sugar().Debug("creating a new github client")
-	//client := github.NewClient(ghs.client) //old
-	graphqlClient := githubv4.NewClient(ghs.client) //new
 
-	// convert this section to graphql
-
-	// old
-	// repos, _, err := client.Repositories.List(ctx, ghs.cfg.GitHubOrg, nil)
-	// if err != nil {
-	// 	ghs.logger.Sugar().Errorf("Error getting repos", zap.Error(err))
-	// }
-
-	// ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(len(repos)))
-	// old
-
-	// new
+	graphqlClient := githubv4.NewClient(ghs.client)
 
 	variables := map[string]interface{}{
-		"owner": githubv4.String(ghs.cfg.GitHubOrg),
+		"login": githubv4.String(ghs.cfg.GitHubOrg),
 	}
 
-	type RepositoryNode struct {
-		Name             string
-		DefaultBranchRef struct {
-			Name string
-		}
+	// we need to check if the provided org in config.yml is a user or an organization
+	var login_query struct {
+		Organization struct {
+			Login githubv4.String
+		} `graphql:"organization(login: $login)"`
 	}
 
-	var query struct {
-		Viewer struct {
+	var provided_org_is_org bool
+
+	err := graphqlClient.Query(context.Background(), &login_query, variables)
+	if err != nil {
+		ghs.logger.Sugar().Info("Org provided is a user, not an organization")
+		provided_org_is_org = false
+	} else {
+		provided_org_is_org = true
+	}
+	// now that we have determined if login is org or user, we can define the query
+
+	var user_query struct {
+		User struct {
 			Repositories struct {
 				TotalCount int
 				PageInfo   struct {
 					EndCursor   githubv4.String
 					HasNextPage bool
 				}
-				Nodes []RepositoryNode
-			} // `graphql:"repositories(first: 100, affiliations: [OWNER])"`
-		}
+				Edges []RepositoryEdge
+			} `graphql:"repositories(first: 100, affiliations:OWNER)"`
+		} `graphql:"user(login: $login)"`
 	}
 
-	var repos []RepositoryNode
+	var org_query struct {
+		Organization struct {
+			Repositories struct {
+				TotalCount int
+				PageInfo   struct {
+					EndCursor   githubv4.String
+					HasNextPage bool
+				}
+				Edges []RepositoryEdge
+			} `graphql:"repositories(first: 100)"`
+		} `graphql:"organization(login: $login)"`
+	}
+
+	var repos []RepositoryEdge
 	for {
-		err := graphqlClient.Query(context.Background(), &query, variables)
 
-		if err != nil {
-			ghs.logger.Sugar().Errorf("Error getting all Repositories", zap.Error(err))
+		// query must be dynamic to user or organization type for Graphql
+		if provided_org_is_org {
+			err := graphqlClient.Query(context.Background(), &org_query, variables)
+
+			if err != nil {
+				ghs.logger.Sugar().Errorf("Error getting all Repositories", zap.Error(err))
+			}
+			repos = append(repos, org_query.Organization.Repositories.Edges...)
+			ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(org_query.Organization.Repositories.TotalCount))
+
+			if !org_query.Organization.Repositories.PageInfo.HasNextPage {
+				break
+			}
+		} else {
+			err := graphqlClient.Query(context.Background(), &user_query, variables)
+
+			if err != nil {
+				ghs.logger.Sugar().Errorf("Error getting all Repositories", zap.Error(err))
+			}
+			repos = append(repos, user_query.User.Repositories.Edges...)
+			ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(user_query.User.Repositories.TotalCount))
+
+			if !user_query.User.Repositories.PageInfo.HasNextPage {
+				break
+			}
 		}
 
-		repos = append(repos, query.Viewer.Repositories.Nodes...)
-
-		if !query.Viewer.Repositories.PageInfo.HasNextPage {
-			break
-		}
 	}
 
 	for _, repo := range repos {
-		repoInfo := &Repo{Name: repo.Name, Owner: ghs.cfg.GitHubOrg, DefaultBranch: repo.DefaultBranchRef.Name}
+		repoInfo := &Repo{Name: repo.Node.Name, Owner: ghs.cfg.GitHubOrg, DefaultBranch: repo.Node.DefaultBranchRef.Name}
 
 		ghs.getRepoBranchInformation(repoInfo)
 
