@@ -274,7 +274,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	graphqlClient := githubv4.NewClient(ghs.client)
 
 	variables := map[string]interface{}{
-		"login": githubv4.String(ghs.cfg.GitHubOrg),
+		"login":      githubv4.String(ghs.cfg.GitHubOrg),
+		"repoCursor": (*githubv4.String)(nil),
 	}
 
 	// we need to check if the provided org in config.yml is a user or an organization
@@ -304,7 +305,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					HasNextPage bool
 				}
 				Edges []RepositoryEdge
-			} `graphql:"repositories(first: 100, affiliations:OWNER)"`
+			} `graphql:"repositories(first: 100, affiliations:OWNER, after: $repoCursor)"`
 		} `graphql:"user(login: $login)"`
 	}
 
@@ -317,7 +318,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					HasNextPage bool
 				}
 				Edges []RepositoryEdge
-			} `graphql:"repositories(first: 100)"`
+			} `graphql:"repositories(first: 100, after: $repoCursor)"`
 		} `graphql:"organization(login: $login)"`
 	}
 
@@ -337,6 +338,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			if !org_query.Organization.Repositories.PageInfo.HasNextPage {
 				break
 			}
+			variables["repoCursor"] = githubv4.NewString(org_query.Organization.Repositories.PageInfo.EndCursor)
 		} else {
 			err := graphqlClient.Query(context.Background(), &user_query, variables)
 
@@ -349,6 +351,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			if !user_query.User.Repositories.PageInfo.HasNextPage {
 				break
 			}
+			variables["repoCursor"] = githubv4.NewString(user_query.User.Repositories.PageInfo.EndCursor)
 		}
 	}
 
