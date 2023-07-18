@@ -52,4 +52,4 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   REGISTRY: ${{ env.REGISTRY }}
-                  IMAGE: ${{ env.IMAGE_NAME }}
+                  IMAGE_NAME: ${{ env.IMAGE_NAME }}
