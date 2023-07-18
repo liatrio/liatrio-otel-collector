@@ -21,8 +21,8 @@ dockers:
     - goos: linux
       goarch: '386'
       image_templates:
-          - ghcr.io/liatrio/liatrio-otel-collector:{{ .Version }}-386
-          - ghcr.io/liatrio/liatrio-otel-collector:latest-386
+          - '{{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:{{ .Version }}-386'
+          - '{{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:latest-386'
       extra_files:
           - config/config.yaml
       use: buildx
@@ -37,8 +37,8 @@ dockers:
     - goos: linux
       goarch: amd64
       image_templates:
-          - ghcr.io/liatrio/liatrio-otel-collector:{{ .Version }}-amd64
-          - ghcr.io/liatrio/liatrio-otel-collector:latest-amd64
+          - '{{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:{{ .Version }}-amd64'
+          - '{{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:latest-amd64'
       extra_files:
           - config/config.yaml
       use: buildx
@@ -53,8 +53,8 @@ dockers:
     - goos: linux
       goarch: arm64
       image_templates:
-          - ghcr.io/liatrio/liatrio-otel-collector:{{ .Version }}-arm64
-          - ghcr.io/liatrio/liatrio-otel-collector:latest-arm64
+          - '{{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:{{ .Version }}-arm64'
+          - '{{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:latest-arm64'
       extra_files:
           - config/config.yaml
       use: buildx
@@ -66,18 +66,6 @@ dockers:
           - --label=org.opencontainers.image.revision={{.FullCommit}}
           - --label=org.opencontainers.image.version={{.Version}}
           - --label=org.opencontainers.image.source={{.GitURL}}
-
-docker_manifests:
-    - name_template: liatrio/liatrio-otel-collector:{{ .Version }}
-      image_templates:
-          - liatrio/liatrio-otel-collector:{{ .Version }}-386
-          - liatrio/liatrio-otel-collector:{{ .Version }}-amd64
-          - liatrio/liatrio-otel-collector:{{ .Version }}-arm64
-    - name_template: liatrio/liatrio-otel-collector:latest
-      image_templates:
-          - liatrio/liatrio-otel-collector:latest-386
-          - liatrio/liatrio-otel-collector:latest-amd64
-          - liatrio/liatrio-otel-collector:latest-arm64
 
 archives:
     - format: tar.gz
