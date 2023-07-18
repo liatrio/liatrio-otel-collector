@@ -274,8 +274,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	graphqlClient := githubv4.NewClient(ghs.client)
 
 	variables := map[string]interface{}{
-		"login":      githubv4.String(ghs.cfg.GitHubOrg),
-		"repoCursor": (*githubv4.String)(nil),
+		"login": githubv4.String(ghs.cfg.GitHubOrg),
 	}
 
 	// we need to check if the provided org in config.yml is a user or an organization
@@ -289,12 +288,14 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	err := graphqlClient.Query(context.Background(), &login_query, variables)
 	if err != nil {
-		ghs.logger.Sugar().Info("Org provided is a user, not an organization")
+		ghs.logger.Sugar().Info("Org provided not found or org provided is user", zap.Error(err))
 		provided_org_is_org = false
 	} else {
 		provided_org_is_org = true
 	}
 	// now that we have determined if login is org or user, we can define the query
+
+	variables["repoCursor"] = (*githubv4.String)(nil)
 
 	var user_query struct {
 		User struct {
