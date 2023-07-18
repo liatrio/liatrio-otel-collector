@@ -38,7 +38,6 @@ jobs:
                       ~/go/bin
                       ./build
                       ./tmp
-                      /usr/local/bin
                   key: ${{ runner.os }}-make-${{ hashFiles('**/Makefile') }}
                   restore-keys: |
                       ${{ runner.os }}-make-
@@ -123,6 +122,28 @@ jobs:
                   args: release --clean --snapshot
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    test:
+        needs: [prep-env]
+        strategy:
+            matrix:
+                go: ['1.19']
+        name: test
+        runs-on:
+            group: bigger
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: ${{ matrix.go }}
+                  cache: false
+
+            - name: Make test-all
+              run: make test-all
 
     go-semantic-release:
         if: ${{ github.ref == 'refs/heads/main' }}

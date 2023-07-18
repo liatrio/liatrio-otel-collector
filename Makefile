@@ -68,12 +68,16 @@ install-tools:
 lint-all: $(PKG_RECEIVER_DIRS)
 	
 $(PKG_RECEIVER_DIRS):
-	$(MAKE) -C $@ lint
+	$(MAKE) -j 4 -C $@ lint
 
 .PHONY: metagen-all
 metagen-all: check-prep
 	cd tmp/opentelemetry-collector-contrib/cmd/mdatagen && go install .
-	$(MAKE) -C $(PKG_RECEIVER_DIRS) metagen
+	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) metagen
+
+.PHONY: test-all
+test-all: 
+	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) test
 
 .PHONY: cibuild
 cibuild: check-prep
