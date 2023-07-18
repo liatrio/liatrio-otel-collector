@@ -32,7 +32,7 @@ jobs:
               run: make cibuild
 
             - name: Cache directories
-              uses: actions/cache@v2
+              uses: actions/cache@v3
               with:
                   path: |
                       ~/go/bin
@@ -62,7 +62,7 @@ jobs:
                   cache: false
 
             - name: Restore cache
-              uses: actions/cache@v2
+              uses: actions/cache@v3
               with:
                   path: |
                       ~/go/bin
@@ -96,7 +96,7 @@ jobs:
                   cache: false
 
             - name: Restore cache
-              uses: actions/cache@v2
+              uses: actions/cache@v3
               with:
                   path: |
                       ~/go/bin
