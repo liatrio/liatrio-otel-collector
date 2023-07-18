@@ -46,4 +46,3 @@ jobs:
                   args: release --clean
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  GR_DOCKER_BUILD: default
