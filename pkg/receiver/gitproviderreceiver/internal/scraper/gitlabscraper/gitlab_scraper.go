@@ -6,12 +6,10 @@ package gitlabscraper
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
-	"os"
 	"time"
 
-	"github.com/xanzy/go-gitlab"
+	"github.com/Khan/genqlient/graphql"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -26,15 +24,9 @@ var (
 )
 
 type Group struct {
-	ID     int
-	Name   string `json:"name"`
-	WebURL string
-}
-
-type Project struct {
-	ID     int
-	Name   string
-	WebURL string
+	ID       int
+	Name     string
+	Projects []Repo
 }
 
 type Commit struct {
@@ -91,51 +83,6 @@ func newGitLabScraper(
 	}
 }
 
-func (gls *gitlabScraper) getGroups() []int {
-
-	var ids []int
-	client, _ := gitlab.NewClient(os.Getenv("GL_PAT"))
-
-	opt := &gitlab.ListGroupsOptions{ListOptions: gitlab.ListOptions{
-		PerPage: 10,
-		Page:    1,
-	}}
-
-	groups, _, err := client.Groups.ListGroups(opt)
-
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
-
-	for _, group := range groups {
-		fmt.Println(group.Name)
-		ids = append(ids, group.ID)
-	}
-
-	return ids
-}
-
-func (gls *gitlabScraper) getProjects() {
-
-	client, _ := gitlab.NewClient(gls.cfg.GitLabPat)
-
-	opt := &gitlab.ListProjectsOptions{ListOptions: gitlab.ListOptions{
-		PerPage: 10,
-		Page:    1,
-	}}
-
-	projects, _, err := client.Projects.ListProjects(opt)
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
-	for _, project := range projects {
-		fmt.Println(project.Name)
-
-	}
-}
-
 // scrape and return metrics
 func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	gls.logger.Sugar().Debug("checking if client is initialized")
@@ -147,12 +94,27 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	gls.logger.Sugar().Debugf("current time: %v", now)
 
 	currentDate := time.Now().Day()
+
 	gls.logger.Sugar().Debugf("current date: %v", currentDate)
 
 	gls.logger.Sugar().Debug("creating a new gitlab client")
 
-	gls.getGroups()
-	gls.getProjects()
+	graphClient := graphql.NewClient("https://gitlab.com/api/graphql", gls.client)
+
+	projects, err := getProjects(context.Background(), graphClient, gls.cfg.GitLabOrg)
+
+	if err != nil {
+		gls.logger.Sugar().Errorf("error getting projects: %v", err)
+		return pmetric.NewMetrics(), err
+	}
+
+	var names []string
+	for _, v := range projects.Group.Projects.Nodes {
+		names = append(names, v.Name)
+	}
+
+	// print(names)
+	gls.logger.Sugar().Debugf("projects: %v", names)
 
 	gls.logger.Sugar().Debugf("metrics: %v", gls.cfg.Metrics.GitRepositoryCount)
 	return gls.mb.Emit(), nil
