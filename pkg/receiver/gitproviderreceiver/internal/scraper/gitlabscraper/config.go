@@ -15,8 +15,6 @@ type Config struct {
 	metadata.MetricsBuilderConfig `mapstructure:",squash"`
 	confighttp.HTTPClientSettings `mapstructure:",squash"`
 	internal.ScraperConfig
-	BearerToken string `mapstructure:"token"`
 	// GitLabOrg is the name of the GitLab organization to srape (gitlab scraper only)
 	GitLabOrg string `mapstructure:"gitlab_org"`
-	GitLabPat string `mapstructure:"gitlab_pat"`
 }

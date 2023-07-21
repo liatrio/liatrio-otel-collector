@@ -22,3 +22,6 @@ ocb
 tmp
 
 dist/
+
+# JetBrains IDEs
+.idea/

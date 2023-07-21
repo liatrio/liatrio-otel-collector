@@ -1,11 +1,48 @@
 query getProjects($group: ID!) {
   group(fullPath: $group) {
-    id
     name
     projects {
+      count
       nodes {
         name
+        repository {
+          rootRef
+        }
       }
+    }
+  }
+}
+
+query getBranchNames($projectPath: ID!) {
+  project(fullPath: $projectPath) {
+    name
+    createdAt
+    repository {
+      branchNames(searchPattern: "*", offset: 0, limit: 100)
+    }
+  }
+}
+
+query getOpenedMergeRequests($projectPath: ID!) {
+  project(fullPath: $projectPath) {
+    mergeRequests(state: opened) {
+      nodes {
+        title
+        author {
+          name
+        }
+        createdAt
+      }
+    }
+  }
+}
+
+query getProjectCommitCount($projectPath: ID!) {
+  project(fullPath: $projectPath) {
+    lastActivityAt
+    name
+    statistics {
+      commitCount
     }
   }
 }

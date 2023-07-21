@@ -4,9 +4,26 @@ package gitlabscraper
 
 import (
 	"context"
+	"time"
 
 	"github.com/Khan/genqlient/graphql"
 )
+
+// __getBranchNamesInput is used internally by genqlient
+type __getBranchNamesInput struct {
+	ProjectPath string `json:"projectPath"`
+}
+
+// GetProjectPath returns __getBranchNamesInput.ProjectPath, and is useful for accessing the field via an interface.
+func (v *__getBranchNamesInput) GetProjectPath() string { return v.ProjectPath }
+
+// __getOpenedMergeRequestsInput is used internally by genqlient
+type __getOpenedMergeRequestsInput struct {
+	ProjectPath string `json:"projectPath"`
+}
+
+// GetProjectPath returns __getOpenedMergeRequestsInput.ProjectPath, and is useful for accessing the field via an interface.
+func (v *__getOpenedMergeRequestsInput) GetProjectPath() string { return v.ProjectPath }
 
 // __getProjectsInput is used internally by genqlient
 type __getProjectsInput struct {
@@ -16,18 +33,102 @@ type __getProjectsInput struct {
 // GetGroup returns __getProjectsInput.Group, and is useful for accessing the field via an interface.
 func (v *__getProjectsInput) GetGroup() string { return v.Group }
 
+// getBranchNamesProject includes the requested fields of the GraphQL type Project.
+type getBranchNamesProject struct {
+	// Name of the project (without namespace).
+	Name string `json:"name"`
+	// Timestamp of the project creation.
+	CreatedAt time.Time `json:"createdAt"`
+	// Git repository of the project.
+	Repository getBranchNamesProjectRepository `json:"repository"`
+}
+
+// GetName returns getBranchNamesProject.Name, and is useful for accessing the field via an interface.
+func (v *getBranchNamesProject) GetName() string { return v.Name }
+
+// GetCreatedAt returns getBranchNamesProject.CreatedAt, and is useful for accessing the field via an interface.
+func (v *getBranchNamesProject) GetCreatedAt() time.Time { return v.CreatedAt }
+
+// GetRepository returns getBranchNamesProject.Repository, and is useful for accessing the field via an interface.
+func (v *getBranchNamesProject) GetRepository() getBranchNamesProjectRepository { return v.Repository }
+
+// getBranchNamesProjectRepository includes the requested fields of the GraphQL type Repository.
+type getBranchNamesProjectRepository struct {
+	// Names of branches available in this repository that match the search pattern.
+	BranchNames []string `json:"branchNames"`
+}
+
+// GetBranchNames returns getBranchNamesProjectRepository.BranchNames, and is useful for accessing the field via an interface.
+func (v *getBranchNamesProjectRepository) GetBranchNames() []string { return v.BranchNames }
+
+// getBranchNamesResponse is returned by getBranchNames on success.
+type getBranchNamesResponse struct {
+	// Find a project.
+	Project getBranchNamesProject `json:"project"`
+}
+
+// GetProject returns getBranchNamesResponse.Project, and is useful for accessing the field via an interface.
+func (v *getBranchNamesResponse) GetProject() getBranchNamesProject { return v.Project }
+
+// getOpenedMergeRequestsProject includes the requested fields of the GraphQL type Project.
+type getOpenedMergeRequestsProject struct {
+	// Merge requests of the project.
+	MergeRequests getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection `json:"mergeRequests"`
+}
+
+// GetMergeRequests returns getOpenedMergeRequestsProject.MergeRequests, and is useful for accessing the field via an interface.
+func (v *getOpenedMergeRequestsProject) GetMergeRequests() getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection {
+	return v.MergeRequests
+}
+
+// getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection includes the requested fields of the GraphQL type MergeRequestConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for MergeRequest.
+type getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection struct {
+	// A list of nodes.
+	Nodes []getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest `json:"nodes"`
+}
+
+// GetNodes returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection) GetNodes() []getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest {
+	return v.Nodes
+}
+
+// getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest includes the requested fields of the GraphQL type MergeRequest.
+type getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest struct {
+	// Title of the merge request.
+	Title string `json:"title"`
+	// Timestamp of when the merge request was created.
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+// GetTitle returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.Title, and is useful for accessing the field via an interface.
+func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetTitle() string {
+	return v.Title
+}
+
+// GetCreatedAt returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.CreatedAt, and is useful for accessing the field via an interface.
+func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetCreatedAt() time.Time {
+	return v.CreatedAt
+}
+
+// getOpenedMergeRequestsResponse is returned by getOpenedMergeRequests on success.
+type getOpenedMergeRequestsResponse struct {
+	// Find a project.
+	Project getOpenedMergeRequestsProject `json:"project"`
+}
+
+// GetProject returns getOpenedMergeRequestsResponse.Project, and is useful for accessing the field via an interface.
+func (v *getOpenedMergeRequestsResponse) GetProject() getOpenedMergeRequestsProject { return v.Project }
+
 // getProjectsGroup includes the requested fields of the GraphQL type Group.
 type getProjectsGroup struct {
-	// ID of the namespace.
-	Id string `json:"id"`
 	// Name of the namespace.
 	Name string `json:"name"`
 	// Projects within this namespace.
 	Projects getProjectsGroupProjectsProjectConnection `json:"projects"`
 }
-
-// GetId returns getProjectsGroup.Id, and is useful for accessing the field via an interface.
-func (v *getProjectsGroup) GetId() string { return v.Id }
 
 // GetName returns getProjectsGroup.Name, and is useful for accessing the field via an interface.
 func (v *getProjectsGroup) GetName() string { return v.Name }
@@ -40,9 +141,14 @@ func (v *getProjectsGroup) GetProjects() getProjectsGroupProjectsProjectConnecti
 //
 // The connection type for Project.
 type getProjectsGroupProjectsProjectConnection struct {
+	// Total count of collection.
+	Count int `json:"count"`
 	// A list of nodes.
 	Nodes []getProjectsGroupProjectsProjectConnectionNodesProject `json:"nodes"`
 }
+
+// GetCount returns getProjectsGroupProjectsProjectConnection.Count, and is useful for accessing the field via an interface.
+func (v *getProjectsGroupProjectsProjectConnection) GetCount() int { return v.Count }
 
 // GetNodes returns getProjectsGroupProjectsProjectConnection.Nodes, and is useful for accessing the field via an interface.
 func (v *getProjectsGroupProjectsProjectConnection) GetNodes() []getProjectsGroupProjectsProjectConnectionNodesProject {
@@ -53,10 +159,28 @@ func (v *getProjectsGroupProjectsProjectConnection) GetNodes() []getProjectsGrou
 type getProjectsGroupProjectsProjectConnectionNodesProject struct {
 	// Name of the project (without namespace).
 	Name string `json:"name"`
+	// Git repository of the project.
+	Repository getProjectsGroupProjectsProjectConnectionNodesProjectRepository `json:"repository"`
 }
 
 // GetName returns getProjectsGroupProjectsProjectConnectionNodesProject.Name, and is useful for accessing the field via an interface.
 func (v *getProjectsGroupProjectsProjectConnectionNodesProject) GetName() string { return v.Name }
+
+// GetRepository returns getProjectsGroupProjectsProjectConnectionNodesProject.Repository, and is useful for accessing the field via an interface.
+func (v *getProjectsGroupProjectsProjectConnectionNodesProject) GetRepository() getProjectsGroupProjectsProjectConnectionNodesProjectRepository {
+	return v.Repository
+}
+
+// getProjectsGroupProjectsProjectConnectionNodesProjectRepository includes the requested fields of the GraphQL type Repository.
+type getProjectsGroupProjectsProjectConnectionNodesProjectRepository struct {
+	// Default branch of the repository.
+	RootRef string `json:"rootRef"`
+}
+
+// GetRootRef returns getProjectsGroupProjectsProjectConnectionNodesProjectRepository.RootRef, and is useful for accessing the field via an interface.
+func (v *getProjectsGroupProjectsProjectConnectionNodesProjectRepository) GetRootRef() string {
+	return v.RootRef
+}
 
 // getProjectsResponse is returned by getProjects on success.
 type getProjectsResponse struct {
@@ -67,15 +191,97 @@ type getProjectsResponse struct {
 // GetGroup returns getProjectsResponse.Group, and is useful for accessing the field via an interface.
 func (v *getProjectsResponse) GetGroup() getProjectsGroup { return v.Group }
 
+// The query or mutation executed by getBranchNames.
+const getBranchNames_Operation = `
+query getBranchNames ($projectPath: ID!) {
+	project(fullPath: $projectPath) {
+		name
+		createdAt
+		repository {
+			branchNames(searchPattern: "*", offset: 0, limit: 100)
+		}
+	}
+}
+`
+
+func getBranchNames(
+	ctx context.Context,
+	client graphql.Client,
+	projectPath string,
+) (*getBranchNamesResponse, error) {
+	req := &graphql.Request{
+		OpName: "getBranchNames",
+		Query:  getBranchNames_Operation,
+		Variables: &__getBranchNamesInput{
+			ProjectPath: projectPath,
+		},
+	}
+	var err error
+
+	var data getBranchNamesResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+// The query or mutation executed by getOpenedMergeRequests.
+const getOpenedMergeRequests_Operation = `
+query getOpenedMergeRequests ($projectPath: ID!) {
+	project(fullPath: $projectPath) {
+		mergeRequests(state: opened) {
+			nodes {
+				title
+				createdAt
+			}
+		}
+	}
+}
+`
+
+func getOpenedMergeRequests(
+	ctx context.Context,
+	client graphql.Client,
+	projectPath string,
+) (*getOpenedMergeRequestsResponse, error) {
+	req := &graphql.Request{
+		OpName: "getOpenedMergeRequests",
+		Query:  getOpenedMergeRequests_Operation,
+		Variables: &__getOpenedMergeRequestsInput{
+			ProjectPath: projectPath,
+		},
+	}
+	var err error
+
+	var data getOpenedMergeRequestsResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
 // The query or mutation executed by getProjects.
 const getProjects_Operation = `
 query getProjects ($group: ID!) {
 	group(fullPath: $group) {
-		id
 		name
 		projects {
+			count
 			nodes {
 				name
+				repository {
+					rootRef
+				}
 			}
 		}
 	}
