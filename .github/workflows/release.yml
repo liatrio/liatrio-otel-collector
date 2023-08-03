@@ -43,8 +43,9 @@ jobs:
             - name: Run GoReleaser
               uses: goreleaser/goreleaser-action@v4
               with:
-                  distribution: goreleaser
+                  distribution: goreleaser-pro
                   version: latest
                   args: release --clean
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
