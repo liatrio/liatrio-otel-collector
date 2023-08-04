@@ -37,7 +37,9 @@ jobs:
             matrix:
                 GOOS: [darwin, linux, windows]
                 go: ['1.19']
-        runs-on: ubuntu-latest
+        #runs-on: ubuntu-latest
+        runs-on:
+            group: bigger
         steps:
             - name: Check out code
               uses: actions/checkout@v3
