@@ -80,6 +80,7 @@ jobs:
         needs: [prep-env]
         strategy:
             matrix:
+                GOOS: [darwin, linux, windows]
                 go: ['1.19']
         runs-on:
             group: bigger
@@ -96,7 +97,7 @@ jobs:
                   cache: false
 
             - name: Restore cache
-              uses: actions/cache@v2
+              uses: actions/cache@v3
               with:
                   path: |
                       ~/go/bin
@@ -112,13 +113,22 @@ jobs:
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v2
 
+            - name: Cache GOOS
+              uses: actions/cache@v3
+              id: cachegoos
+              with:
+                  path: dist/${{ matrix.GOOS }}
+                  key: ${{ matrix.GOOS }}-${{ env.sha_short }}
+
             - name: Run GoReleaser
               uses: goreleaser/goreleaser-action@v4
+              if: steps.cache.outputs.cache-hit != 'true'
               with:
                   distribution: goreleaser-pro
                   version: latest
                   args: release --clean --snapshot
               env:
+                  GOOS: ${{ matrix.GOOS }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
 
