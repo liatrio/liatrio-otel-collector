@@ -51,27 +51,6 @@ func newGitLabScraper(
 	}
 }
 
-func (gls *gitlabScraper) getMergeRequestInfo(projectName string) {
-
-	graphClient := graphql.NewClient("https://gitlab.com/api/graphql", gls.client)
-
-	mergeRequests, err := getOpenedMergeRequests(context.Background(), graphClient, gls.cfg.GitLabOrg+"/"+projectName)
-
-	requestMap := make(map[string]string)
-	requestMap["projectName"] = projectName
-
-	for _, m := range mergeRequests.Project.MergeRequests.Nodes {
-		requestMap["mergeRequestTitle"] = m.Title
-		requestMap["mergeRequestCreated"] = m.CreatedAt.String()
-	}
-
-	if err != nil {
-		gls.logger.Sugar().Errorf("error getting merge request info: %v", err)
-	}
-
-	gls.logger.Sugar().Debugf("found merge request: %v", requestMap["mergeRequestTitle"]+", created: "+requestMap["mergeRequestCreated"])
-}
-
 // scrape and return metrics
 func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	gls.logger.Sugar().Debug("checking if client is initialized")
@@ -91,22 +70,34 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	graphClient := graphql.NewClient("https://gitlab.com/api/graphql", gls.client)
 
-	projects, err := getProjects(context.Background(), graphClient, gls.cfg.GitLabOrg)
-
-	if err != nil {
-		gls.logger.Sugar().Errorf("error getting projects: %v", err)
-	}
+	subgroups, err := getGroupDescendents(context.Background(), graphClient, gls.cfg.GitLabOrg)
 
 	var projectList []string
+
+	if len(subgroups.Group.DescendantGroups.Nodes) > 0 {
+		for _, d := range subgroups.Group.DescendantGroups.Nodes {
+			projectList = append(projectList, d.Name)
+		}
+	}
+
+	for _, group := range subgroups.Group.DescendantGroups.Nodes {
+		projects, err := getGroupProjects(context.Background(), graphClient, gls.cfg.GitLabOrg+"/"+group.Name)
+		if err != nil {
+			gls.logger.Sugar().Errorf("error getting descendant groups: %v", err)
+		}
+		for _, project := range projects.Group.Projects.Nodes {
+			projectList = append(projectList, project.Name)
+		}
+	}
+
 	var branchList []string
+	//branchList = append(branchList, )
 
-	for _, project := range projects.Group.Projects.Nodes {
+	for _, project := range projectList {
 
-		gls.logger.Sugar().Debugf("project: %v", project.Name)
+		gls.logger.Sugar().Debugf("project: %v", project)
 
-		projectList = append(projectList, project.Name)
-
-		branches, err := getBranchNames(context.Background(), graphClient, gls.cfg.GitLabOrg+"/"+project.Name)
+		branches, err := getBranchNames(context.Background(), graphClient, project)
 
 		if err != nil {
 			gls.logger.Sugar().Errorf("error getting branches: %v", err)
@@ -114,11 +105,20 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 		branchList = append(branchList, branches.Project.Repository.BranchNames...)
 
+		//gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, int64(project.), project.Name)
+
 		gls.logger.Sugar().Debugf("branch: %v", branches.Project.Repository.BranchNames)
 
 		// set the metric with metric builder
-		gls.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(branches.Project.Repository.BranchNames)), project.Name)
+		//gls.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(branches.Project.Repository.BranchNames)), project)
+
 	}
+
+	if err != nil {
+		gls.logger.Sugar().Errorf("error: %v", err)
+	}
+
+	//gls.mb.RecordGitRepositoryCountDataPoint(now, int64(len(projectList)))
 
 	gls.logger.Sugar().Debugf("metrics: %v", gls.cfg.Metrics.GitRepositoryCount)
 

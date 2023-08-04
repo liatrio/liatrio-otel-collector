@@ -1,48 +1,50 @@
-query getProjects($group: ID!) {
-  group(fullPath: $group) {
-    name
+query getGroupProjects($fullPath: ID!) {
+  group(fullPath: $fullPath) {
     projects {
-      count
       nodes {
         name
-        repository {
-          rootRef
-        }
+        createdAt
+        lastActivityAt
       }
     }
   }
 }
 
-query getBranchNames($projectPath: ID!) {
-  project(fullPath: $projectPath) {
+query getProject($fullPath: ID!) {
+  project(fullPath: $fullPath) {
     name
     createdAt
+    lastActivityAt
+  }
+}
+
+query getGroupDescendents($fullPath: ID!) {
+  group(fullPath: $fullPath) {
+    descendantGroups {
+      nodes {
+        name
+      }
+    }
+  }
+}
+query getBranchNames($fullPath: ID!) {
+  project(fullPath: $fullPath) {
     repository {
       branchNames(searchPattern: "*", offset: 0, limit: 100)
     }
   }
 }
 
-query getOpenedMergeRequests($projectPath: ID!) {
-  project(fullPath: $projectPath) {
+query getOpenedMergeRequests($fullPath: ID!) {
+  project(fullPath: $fullPath) {
     mergeRequests(state: opened) {
       nodes {
-        title
-        author {
-          name
-        }
+        iid
+        sourceBranch
+        targetBranch
         createdAt
+        updatedAt
       }
-    }
-  }
-}
-
-query getProjectCommitCount($projectPath: ID!) {
-  project(fullPath: $projectPath) {
-    lastActivityAt
-    name
-    statistics {
-      commitCount
     }
   }
 }
