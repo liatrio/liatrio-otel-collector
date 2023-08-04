@@ -13,8 +13,7 @@ jobs:
         strategy:
             matrix:
                 go: ['1.19']
-        runs-on:
-            group: bigger
+        runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
               with:
@@ -48,8 +47,7 @@ jobs:
             matrix:
                 go: ['1.19']
         name: lint
-        runs-on:
-            group: bigger
+        runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
               with:
@@ -82,8 +80,7 @@ jobs:
             matrix:
                 GOOS: [darwin, linux, windows]
                 go: ['1.19']
-        runs-on:
-            group: bigger
+        runs-on: ubuntu-latest
         steps:
             - name: Check out code
               uses: actions/checkout@v3
@@ -138,8 +135,7 @@ jobs:
             matrix:
                 go: ['1.19']
         name: test
-        runs-on:
-            group: bigger
+        runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
               with:
