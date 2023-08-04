@@ -8,41 +8,7 @@ on:
         branches: [main]
 
 jobs:
-    prep-env:
-        name: prepare environment
-        strategy:
-            matrix:
-                go: ['1.19']
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
-              with:
-                  fetch-depth: 0
-
-            - uses: actions/setup-go@v4
-              with:
-                  go-version: ${{ matrix.go }}
-                  cache: false
-
-            - name: Make install-tools
-              run: make install-tools
-
-            - name: Make cibuild
-              run: make cibuild
-
-            - name: Cache directories
-              uses: actions/cache@v3
-              with:
-                  path: |
-                      ~/go/bin
-                      ./build
-                      ./tmp
-                  key: ${{ runner.os }}-make-${{ hashFiles('**/Makefile') }}
-                  restore-keys: |
-                      ${{ runner.os }}-make-
-
     lint:
-        needs: [prep-env]
         strategy:
             matrix:
                 go: ['1.19']
@@ -59,23 +25,14 @@ jobs:
                   go-version: ${{ matrix.go }}
                   cache: false
 
-            - name: Restore cache
-              uses: actions/cache@v3
-              with:
-                  path: |
-                      ~/go/bin
-                      ./build
-                      ./tmp
-                  key: ${{ runner.os }}-make-${{ hashFiles('**/Makefile') }}
-                  restore-keys: |
-                      ${{ runner.os }}-make-
+            - name: Make install-tools
+              run: make install-tools
 
             - name: Make lint-all
               run: make lint-all
 
     build:
         name: build
-        needs: [prep-env]
         strategy:
             matrix:
                 GOOS: [darwin, linux, windows]
@@ -93,29 +50,11 @@ jobs:
                   go-version: ${{ matrix.go }}
                   cache: false
 
-            - name: Restore cache
-              uses: actions/cache@v3
-              with:
-                  path: |
-                      ~/go/bin
-                      ./build
-                      ./tmp
-                  key: ${{ runner.os }}-make-${{ hashFiles('**/Makefile') }}
-                  restore-keys: |
-                      ${{ runner.os }}-make-
-
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v2
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v2
-
-            - name: Cache GOOS
-              uses: actions/cache@v3
-              id: cachegoos
-              with:
-                  path: dist/${{ matrix.GOOS }}
-                  key: ${{ matrix.GOOS }}-${{ env.sha_short }}
 
             - name: Run GoReleaser
               uses: goreleaser/goreleaser-action@v4
@@ -130,7 +69,6 @@ jobs:
                   GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
 
     test:
-        needs: [prep-env]
         strategy:
             matrix:
                 go: ['1.19']
