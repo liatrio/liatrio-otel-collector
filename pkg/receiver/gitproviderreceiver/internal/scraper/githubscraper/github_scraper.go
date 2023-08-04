@@ -306,7 +306,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					HasNextPage bool
 				}
 				Edges []RepositoryEdge
-			} `graphql:"repositories(first: 100, affiliations:OWNER, after: $repoCursor)"`
+			} `graphql:"repositories(first: 100, affiliations: OWNER, after: $repoCursor, isArchived: false, isFork: false)"`
 		} `graphql:"user(login: $login)"`
 	}
 
@@ -319,7 +319,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					HasNextPage bool
 				}
 				Edges []RepositoryEdge
-			} `graphql:"repositories(first: 100, after: $repoCursor)"`
+			} `graphql:"repositories(first: 100, after: $repoCursor, affiliations: OWNER, isArchived: false, isFork: false)"`
 		} `graphql:"organization(login: $login)"`
 	}
 

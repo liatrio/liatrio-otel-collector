@@ -68,7 +68,7 @@ service:
     extensions: [health_check, pprof, zpages, bearertokenauth/gitlab]
     pipelines:
         metrics:
-            receivers: [otlp, gitprovider]
+            receivers: [otlp, prometheus, gitprovider]
             processors: [batch]
             exporters: [logging]
 

@@ -24,7 +24,7 @@ endif
 
 .PHONY: build
 build: check-prep
-	$(OCB_PATH)/ocb --config config/manifest.yaml
+	GOOS=$(OS) GOARCH=$(ARCH) $(OCB_PATH)/ocb --config config/manifest.yaml
 
 .PHONY: build-debug
 build-debug: check-prep
@@ -83,5 +83,6 @@ cibuild: check-prep
 	$(OCB_PATH)/ocb --config config/manifest.yaml --skip-compilation
 
 .PHONY: dockerbuild
-dockerbuild: build
+dockerbuild:
+	$(MAKE) build OS=linux ARCH=amd64
 	docker build . -t liatrio/liatrio-otel-collector:localdev --build-arg BIN_PATH="./build/otelcol-custom"
