@@ -9,6 +9,8 @@ else
 	.SHELLFLAGS = -o pipefail -c
 endif
 
+GENQLIENT_DIR = $(shell find . -type f -name 'genqlient.yaml' -exec dirname {} \;)
+
 # SRC_ROOT is the top of the source tree.
 SRC_ROOT := $(shell git rev-parse --show-toplevel)
 
@@ -28,3 +30,13 @@ metagen:
 .PHONY: test
 test:
 	go test -v ./...
+
+.PHONY: fmt
+fmt:
+	go fmt ./...
+
+.PHONY: genqlient
+genqlient:
+	cd $(GENQLIENT_DIR) && \
+		[[ -f genqlient.yaml && -f genqlient.graphql && -f schema.graphql ]] && \
+		go run github.com/Khan/genqlient@latest

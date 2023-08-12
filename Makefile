@@ -62,6 +62,7 @@ install-tools:
 	go install github.com/securego/gosec/v2/cmd/gosec@latest
 	go install golang.org/x/tools/cmd/goimports@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	go install github.com/Khan/genqlient@latest
 	
 .PHONY: lint-all $(PKG_RECEIVER_DIRS)
 lint-all: $(PKG_RECEIVER_DIRS)
@@ -86,3 +87,15 @@ cibuild: check-prep
 dockerbuild:
 	$(MAKE) build OS=linux ARCH=amd64
 	docker build . -t liatrio/liatrio-otel-collector:localdev --build-arg BIN_PATH="./build/otelcol-custom"
+
+.PHONY: genqlient-all
+genqlient-all: install-tools
+	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) genqlient
+
+.PHONY: tidy-all
+tidy-all:
+	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) tidy
+
+.PHONY: fmt-all
+fmt-all:
+	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) fmt
