@@ -66,15 +66,6 @@ type PullRequestNode struct {
 	}
 }
 
-type RepositoryEdge struct {
-	Node struct {
-		Name             string
-		DefaultBranchRef struct {
-			Name string
-		}
-	}
-}
-
 func (ghs *githubScraper) start(_ context.Context, host component.Host) (err error) {
 	ghs.logger.Sugar().Info("Starting the scraper inside scraper.go")
 	// TODO: Fix the ToClient configuration
@@ -272,12 +263,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	ghs.logger.Sugar().Debug("creating a new github client")
 
-	//graphqlClient := githubv4.NewClient(ghs.client)
-
-	// This has been moved forward with the refactor due to new logic for confirming
-	// if the provided org is a user or an organization
-	//var provided_org_is_org bool
-
 	// TODO: Below is the beginnning of the refactor to using genqlient
 	// This is a secondary instantiation of the GraphQL client for the purpose of
 	// using genqlient during the refactor.
@@ -316,11 +301,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		ghs.logger.Sugar().Debug("successful response for organization")
 		ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(orgData.Organization.Repositories.TotalCount))
 
-		// TODO: this is a temporary fix for the refactor to using genqlient and should
-		// be removed once the refactor is complete
-		//provided_org_is_org = true
-		// END TODO
-
 		pages := getNumPages(float64(orgData.Organization.Repositories.TotalCount))
 		ghs.logger.Sugar().Debugf("pages: %v", pages)
 
@@ -339,11 +319,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	} else if userData, ok := data.(*getUserRepoDataResponse); ok {
 		ghs.logger.Sugar().Debug("successful response for organization")
 		ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(userData.User.Repositories.TotalCount))
-
-		// TODO: this is a temporary fix for the refactor to using genqlient and should
-		// be removed once the refactor is complete
-		//provided_org_is_org = false
-		// END TODO
 
 		pages := getNumPages(float64(userData.User.Repositories.TotalCount))
 		ghs.logger.Sugar().Debugf("pages: %v", pages)
@@ -424,72 +399,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 		}
 	}
-
-	//variables := map[string]interface{}{
-	//	"login": githubv4.String(ghs.cfg.GitHubOrg),
-	//    "repoCursor": (*githubv4.String)(nil),
-	//}
-
-	//variables["repoCursor"] = (*githubv4.String)(nil)
-
-	//var user_query struct {
-	//	User struct {
-	//		Repositories struct {
-	//			TotalCount int
-	//			PageInfo   struct {
-	//				EndCursor   githubv4.String
-	//				HasNextPage bool
-	//			}
-	//			Edges []RepositoryEdge
-	//		} `graphql:"repositories(first: 100, affiliations: OWNER, after: $repoCursor, isArchived: false, isFork: false)"`
-	//	} `graphql:"user(login: $login)"`
-	//}
-
-	//var org_query struct {
-	//	Organization struct {
-	//		Repositories struct {
-	//			TotalCount int
-	//			PageInfo   struct {
-	//				EndCursor   githubv4.String
-	//				HasNextPage bool
-	//			}
-	//			Edges []RepositoryEdge
-	//		} `graphql:"repositories(first: 100, after: $repoCursor, affiliations: OWNER, isArchived: false, isFork: false)"`
-	//	} `graphql:"organization(login: $login)"`
-	//}
-
-	//var repos []RepositoryEdge
-	//	for {
-	//
-	//		// query must be dynamic to user or organization type for Graphql
-	//		if provided_org_is_org {
-	//			err := graphqlClient.Query(context.Background(), &org_query, variables)
-	//
-	//			if err != nil {
-	//				ghs.logger.Sugar().Errorf("Error getting all Repositories", zap.Error(err))
-	//			}
-	//			repos = append(repos, org_query.Organization.Repositories.Edges...)
-	//			ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(org_query.Organization.Repositories.TotalCount))
-	//
-	//			if !org_query.Organization.Repositories.PageInfo.HasNextPage {
-	//				break
-	//			}
-	//			variables["repoCursor"] = githubv4.NewString(org_query.Organization.Repositories.PageInfo.EndCursor)
-	//		} else {
-	//			err := graphqlClient.Query(context.Background(), &user_query, variables)
-	//
-	//			if err != nil {
-	//				ghs.logger.Sugar().Errorf("Error getting all Repositories", zap.Error(err))
-	//			}
-	//			repos = append(repos, user_query.User.Repositories.Edges...)
-	//			ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(user_query.User.Repositories.TotalCount))
-	//
-	//			if !user_query.User.Repositories.PageInfo.HasNextPage {
-	//				break
-	//			}
-	//			variables["repoCursor"] = githubv4.NewString(user_query.User.Repositories.PageInfo.EndCursor)
-	//		}
-	//	}
 
 	return ghs.mb.Emit(), nil
 }
