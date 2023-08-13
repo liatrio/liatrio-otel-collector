@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Khan/genqlient/graphql"
 	"github.com/shurcooL/githubv4"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -271,119 +272,224 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	ghs.logger.Sugar().Debug("creating a new github client")
 
-	graphqlClient := githubv4.NewClient(ghs.client)
+	//graphqlClient := githubv4.NewClient(ghs.client)
 
-	variables := map[string]interface{}{
-		"login": githubv4.String(ghs.cfg.GitHubOrg),
-	}
+	// This has been moved forward with the refactor due to new logic for confirming
+	// if the provided org is a user or an organization
+	//var provided_org_is_org bool
 
-	// we need to check if the provided org in config.yml is a user or an organization
-	var login_query struct {
-		Organization struct {
-			Login githubv4.String
-		} `graphql:"organization(login: $login)"`
-	}
+	// TODO: Below is the beginnning of the refactor to using genqlient
+	// This is a secondary instantiation of the GraphQL client for the purpose of
+	// using genqlient during the refactor.
+	genClient := graphql.NewClient("https://api.github.com/graphql", ghs.client)
 
-	var provided_org_is_org bool
-
-	err := graphqlClient.Query(context.Background(), &login_query, variables)
+	exists, ownertype, err := ghs.checkOwnerExists(ctx, genClient, ghs.cfg.GitHubOrg)
 	if err != nil {
-		ghs.logger.Sugar().Info("Org provided not found or org provided is user", zap.Error(err))
-		provided_org_is_org = false
-	} else {
-		provided_org_is_org = true
-	}
-	// now that we have determined if login is org or user, we can define the query
-
-	variables["repoCursor"] = (*githubv4.String)(nil)
-
-	var user_query struct {
-		User struct {
-			Repositories struct {
-				TotalCount int
-				PageInfo   struct {
-					EndCursor   githubv4.String
-					HasNextPage bool
-				}
-				Edges []RepositoryEdge
-			} `graphql:"repositories(first: 100, affiliations: OWNER, after: $repoCursor, isArchived: false, isFork: false)"`
-		} `graphql:"user(login: $login)"`
+		ghs.logger.Sugar().Errorf("Error checking if owner exists", zap.Error(err))
 	}
 
-	var org_query struct {
-		Organization struct {
-			Repositories struct {
-				TotalCount int
-				PageInfo   struct {
-					EndCursor   githubv4.String
-					HasNextPage bool
-				}
-				Edges []RepositoryEdge
-			} `graphql:"repositories(first: 100, after: $repoCursor, affiliations: OWNER, isArchived: false, isFork: false)"`
-		} `graphql:"organization(login: $login)"`
+	typeValid, err := checkOwnerTypeValid(ownertype)
+	if err != nil {
+		ghs.logger.Sugar().Errorf("Error checking if owner type is valid", zap.Error(err))
 	}
 
-	var repos []RepositoryEdge
-	for {
+	var data interface{}
+	var repoCursor *string
 
-		// query must be dynamic to user or organization type for Graphql
-		if provided_org_is_org {
-			err := graphqlClient.Query(context.Background(), &org_query, variables)
+	if !exists || !typeValid {
+		ghs.logger.Sugar().Error("error logging in and getting data from github")
+		return ghs.mb.Emit(), err
+	}
 
+	data, err = getRepoData(ctx, genClient, ghs.cfg.GitHubOrg, ownertype, repoCursor)
+	if err != nil {
+		ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
+		return ghs.mb.Emit(), err
+	}
+
+	// TODO: setting this here for access from the proceeding for statement
+	// gathering repo data
+	var orgRepos []getOrgRepoDataOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge
+	var userRepos []getUserRepoDataUserRepositoriesRepositoryConnectionEdgesRepositoryEdge
+
+	if orgData, ok := data.(*getOrgRepoDataResponse); ok {
+		ghs.logger.Sugar().Debug("successful response for organization")
+		ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(orgData.Organization.Repositories.TotalCount))
+
+		// TODO: this is a temporary fix for the refactor to using genqlient and should
+		// be removed once the refactor is complete
+		//provided_org_is_org = true
+		// END TODO
+
+		pages := getNumPages(float64(orgData.Organization.Repositories.TotalCount))
+		ghs.logger.Sugar().Debugf("pages: %v", pages)
+
+		for i := 0; i < pages; i++ {
+			orgRepos = append(orgRepos, orgData.Organization.Repositories.Edges...)
+
+			repoCursor = &orgData.Organization.Repositories.PageInfo.EndCursor
+			data, err = getRepoData(ctx, genClient, ghs.cfg.GitHubOrg, ownertype, repoCursor)
 			if err != nil {
-				ghs.logger.Sugar().Errorf("Error getting all Repositories", zap.Error(err))
+				ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
 			}
-			repos = append(repos, org_query.Organization.Repositories.Edges...)
-			ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(org_query.Organization.Repositories.TotalCount))
+		}
 
-			if !org_query.Organization.Repositories.PageInfo.HasNextPage {
-				break
-			}
-			variables["repoCursor"] = githubv4.NewString(org_query.Organization.Repositories.PageInfo.EndCursor)
-		} else {
-			err := graphqlClient.Query(context.Background(), &user_query, variables)
+		ghs.logger.Sugar().Debugf("repos: %v", orgRepos)
 
+	} else if userData, ok := data.(*getUserRepoDataResponse); ok {
+		ghs.logger.Sugar().Debug("successful response for organization")
+		ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(userData.User.Repositories.TotalCount))
+
+		// TODO: this is a temporary fix for the refactor to using genqlient and should
+		// be removed once the refactor is complete
+		//provided_org_is_org = false
+		// END TODO
+
+		pages := getNumPages(float64(userData.User.Repositories.TotalCount))
+		ghs.logger.Sugar().Debugf("pages: %v", pages)
+
+		for i := 0; i < pages; i++ {
+			userRepos = append(userRepos, userData.User.Repositories.Edges...)
+
+			repoCursor = &userData.User.Repositories.PageInfo.EndCursor
+			data, err = getRepoData(ctx, genClient, ghs.cfg.GitHubOrg, ownertype, repoCursor)
 			if err != nil {
-				ghs.logger.Sugar().Errorf("Error getting all Repositories", zap.Error(err))
+				ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
 			}
-			repos = append(repos, user_query.User.Repositories.Edges...)
-			ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(user_query.User.Repositories.TotalCount))
+		}
 
-			if !user_query.User.Repositories.PageInfo.HasNextPage {
-				break
+		ghs.logger.Sugar().Debugf("repos: %v", userRepos)
+
+	}
+	// TODO: End of refactor to using genqlient
+
+	// Slightly refactoring this and making it more nested during the refactor
+	// to maintain parady with the original code while using genqlient and
+	// not having to use the original query login interspection and types
+	if _, ok := data.(*getOrgRepoDataResponse); ok {
+		for _, repo := range orgRepos {
+			repoInfo := &Repo{Name: repo.Node.Name, Owner: ghs.cfg.GitHubOrg, DefaultBranch: repo.Node.DefaultBranchRef.Name}
+
+			ghs.getRepoBranchInformation(repoInfo)
+
+			numOfBranches := len(repoInfo.Branches)
+
+			ghs.logger.Sugar().Debugf("Repo Name: %v", repoInfo.Name)
+			ghs.logger.Sugar().Debugf("Num of Branches: %v", numOfBranches)
+
+			ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(numOfBranches), repoInfo.Name)
+
+			for _, branch := range repoInfo.Branches {
+				if branch.Name != repoInfo.DefaultBranch {
+					branch := branch
+					ghs.getOldestBranchCommit(repoInfo, &branch)
+					branchAge := int64(time.Since(branch.CreatedDate).Hours())
+					ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, repoInfo.Name, branch.Name)
+				}
 			}
-			variables["repoCursor"] = githubv4.NewString(user_query.User.Repositories.PageInfo.EndCursor)
+
+			ghs.getRepoPullRequestInformation(repoInfo)
+
+			for _, pr := range repoInfo.PullRequests {
+				ghs.logger.Sugar().Debugf("PR Creation Date: %v PR Closed Date %v", pr.CreatedDate.Format(time.RFC3339), pr.ClosedDate.Format(time.RFC3339))
+			}
+		}
+
+	} else if _, ok := data.(*getUserRepoDataResponse); ok {
+		for _, repo := range userRepos {
+			repoInfo := &Repo{Name: repo.Node.Name, Owner: ghs.cfg.GitHubOrg, DefaultBranch: repo.Node.DefaultBranchRef.Name}
+
+			ghs.getRepoBranchInformation(repoInfo)
+
+			numOfBranches := len(repoInfo.Branches)
+
+			ghs.logger.Sugar().Debugf("Repo Name: %v", repoInfo.Name)
+			ghs.logger.Sugar().Debugf("Num of Branches: %v", numOfBranches)
+
+			ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(numOfBranches), repoInfo.Name)
+
+			for _, branch := range repoInfo.Branches {
+				if branch.Name != repoInfo.DefaultBranch {
+					branch := branch
+					ghs.getOldestBranchCommit(repoInfo, &branch)
+					branchAge := int64(time.Since(branch.CreatedDate).Hours())
+					ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, repoInfo.Name, branch.Name)
+				}
+			}
+
+			ghs.getRepoPullRequestInformation(repoInfo)
+
+			for _, pr := range repoInfo.PullRequests {
+				ghs.logger.Sugar().Debugf("PR Creation Date: %v PR Closed Date %v", pr.CreatedDate.Format(time.RFC3339), pr.ClosedDate.Format(time.RFC3339))
+			}
 		}
 	}
 
-	for _, repo := range repos {
-		repoInfo := &Repo{Name: repo.Node.Name, Owner: ghs.cfg.GitHubOrg, DefaultBranch: repo.Node.DefaultBranchRef.Name}
+	//variables := map[string]interface{}{
+	//	"login": githubv4.String(ghs.cfg.GitHubOrg),
+	//    "repoCursor": (*githubv4.String)(nil),
+	//}
 
-		ghs.getRepoBranchInformation(repoInfo)
+	//variables["repoCursor"] = (*githubv4.String)(nil)
 
-		numOfBranches := len(repoInfo.Branches)
+	//var user_query struct {
+	//	User struct {
+	//		Repositories struct {
+	//			TotalCount int
+	//			PageInfo   struct {
+	//				EndCursor   githubv4.String
+	//				HasNextPage bool
+	//			}
+	//			Edges []RepositoryEdge
+	//		} `graphql:"repositories(first: 100, affiliations: OWNER, after: $repoCursor, isArchived: false, isFork: false)"`
+	//	} `graphql:"user(login: $login)"`
+	//}
 
-		ghs.logger.Sugar().Debugf("Repo Name: %v", repoInfo.Name)
-		ghs.logger.Sugar().Debugf("Num of Branches: %v", numOfBranches)
+	//var org_query struct {
+	//	Organization struct {
+	//		Repositories struct {
+	//			TotalCount int
+	//			PageInfo   struct {
+	//				EndCursor   githubv4.String
+	//				HasNextPage bool
+	//			}
+	//			Edges []RepositoryEdge
+	//		} `graphql:"repositories(first: 100, after: $repoCursor, affiliations: OWNER, isArchived: false, isFork: false)"`
+	//	} `graphql:"organization(login: $login)"`
+	//}
 
-		ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(numOfBranches), repoInfo.Name)
+	//var repos []RepositoryEdge
+	//	for {
+	//
+	//		// query must be dynamic to user or organization type for Graphql
+	//		if provided_org_is_org {
+	//			err := graphqlClient.Query(context.Background(), &org_query, variables)
+	//
+	//			if err != nil {
+	//				ghs.logger.Sugar().Errorf("Error getting all Repositories", zap.Error(err))
+	//			}
+	//			repos = append(repos, org_query.Organization.Repositories.Edges...)
+	//			ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(org_query.Organization.Repositories.TotalCount))
+	//
+	//			if !org_query.Organization.Repositories.PageInfo.HasNextPage {
+	//				break
+	//			}
+	//			variables["repoCursor"] = githubv4.NewString(org_query.Organization.Repositories.PageInfo.EndCursor)
+	//		} else {
+	//			err := graphqlClient.Query(context.Background(), &user_query, variables)
+	//
+	//			if err != nil {
+	//				ghs.logger.Sugar().Errorf("Error getting all Repositories", zap.Error(err))
+	//			}
+	//			repos = append(repos, user_query.User.Repositories.Edges...)
+	//			ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(user_query.User.Repositories.TotalCount))
+	//
+	//			if !user_query.User.Repositories.PageInfo.HasNextPage {
+	//				break
+	//			}
+	//			variables["repoCursor"] = githubv4.NewString(user_query.User.Repositories.PageInfo.EndCursor)
+	//		}
+	//	}
 
-		for _, branch := range repoInfo.Branches {
-			if branch.Name != repoInfo.DefaultBranch {
-				branch := branch
-				ghs.getOldestBranchCommit(repoInfo, &branch)
-				branchAge := int64(time.Since(branch.CreatedDate).Hours())
-				ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, repoInfo.Name, branch.Name)
-			}
-		}
-
-		ghs.getRepoPullRequestInformation(repoInfo)
-
-		for _, pr := range repoInfo.PullRequests {
-			ghs.logger.Sugar().Debugf("PR Creation Date: %v PR Closed Date %v", pr.CreatedDate.Format(time.RFC3339), pr.ClosedDate.Format(time.RFC3339))
-		}
-	}
-
-	ghs.logger.Sugar().Debugf("metrics: %v", ghs.cfg.Metrics.GitRepositoryCount)
 	return ghs.mb.Emit(), nil
 }
