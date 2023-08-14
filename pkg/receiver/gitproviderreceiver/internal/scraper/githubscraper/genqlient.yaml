@@ -1,0 +1,17 @@
+---
+# Default genqlient config; for full documentation see:
+# https://github.com/Khan/genqlient/blob/main/docs/genqlient.yaml
+schema: schema.graphql
+
+operations:
+    - genqlient.graphql
+
+generated: generated-graphql.go
+
+  #optional: pointer
+
+bindings:
+    DateTime:
+        type: time.Time
+  #    marshaler: github.com/you/yourpkg.MarshalDateTime
+  #    unmarshaler: github.com/you/yourpkg.UnmarshalDateTime

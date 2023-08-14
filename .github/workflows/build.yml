@@ -8,48 +8,12 @@ on:
         branches: [main]
 
 jobs:
-    prep-env:
-        name: prepare environment
-        strategy:
-            matrix:
-                go: ['1.19']
-        runs-on:
-            group: bigger
-        steps:
-            - uses: actions/checkout@v3
-              with:
-                  fetch-depth: 0
-
-            - uses: actions/setup-go@v4
-              with:
-                  go-version: ${{ matrix.go }}
-                  cache: false
-
-            - name: Make install-tools
-              run: make install-tools
-
-            - name: Make cibuild
-              run: make cibuild
-
-            - name: Cache directories
-              uses: actions/cache@v2
-              with:
-                  path: |
-                      ~/go/bin
-                      ./build
-                      ./tmp
-                  key: ${{ runner.os }}-make-${{ hashFiles('**/Makefile') }}
-                  restore-keys: |
-                      ${{ runner.os }}-make-
-
     lint:
-        needs: [prep-env]
         strategy:
             matrix:
                 go: ['1.19']
         name: lint
-        runs-on:
-            group: bigger
+        runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
               with:
@@ -61,25 +25,27 @@ jobs:
                   go-version: ${{ matrix.go }}
                   cache: false
 
-            - name: Restore cache
-              uses: actions/cache@v2
-              with:
-                  path: |
-                      ~/go/bin
-                      ./build
-                      ./tmp
-                  key: ${{ runner.os }}-make-${{ hashFiles('**/Makefile') }}
-                  restore-keys: |
-                      ${{ runner.os }}-make-
+            - name: Make install-tools
+              run: make install-tools
 
             - name: Make lint-all
               run: make lint-all
 
+            - name: Check GenQlient
+              run: |
+                  make genqlient-all
+                  git diff -s --exit-code || (echo 'Generated GraphQL queries are out of date. Run make genqlient-all and commit the changes' && exit 1)
+
+            - name: Check packages are up-to-date
+              run: |
+                  make tidy-all
+                  git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
+
     build:
         name: build
-        needs: [prep-env]
         strategy:
             matrix:
+                GOOS: [darwin, linux, windows]
                 go: ['1.19']
         runs-on:
             group: bigger
@@ -95,17 +61,6 @@ jobs:
                   go-version: ${{ matrix.go }}
                   cache: false
 
-            - name: Restore cache
-              uses: actions/cache@v2
-              with:
-                  path: |
-                      ~/go/bin
-                      ./build
-                      ./tmp
-                  key: ${{ runner.os }}-make-${{ hashFiles('**/Makefile') }}
-                  restore-keys: |
-                      ${{ runner.os }}-make-
-
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v2
 
@@ -114,21 +69,22 @@ jobs:
 
             - name: Run GoReleaser
               uses: goreleaser/goreleaser-action@v4
+              if: steps.cache.outputs.cache-hit != 'true'
               with:
-                  distribution: goreleaser
+                  distribution: goreleaser-pro
                   version: latest
-                  args: release --clean --snapshot
+                  args: release --clean --snapshot --split
               env:
+                  GOOS: ${{ matrix.GOOS }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
 
     test:
-        needs: [prep-env]
         strategy:
             matrix:
                 go: ['1.19']
         name: test
-        runs-on:
-            group: bigger
+        runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
               with:
