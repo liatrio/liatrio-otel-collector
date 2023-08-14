@@ -31,6 +31,16 @@ jobs:
             - name: Make lint-all
               run: make lint-all
 
+            - name: Check GenQlient
+              run: |
+                  make genqlient-all
+                  git diff -s --exit-code || (echo 'Generated GraphQL queries are out of date. Run make genqlient-all and commit the changes' && exit 1)
+
+            - name: Check packages are up-to-date
+              run: |
+                  make tidy-all
+                  git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
+
     build:
         name: build
         strategy:

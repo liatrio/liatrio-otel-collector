@@ -1,0 +1,152 @@
+query getUserRepoData(
+    $login: String!
+    # @genqlient(pointer: true)
+    $repoCursor: String) {
+  user(login: $login) {
+    repositories(
+        affiliations: OWNER, 
+        first: 100, 
+        after: $repoCursor
+        isArchived: false, 
+        isFork: false) {
+      totalCount
+      edges {
+        node {
+          id
+          name
+          defaultBranchRef {
+            name
+          }
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+}
+
+query getOrgRepoData(
+    $login: String!, 
+    # @genqlient(pointer: true)
+    $repoCursor: String) {
+  organization(login: $login) {
+    repositories(
+        affiliations: OWNER, 
+        first: 100, 
+        after: $repoCursor, 
+        isArchived: false, 
+        isFork: false) {
+      totalCount
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      edges {
+        node {
+          id
+          name
+          defaultBranchRef {
+            name
+          }
+        }
+      }
+    }
+  }
+}
+
+query checkLogin($login: String!){ 
+  user(login: $login) {
+    login
+  }
+  organization(login: $login) {
+    login
+  }
+}
+
+query getOrgRepoBranchInformation(
+    $login: String!
+    # @genqlient(pointer: true)
+    $repoCursor: String,
+    # @genqlient(pointer: true)
+    $branchCursor: String) {
+  organization(login: $login) {
+    repositories(
+        affiliations: OWNER, 
+        first: 100, 
+        after: $repoCursor, 
+        isArchived: false, 
+        isFork: false) {
+      edges {
+        node {
+          name
+          refs(refPrefix: "refs/heads/", first: 100, after: $branchCursor) {
+            totalCount
+            nodes {
+              name
+              target {
+                ... on Commit {
+                  id
+                  history {
+                    totalCount
+                    edges {
+                      node {
+                        committedDate
+                      }
+                    }
+                    pageInfo {
+                      endCursor
+                    }
+                  }
+                }
+              }
+            }
+            pageInfo {
+              endCursor
+              startCursor
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+query getUserRepoBranchInformation($login: String!) {
+  organization(login: $login) {
+    repositories(affiliations: OWNER, first: 10) {
+      edges {
+        node {
+          name
+          refs(refPrefix: "refs/heads/", first: 10) {
+            totalCount
+            nodes {
+              name
+              target {
+                ... on Commit {
+                  id
+                  history {
+                    totalCount
+                    edges {
+                      node {
+                        committedDate
+                      }
+                    }
+                    pageInfo {
+                      endCursor
+                    }
+                  }
+                }
+              }
+            }
+            pageInfo {
+              endCursor
+              startCursor
+            }
+          }
+        }
+      }
+    }
+  }
+}

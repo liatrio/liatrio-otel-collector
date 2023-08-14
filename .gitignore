@@ -22,3 +22,7 @@ ocb
 tmp
 
 dist/
+
+# MacOS
+.DS_Store
+
