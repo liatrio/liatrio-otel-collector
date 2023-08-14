@@ -8,10 +8,6 @@ on:
 
 jobs:
     release:
-        strategy:
-            matrix:
-                GOOS: [darwin, linux, windows]
-                go: ['1.19']
         runs-on:
             group: bigger
         permissions:
@@ -49,19 +45,7 @@ jobs:
               with:
                   distribution: goreleaser-pro
                   version: latest
-                  args: release --clean --split
-              env:
-                  GOOS: ${{ matrix.GOOS }}
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
-
-            - name: Merge and publish GoReleaser
-              uses: goreleaser/goreleaser-action@v4
-              with:
-                  distribution: goreleaser-pro
-                  version: latest
-                  args: continue --merge
+                  args: release --clean
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
-
