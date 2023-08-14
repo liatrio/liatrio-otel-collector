@@ -23,4 +23,5 @@ tmp
 
 dist/
 
+# JetBrains IDEs
 .idea/
