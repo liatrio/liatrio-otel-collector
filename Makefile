@@ -7,7 +7,7 @@ OCB_URL = https://github.com/open-telemetry/opentelemetry-collector/releases/dow
 OTEL_CONTRIB_REPO = https://github.com/open-telemetry/opentelemetry-collector-contrib.git
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 ARCH := $(shell uname -m)
-GORELEASER_VERSION = 1.19.2
+GORELEASER_VERSION = 1.20.0
 GOLANGCI_LINT_VERSION ?= v1.53.2
 
 # Arguments for getting directories & executing commands against them
