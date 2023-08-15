@@ -305,10 +305,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	// gathering repo data
 	var orgRepos []getOrgRepoDataOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge
 	var userRepos []getUserRepoDataUserRepositoriesRepositoryConnectionEdgesRepositoryEdge
-	//var searchRepos []getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdgeNodeRepository
 	var searchRepos []getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge
-	//var searchRepos []getRepoDataBySearchSearchSearchResultItemConnection
-	//var searchRepos []getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdgeNodeRepository
 
 	if ghs.cfg.SearchQuery != "" {
 		if searchData, ok := data.(*getRepoDataBySearchResponse); ok {
@@ -317,9 +314,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			pages := getNumPages(float64(searchData.Search.RepositoryCount))
 			ghs.logger.Sugar().Debugf("pages: %v", pages)
-
-			//d := searchData.GetSearch()
-			//l := d.GetRepositoryCount()
 
 			for i := 0; i < pages; i++ {
 				results := searchData.GetSearch()
@@ -416,12 +410,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
                     }
                 }
 
-				//ghs.getRepoPullRequestInformation(repoInfo)
-
-                //if 
-				//for _, pr := range repoInfo.PullRequests {
-				//	ghs.logger.Sugar().Debugf("PR Creation Date: %v PR Closed Date %v", pr.CreatedDate.Format(time.RFC3339), pr.ClosedDate.Format(time.RFC3339))
-				//}
+				ghs.getRepoPullRequestInformation(repoInfo)
 			}
 
 		}
