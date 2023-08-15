@@ -11,9 +11,32 @@
 
 The Git Provider receiver scrapes data from Git vendors.
 
+As a starting point, this receiver can infer many of the same core git
+metrics across vendors, while being able to receive additional data specific to
+vendors. 
+
+The current default set of metrics common across all vendors can be found in
+[documentation.md](./documentation.md).
+
+These default metrics can be used as leading indicators to the DORA metrics; helping 
+provide insight into modern-day engineering practices.
+
+The current metrics available via scraping from GitHub are:
+* repository branch count
+* repository branch time 
+* repository count
+* repository branch count
+* repository contributor count
+* repository pull request time
+
+
 ## Getting Started
 
 The collection interval is common to all scrapers and is set to 30 seconds by default.
+
+> Note: Generally speaking, if the vendor allows for anonymous API calls, then you
+> won't have to configure any authentication, but you may only see public repositories
+> and organizations.
 
 ```yaml
 gitprovider:
@@ -24,8 +47,37 @@ gitprovider:
         ...
 ```
 
+A more complete example using the GitHub scraper with an authenticator is as follows:
+```yaml
+extensions:
+    basicauth/github:
+        client_auth:
+            username: ${env:GH_USER}
+            password: ${env:GH_PAT}
+
+receivers:
+    gitprovider:
+        initial_delay: 1s
+        collection_interval: 60s
+        scrapers:
+            github:
+                github_org: myfancyorg
+                search_query: "org:myfancyorg topic:o11yalltheway" #optional query override, defaults to "{org,user}:<github_org>"
+                auth:
+                    authenticator: basicauth/github
+service:
+    extensions: [basicauth/github]
+    pipelines:
+        metrics:
+            receivers: [..., gitprovider]
+            processors: []
+            exporters: [...]
+```
+
+This receiver is developed upstream in the [liatrio-otel-collector distribution](https://github.com/liatrio/liatrio-otel-collector)
+where a quick start exists with an [example config](https://github.com/liatrio/liatrio-otel-collector/blob/main/config/config.yaml)
+
 The available scrapers are:
 | Scraper  | Description             |
 |----------|-------------------------|
 | [github] | Git Metrics from [GitHub](https://github.com/) |
-
