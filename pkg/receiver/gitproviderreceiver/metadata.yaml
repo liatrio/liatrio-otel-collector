@@ -7,7 +7,7 @@ status:
     class: receiver
     stability:
         development: [metrics]
-    distributions: []
+    distributions: [liatrio]
 
 # this might need to be unique per sub receiver implementation
 resource_attributes:

@@ -175,17 +175,17 @@ func (ghs *githubScraper) getOldestBranchCommit(repo *Repo, branch *Branch) {
 		ghs.logger.Sugar().Errorf("Error getting oldest commit", zap.Error(err))
 	}
 
-    if len(query.Repository.Ref.Target.Commit.History.Edges) > 0 {
-        oldestCommit, err := time.Parse(time.RFC3339, query.Repository.Ref.Target.Commit.History.Edges[0].Node.CommittedDate)
+	if len(query.Repository.Ref.Target.Commit.History.Edges) > 0 {
+		oldestCommit, err := time.Parse(time.RFC3339, query.Repository.Ref.Target.Commit.History.Edges[0].Node.CommittedDate)
 
-        if err != nil {
-            ghs.logger.Sugar().Errorf("Error converting timestamp for oldest commit", zap.Error(err))
-        }
+		if err != nil {
+			ghs.logger.Sugar().Errorf("Error converting timestamp for oldest commit", zap.Error(err))
+		}
 
-        branch.CreatedDate = oldestCommit
-    } else {
-        branch.CreatedDate = time.Now()
-    }
+		branch.CreatedDate = oldestCommit
+	} else {
+		branch.CreatedDate = time.Now()
+	}
 
 }
 
@@ -399,16 +399,16 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 				ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(numOfBranches), repoInfo.Name)
 
-                if numOfBranches > 1 {
-                    for _, branch := range repoInfo.Branches {
-                        if branch.Name != repoInfo.DefaultBranch {
-                            branch := branch
-                            ghs.getOldestBranchCommit(repoInfo, &branch)
-                            branchAge := int64(time.Since(branch.CreatedDate).Hours())
-                            ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, repoInfo.Name, branch.Name)
-                        }
-                    }
-                }
+				if numOfBranches > 1 {
+					for _, branch := range repoInfo.Branches {
+						if branch.Name != repoInfo.DefaultBranch {
+							branch := branch
+							ghs.getOldestBranchCommit(repoInfo, &branch)
+							branchAge := int64(time.Since(branch.CreatedDate).Hours())
+							ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, repoInfo.Name, branch.Name)
+						}
+					}
+				}
 
 				ghs.getRepoPullRequestInformation(repoInfo)
 			}
