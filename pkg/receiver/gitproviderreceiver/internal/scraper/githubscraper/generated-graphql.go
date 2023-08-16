@@ -11,6 +11,274 @@ import (
 	"github.com/Khan/genqlient/graphql"
 )
 
+// SearchNode includes the requested fields of the GraphQL interface SearchResultItem.
+//
+// SearchNode is implemented by the following types:
+// SearchNodeApp
+// SearchNodeDiscussion
+// SearchNodeIssue
+// SearchNodeMarketplaceListing
+// SearchNodeOrganization
+// SearchNodePullRequest
+// SearchNodeRepository
+// SearchNodeUser
+// The GraphQL type's documentation follows.
+//
+// The results of a search.
+type SearchNode interface {
+	implementsGraphQLInterfaceSearchNode()
+	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
+	GetTypename() string
+}
+
+func (v *SearchNodeApp) implementsGraphQLInterfaceSearchNode()                {}
+func (v *SearchNodeDiscussion) implementsGraphQLInterfaceSearchNode()         {}
+func (v *SearchNodeIssue) implementsGraphQLInterfaceSearchNode()              {}
+func (v *SearchNodeMarketplaceListing) implementsGraphQLInterfaceSearchNode() {}
+func (v *SearchNodeOrganization) implementsGraphQLInterfaceSearchNode()       {}
+func (v *SearchNodePullRequest) implementsGraphQLInterfaceSearchNode()        {}
+func (v *SearchNodeRepository) implementsGraphQLInterfaceSearchNode()         {}
+func (v *SearchNodeUser) implementsGraphQLInterfaceSearchNode()               {}
+
+func __unmarshalSearchNode(b []byte, v *SearchNode) error {
+	if string(b) == "null" {
+		return nil
+	}
+
+	var tn struct {
+		TypeName string `json:"__typename"`
+	}
+	err := json.Unmarshal(b, &tn)
+	if err != nil {
+		return err
+	}
+
+	switch tn.TypeName {
+	case "App":
+		*v = new(SearchNodeApp)
+		return json.Unmarshal(b, *v)
+	case "Discussion":
+		*v = new(SearchNodeDiscussion)
+		return json.Unmarshal(b, *v)
+	case "Issue":
+		*v = new(SearchNodeIssue)
+		return json.Unmarshal(b, *v)
+	case "MarketplaceListing":
+		*v = new(SearchNodeMarketplaceListing)
+		return json.Unmarshal(b, *v)
+	case "Organization":
+		*v = new(SearchNodeOrganization)
+		return json.Unmarshal(b, *v)
+	case "PullRequest":
+		*v = new(SearchNodePullRequest)
+		return json.Unmarshal(b, *v)
+	case "Repository":
+		*v = new(SearchNodeRepository)
+		return json.Unmarshal(b, *v)
+	case "User":
+		*v = new(SearchNodeUser)
+		return json.Unmarshal(b, *v)
+	case "":
+		return fmt.Errorf(
+			"response was missing SearchResultItem.__typename")
+	default:
+		return fmt.Errorf(
+			`unexpected concrete type for SearchNode: "%v"`, tn.TypeName)
+	}
+}
+
+func __marshalSearchNode(v *SearchNode) ([]byte, error) {
+
+	var typename string
+	switch v := (*v).(type) {
+	case *SearchNodeApp:
+		typename = "App"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*SearchNodeApp
+		}{typename, v}
+		return json.Marshal(result)
+	case *SearchNodeDiscussion:
+		typename = "Discussion"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*SearchNodeDiscussion
+		}{typename, v}
+		return json.Marshal(result)
+	case *SearchNodeIssue:
+		typename = "Issue"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*SearchNodeIssue
+		}{typename, v}
+		return json.Marshal(result)
+	case *SearchNodeMarketplaceListing:
+		typename = "MarketplaceListing"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*SearchNodeMarketplaceListing
+		}{typename, v}
+		return json.Marshal(result)
+	case *SearchNodeOrganization:
+		typename = "Organization"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*SearchNodeOrganization
+		}{typename, v}
+		return json.Marshal(result)
+	case *SearchNodePullRequest:
+		typename = "PullRequest"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*SearchNodePullRequest
+		}{typename, v}
+		return json.Marshal(result)
+	case *SearchNodeRepository:
+		typename = "Repository"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*SearchNodeRepository
+		}{typename, v}
+		return json.Marshal(result)
+	case *SearchNodeUser:
+		typename = "User"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*SearchNodeUser
+		}{typename, v}
+		return json.Marshal(result)
+	case nil:
+		return []byte("null"), nil
+	default:
+		return nil, fmt.Errorf(
+			`unexpected concrete type for SearchNode: "%T"`, v)
+	}
+}
+
+// SearchNodeApp includes the requested fields of the GraphQL type App.
+// The GraphQL type's documentation follows.
+//
+// A GitHub App.
+type SearchNodeApp struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns SearchNodeApp.Typename, and is useful for accessing the field via an interface.
+func (v *SearchNodeApp) GetTypename() string { return v.Typename }
+
+// SearchNodeDefaultBranchRef includes the requested fields of the GraphQL type Ref.
+// The GraphQL type's documentation follows.
+//
+// Represents a Git reference.
+type SearchNodeDefaultBranchRef struct {
+	// The ref name.
+	Name string `json:"name"`
+}
+
+// GetName returns SearchNodeDefaultBranchRef.Name, and is useful for accessing the field via an interface.
+func (v *SearchNodeDefaultBranchRef) GetName() string { return v.Name }
+
+// SearchNodeDiscussion includes the requested fields of the GraphQL type Discussion.
+// The GraphQL type's documentation follows.
+//
+// A discussion in a repository.
+type SearchNodeDiscussion struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns SearchNodeDiscussion.Typename, and is useful for accessing the field via an interface.
+func (v *SearchNodeDiscussion) GetTypename() string { return v.Typename }
+
+// SearchNodeIssue includes the requested fields of the GraphQL type Issue.
+// The GraphQL type's documentation follows.
+//
+// An Issue is a place to discuss ideas, enhancements, tasks, and bugs for a project.
+type SearchNodeIssue struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns SearchNodeIssue.Typename, and is useful for accessing the field via an interface.
+func (v *SearchNodeIssue) GetTypename() string { return v.Typename }
+
+// SearchNodeMarketplaceListing includes the requested fields of the GraphQL type MarketplaceListing.
+// The GraphQL type's documentation follows.
+//
+// A listing in the GitHub integration marketplace.
+type SearchNodeMarketplaceListing struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns SearchNodeMarketplaceListing.Typename, and is useful for accessing the field via an interface.
+func (v *SearchNodeMarketplaceListing) GetTypename() string { return v.Typename }
+
+// SearchNodeOrganization includes the requested fields of the GraphQL type Organization.
+// The GraphQL type's documentation follows.
+//
+// An account on GitHub, with one or more owners, that has repositories, members and teams.
+type SearchNodeOrganization struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns SearchNodeOrganization.Typename, and is useful for accessing the field via an interface.
+func (v *SearchNodeOrganization) GetTypename() string { return v.Typename }
+
+// SearchNodePullRequest includes the requested fields of the GraphQL type PullRequest.
+// The GraphQL type's documentation follows.
+//
+// A repository pull request.
+type SearchNodePullRequest struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns SearchNodePullRequest.Typename, and is useful for accessing the field via an interface.
+func (v *SearchNodePullRequest) GetTypename() string { return v.Typename }
+
+// SearchNodeRepository includes the requested fields of the GraphQL type Repository.
+// The GraphQL type's documentation follows.
+//
+// A repository contains the content for a project.
+type SearchNodeRepository struct {
+	Typename string `json:"__typename"`
+	Id       string `json:"id"`
+	// The name of the repository.
+	Name string `json:"name"`
+	// The Ref associated with the repository's default branch.
+	DefaultBranchRef SearchNodeDefaultBranchRef `json:"defaultBranchRef"`
+}
+
+// GetTypename returns SearchNodeRepository.Typename, and is useful for accessing the field via an interface.
+func (v *SearchNodeRepository) GetTypename() string { return v.Typename }
+
+// GetId returns SearchNodeRepository.Id, and is useful for accessing the field via an interface.
+func (v *SearchNodeRepository) GetId() string { return v.Id }
+
+// GetName returns SearchNodeRepository.Name, and is useful for accessing the field via an interface.
+func (v *SearchNodeRepository) GetName() string { return v.Name }
+
+// GetDefaultBranchRef returns SearchNodeRepository.DefaultBranchRef, and is useful for accessing the field via an interface.
+func (v *SearchNodeRepository) GetDefaultBranchRef() SearchNodeDefaultBranchRef {
+	return v.DefaultBranchRef
+}
+
+// SearchNodeUser includes the requested fields of the GraphQL type User.
+// The GraphQL type's documentation follows.
+//
+// A user is an individual's account on GitHub that owns repositories and can make new content.
+type SearchNodeUser struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns SearchNodeUser.Typename, and is useful for accessing the field via an interface.
+func (v *SearchNodeUser) GetTypename() string { return v.Typename }
+
 // __checkLoginInput is used internally by genqlient
 type __checkLoginInput struct {
 	Login string `json:"login"`
@@ -46,6 +314,18 @@ func (v *__getOrgRepoDataInput) GetLogin() string { return v.Login }
 
 // GetRepoCursor returns __getOrgRepoDataInput.RepoCursor, and is useful for accessing the field via an interface.
 func (v *__getOrgRepoDataInput) GetRepoCursor() *string { return v.RepoCursor }
+
+// __getRepoDataBySearchInput is used internally by genqlient
+type __getRepoDataBySearchInput struct {
+	SearchQuery string  `json:"searchQuery"`
+	RepoCursor  *string `json:"repoCursor"`
+}
+
+// GetSearchQuery returns __getRepoDataBySearchInput.SearchQuery, and is useful for accessing the field via an interface.
+func (v *__getRepoDataBySearchInput) GetSearchQuery() string { return v.SearchQuery }
+
+// GetRepoCursor returns __getRepoDataBySearchInput.RepoCursor, and is useful for accessing the field via an interface.
+func (v *__getRepoDataBySearchInput) GetRepoCursor() *string { return v.RepoCursor }
 
 // __getUserRepoBranchInformationInput is used internally by genqlient
 type __getUserRepoBranchInformationInput struct {
@@ -680,6 +960,143 @@ type getOrgRepoDataResponse struct {
 
 // GetOrganization returns getOrgRepoDataResponse.Organization, and is useful for accessing the field via an interface.
 func (v *getOrgRepoDataResponse) GetOrganization() getOrgRepoDataOrganization { return v.Organization }
+
+// getRepoDataBySearchResponse is returned by getRepoDataBySearch on success.
+type getRepoDataBySearchResponse struct {
+	// Perform a search across resources, returning a maximum of 1,000 results.
+	Search getRepoDataBySearchSearchSearchResultItemConnection `json:"search"`
+}
+
+// GetSearch returns getRepoDataBySearchResponse.Search, and is useful for accessing the field via an interface.
+func (v *getRepoDataBySearchResponse) GetSearch() getRepoDataBySearchSearchSearchResultItemConnection {
+	return v.Search
+}
+
+// getRepoDataBySearchSearchSearchResultItemConnection includes the requested fields of the GraphQL type SearchResultItemConnection.
+// The GraphQL type's documentation follows.
+//
+// A list of results that matched against a search query. Regardless of the number of matches, a maximum of 1,000 results will be available across all types, potentially split across many pages.
+type getRepoDataBySearchSearchSearchResultItemConnection struct {
+	// The total number of repositories that matched the search query. Regardless of the total number of matches, a maximum of 1,000 results will be available across all types.
+	RepositoryCount int `json:"repositoryCount"`
+	// A list of edges.
+	Edges []getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge `json:"edges"`
+	// Information to aid in pagination.
+	PageInfo getRepoDataBySearchSearchSearchResultItemConnectionPageInfo `json:"pageInfo"`
+}
+
+// GetRepositoryCount returns getRepoDataBySearchSearchSearchResultItemConnection.RepositoryCount, and is useful for accessing the field via an interface.
+func (v *getRepoDataBySearchSearchSearchResultItemConnection) GetRepositoryCount() int {
+	return v.RepositoryCount
+}
+
+// GetEdges returns getRepoDataBySearchSearchSearchResultItemConnection.Edges, and is useful for accessing the field via an interface.
+func (v *getRepoDataBySearchSearchSearchResultItemConnection) GetEdges() []getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge {
+	return v.Edges
+}
+
+// GetPageInfo returns getRepoDataBySearchSearchSearchResultItemConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *getRepoDataBySearchSearchSearchResultItemConnection) GetPageInfo() getRepoDataBySearchSearchSearchResultItemConnectionPageInfo {
+	return v.PageInfo
+}
+
+// getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge includes the requested fields of the GraphQL type SearchResultItemEdge.
+// The GraphQL type's documentation follows.
+//
+// An edge in a connection.
+type getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge struct {
+	// The item at the end of the edge.
+	Node SearchNode `json:"-"`
+}
+
+// GetNode returns getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge.Node, and is useful for accessing the field via an interface.
+func (v *getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge) GetNode() SearchNode {
+	return v.Node
+}
+
+func (v *getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge
+		Node json.RawMessage `json:"node"`
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	{
+		dst := &v.Node
+		src := firstPass.Node
+		if len(src) != 0 && string(src) != "null" {
+			err = __unmarshalSearchNode(
+				src, dst)
+			if err != nil {
+				return fmt.Errorf(
+					"unable to unmarshal getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge.Node: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+type __premarshalgetRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge struct {
+	Node json.RawMessage `json:"node"`
+}
+
+func (v *getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge) __premarshalJSON() (*__premarshalgetRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge, error) {
+	var retval __premarshalgetRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge
+
+	{
+
+		dst := &retval.Node
+		src := v.Node
+		var err error
+		*dst, err = __marshalSearchNode(
+			&src)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"unable to marshal getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge.Node: %w", err)
+		}
+	}
+	return &retval, nil
+}
+
+// getRepoDataBySearchSearchSearchResultItemConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+// The GraphQL type's documentation follows.
+//
+// Information about pagination in a connection.
+type getRepoDataBySearchSearchSearchResultItemConnectionPageInfo struct {
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
+}
+
+// GetHasNextPage returns getRepoDataBySearchSearchSearchResultItemConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *getRepoDataBySearchSearchSearchResultItemConnectionPageInfo) GetHasNextPage() bool {
+	return v.HasNextPage
+}
+
+// GetEndCursor returns getRepoDataBySearchSearchSearchResultItemConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *getRepoDataBySearchSearchSearchResultItemConnectionPageInfo) GetEndCursor() string {
+	return v.EndCursor
+}
 
 // getUserRepoBranchInformationOrganization includes the requested fields of the GraphQL type Organization.
 // The GraphQL type's documentation follows.
@@ -1408,6 +1825,59 @@ func getOrgRepoData(
 	var err error
 
 	var data getOrgRepoDataResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+// The query or mutation executed by getRepoDataBySearch.
+const getRepoDataBySearch_Operation = `
+query getRepoDataBySearch ($searchQuery: String!, $repoCursor: String) {
+	search(query: $searchQuery, type: REPOSITORY, first: 100, after: $repoCursor) {
+		repositoryCount
+		edges {
+			node {
+				__typename
+				... on Repository {
+					id
+					name
+					defaultBranchRef {
+						name
+					}
+				}
+			}
+		}
+		pageInfo {
+			hasNextPage
+			endCursor
+		}
+	}
+}
+`
+
+func getRepoDataBySearch(
+	ctx context.Context,
+	client graphql.Client,
+	searchQuery string,
+	repoCursor *string,
+) (*getRepoDataBySearchResponse, error) {
+	req := &graphql.Request{
+		OpName: "getRepoDataBySearch",
+		Query:  getRepoDataBySearch_Operation,
+		Variables: &__getRepoDataBySearchInput{
+			SearchQuery: searchQuery,
+			RepoCursor:  repoCursor,
+		},
+	}
+	var err error
+
+	var data getRepoDataBySearchResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(

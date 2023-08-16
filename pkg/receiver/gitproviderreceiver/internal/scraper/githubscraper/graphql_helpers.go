@@ -15,7 +15,7 @@ import (
 func getRepoData(
 	ctx context.Context,
 	client graphql.Client,
-	owner string,
+	cfg *Config,
 	ownertype string,
 	// here we use a pointer to a string so that graphql will receive null if the
 	// value is not set since the after: $repoCursor is optional to graphql
@@ -23,14 +23,20 @@ func getRepoData(
 	// since we're using a interface{} here we do type checking when data
 	// is returned to the calling function
 ) (interface{}, error) {
-	if ownertype == "user" {
-		data, err := getUserRepoData(ctx, client, owner, repoCursor)
+	if cfg.SearchQuery != "" {
+		data, err := getRepoDataBySearch(ctx, client, cfg.SearchQuery, repoCursor)
+		if err != nil {
+			return nil, err
+		}
+		return data, nil
+	} else if ownertype == "user" {
+		data, err := getUserRepoData(ctx, client, cfg.GitHubOrg, repoCursor)
 		if err != nil {
 			return nil, err
 		}
 		return data, nil
 	} else if ownertype == "org" {
-		data, err := getOrgRepoData(ctx, client, owner, repoCursor)
+		data, err := getOrgRepoData(ctx, client, cfg.GitHubOrg, repoCursor)
 		if err != nil {
 			return nil, err
 		}
@@ -39,47 +45,6 @@ func getRepoData(
 
 	return nil, errors.New("not able to get repo count")
 }
-
-//func getBranchData(
-//	ctx context.Context,
-//	client graphql.Client,
-//	owner string,
-//	ownertype string,
-//	// here we use a pointer to a string so that graphql will receive null if the
-//	// value is not set since the after: $repoCursor is optional to graphql
-//	repoCursor *string,
-//	branchCursor *string,
-//	// since we're using a interface{} here we do type checking when data
-//	// is returned to the calling function
-//) (interface{}, error) {
-//	if ownertype == "user" {
-//		data, err := getUserBranchData(ctx, client, owner, repoCursor, branchCursor)
-//		if err != nil {
-//			return nil, err
-//		}
-//		return data, nil
-//	} else if ownertype == "org" {
-//		data, err := getOrgBranchData(ctx, client, owner, repoCursor, branchCursor)
-//		if err != nil {
-//			return nil, err
-//		}
-//		return data, nil
-//	}
-//
-//	return nil, errors.New("not able to get repo count")
-//}
-
-//func (ghs *githubScraper) getRepoBranchInformation(ctx context.Context, client graphql.Client, owner string, ownertype string) error {
-//	//reposEndCursor := "0"
-//	//branchesEndCursor := "0"
-//
-//	info, err := getOrgRepoBranchInformation(ctx, client, owner)
-//	if err != nil {
-//		ghs.logger.Sugar().Errorf("error getting branch information", zap.Error(err))
-//	}
-//	ghs.logger.Sugar().Debugf("info: %v", info)
-//	return nil
-//}
 
 func getNumPages(n float64) int {
 	pageCap := 100.0

@@ -21,7 +21,7 @@ lint:
 .PHONY: tidy
 tidy: 
 	rm go.sum 
-	go mod tidy -compat=1.19
+	go mod tidy -compat=1.20
 
 .PHONY: metagen
 metagen:
