@@ -51,6 +51,11 @@ receivers:
 
 processors:
     batch:
+    resourcedetection:
+        detectors: [env]
+        timeout: 2s
+        override: false
+
 
 exporters:
     logging:
@@ -69,12 +74,12 @@ service:
     pipelines:
         metrics:
             receivers: [otlp, prometheus, gitprovider]
-            processors: [batch]
+            processors: [resourcedetection,batch]
             exporters: [logging]
 
         traces:
             receivers: [otlp]
-            processors: [batch]
+            processors: [resourcedetection,batch]
             exporters: [logging]
 
     telemetry:

@@ -175,13 +175,18 @@ func (ghs *githubScraper) getOldestBranchCommit(repo *Repo, branch *Branch) {
 		ghs.logger.Sugar().Errorf("Error getting oldest commit", zap.Error(err))
 	}
 
-	oldestCommit, err := time.Parse(time.RFC3339, query.Repository.Ref.Target.Commit.History.Edges[0].Node.CommittedDate)
+	if len(query.Repository.Ref.Target.Commit.History.Edges) > 0 {
+		oldestCommit, err := time.Parse(time.RFC3339, query.Repository.Ref.Target.Commit.History.Edges[0].Node.CommittedDate)
 
-	if err != nil {
-		ghs.logger.Sugar().Errorf("Error converting timestamp for oldest commit", zap.Error(err))
+		if err != nil {
+			ghs.logger.Sugar().Errorf("Error converting timestamp for oldest commit", zap.Error(err))
+		}
+
+		branch.CreatedDate = oldestCommit
+	} else {
+		branch.CreatedDate = time.Now()
 	}
 
-	branch.CreatedDate = oldestCommit
 }
 
 func (ghs *githubScraper) getRepoPullRequestInformation(repo *Repo) {
@@ -286,7 +291,11 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		return ghs.mb.Emit(), err
 	}
 
-	data, err = getRepoData(ctx, genClient, ghs.cfg.GitHubOrg, ownertype, repoCursor)
+	if ghs.cfg.SearchQuery != "" {
+		ghs.logger.Sugar().Debugf("using search query where query is: %v", ghs.cfg.SearchQuery)
+	}
+
+	data, err = getRepoData(ctx, genClient, ghs.cfg, ownertype, repoCursor)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
 		return ghs.mb.Emit(), err
@@ -296,8 +305,31 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	// gathering repo data
 	var orgRepos []getOrgRepoDataOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge
 	var userRepos []getUserRepoDataUserRepositoriesRepositoryConnectionEdgesRepositoryEdge
+	var searchRepos []getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge
 
-	if orgData, ok := data.(*getOrgRepoDataResponse); ok {
+	if ghs.cfg.SearchQuery != "" {
+		if searchData, ok := data.(*getRepoDataBySearchResponse); ok {
+			ghs.logger.Sugar().Debug("successful search response")
+			ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(searchData.Search.RepositoryCount))
+
+			pages := getNumPages(float64(searchData.Search.RepositoryCount))
+			ghs.logger.Sugar().Debugf("pages: %v", pages)
+
+			for i := 0; i < pages; i++ {
+				results := searchData.GetSearch()
+				searchRepos = append(searchRepos, results.Edges...)
+
+				repoCursor = &searchData.Search.PageInfo.EndCursor
+				data, err = getRepoData(ctx, genClient, ghs.cfg, ownertype, repoCursor)
+				if err != nil {
+					ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
+				}
+			}
+
+			ghs.logger.Sugar().Debugf("repos: %v", searchRepos)
+
+		}
+	} else if orgData, ok := data.(*getOrgRepoDataResponse); ok {
 		ghs.logger.Sugar().Debug("successful response for organization")
 		ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(orgData.Organization.Repositories.TotalCount))
 
@@ -308,7 +340,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			orgRepos = append(orgRepos, orgData.Organization.Repositories.Edges...)
 
 			repoCursor = &orgData.Organization.Repositories.PageInfo.EndCursor
-			data, err = getRepoData(ctx, genClient, ghs.cfg.GitHubOrg, ownertype, repoCursor)
+			data, err = getRepoData(ctx, genClient, ghs.cfg, ownertype, repoCursor)
 			if err != nil {
 				ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
 			}
@@ -324,10 +356,10 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		ghs.logger.Sugar().Debugf("pages: %v", pages)
 
 		for i := 0; i < pages; i++ {
-			userRepos = append(userRepos, userData.User.Repositories.Edges...)
+			userRepos = append(userRepos, userData.User.Repositories.GetEdges()...)
 
 			repoCursor = &userData.User.Repositories.PageInfo.EndCursor
-			data, err = getRepoData(ctx, genClient, ghs.cfg.GitHubOrg, ownertype, repoCursor)
+			data, err = getRepoData(ctx, genClient, ghs.cfg, ownertype, repoCursor)
 			if err != nil {
 				ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
 			}
@@ -341,7 +373,48 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	// Slightly refactoring this and making it more nested during the refactor
 	// to maintain parady with the original code while using genqlient and
 	// not having to use the original query login interspection and types
-	if _, ok := data.(*getOrgRepoDataResponse); ok {
+	if ghs.cfg.SearchQuery != "" {
+		if _, ok := data.(*getRepoDataBySearchResponse); ok {
+			for _, repo := range searchRepos {
+				var name string
+				var defaultBranch string
+
+				if n, ok := repo.Node.(*SearchNodeRepository); ok {
+					name = n.Name
+					defaultBranch = n.DefaultBranchRef.Name
+				}
+
+				repoInfo := &Repo{
+					Name:          name,
+					Owner:         ghs.cfg.GitHubOrg,
+					DefaultBranch: defaultBranch,
+				}
+
+				ghs.getRepoBranchInformation(repoInfo)
+
+				numOfBranches := len(repoInfo.Branches)
+
+				ghs.logger.Sugar().Debugf("Repo Name: %v", repoInfo.Name)
+				ghs.logger.Sugar().Debugf("Num of Branches: %v", numOfBranches)
+
+				ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(numOfBranches), repoInfo.Name)
+
+				if numOfBranches > 1 {
+					for _, branch := range repoInfo.Branches {
+						if branch.Name != repoInfo.DefaultBranch {
+							branch := branch
+							ghs.getOldestBranchCommit(repoInfo, &branch)
+							branchAge := int64(time.Since(branch.CreatedDate).Hours())
+							ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, repoInfo.Name, branch.Name)
+						}
+					}
+				}
+
+				ghs.getRepoPullRequestInformation(repoInfo)
+			}
+
+		}
+	} else if _, ok := data.(*getOrgRepoDataResponse); ok {
 		for _, repo := range orgRepos {
 			repoInfo := &Repo{Name: repo.Node.Name, Owner: ghs.cfg.GitHubOrg, DefaultBranch: repo.Node.DefaultBranchRef.Name}
 

@@ -11,7 +11,7 @@ jobs:
     lint:
         strategy:
             matrix:
-                go: ['1.19']
+                go: ['1.20']
         name: lint
         runs-on: ubuntu-latest
         steps:
@@ -41,12 +41,17 @@ jobs:
                   make tidy-all
                   git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
 
+            - name: Check metagen-all
+              run: |
+                  make metagen-all
+                  git diff -s --exit-code || (echo 'Generated metrics and docs are out of date. Run make metagen-all and commit the changes' && exit 1)
+
     build:
         name: build
         strategy:
             matrix:
                 GOOS: [darwin, linux, windows]
-                go: ['1.19']
+                go: ['1.20']
         runs-on:
             group: bigger
         steps:
@@ -82,7 +87,7 @@ jobs:
     test:
         strategy:
             matrix:
-                go: ['1.19']
+                go: ['1.20']
         name: test
         runs-on: ubuntu-latest
         steps:
