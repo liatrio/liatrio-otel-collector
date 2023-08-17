@@ -291,11 +291,14 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		return ghs.mb.Emit(), err
 	}
 
+	sq := genDefaultSearchQuery(ownertype, ghs.cfg.GitHubOrg)
+
 	if ghs.cfg.SearchQuery != "" {
+		sq = ghs.cfg.SearchQuery
 		ghs.logger.Sugar().Debugf("using search query where query is: %v", ghs.cfg.SearchQuery)
 	}
 
-	data, err = getRepoData(ctx, genClient, ghs.cfg, ownertype, repoCursor)
+	data, err = getRepoData(ctx, genClient, sq, ownertype, repoCursor)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
 		return ghs.mb.Emit(), err
@@ -303,174 +306,74 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	// TODO: setting this here for access from the proceeding for statement
 	// gathering repo data
-	var orgRepos []getOrgRepoDataOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge
-	var userRepos []getUserRepoDataUserRepositoriesRepositoryConnectionEdgesRepositoryEdge
 	var searchRepos []getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge
 
-	if ghs.cfg.SearchQuery != "" {
-		if searchData, ok := data.(*getRepoDataBySearchResponse); ok {
-			ghs.logger.Sugar().Debug("successful search response")
-			ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(searchData.Search.RepositoryCount))
+	if searchData, ok := data.(*getRepoDataBySearchResponse); ok {
+		ghs.logger.Sugar().Debug("successful search response")
+		ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(searchData.Search.RepositoryCount))
 
-			pages := getNumPages(float64(searchData.Search.RepositoryCount))
-			ghs.logger.Sugar().Debugf("pages: %v", pages)
-
-			for i := 0; i < pages; i++ {
-				results := searchData.GetSearch()
-				searchRepos = append(searchRepos, results.Edges...)
-
-				repoCursor = &searchData.Search.PageInfo.EndCursor
-				data, err = getRepoData(ctx, genClient, ghs.cfg, ownertype, repoCursor)
-				if err != nil {
-					ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
-				}
-			}
-
-			ghs.logger.Sugar().Debugf("repos: %v", searchRepos)
-
-		}
-	} else if orgData, ok := data.(*getOrgRepoDataResponse); ok {
-		ghs.logger.Sugar().Debug("successful response for organization")
-		ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(orgData.Organization.Repositories.TotalCount))
-
-		pages := getNumPages(float64(orgData.Organization.Repositories.TotalCount))
+		pages := getNumPages(float64(searchData.Search.RepositoryCount))
 		ghs.logger.Sugar().Debugf("pages: %v", pages)
 
 		for i := 0; i < pages; i++ {
-			orgRepos = append(orgRepos, orgData.Organization.Repositories.Edges...)
+			results := searchData.GetSearch()
+			searchRepos = append(searchRepos, results.Edges...)
 
-			repoCursor = &orgData.Organization.Repositories.PageInfo.EndCursor
-			data, err = getRepoData(ctx, genClient, ghs.cfg, ownertype, repoCursor)
+			repoCursor = &searchData.Search.PageInfo.EndCursor
+			data, err = getRepoData(ctx, genClient, sq, ownertype, repoCursor)
 			if err != nil {
 				ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
 			}
 		}
 
-		ghs.logger.Sugar().Debugf("repos: %v", orgRepos)
-
-	} else if userData, ok := data.(*getUserRepoDataResponse); ok {
-		ghs.logger.Sugar().Debug("successful response for organization")
-		ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(userData.User.Repositories.TotalCount))
-
-		pages := getNumPages(float64(userData.User.Repositories.TotalCount))
-		ghs.logger.Sugar().Debugf("pages: %v", pages)
-
-		for i := 0; i < pages; i++ {
-			userRepos = append(userRepos, userData.User.Repositories.GetEdges()...)
-
-			repoCursor = &userData.User.Repositories.PageInfo.EndCursor
-			data, err = getRepoData(ctx, genClient, ghs.cfg, ownertype, repoCursor)
-			if err != nil {
-				ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
-			}
-		}
-
-		ghs.logger.Sugar().Debugf("repos: %v", userRepos)
+		ghs.logger.Sugar().Debugf("repos: %v", searchRepos)
 
 	}
+
 	// TODO: End of refactor to using genqlient
 
 	// Slightly refactoring this and making it more nested during the refactor
 	// to maintain parady with the original code while using genqlient and
 	// not having to use the original query login interspection and types
-	if ghs.cfg.SearchQuery != "" {
-		if _, ok := data.(*getRepoDataBySearchResponse); ok {
-			for _, repo := range searchRepos {
-				var name string
-				var defaultBranch string
+	if _, ok := data.(*getRepoDataBySearchResponse); ok {
+		for _, repo := range searchRepos {
+			var name string
+			var defaultBranch string
 
-				if n, ok := repo.Node.(*SearchNodeRepository); ok {
-					name = n.Name
-					defaultBranch = n.DefaultBranchRef.Name
-				}
+			if n, ok := repo.Node.(*SearchNodeRepository); ok {
+				name = n.Name
+				defaultBranch = n.DefaultBranchRef.Name
+			}
 
-				repoInfo := &Repo{
-					Name:          name,
-					Owner:         ghs.cfg.GitHubOrg,
-					DefaultBranch: defaultBranch,
-				}
+			repoInfo := &Repo{
+				Name:          name,
+				Owner:         ghs.cfg.GitHubOrg,
+				DefaultBranch: defaultBranch,
+			}
 
-				ghs.getRepoBranchInformation(repoInfo)
+			ghs.getRepoBranchInformation(repoInfo)
 
-				numOfBranches := len(repoInfo.Branches)
+			numOfBranches := len(repoInfo.Branches)
 
-				ghs.logger.Sugar().Debugf("Repo Name: %v", repoInfo.Name)
-				ghs.logger.Sugar().Debugf("Num of Branches: %v", numOfBranches)
+			ghs.logger.Sugar().Debugf("Repo Name: %v", repoInfo.Name)
+			ghs.logger.Sugar().Debugf("Num of Branches: %v", numOfBranches)
 
-				ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(numOfBranches), repoInfo.Name)
+			ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(numOfBranches), repoInfo.Name)
 
-				if numOfBranches > 1 {
-					for _, branch := range repoInfo.Branches {
-						if branch.Name != repoInfo.DefaultBranch {
-							branch := branch
-							ghs.getOldestBranchCommit(repoInfo, &branch)
-							branchAge := int64(time.Since(branch.CreatedDate).Hours())
-							ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, repoInfo.Name, branch.Name)
-						}
+			if numOfBranches > 1 {
+				for _, branch := range repoInfo.Branches {
+					if branch.Name != repoInfo.DefaultBranch {
+						branch := branch
+						ghs.getOldestBranchCommit(repoInfo, &branch)
+						branchAge := int64(time.Since(branch.CreatedDate).Hours())
+						ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, repoInfo.Name, branch.Name)
 					}
 				}
-
-				ghs.getRepoPullRequestInformation(repoInfo)
-			}
-
-		}
-	} else if _, ok := data.(*getOrgRepoDataResponse); ok {
-		for _, repo := range orgRepos {
-			repoInfo := &Repo{Name: repo.Node.Name, Owner: ghs.cfg.GitHubOrg, DefaultBranch: repo.Node.DefaultBranchRef.Name}
-
-			ghs.getRepoBranchInformation(repoInfo)
-
-			numOfBranches := len(repoInfo.Branches)
-
-			ghs.logger.Sugar().Debugf("Repo Name: %v", repoInfo.Name)
-			ghs.logger.Sugar().Debugf("Num of Branches: %v", numOfBranches)
-
-			ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(numOfBranches), repoInfo.Name)
-
-			for _, branch := range repoInfo.Branches {
-				if branch.Name != repoInfo.DefaultBranch {
-					branch := branch
-					ghs.getOldestBranchCommit(repoInfo, &branch)
-					branchAge := int64(time.Since(branch.CreatedDate).Hours())
-					ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, repoInfo.Name, branch.Name)
-				}
 			}
 
 			ghs.getRepoPullRequestInformation(repoInfo)
-
-			for _, pr := range repoInfo.PullRequests {
-				ghs.logger.Sugar().Debugf("PR Creation Date: %v PR Closed Date %v", pr.CreatedDate.Format(time.RFC3339), pr.ClosedDate.Format(time.RFC3339))
-			}
 		}
 
-	} else if _, ok := data.(*getUserRepoDataResponse); ok {
-		for _, repo := range userRepos {
-			repoInfo := &Repo{Name: repo.Node.Name, Owner: ghs.cfg.GitHubOrg, DefaultBranch: repo.Node.DefaultBranchRef.Name}
-
-			ghs.getRepoBranchInformation(repoInfo)
-
-			numOfBranches := len(repoInfo.Branches)
-
-			ghs.logger.Sugar().Debugf("Repo Name: %v", repoInfo.Name)
-			ghs.logger.Sugar().Debugf("Num of Branches: %v", numOfBranches)
-
-			ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(numOfBranches), repoInfo.Name)
-
-			for _, branch := range repoInfo.Branches {
-				if branch.Name != repoInfo.DefaultBranch {
-					branch := branch
-					ghs.getOldestBranchCommit(repoInfo, &branch)
-					branchAge := int64(time.Since(branch.CreatedDate).Hours())
-					ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, branchAge, repoInfo.Name, branch.Name)
-				}
-			}
-
-			ghs.getRepoPullRequestInformation(repoInfo)
-
-			for _, pr := range repoInfo.PullRequests {
-				ghs.logger.Sugar().Debugf("PR Creation Date: %v PR Closed Date %v", pr.CreatedDate.Format(time.RFC3339), pr.ClosedDate.Format(time.RFC3339))
-			}
-		}
 	}
 
 	return ghs.mb.Emit(), nil
