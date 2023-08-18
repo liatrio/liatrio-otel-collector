@@ -1,66 +1,14 @@
-query getUserRepoData(
-    $login: String!
-    # @genqlient(pointer: true)
-    $repoCursor: String) {
-  user(login: $login) {
-    repositories(
-        affiliations: OWNER, 
-        first: 100, 
-        after: $repoCursor
-        isArchived: false, 
-        isFork: false) {
-      totalCount
-      edges {
-        node {
-          id
-          name
-          defaultBranchRef {
-            name
-          }
-        }
-      }
-      pageInfo {
-        endCursor
-        hasNextPage
-      }
-    }
-  }
-}
-
-query getOrgRepoData(
-    $login: String!, 
-    # @genqlient(pointer: true)
-    $repoCursor: String) {
-  organization(login: $login) {
-    repositories(
-        affiliations: OWNER, 
-        first: 100, 
-        after: $repoCursor, 
-        isArchived: false, 
-        isFork: false) {
-      totalCount
-      pageInfo {
-        endCursor
-        hasNextPage
-      }
-      edges {
-        node {
-          id
-          name
-          defaultBranchRef {
-            name
-          }
-        }
-      }
-    }
-  }
-}
-
 query getRepoDataBySearch(
-    $searchQuery: String!, 
-    # @genqlient(pointer: true)
-    $repoCursor: String) {
-  search(query: $searchQuery, type: REPOSITORY, first: 100, after: $repoCursor) {
+  $searchQuery: String!
+  # @genqlient(pointer: true)
+  $repoCursor: String
+) {
+  search(
+    query: $searchQuery
+    type: REPOSITORY
+    first: 100
+    after: $repoCursor
+  ) {
     repositoryCount
     edges {
       # @genqlient(typename: "SearchNode")
@@ -81,7 +29,7 @@ query getRepoDataBySearch(
   }
 }
 
-query checkLogin($login: String!){ 
+query checkLogin($login: String!) {
   user(login: $login) {
     login
   }
@@ -90,46 +38,32 @@ query checkLogin($login: String!){
   }
 }
 
-query getOrgRepoBranchInformation(
-    $login: String!
-    # @genqlient(pointer: true)
-    $repoCursor: String,
-    # @genqlient(pointer: true)
-    $branchCursor: String) {
-  organization(login: $login) {
-    repositories(
-        affiliations: OWNER, 
-        first: 100, 
-        after: $repoCursor, 
-        isArchived: false, 
-        isFork: false) {
-      edges {
-        node {
-          name
-          refs(refPrefix: "refs/heads/", first: 100, after: $branchCursor) {
-            totalCount
-            nodes {
-              name
-              target {
-                ... on Commit {
-                  id
-                  history {
-                    totalCount
-                    edges {
-                      node {
-                        committedDate
-                      }
-                    }
-                    pageInfo {
-                      endCursor
-                    }
-                  }
+query getCommitData(
+  $name: String!
+  $owner: String!
+  $branchFirst: Int!
+  $commitFirst: Int!
+  # @genqlient(pointer: true)
+  $commitCursor: String
+  $branchName: String!
+) {
+  repository(name: $name, owner: $owner) {
+    refs(refPrefix: "refs/heads/", first: $branchFirst, query: $branchName) {
+      # @genqlient(typename: "CommitNode")
+      nodes {
+        target {
+          ... on Commit {
+            id
+            history(first: $commitFirst, after: $commitCursor) {
+              edges {
+                node {
+                  committedDate
                 }
               }
-            }
-            pageInfo {
-              endCursor
-              startCursor
+              pageInfo {
+                endCursor
+                hasNextPage
+              }
             }
           }
         }
@@ -138,40 +72,37 @@ query getOrgRepoBranchInformation(
   }
 }
 
-query getUserRepoBranchInformation($login: String!) {
-  organization(login: $login) {
-    repositories(affiliations: OWNER, first: 10) {
-      edges {
-        node {
-          name
-          refs(refPrefix: "refs/heads/", first: 10) {
-            totalCount
-            nodes {
-              name
-              target {
-                ... on Commit {
-                  id
-                  history {
-                    totalCount
-                    edges {
-                      node {
-                        committedDate
-                      }
-                    }
-                    pageInfo {
-                      endCursor
-                    }
-                  }
-                }
-              }
-            }
-            pageInfo {
-              endCursor
-              startCursor
-            }
-          }
+query getBranchData(
+  $name: String!
+  $owner: String!
+  $branchFirst: Int!
+  $targetBranch: String!
+  # @genqlient(pointer: true)
+  $branchCursor: String
+) {
+  repository(name: $name, owner: $owner) {
+    refs(refPrefix: "refs/heads/", first: $branchFirst, after: $branchCursor) {
+      totalCount
+      # @genqlient(typename: "BranchNode")
+      nodes {
+        name
+        compare(headRef: $targetBranch) {
+          aheadBy
+          behindBy
         }
       }
+      pageInfo {
+        endCursor
+        startCursor
+      }
+    }
+  }
+}
+
+query getBranchCount($name: String!, $owner: String!) {
+  repository(name: $name, owner: $owner) {
+    refs(refPrefix: "refs/heads/") {
+      totalCount
     }
   }
 }
