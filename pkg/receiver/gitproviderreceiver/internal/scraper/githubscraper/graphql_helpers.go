@@ -73,5 +73,5 @@ func (ghs *githubScraper) checkOwnerExists(ctx context.Context, client graphql.C
 // Returns the default search query string based on input of owner type
 // and GitHubOrg name with a default of archived:false to ignore archived repos
 func genDefaultSearchQuery(ownertype string, ghorg string) string {
-    return fmt.Sprintf("%s:%s archived:false", ownertype, ghorg)
+	return fmt.Sprintf("%s:%s archived:false", ownertype, ghorg)
 }

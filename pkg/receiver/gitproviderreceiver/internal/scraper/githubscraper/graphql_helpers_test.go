@@ -43,7 +43,7 @@ func TestGenDefaultSearchQueryOrg(t *testing.T) {
 	st := "org"
 	org := "empire"
 
-    expected := "org:empire archived:false"
+	expected := "org:empire archived:false"
 
 	actual := genDefaultSearchQuery(st, org)
 
@@ -54,7 +54,7 @@ func TestGenDefaultSearchQueryUser(t *testing.T) {
 	st := "user"
 	org := "vader"
 
-    expected := "user:vader archived:false"
+	expected := "user:vader archived:false"
 
 	actual := genDefaultSearchQuery(st, org)
 
