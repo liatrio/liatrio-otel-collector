@@ -279,7 +279,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				var cc *string
 
 				for i := 0; i < cp; i++ {
-					if branch.Name == defaultBranch {
+					if branch.Name == defaultBranch || branch.Compare.BehindBy == 0 {
 						break
 					}
 
