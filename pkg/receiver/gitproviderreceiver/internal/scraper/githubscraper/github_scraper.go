@@ -1,6 +1,3 @@
-// Copyright The OpenTelemetry Authors
-// SPDX-License-Identifier: Apache-2.0
-
 package githubscraper
 
 import (
@@ -35,8 +32,7 @@ type Repo struct {
 	Name          string
 	Owner         string
 	DefaultBranch string
-	//Branches      []Branch
-	PullRequests []PullRequest
+	PullRequests  []PullRequest
 }
 
 // TODO: Keep this

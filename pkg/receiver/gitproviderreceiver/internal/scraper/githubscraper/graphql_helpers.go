@@ -7,7 +7,6 @@ import (
 	"math"
 
 	"github.com/Khan/genqlient/graphql"
-	//"go.uber.org/zap"
 )
 
 // TODO: getRepoData and getBranchData should be a singular function since we can
@@ -30,24 +29,6 @@ func getRepoData(
 	}
 	return data, nil
 }
-
-// Gets a count of the branches for a given repository, the commit count, and
-// dates of the commits in order to calculate the branch age and branch count
-// metrics.
-//func getBranchInfo(
-//    ctx context.Context,
-//    client graphql.Client,
-//    name string,
-//    owner string,
-//    commitCursor *string,
-//    branchCursor *string,
-//) (interface{}, error) {
-//    data, err := getBranchInfo(ctx, client, name, owner, commitCursor, branchCursor)
-//    if err != nil {
-//        return nil, err
-//    }
-//    return data, nil
-//}
 
 func getNumPages(p float64, n float64) int {
 	numPages := math.Ceil(n / p)

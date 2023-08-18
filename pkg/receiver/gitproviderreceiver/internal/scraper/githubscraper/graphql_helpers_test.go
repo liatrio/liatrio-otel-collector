@@ -15,7 +15,6 @@ func TestGetNumPages100(t *testing.T) {
 	num := getNumPages(p, n)
 
 	assert.Equal(t, expected, num)
-
 }
 
 func TestGetNumPages10(t *testing.T) {
@@ -27,7 +26,6 @@ func TestGetNumPages10(t *testing.T) {
 	num := getNumPages(p, n)
 
 	assert.Equal(t, expected, num)
-
 }
 
 func TestGetNumPages1(t *testing.T) {
@@ -39,7 +37,6 @@ func TestGetNumPages1(t *testing.T) {
 	num := getNumPages(p, n)
 
 	assert.Equal(t, expected, num)
-
 }
 
 func TestGenDefaultSearchQueryOrg(t *testing.T) {
