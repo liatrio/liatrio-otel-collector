@@ -11,6 +11,340 @@ import (
 	"github.com/Khan/genqlient/graphql"
 )
 
+// BranchNode includes the requested fields of the GraphQL type Ref.
+// The GraphQL type's documentation follows.
+//
+// Represents a Git reference.
+type BranchNode struct {
+	// The ref name.
+	Name string `json:"name"`
+	// Compares the current ref as a base ref to another head ref, if the comparison can be made.
+	Compare BranchNodeCompareComparison `json:"compare"`
+}
+
+// GetName returns BranchNode.Name, and is useful for accessing the field via an interface.
+func (v *BranchNode) GetName() string { return v.Name }
+
+// GetCompare returns BranchNode.Compare, and is useful for accessing the field via an interface.
+func (v *BranchNode) GetCompare() BranchNodeCompareComparison { return v.Compare }
+
+// BranchNodeCompareComparison includes the requested fields of the GraphQL type Comparison.
+// The GraphQL type's documentation follows.
+//
+// Represents a comparison between two commit revisions.
+type BranchNodeCompareComparison struct {
+	// The number of commits ahead of the base branch.
+	AheadBy int `json:"aheadBy"`
+	// The number of commits behind the base branch.
+	BehindBy int `json:"behindBy"`
+}
+
+// GetAheadBy returns BranchNodeCompareComparison.AheadBy, and is useful for accessing the field via an interface.
+func (v *BranchNodeCompareComparison) GetAheadBy() int { return v.AheadBy }
+
+// GetBehindBy returns BranchNodeCompareComparison.BehindBy, and is useful for accessing the field via an interface.
+func (v *BranchNodeCompareComparison) GetBehindBy() int { return v.BehindBy }
+
+// CommitNode includes the requested fields of the GraphQL type Ref.
+// The GraphQL type's documentation follows.
+//
+// Represents a Git reference.
+type CommitNode struct {
+	// The object the ref points to. Returns null when object does not exist.
+	Target CommitNodeTargetGitObject `json:"-"`
+}
+
+// GetTarget returns CommitNode.Target, and is useful for accessing the field via an interface.
+func (v *CommitNode) GetTarget() CommitNodeTargetGitObject { return v.Target }
+
+func (v *CommitNode) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*CommitNode
+		Target json.RawMessage `json:"target"`
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.CommitNode = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	{
+		dst := &v.Target
+		src := firstPass.Target
+		if len(src) != 0 && string(src) != "null" {
+			err = __unmarshalCommitNodeTargetGitObject(
+				src, dst)
+			if err != nil {
+				return fmt.Errorf(
+					"unable to unmarshal CommitNode.Target: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+type __premarshalCommitNode struct {
+	Target json.RawMessage `json:"target"`
+}
+
+func (v *CommitNode) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *CommitNode) __premarshalJSON() (*__premarshalCommitNode, error) {
+	var retval __premarshalCommitNode
+
+	{
+
+		dst := &retval.Target
+		src := v.Target
+		var err error
+		*dst, err = __marshalCommitNodeTargetGitObject(
+			&src)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"unable to marshal CommitNode.Target: %w", err)
+		}
+	}
+	return &retval, nil
+}
+
+// CommitNodeTargetBlob includes the requested fields of the GraphQL type Blob.
+// The GraphQL type's documentation follows.
+//
+// Represents a Git blob.
+type CommitNodeTargetBlob struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns CommitNodeTargetBlob.Typename, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetBlob) GetTypename() string { return v.Typename }
+
+// CommitNodeTargetCommit includes the requested fields of the GraphQL type Commit.
+// The GraphQL type's documentation follows.
+//
+// Represents a Git commit.
+type CommitNodeTargetCommit struct {
+	Typename string `json:"__typename"`
+	Id       string `json:"id"`
+	// The linear commit history starting from (and including) this commit, in the same order as `git log`.
+	History CommitNodeTargetCommitHistoryCommitHistoryConnection `json:"history"`
+}
+
+// GetTypename returns CommitNodeTargetCommit.Typename, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetCommit) GetTypename() string { return v.Typename }
+
+// GetId returns CommitNodeTargetCommit.Id, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetCommit) GetId() string { return v.Id }
+
+// GetHistory returns CommitNodeTargetCommit.History, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetCommit) GetHistory() CommitNodeTargetCommitHistoryCommitHistoryConnection {
+	return v.History
+}
+
+// CommitNodeTargetCommitHistoryCommitHistoryConnection includes the requested fields of the GraphQL type CommitHistoryConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Commit.
+type CommitNodeTargetCommitHistoryCommitHistoryConnection struct {
+	// A list of edges.
+	Edges []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge `json:"edges"`
+	// Information to aid in pagination.
+	PageInfo CommitNodeTargetCommitHistoryCommitHistoryConnectionPageInfo `json:"pageInfo"`
+}
+
+// GetEdges returns CommitNodeTargetCommitHistoryCommitHistoryConnection.Edges, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetCommitHistoryCommitHistoryConnection) GetEdges() []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge {
+	return v.Edges
+}
+
+// GetPageInfo returns CommitNodeTargetCommitHistoryCommitHistoryConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetCommitHistoryCommitHistoryConnection) GetPageInfo() CommitNodeTargetCommitHistoryCommitHistoryConnectionPageInfo {
+	return v.PageInfo
+}
+
+// CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge includes the requested fields of the GraphQL type CommitEdge.
+// The GraphQL type's documentation follows.
+//
+// An edge in a connection.
+type CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge struct {
+	// The item at the end of the edge.
+	Node CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit `json:"node"`
+}
+
+// GetNode returns CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge.Node, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge) GetNode() CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit {
+	return v.Node
+}
+
+// CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit includes the requested fields of the GraphQL type Commit.
+// The GraphQL type's documentation follows.
+//
+// Represents a Git commit.
+type CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit struct {
+	// The datetime when this commit was committed.
+	CommittedDate time.Time `json:"committedDate"`
+}
+
+// GetCommittedDate returns CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit.CommittedDate, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit) GetCommittedDate() time.Time {
+	return v.CommittedDate
+}
+
+// CommitNodeTargetCommitHistoryCommitHistoryConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+// The GraphQL type's documentation follows.
+//
+// Information about pagination in a connection.
+type CommitNodeTargetCommitHistoryCommitHistoryConnectionPageInfo struct {
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+}
+
+// GetEndCursor returns CommitNodeTargetCommitHistoryCommitHistoryConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetCommitHistoryCommitHistoryConnectionPageInfo) GetEndCursor() string {
+	return v.EndCursor
+}
+
+// GetHasNextPage returns CommitNodeTargetCommitHistoryCommitHistoryConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetCommitHistoryCommitHistoryConnectionPageInfo) GetHasNextPage() bool {
+	return v.HasNextPage
+}
+
+// CommitNodeTargetGitObject includes the requested fields of the GraphQL interface GitObject.
+//
+// CommitNodeTargetGitObject is implemented by the following types:
+// CommitNodeTargetBlob
+// CommitNodeTargetCommit
+// CommitNodeTargetTag
+// CommitNodeTargetTree
+// The GraphQL type's documentation follows.
+//
+// Represents a Git object.
+type CommitNodeTargetGitObject interface {
+	implementsGraphQLInterfaceCommitNodeTargetGitObject()
+	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
+	GetTypename() string
+}
+
+func (v *CommitNodeTargetBlob) implementsGraphQLInterfaceCommitNodeTargetGitObject()   {}
+func (v *CommitNodeTargetCommit) implementsGraphQLInterfaceCommitNodeTargetGitObject() {}
+func (v *CommitNodeTargetTag) implementsGraphQLInterfaceCommitNodeTargetGitObject()    {}
+func (v *CommitNodeTargetTree) implementsGraphQLInterfaceCommitNodeTargetGitObject()   {}
+
+func __unmarshalCommitNodeTargetGitObject(b []byte, v *CommitNodeTargetGitObject) error {
+	if string(b) == "null" {
+		return nil
+	}
+
+	var tn struct {
+		TypeName string `json:"__typename"`
+	}
+	err := json.Unmarshal(b, &tn)
+	if err != nil {
+		return err
+	}
+
+	switch tn.TypeName {
+	case "Blob":
+		*v = new(CommitNodeTargetBlob)
+		return json.Unmarshal(b, *v)
+	case "Commit":
+		*v = new(CommitNodeTargetCommit)
+		return json.Unmarshal(b, *v)
+	case "Tag":
+		*v = new(CommitNodeTargetTag)
+		return json.Unmarshal(b, *v)
+	case "Tree":
+		*v = new(CommitNodeTargetTree)
+		return json.Unmarshal(b, *v)
+	case "":
+		return fmt.Errorf(
+			"response was missing GitObject.__typename")
+	default:
+		return fmt.Errorf(
+			`unexpected concrete type for CommitNodeTargetGitObject: "%v"`, tn.TypeName)
+	}
+}
+
+func __marshalCommitNodeTargetGitObject(v *CommitNodeTargetGitObject) ([]byte, error) {
+
+	var typename string
+	switch v := (*v).(type) {
+	case *CommitNodeTargetBlob:
+		typename = "Blob"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*CommitNodeTargetBlob
+		}{typename, v}
+		return json.Marshal(result)
+	case *CommitNodeTargetCommit:
+		typename = "Commit"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*CommitNodeTargetCommit
+		}{typename, v}
+		return json.Marshal(result)
+	case *CommitNodeTargetTag:
+		typename = "Tag"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*CommitNodeTargetTag
+		}{typename, v}
+		return json.Marshal(result)
+	case *CommitNodeTargetTree:
+		typename = "Tree"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*CommitNodeTargetTree
+		}{typename, v}
+		return json.Marshal(result)
+	case nil:
+		return []byte("null"), nil
+	default:
+		return nil, fmt.Errorf(
+			`unexpected concrete type for CommitNodeTargetGitObject: "%T"`, v)
+	}
+}
+
+// CommitNodeTargetTag includes the requested fields of the GraphQL type Tag.
+// The GraphQL type's documentation follows.
+//
+// Represents a Git tag.
+type CommitNodeTargetTag struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns CommitNodeTargetTag.Typename, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetTag) GetTypename() string { return v.Typename }
+
+// CommitNodeTargetTree includes the requested fields of the GraphQL type Tree.
+// The GraphQL type's documentation follows.
+//
+// Represents a Git tree.
+type CommitNodeTargetTree struct {
+	Typename string `json:"__typename"`
+}
+
+// GetTypename returns CommitNodeTargetTree.Typename, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetTree) GetTypename() string { return v.Typename }
+
 // SearchNode includes the requested fields of the GraphQL interface SearchResultItem.
 //
 // SearchNode is implemented by the following types:
@@ -287,21 +621,69 @@ type __checkLoginInput struct {
 // GetLogin returns __checkLoginInput.Login, and is useful for accessing the field via an interface.
 func (v *__checkLoginInput) GetLogin() string { return v.Login }
 
-// __getOrgRepoBranchInformationInput is used internally by genqlient
-type __getOrgRepoBranchInformationInput struct {
-	Login        string  `json:"login"`
-	RepoCursor   *string `json:"repoCursor"`
+// __getBranchCountInput is used internally by genqlient
+type __getBranchCountInput struct {
+	Name  string `json:"name"`
+	Owner string `json:"owner"`
+}
+
+// GetName returns __getBranchCountInput.Name, and is useful for accessing the field via an interface.
+func (v *__getBranchCountInput) GetName() string { return v.Name }
+
+// GetOwner returns __getBranchCountInput.Owner, and is useful for accessing the field via an interface.
+func (v *__getBranchCountInput) GetOwner() string { return v.Owner }
+
+// __getBranchDataInput is used internally by genqlient
+type __getBranchDataInput struct {
+	Name         string  `json:"name"`
+	Owner        string  `json:"owner"`
+	BranchFirst  int     `json:"branchFirst"`
+	TargetBranch string  `json:"targetBranch"`
 	BranchCursor *string `json:"branchCursor"`
 }
 
-// GetLogin returns __getOrgRepoBranchInformationInput.Login, and is useful for accessing the field via an interface.
-func (v *__getOrgRepoBranchInformationInput) GetLogin() string { return v.Login }
+// GetName returns __getBranchDataInput.Name, and is useful for accessing the field via an interface.
+func (v *__getBranchDataInput) GetName() string { return v.Name }
 
-// GetRepoCursor returns __getOrgRepoBranchInformationInput.RepoCursor, and is useful for accessing the field via an interface.
-func (v *__getOrgRepoBranchInformationInput) GetRepoCursor() *string { return v.RepoCursor }
+// GetOwner returns __getBranchDataInput.Owner, and is useful for accessing the field via an interface.
+func (v *__getBranchDataInput) GetOwner() string { return v.Owner }
 
-// GetBranchCursor returns __getOrgRepoBranchInformationInput.BranchCursor, and is useful for accessing the field via an interface.
-func (v *__getOrgRepoBranchInformationInput) GetBranchCursor() *string { return v.BranchCursor }
+// GetBranchFirst returns __getBranchDataInput.BranchFirst, and is useful for accessing the field via an interface.
+func (v *__getBranchDataInput) GetBranchFirst() int { return v.BranchFirst }
+
+// GetTargetBranch returns __getBranchDataInput.TargetBranch, and is useful for accessing the field via an interface.
+func (v *__getBranchDataInput) GetTargetBranch() string { return v.TargetBranch }
+
+// GetBranchCursor returns __getBranchDataInput.BranchCursor, and is useful for accessing the field via an interface.
+func (v *__getBranchDataInput) GetBranchCursor() *string { return v.BranchCursor }
+
+// __getCommitDataInput is used internally by genqlient
+type __getCommitDataInput struct {
+	Name         string  `json:"name"`
+	Owner        string  `json:"owner"`
+	BranchFirst  int     `json:"branchFirst"`
+	CommitFirst  int     `json:"commitFirst"`
+	CommitCursor *string `json:"commitCursor"`
+	BranchName   string  `json:"branchName"`
+}
+
+// GetName returns __getCommitDataInput.Name, and is useful for accessing the field via an interface.
+func (v *__getCommitDataInput) GetName() string { return v.Name }
+
+// GetOwner returns __getCommitDataInput.Owner, and is useful for accessing the field via an interface.
+func (v *__getCommitDataInput) GetOwner() string { return v.Owner }
+
+// GetBranchFirst returns __getCommitDataInput.BranchFirst, and is useful for accessing the field via an interface.
+func (v *__getCommitDataInput) GetBranchFirst() int { return v.BranchFirst }
+
+// GetCommitFirst returns __getCommitDataInput.CommitFirst, and is useful for accessing the field via an interface.
+func (v *__getCommitDataInput) GetCommitFirst() int { return v.CommitFirst }
+
+// GetCommitCursor returns __getCommitDataInput.CommitCursor, and is useful for accessing the field via an interface.
+func (v *__getCommitDataInput) GetCommitCursor() *string { return v.CommitCursor }
+
+// GetBranchName returns __getCommitDataInput.BranchName, and is useful for accessing the field via an interface.
+func (v *__getCommitDataInput) GetBranchName() string { return v.BranchName }
 
 // __getRepoDataBySearchInput is used internally by genqlient
 type __getRepoDataBySearchInput struct {
@@ -314,14 +696,6 @@ func (v *__getRepoDataBySearchInput) GetSearchQuery() string { return v.SearchQu
 
 // GetRepoCursor returns __getRepoDataBySearchInput.RepoCursor, and is useful for accessing the field via an interface.
 func (v *__getRepoDataBySearchInput) GetRepoCursor() *string { return v.RepoCursor }
-
-// __getUserRepoBranchInformationInput is used internally by genqlient
-type __getUserRepoBranchInformationInput struct {
-	Login string `json:"login"`
-}
-
-// GetLogin returns __getUserRepoBranchInformationInput.Login, and is useful for accessing the field via an interface.
-func (v *__getUserRepoBranchInformationInput) GetLogin() string { return v.Login }
 
 // checkLoginOrganization includes the requested fields of the GraphQL type Organization.
 // The GraphQL type's documentation follows.
@@ -361,454 +735,135 @@ type checkLoginUser struct {
 // GetLogin returns checkLoginUser.Login, and is useful for accessing the field via an interface.
 func (v *checkLoginUser) GetLogin() string { return v.Login }
 
-// getOrgRepoBranchInformationOrganization includes the requested fields of the GraphQL type Organization.
-// The GraphQL type's documentation follows.
-//
-// An account on GitHub, with one or more owners, that has repositories, members and teams.
-type getOrgRepoBranchInformationOrganization struct {
-	// A list of repositories that the user owns.
-	Repositories getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnection `json:"repositories"`
-}
-
-// GetRepositories returns getOrgRepoBranchInformationOrganization.Repositories, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganization) GetRepositories() getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnection {
-	return v.Repositories
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnection includes the requested fields of the GraphQL type RepositoryConnection.
-// The GraphQL type's documentation follows.
-//
-// A list of repositories owned by the subject.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnection struct {
-	// A list of edges.
-	Edges []getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge `json:"edges"`
-}
-
-// GetEdges returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnection.Edges, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnection) GetEdges() []getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge {
-	return v.Edges
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge includes the requested fields of the GraphQL type RepositoryEdge.
-// The GraphQL type's documentation follows.
-//
-// An edge in a connection.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge struct {
-	// The item at the end of the edge.
-	Node getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository `json:"node"`
-}
-
-// GetNode returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge.Node, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge) GetNode() getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository {
-	return v.Node
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository includes the requested fields of the GraphQL type Repository.
+// getBranchCountRepository includes the requested fields of the GraphQL type Repository.
 // The GraphQL type's documentation follows.
 //
 // A repository contains the content for a project.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository struct {
-	// The name of the repository.
-	Name string `json:"name"`
+type getBranchCountRepository struct {
 	// Fetch a list of refs from the repository
-	Refs getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection `json:"refs"`
+	Refs getBranchCountRepositoryRefsRefConnection `json:"refs"`
 }
 
-// GetName returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository.Name, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository) GetName() string {
-	return v.Name
-}
+// GetRefs returns getBranchCountRepository.Refs, and is useful for accessing the field via an interface.
+func (v *getBranchCountRepository) GetRefs() getBranchCountRepositoryRefsRefConnection { return v.Refs }
 
-// GetRefs returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository.Refs, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository) GetRefs() getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection {
-	return v.Refs
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection includes the requested fields of the GraphQL type RefConnection.
+// getBranchCountRepositoryRefsRefConnection includes the requested fields of the GraphQL type RefConnection.
 // The GraphQL type's documentation follows.
 //
 // The connection type for Ref.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection struct {
+type getBranchCountRepositoryRefsRefConnection struct {
+	// Identifies the total count of items in the connection.
+	TotalCount int `json:"totalCount"`
+}
+
+// GetTotalCount returns getBranchCountRepositoryRefsRefConnection.TotalCount, and is useful for accessing the field via an interface.
+func (v *getBranchCountRepositoryRefsRefConnection) GetTotalCount() int { return v.TotalCount }
+
+// getBranchCountResponse is returned by getBranchCount on success.
+type getBranchCountResponse struct {
+	// Lookup a given repository by the owner and repository name.
+	Repository getBranchCountRepository `json:"repository"`
+}
+
+// GetRepository returns getBranchCountResponse.Repository, and is useful for accessing the field via an interface.
+func (v *getBranchCountResponse) GetRepository() getBranchCountRepository { return v.Repository }
+
+// getBranchDataRepository includes the requested fields of the GraphQL type Repository.
+// The GraphQL type's documentation follows.
+//
+// A repository contains the content for a project.
+type getBranchDataRepository struct {
+	// Fetch a list of refs from the repository
+	Refs getBranchDataRepositoryRefsRefConnection `json:"refs"`
+}
+
+// GetRefs returns getBranchDataRepository.Refs, and is useful for accessing the field via an interface.
+func (v *getBranchDataRepository) GetRefs() getBranchDataRepositoryRefsRefConnection { return v.Refs }
+
+// getBranchDataRepositoryRefsRefConnection includes the requested fields of the GraphQL type RefConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Ref.
+type getBranchDataRepositoryRefsRefConnection struct {
 	// Identifies the total count of items in the connection.
 	TotalCount int `json:"totalCount"`
 	// A list of nodes.
-	Nodes []getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef `json:"nodes"`
+	Nodes []BranchNode `json:"nodes"`
 	// Information to aid in pagination.
-	PageInfo getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo `json:"pageInfo"`
+	PageInfo getBranchDataRepositoryRefsRefConnectionPageInfo `json:"pageInfo"`
 }
 
-// GetTotalCount returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection.TotalCount, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection) GetTotalCount() int {
-	return v.TotalCount
-}
+// GetTotalCount returns getBranchDataRepositoryRefsRefConnection.TotalCount, and is useful for accessing the field via an interface.
+func (v *getBranchDataRepositoryRefsRefConnection) GetTotalCount() int { return v.TotalCount }
 
-// GetNodes returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection.Nodes, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection) GetNodes() []getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef {
-	return v.Nodes
-}
+// GetNodes returns getBranchDataRepositoryRefsRefConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *getBranchDataRepositoryRefsRefConnection) GetNodes() []BranchNode { return v.Nodes }
 
-// GetPageInfo returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection.PageInfo, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection) GetPageInfo() getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo {
+// GetPageInfo returns getBranchDataRepositoryRefsRefConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *getBranchDataRepositoryRefsRefConnection) GetPageInfo() getBranchDataRepositoryRefsRefConnectionPageInfo {
 	return v.PageInfo
 }
 
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef includes the requested fields of the GraphQL type Ref.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git reference.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef struct {
-	// The ref name.
-	Name string `json:"name"`
-	// The object the ref points to. Returns null when object does not exist.
-	Target getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject `json:"-"`
-}
-
-// GetName returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef.Name, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef) GetName() string {
-	return v.Name
-}
-
-// GetTarget returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef.Target, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef) GetTarget() getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject {
-	return v.Target
-}
-
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef
-		Target json.RawMessage `json:"target"`
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	{
-		dst := &v.Target
-		src := firstPass.Target
-		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshalgetOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject(
-				src, dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef.Target: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-type __premarshalgetOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef struct {
-	Name string `json:"name"`
-
-	Target json.RawMessage `json:"target"`
-}
-
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef) __premarshalJSON() (*__premarshalgetOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef, error) {
-	var retval __premarshalgetOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef
-
-	retval.Name = v.Name
-	{
-
-		dst := &retval.Target
-		src := v.Target
-		var err error
-		*dst, err = __marshalgetOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject(
-			&src)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"unable to marshal getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef.Target: %w", err)
-		}
-	}
-	return &retval, nil
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob includes the requested fields of the GraphQL type Blob.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git blob.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob struct {
-	Typename string `json:"__typename"`
-}
-
-// GetTypename returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob.Typename, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob) GetTypename() string {
-	return v.Typename
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit includes the requested fields of the GraphQL type Commit.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git commit.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit struct {
-	Typename string `json:"__typename"`
-	Id       string `json:"id"`
-	// The linear commit history starting from (and including) this commit, in the same order as `git log`.
-	History getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection `json:"history"`
-}
-
-// GetTypename returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit.Typename, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit) GetTypename() string {
-	return v.Typename
-}
-
-// GetId returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit.Id, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit) GetId() string {
-	return v.Id
-}
-
-// GetHistory returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit.History, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit) GetHistory() getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection {
-	return v.History
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection includes the requested fields of the GraphQL type CommitHistoryConnection.
-// The GraphQL type's documentation follows.
-//
-// The connection type for Commit.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection struct {
-	// Identifies the total count of items in the connection.
-	TotalCount int `json:"totalCount"`
-	// A list of edges.
-	Edges []getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge `json:"edges"`
-	// Information to aid in pagination.
-	PageInfo getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionPageInfo `json:"pageInfo"`
-}
-
-// GetTotalCount returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection.TotalCount, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection) GetTotalCount() int {
-	return v.TotalCount
-}
-
-// GetEdges returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection.Edges, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection) GetEdges() []getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge {
-	return v.Edges
-}
-
-// GetPageInfo returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection.PageInfo, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection) GetPageInfo() getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionPageInfo {
-	return v.PageInfo
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge includes the requested fields of the GraphQL type CommitEdge.
-// The GraphQL type's documentation follows.
-//
-// An edge in a connection.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge struct {
-	// The item at the end of the edge.
-	Node getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit `json:"node"`
-}
-
-// GetNode returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge.Node, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge) GetNode() getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit {
-	return v.Node
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit includes the requested fields of the GraphQL type Commit.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git commit.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit struct {
-	// The datetime when this commit was committed.
-	CommittedDate time.Time `json:"committedDate"`
-}
-
-// GetCommittedDate returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit.CommittedDate, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit) GetCommittedDate() time.Time {
-	return v.CommittedDate
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+// getBranchDataRepositoryRefsRefConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
 // The GraphQL type's documentation follows.
 //
 // Information about pagination in a connection.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionPageInfo struct {
-	// When paginating forwards, the cursor to continue.
-	EndCursor string `json:"endCursor"`
-}
-
-// GetEndCursor returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionPageInfo) GetEndCursor() string {
-	return v.EndCursor
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject includes the requested fields of the GraphQL interface GitObject.
-//
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject is implemented by the following types:
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree
-// The GraphQL type's documentation follows.
-//
-// Represents a Git object.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject interface {
-	implementsGraphQLInterfacegetOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject()
-	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
-	GetTypename() string
-}
-
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob) implementsGraphQLInterfacegetOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject() {
-}
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit) implementsGraphQLInterfacegetOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject() {
-}
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag) implementsGraphQLInterfacegetOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject() {
-}
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree) implementsGraphQLInterfacegetOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject() {
-}
-
-func __unmarshalgetOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject(b []byte, v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject) error {
-	if string(b) == "null" {
-		return nil
-	}
-
-	var tn struct {
-		TypeName string `json:"__typename"`
-	}
-	err := json.Unmarshal(b, &tn)
-	if err != nil {
-		return err
-	}
-
-	switch tn.TypeName {
-	case "Blob":
-		*v = new(getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob)
-		return json.Unmarshal(b, *v)
-	case "Commit":
-		*v = new(getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit)
-		return json.Unmarshal(b, *v)
-	case "Tag":
-		*v = new(getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag)
-		return json.Unmarshal(b, *v)
-	case "Tree":
-		*v = new(getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree)
-		return json.Unmarshal(b, *v)
-	case "":
-		return fmt.Errorf(
-			"response was missing GitObject.__typename")
-	default:
-		return fmt.Errorf(
-			`unexpected concrete type for getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject: "%v"`, tn.TypeName)
-	}
-}
-
-func __marshalgetOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject(v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject) ([]byte, error) {
-
-	var typename string
-	switch v := (*v).(type) {
-	case *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob:
-		typename = "Blob"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob
-		}{typename, v}
-		return json.Marshal(result)
-	case *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit:
-		typename = "Commit"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit
-		}{typename, v}
-		return json.Marshal(result)
-	case *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag:
-		typename = "Tag"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag
-		}{typename, v}
-		return json.Marshal(result)
-	case *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree:
-		typename = "Tree"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree
-		}{typename, v}
-		return json.Marshal(result)
-	case nil:
-		return []byte("null"), nil
-	default:
-		return nil, fmt.Errorf(
-			`unexpected concrete type for getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject: "%T"`, v)
-	}
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag includes the requested fields of the GraphQL type Tag.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git tag.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag struct {
-	Typename string `json:"__typename"`
-}
-
-// GetTypename returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag.Typename, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag) GetTypename() string {
-	return v.Typename
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree includes the requested fields of the GraphQL type Tree.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git tree.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree struct {
-	Typename string `json:"__typename"`
-}
-
-// GetTypename returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree.Typename, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree) GetTypename() string {
-	return v.Typename
-}
-
-// getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
-// The GraphQL type's documentation follows.
-//
-// Information about pagination in a connection.
-type getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo struct {
+type getBranchDataRepositoryRefsRefConnectionPageInfo struct {
 	// When paginating forwards, the cursor to continue.
 	EndCursor string `json:"endCursor"`
 	// When paginating backwards, the cursor to continue.
 	StartCursor string `json:"startCursor"`
 }
 
-// GetEndCursor returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo) GetEndCursor() string {
-	return v.EndCursor
-}
+// GetEndCursor returns getBranchDataRepositoryRefsRefConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *getBranchDataRepositoryRefsRefConnectionPageInfo) GetEndCursor() string { return v.EndCursor }
 
-// GetStartCursor returns getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo.StartCursor, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo) GetStartCursor() string {
+// GetStartCursor returns getBranchDataRepositoryRefsRefConnectionPageInfo.StartCursor, and is useful for accessing the field via an interface.
+func (v *getBranchDataRepositoryRefsRefConnectionPageInfo) GetStartCursor() string {
 	return v.StartCursor
 }
 
-// getOrgRepoBranchInformationResponse is returned by getOrgRepoBranchInformation on success.
-type getOrgRepoBranchInformationResponse struct {
-	// Lookup a organization by login.
-	Organization getOrgRepoBranchInformationOrganization `json:"organization"`
+// getBranchDataResponse is returned by getBranchData on success.
+type getBranchDataResponse struct {
+	// Lookup a given repository by the owner and repository name.
+	Repository getBranchDataRepository `json:"repository"`
 }
 
-// GetOrganization returns getOrgRepoBranchInformationResponse.Organization, and is useful for accessing the field via an interface.
-func (v *getOrgRepoBranchInformationResponse) GetOrganization() getOrgRepoBranchInformationOrganization {
-	return v.Organization
+// GetRepository returns getBranchDataResponse.Repository, and is useful for accessing the field via an interface.
+func (v *getBranchDataResponse) GetRepository() getBranchDataRepository { return v.Repository }
+
+// getCommitDataRepository includes the requested fields of the GraphQL type Repository.
+// The GraphQL type's documentation follows.
+//
+// A repository contains the content for a project.
+type getCommitDataRepository struct {
+	// Fetch a list of refs from the repository
+	Refs getCommitDataRepositoryRefsRefConnection `json:"refs"`
 }
+
+// GetRefs returns getCommitDataRepository.Refs, and is useful for accessing the field via an interface.
+func (v *getCommitDataRepository) GetRefs() getCommitDataRepositoryRefsRefConnection { return v.Refs }
+
+// getCommitDataRepositoryRefsRefConnection includes the requested fields of the GraphQL type RefConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Ref.
+type getCommitDataRepositoryRefsRefConnection struct {
+	// A list of nodes.
+	Nodes []CommitNode `json:"nodes"`
+}
+
+// GetNodes returns getCommitDataRepositoryRefsRefConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *getCommitDataRepositoryRefsRefConnection) GetNodes() []CommitNode { return v.Nodes }
+
+// getCommitDataResponse is returned by getCommitData on success.
+type getCommitDataResponse struct {
+	// Lookup a given repository by the owner and repository name.
+	Repository getCommitDataRepository `json:"repository"`
+}
+
+// GetRepository returns getCommitDataResponse.Repository, and is useful for accessing the field via an interface.
+func (v *getCommitDataResponse) GetRepository() getCommitDataRepository { return v.Repository }
 
 // getRepoDataBySearchResponse is returned by getRepoDataBySearch on success.
 type getRepoDataBySearchResponse struct {
@@ -947,455 +1002,6 @@ func (v *getRepoDataBySearchSearchSearchResultItemConnectionPageInfo) GetEndCurs
 	return v.EndCursor
 }
 
-// getUserRepoBranchInformationOrganization includes the requested fields of the GraphQL type Organization.
-// The GraphQL type's documentation follows.
-//
-// An account on GitHub, with one or more owners, that has repositories, members and teams.
-type getUserRepoBranchInformationOrganization struct {
-	// A list of repositories that the user owns.
-	Repositories getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnection `json:"repositories"`
-}
-
-// GetRepositories returns getUserRepoBranchInformationOrganization.Repositories, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganization) GetRepositories() getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnection {
-	return v.Repositories
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnection includes the requested fields of the GraphQL type RepositoryConnection.
-// The GraphQL type's documentation follows.
-//
-// A list of repositories owned by the subject.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnection struct {
-	// A list of edges.
-	Edges []getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge `json:"edges"`
-}
-
-// GetEdges returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnection.Edges, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnection) GetEdges() []getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge {
-	return v.Edges
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge includes the requested fields of the GraphQL type RepositoryEdge.
-// The GraphQL type's documentation follows.
-//
-// An edge in a connection.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge struct {
-	// The item at the end of the edge.
-	Node getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository `json:"node"`
-}
-
-// GetNode returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge.Node, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdge) GetNode() getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository {
-	return v.Node
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository includes the requested fields of the GraphQL type Repository.
-// The GraphQL type's documentation follows.
-//
-// A repository contains the content for a project.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository struct {
-	// The name of the repository.
-	Name string `json:"name"`
-	// Fetch a list of refs from the repository
-	Refs getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection `json:"refs"`
-}
-
-// GetName returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository.Name, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository) GetName() string {
-	return v.Name
-}
-
-// GetRefs returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository.Refs, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepository) GetRefs() getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection {
-	return v.Refs
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection includes the requested fields of the GraphQL type RefConnection.
-// The GraphQL type's documentation follows.
-//
-// The connection type for Ref.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection struct {
-	// Identifies the total count of items in the connection.
-	TotalCount int `json:"totalCount"`
-	// A list of nodes.
-	Nodes []getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef `json:"nodes"`
-	// Information to aid in pagination.
-	PageInfo getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo `json:"pageInfo"`
-}
-
-// GetTotalCount returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection.TotalCount, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection) GetTotalCount() int {
-	return v.TotalCount
-}
-
-// GetNodes returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection.Nodes, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection) GetNodes() []getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef {
-	return v.Nodes
-}
-
-// GetPageInfo returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection.PageInfo, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnection) GetPageInfo() getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo {
-	return v.PageInfo
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef includes the requested fields of the GraphQL type Ref.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git reference.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef struct {
-	// The ref name.
-	Name string `json:"name"`
-	// The object the ref points to. Returns null when object does not exist.
-	Target getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject `json:"-"`
-}
-
-// GetName returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef.Name, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef) GetName() string {
-	return v.Name
-}
-
-// GetTarget returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef.Target, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef) GetTarget() getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject {
-	return v.Target
-}
-
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef) UnmarshalJSON(b []byte) error {
-
-	if string(b) == "null" {
-		return nil
-	}
-
-	var firstPass struct {
-		*getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef
-		Target json.RawMessage `json:"target"`
-		graphql.NoUnmarshalJSON
-	}
-	firstPass.getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef = v
-
-	err := json.Unmarshal(b, &firstPass)
-	if err != nil {
-		return err
-	}
-
-	{
-		dst := &v.Target
-		src := firstPass.Target
-		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshalgetUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject(
-				src, dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef.Target: %w", err)
-			}
-		}
-	}
-	return nil
-}
-
-type __premarshalgetUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef struct {
-	Name string `json:"name"`
-
-	Target json.RawMessage `json:"target"`
-}
-
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef) MarshalJSON() ([]byte, error) {
-	premarshaled, err := v.__premarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(premarshaled)
-}
-
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef) __premarshalJSON() (*__premarshalgetUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef, error) {
-	var retval __premarshalgetUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef
-
-	retval.Name = v.Name
-	{
-
-		dst := &retval.Target
-		src := v.Target
-		var err error
-		*dst, err = __marshalgetUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject(
-			&src)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"unable to marshal getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRef.Target: %w", err)
-		}
-	}
-	return &retval, nil
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob includes the requested fields of the GraphQL type Blob.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git blob.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob struct {
-	Typename string `json:"__typename"`
-}
-
-// GetTypename returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob.Typename, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob) GetTypename() string {
-	return v.Typename
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit includes the requested fields of the GraphQL type Commit.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git commit.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit struct {
-	Typename string `json:"__typename"`
-	Id       string `json:"id"`
-	// The linear commit history starting from (and including) this commit, in the same order as `git log`.
-	History getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection `json:"history"`
-}
-
-// GetTypename returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit.Typename, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit) GetTypename() string {
-	return v.Typename
-}
-
-// GetId returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit.Id, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit) GetId() string {
-	return v.Id
-}
-
-// GetHistory returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit.History, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit) GetHistory() getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection {
-	return v.History
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection includes the requested fields of the GraphQL type CommitHistoryConnection.
-// The GraphQL type's documentation follows.
-//
-// The connection type for Commit.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection struct {
-	// Identifies the total count of items in the connection.
-	TotalCount int `json:"totalCount"`
-	// A list of edges.
-	Edges []getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge `json:"edges"`
-	// Information to aid in pagination.
-	PageInfo getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionPageInfo `json:"pageInfo"`
-}
-
-// GetTotalCount returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection.TotalCount, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection) GetTotalCount() int {
-	return v.TotalCount
-}
-
-// GetEdges returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection.Edges, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection) GetEdges() []getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge {
-	return v.Edges
-}
-
-// GetPageInfo returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection.PageInfo, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnection) GetPageInfo() getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionPageInfo {
-	return v.PageInfo
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge includes the requested fields of the GraphQL type CommitEdge.
-// The GraphQL type's documentation follows.
-//
-// An edge in a connection.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge struct {
-	// The item at the end of the edge.
-	Node getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit `json:"node"`
-}
-
-// GetNode returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge.Node, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge) GetNode() getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit {
-	return v.Node
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit includes the requested fields of the GraphQL type Commit.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git commit.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit struct {
-	// The datetime when this commit was committed.
-	CommittedDate time.Time `json:"committedDate"`
-}
-
-// GetCommittedDate returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit.CommittedDate, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit) GetCommittedDate() time.Time {
-	return v.CommittedDate
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
-// The GraphQL type's documentation follows.
-//
-// Information about pagination in a connection.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionPageInfo struct {
-	// When paginating forwards, the cursor to continue.
-	EndCursor string `json:"endCursor"`
-}
-
-// GetEndCursor returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommitHistoryCommitHistoryConnectionPageInfo) GetEndCursor() string {
-	return v.EndCursor
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject includes the requested fields of the GraphQL interface GitObject.
-//
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject is implemented by the following types:
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree
-// The GraphQL type's documentation follows.
-//
-// Represents a Git object.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject interface {
-	implementsGraphQLInterfacegetUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject()
-	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
-	GetTypename() string
-}
-
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob) implementsGraphQLInterfacegetUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject() {
-}
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit) implementsGraphQLInterfacegetUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject() {
-}
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag) implementsGraphQLInterfacegetUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject() {
-}
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree) implementsGraphQLInterfacegetUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject() {
-}
-
-func __unmarshalgetUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject(b []byte, v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject) error {
-	if string(b) == "null" {
-		return nil
-	}
-
-	var tn struct {
-		TypeName string `json:"__typename"`
-	}
-	err := json.Unmarshal(b, &tn)
-	if err != nil {
-		return err
-	}
-
-	switch tn.TypeName {
-	case "Blob":
-		*v = new(getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob)
-		return json.Unmarshal(b, *v)
-	case "Commit":
-		*v = new(getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit)
-		return json.Unmarshal(b, *v)
-	case "Tag":
-		*v = new(getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag)
-		return json.Unmarshal(b, *v)
-	case "Tree":
-		*v = new(getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree)
-		return json.Unmarshal(b, *v)
-	case "":
-		return fmt.Errorf(
-			"response was missing GitObject.__typename")
-	default:
-		return fmt.Errorf(
-			`unexpected concrete type for getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject: "%v"`, tn.TypeName)
-	}
-}
-
-func __marshalgetUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject(v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject) ([]byte, error) {
-
-	var typename string
-	switch v := (*v).(type) {
-	case *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob:
-		typename = "Blob"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetBlob
-		}{typename, v}
-		return json.Marshal(result)
-	case *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit:
-		typename = "Commit"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetCommit
-		}{typename, v}
-		return json.Marshal(result)
-	case *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag:
-		typename = "Tag"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag
-		}{typename, v}
-		return json.Marshal(result)
-	case *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree:
-		typename = "Tree"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree
-		}{typename, v}
-		return json.Marshal(result)
-	case nil:
-		return []byte("null"), nil
-	default:
-		return nil, fmt.Errorf(
-			`unexpected concrete type for getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetGitObject: "%T"`, v)
-	}
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag includes the requested fields of the GraphQL type Tag.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git tag.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag struct {
-	Typename string `json:"__typename"`
-}
-
-// GetTypename returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag.Typename, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTag) GetTypename() string {
-	return v.Typename
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree includes the requested fields of the GraphQL type Tree.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git tree.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree struct {
-	Typename string `json:"__typename"`
-}
-
-// GetTypename returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree.Typename, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionNodesRefTargetTree) GetTypename() string {
-	return v.Typename
-}
-
-// getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
-// The GraphQL type's documentation follows.
-//
-// Information about pagination in a connection.
-type getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo struct {
-	// When paginating forwards, the cursor to continue.
-	EndCursor string `json:"endCursor"`
-	// When paginating backwards, the cursor to continue.
-	StartCursor string `json:"startCursor"`
-}
-
-// GetEndCursor returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo) GetEndCursor() string {
-	return v.EndCursor
-}
-
-// GetStartCursor returns getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo.StartCursor, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationOrganizationRepositoriesRepositoryConnectionEdgesRepositoryEdgeNodeRepositoryRefsRefConnectionPageInfo) GetStartCursor() string {
-	return v.StartCursor
-}
-
-// getUserRepoBranchInformationResponse is returned by getUserRepoBranchInformation on success.
-type getUserRepoBranchInformationResponse struct {
-	// Lookup a organization by login.
-	Organization getUserRepoBranchInformationOrganization `json:"organization"`
-}
-
-// GetOrganization returns getUserRepoBranchInformationResponse.Organization, and is useful for accessing the field via an interface.
-func (v *getUserRepoBranchInformationResponse) GetOrganization() getUserRepoBranchInformationOrganization {
-	return v.Organization
-}
-
 // The query or mutation executed by checkLogin.
 const checkLogin_Operation = `
 query checkLogin ($login: String!) {
@@ -1434,39 +1040,121 @@ func checkLogin(
 	return &data, err
 }
 
-// The query or mutation executed by getOrgRepoBranchInformation.
-const getOrgRepoBranchInformation_Operation = `
-query getOrgRepoBranchInformation ($login: String!, $repoCursor: String, $branchCursor: String) {
-	organization(login: $login) {
-		repositories(affiliations: OWNER, first: 100, after: $repoCursor, isArchived: false, isFork: false) {
-			edges {
-				node {
-					name
-					refs(refPrefix: "refs/heads/", first: 100, after: $branchCursor) {
-						totalCount
-						nodes {
-							name
-							target {
-								__typename
-								... on Commit {
-									id
-									history {
-										totalCount
-										edges {
-											node {
-												committedDate
-											}
-										}
-										pageInfo {
-											endCursor
-										}
-									}
+// The query or mutation executed by getBranchCount.
+const getBranchCount_Operation = `
+query getBranchCount ($name: String!, $owner: String!) {
+	repository(name: $name, owner: $owner) {
+		refs(refPrefix: "refs/heads/") {
+			totalCount
+		}
+	}
+}
+`
+
+func getBranchCount(
+	ctx context.Context,
+	client graphql.Client,
+	name string,
+	owner string,
+) (*getBranchCountResponse, error) {
+	req := &graphql.Request{
+		OpName: "getBranchCount",
+		Query:  getBranchCount_Operation,
+		Variables: &__getBranchCountInput{
+			Name:  name,
+			Owner: owner,
+		},
+	}
+	var err error
+
+	var data getBranchCountResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+// The query or mutation executed by getBranchData.
+const getBranchData_Operation = `
+query getBranchData ($name: String!, $owner: String!, $branchFirst: Int!, $targetBranch: String!, $branchCursor: String) {
+	repository(name: $name, owner: $owner) {
+		refs(refPrefix: "refs/heads/", first: $branchFirst, after: $branchCursor) {
+			totalCount
+			nodes {
+				name
+				compare(headRef: $targetBranch) {
+					aheadBy
+					behindBy
+				}
+			}
+			pageInfo {
+				endCursor
+				startCursor
+			}
+		}
+	}
+}
+`
+
+func getBranchData(
+	ctx context.Context,
+	client graphql.Client,
+	name string,
+	owner string,
+	branchFirst int,
+	targetBranch string,
+	branchCursor *string,
+) (*getBranchDataResponse, error) {
+	req := &graphql.Request{
+		OpName: "getBranchData",
+		Query:  getBranchData_Operation,
+		Variables: &__getBranchDataInput{
+			Name:         name,
+			Owner:        owner,
+			BranchFirst:  branchFirst,
+			TargetBranch: targetBranch,
+			BranchCursor: branchCursor,
+		},
+	}
+	var err error
+
+	var data getBranchDataResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+// The query or mutation executed by getCommitData.
+const getCommitData_Operation = `
+query getCommitData ($name: String!, $owner: String!, $branchFirst: Int!, $commitFirst: Int!, $commitCursor: String, $branchName: String!) {
+	repository(name: $name, owner: $owner) {
+		refs(refPrefix: "refs/heads/", first: $branchFirst, query: $branchName) {
+			nodes {
+				target {
+					__typename
+					... on Commit {
+						id
+						history(first: $commitFirst, after: $commitCursor) {
+							edges {
+								node {
+									committedDate
 								}
 							}
-						}
-						pageInfo {
-							endCursor
-							startCursor
+							pageInfo {
+								endCursor
+								hasNextPage
+							}
 						}
 					}
 				}
@@ -1476,25 +1164,31 @@ query getOrgRepoBranchInformation ($login: String!, $repoCursor: String, $branch
 }
 `
 
-func getOrgRepoBranchInformation(
+func getCommitData(
 	ctx context.Context,
 	client graphql.Client,
-	login string,
-	repoCursor *string,
-	branchCursor *string,
-) (*getOrgRepoBranchInformationResponse, error) {
+	name string,
+	owner string,
+	branchFirst int,
+	commitFirst int,
+	commitCursor *string,
+	branchName string,
+) (*getCommitDataResponse, error) {
 	req := &graphql.Request{
-		OpName: "getOrgRepoBranchInformation",
-		Query:  getOrgRepoBranchInformation_Operation,
-		Variables: &__getOrgRepoBranchInformationInput{
-			Login:        login,
-			RepoCursor:   repoCursor,
-			BranchCursor: branchCursor,
+		OpName: "getCommitData",
+		Query:  getCommitData_Operation,
+		Variables: &__getCommitDataInput{
+			Name:         name,
+			Owner:        owner,
+			BranchFirst:  branchFirst,
+			CommitFirst:  commitFirst,
+			CommitCursor: commitCursor,
+			BranchName:   branchName,
 		},
 	}
 	var err error
 
-	var data getOrgRepoBranchInformationResponse
+	var data getCommitDataResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
@@ -1548,74 +1242,6 @@ func getRepoDataBySearch(
 	var err error
 
 	var data getRepoDataBySearchResponse
-	resp := &graphql.Response{Data: &data}
-
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
-	)
-
-	return &data, err
-}
-
-// The query or mutation executed by getUserRepoBranchInformation.
-const getUserRepoBranchInformation_Operation = `
-query getUserRepoBranchInformation ($login: String!) {
-	organization(login: $login) {
-		repositories(affiliations: OWNER, first: 10) {
-			edges {
-				node {
-					name
-					refs(refPrefix: "refs/heads/", first: 10) {
-						totalCount
-						nodes {
-							name
-							target {
-								__typename
-								... on Commit {
-									id
-									history {
-										totalCount
-										edges {
-											node {
-												committedDate
-											}
-										}
-										pageInfo {
-											endCursor
-										}
-									}
-								}
-							}
-						}
-						pageInfo {
-							endCursor
-							startCursor
-						}
-					}
-				}
-			}
-		}
-	}
-}
-`
-
-func getUserRepoBranchInformation(
-	ctx context.Context,
-	client graphql.Client,
-	login string,
-) (*getUserRepoBranchInformationResponse, error) {
-	req := &graphql.Request{
-		OpName: "getUserRepoBranchInformation",
-		Query:  getUserRepoBranchInformation_Operation,
-		Variables: &__getUserRepoBranchInformationInput{
-			Login: login,
-		},
-	}
-	var err error
-
-	var data getUserRepoBranchInformationResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(

@@ -6,11 +6,37 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetNumPages(t *testing.T) {
+func TestGetNumPages100(t *testing.T) {
+	p := float64(100)
 	n := float64(375)
+
 	expected := 4
 
-	num := getNumPages(n)
+	num := getNumPages(p, n)
+
+	assert.Equal(t, expected, num)
+
+}
+
+func TestGetNumPages10(t *testing.T) {
+	p := float64(10)
+	n := float64(375)
+
+	expected := 38
+
+	num := getNumPages(p, n)
+
+	assert.Equal(t, expected, num)
+
+}
+
+func TestGetNumPages1(t *testing.T) {
+	p := float64(10)
+	n := float64(1)
+
+	expected := 1
+
+	num := getNumPages(p, n)
 
 	assert.Equal(t, expected, num)
 
