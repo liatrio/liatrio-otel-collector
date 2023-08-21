@@ -248,8 +248,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			// which would require tons of pageation and requests to the api. Doing
 			// so via the rest api is much more efficient as it's a direct endpoint
 			// with limited pageation.
-            // Due to the above, we'll only run this actual code when the metric
-            // is excplicitly enabled.
+			// Due to the above, we'll only run this actual code when the metric
+			// is excplicitly enabled.
 			if ghs.cfg.MetricsBuilderConfig.Metrics.GitRepositoryContributorCount.Enabled {
 				gc := github.NewClient(ghs.client)
 				contribs, _, err := gc.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, name, nil)
