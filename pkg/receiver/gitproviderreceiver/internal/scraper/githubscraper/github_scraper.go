@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
+	"github.com/google/go-github/v53/github"
 	"github.com/shurcooL/githubv4"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -240,6 +241,32 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				DefaultBranch: defaultBranch,
 			}
 
+			// Getting contributor count via the graphql api is very process heavy
+			// as you have to get all commits on the default branch and then
+			// iterate through each commit to get the author and committer, and remove
+			// duplicate values. The default branch could be thousands of commits,
+			// which would require tons of pageation and requests to the api. Doing
+			// so via the rest api is much more efficient as it's a direct endpoint
+			// with limited pageation.
+			// Due to the above, we'll only run this actual code when the metric
+			// is excplicitly enabled.
+			if ghs.cfg.MetricsBuilderConfig.Metrics.GitRepositoryContributorCount.Enabled {
+				gc := github.NewClient(ghs.client)
+				contribs, _, err := gc.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, name, nil)
+				if err != nil {
+					ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
+				}
+
+				contribCount := 0
+				if len(contribs) > 0 {
+					contribCount = len(contribs)
+				}
+
+				ghs.logger.Sugar().Debugf("contributor count: %v for repo %v", contribCount, repo)
+
+				ghs.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contribCount), name)
+			}
+
 			count, err := getBranchCount(ctx, genClient, name, ghs.cfg.GitHubOrg)
 			if err != nil {
 				ghs.logger.Sugar().Errorf("error getting branch count", zap.Error(err))
@@ -282,6 +309,10 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					c, err := getCommitData(ctx, genClient, name, ghs.cfg.GitHubOrg, 1, 100, cc, branch.Name)
 					if err != nil {
 						ghs.logger.Sugar().Errorf("error getting commit data", zap.Error(err))
+					}
+
+					if len(c.Repository.GetRefs().Nodes) == 0 {
+						break
 					}
 
 					tar := c.Repository.GetRefs().Nodes[0].GetTarget()

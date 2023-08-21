@@ -62,7 +62,6 @@ func TestMetricsBuilder(t *testing.T) {
 			allMetricsCount++
 			mb.RecordGitRepositoryBranchTimeDataPoint(ts, 1, "repository.name-val", "branch.name-val")
 
-			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordGitRepositoryContributorCountDataPoint(ts, 1, "repository.name-val")
 

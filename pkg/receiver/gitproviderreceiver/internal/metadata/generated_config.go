@@ -41,7 +41,7 @@ func DefaultMetricsConfig() MetricsConfig {
 			Enabled: true,
 		},
 		GitRepositoryContributorCount: MetricConfig{
-			Enabled: true,
+			Enabled: false,
 		},
 		GitRepositoryCount: MetricConfig{
 			Enabled: true,
