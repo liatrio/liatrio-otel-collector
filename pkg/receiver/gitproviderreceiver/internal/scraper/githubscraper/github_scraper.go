@@ -8,6 +8,7 @@ import (
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/shurcooL/githubv4"
+    "github.com/google/go-github/v53/github"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -239,6 +240,20 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				Owner:         ghs.cfg.GitHubOrg,
 				DefaultBranch: defaultBranch,
 			}
+
+            // Getting contributor count via the graphql api is very process heavy
+            // as you have to get all commits on the default branch and then
+            // iterate through each commit to get the author and committer, and remove
+            // duplicate values. The default branch could be thousands of commits,
+            // which would require tons of pageation and requests to the api. Doing
+            // so via the rest api is much more efficient as it's a direct endpoint
+            // with limited pageation. 
+            gc := github.NewClient(ghs.client)
+            contribs, _, err := gc.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, name, nil)
+            if err != nil {
+                ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
+            }
+            ghs.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(len(contribs)), name)
 
 			count, err := getBranchCount(ctx, genClient, name, ghs.cfg.GitHubOrg)
 			if err != nil {
