@@ -46,7 +46,7 @@ metrics:
             value_type: int
         attributes: [repository.name]
     git.repository.contributor.count:
-        enabled: true
+        enabled: false
         description: Total number of unique contributors to this repository
         unit: 1
         gauge:

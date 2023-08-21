@@ -248,18 +248,24 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			// which would require tons of pageation and requests to the api. Doing
 			// so via the rest api is much more efficient as it's a direct endpoint
 			// with limited pageation.
-			gc := github.NewClient(ghs.client)
-			contribs, _, err := gc.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, name, nil)
-			if err != nil {
-				ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
-			}
+            // Due to the above, we'll only run this actual code when the metric
+            // is excplicitly enabled.
+			if ghs.cfg.MetricsBuilderConfig.Metrics.GitRepositoryContributorCount.Enabled {
+				gc := github.NewClient(ghs.client)
+				contribs, _, err := gc.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, name, nil)
+				if err != nil {
+					ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
+				}
 
-			contribCount := 0
-			if len(contribs) > 0 {
-				contribCount = len(contribs)
-			}
+				contribCount := 0
+				if len(contribs) > 0 {
+					contribCount = len(contribs)
+				}
 
-			ghs.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contribCount), name)
+				ghs.logger.Sugar().Debugf("contributor count: %v for repo %v", contribCount, repo)
+
+				ghs.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contribCount), name)
+			}
 
 			count, err := getBranchCount(ctx, genClient, name, ghs.cfg.GitHubOrg)
 			if err != nil {
@@ -305,7 +311,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 						ghs.logger.Sugar().Errorf("error getting commit data", zap.Error(err))
 					}
 
-					if len(c.Repository.GetRefs().Nodes) > 0 {
+					if len(c.Repository.GetRefs().Nodes) == 0 {
 						break
 					}
 
