@@ -345,6 +345,37 @@ type CommitNodeTargetTree struct {
 // GetTypename returns CommitNodeTargetTree.Typename, and is useful for accessing the field via an interface.
 func (v *CommitNodeTargetTree) GetTypename() string { return v.Typename }
 
+// PullRequestNode includes the requested fields of the GraphQL type PullRequest.
+// The GraphQL type's documentation follows.
+//
+// A repository pull request.
+type PullRequestNode struct {
+	Id string `json:"id"`
+	// Identifies the date and time when the object was created.
+	CreatedAt time.Time `json:"createdAt"`
+	// `true` if the pull request is closed
+	Closed bool `json:"closed"`
+	// Identifies the date and time when the object was closed.
+	ClosedAt time.Time `json:"closedAt"`
+	// Identifies the name of the head Ref associated with the pull request, even if the ref has been deleted.
+	HeadRefName string `json:"headRefName"`
+}
+
+// GetId returns PullRequestNode.Id, and is useful for accessing the field via an interface.
+func (v *PullRequestNode) GetId() string { return v.Id }
+
+// GetCreatedAt returns PullRequestNode.CreatedAt, and is useful for accessing the field via an interface.
+func (v *PullRequestNode) GetCreatedAt() time.Time { return v.CreatedAt }
+
+// GetClosed returns PullRequestNode.Closed, and is useful for accessing the field via an interface.
+func (v *PullRequestNode) GetClosed() bool { return v.Closed }
+
+// GetClosedAt returns PullRequestNode.ClosedAt, and is useful for accessing the field via an interface.
+func (v *PullRequestNode) GetClosedAt() time.Time { return v.ClosedAt }
+
+// GetHeadRefName returns PullRequestNode.HeadRefName, and is useful for accessing the field via an interface.
+func (v *PullRequestNode) GetHeadRefName() string { return v.HeadRefName }
+
 // SearchNode includes the requested fields of the GraphQL interface SearchResultItem.
 //
 // SearchNode is implemented by the following types:
@@ -685,6 +716,38 @@ func (v *__getCommitDataInput) GetCommitCursor() *string { return v.CommitCursor
 // GetBranchName returns __getCommitDataInput.BranchName, and is useful for accessing the field via an interface.
 func (v *__getCommitDataInput) GetBranchName() string { return v.BranchName }
 
+// __getPullRequestCountInput is used internally by genqlient
+type __getPullRequestCountInput struct {
+	Name  string `json:"name"`
+	Owner string `json:"owner"`
+}
+
+// GetName returns __getPullRequestCountInput.Name, and is useful for accessing the field via an interface.
+func (v *__getPullRequestCountInput) GetName() string { return v.Name }
+
+// GetOwner returns __getPullRequestCountInput.Owner, and is useful for accessing the field via an interface.
+func (v *__getPullRequestCountInput) GetOwner() string { return v.Owner }
+
+// __getPullRequestDataInput is used internally by genqlient
+type __getPullRequestDataInput struct {
+	Name     string  `json:"name"`
+	Owner    string  `json:"owner"`
+	PrFirst  int     `json:"prFirst"`
+	PrCursor *string `json:"prCursor"`
+}
+
+// GetName returns __getPullRequestDataInput.Name, and is useful for accessing the field via an interface.
+func (v *__getPullRequestDataInput) GetName() string { return v.Name }
+
+// GetOwner returns __getPullRequestDataInput.Owner, and is useful for accessing the field via an interface.
+func (v *__getPullRequestDataInput) GetOwner() string { return v.Owner }
+
+// GetPrFirst returns __getPullRequestDataInput.PrFirst, and is useful for accessing the field via an interface.
+func (v *__getPullRequestDataInput) GetPrFirst() int { return v.PrFirst }
+
+// GetPrCursor returns __getPullRequestDataInput.PrCursor, and is useful for accessing the field via an interface.
+func (v *__getPullRequestDataInput) GetPrCursor() *string { return v.PrCursor }
+
 // __getRepoDataBySearchInput is used internally by genqlient
 type __getRepoDataBySearchInput struct {
 	SearchQuery string  `json:"searchQuery"`
@@ -864,6 +927,112 @@ type getCommitDataResponse struct {
 
 // GetRepository returns getCommitDataResponse.Repository, and is useful for accessing the field via an interface.
 func (v *getCommitDataResponse) GetRepository() getCommitDataRepository { return v.Repository }
+
+// getPullRequestCountRepository includes the requested fields of the GraphQL type Repository.
+// The GraphQL type's documentation follows.
+//
+// A repository contains the content for a project.
+type getPullRequestCountRepository struct {
+	// A list of pull requests that have been opened in the repository.
+	PullRequests getPullRequestCountRepositoryPullRequestsPullRequestConnection `json:"pullRequests"`
+}
+
+// GetPullRequests returns getPullRequestCountRepository.PullRequests, and is useful for accessing the field via an interface.
+func (v *getPullRequestCountRepository) GetPullRequests() getPullRequestCountRepositoryPullRequestsPullRequestConnection {
+	return v.PullRequests
+}
+
+// getPullRequestCountRepositoryPullRequestsPullRequestConnection includes the requested fields of the GraphQL type PullRequestConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for PullRequest.
+type getPullRequestCountRepositoryPullRequestsPullRequestConnection struct {
+	// Identifies the total count of items in the connection.
+	TotalCount int `json:"totalCount"`
+}
+
+// GetTotalCount returns getPullRequestCountRepositoryPullRequestsPullRequestConnection.TotalCount, and is useful for accessing the field via an interface.
+func (v *getPullRequestCountRepositoryPullRequestsPullRequestConnection) GetTotalCount() int {
+	return v.TotalCount
+}
+
+// getPullRequestCountResponse is returned by getPullRequestCount on success.
+type getPullRequestCountResponse struct {
+	// Lookup a given repository by the owner and repository name.
+	Repository getPullRequestCountRepository `json:"repository"`
+}
+
+// GetRepository returns getPullRequestCountResponse.Repository, and is useful for accessing the field via an interface.
+func (v *getPullRequestCountResponse) GetRepository() getPullRequestCountRepository {
+	return v.Repository
+}
+
+// getPullRequestDataRepository includes the requested fields of the GraphQL type Repository.
+// The GraphQL type's documentation follows.
+//
+// A repository contains the content for a project.
+type getPullRequestDataRepository struct {
+	// A list of pull requests that have been opened in the repository.
+	PullRequests getPullRequestDataRepositoryPullRequestsPullRequestConnection `json:"pullRequests"`
+}
+
+// GetPullRequests returns getPullRequestDataRepository.PullRequests, and is useful for accessing the field via an interface.
+func (v *getPullRequestDataRepository) GetPullRequests() getPullRequestDataRepositoryPullRequestsPullRequestConnection {
+	return v.PullRequests
+}
+
+// getPullRequestDataRepositoryPullRequestsPullRequestConnection includes the requested fields of the GraphQL type PullRequestConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for PullRequest.
+type getPullRequestDataRepositoryPullRequestsPullRequestConnection struct {
+	// A list of nodes.
+	Nodes []PullRequestNode `json:"nodes"`
+	// Information to aid in pagination.
+	PageInfo getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo `json:"pageInfo"`
+}
+
+// GetNodes returns getPullRequestDataRepositoryPullRequestsPullRequestConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *getPullRequestDataRepositoryPullRequestsPullRequestConnection) GetNodes() []PullRequestNode {
+	return v.Nodes
+}
+
+// GetPageInfo returns getPullRequestDataRepositoryPullRequestsPullRequestConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *getPullRequestDataRepositoryPullRequestsPullRequestConnection) GetPageInfo() getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo {
+	return v.PageInfo
+}
+
+// getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+// The GraphQL type's documentation follows.
+//
+// Information about pagination in a connection.
+type getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo struct {
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
+}
+
+// GetHasNextPage returns getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo) GetHasNextPage() bool {
+	return v.HasNextPage
+}
+
+// GetEndCursor returns getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo) GetEndCursor() string {
+	return v.EndCursor
+}
+
+// getPullRequestDataResponse is returned by getPullRequestData on success.
+type getPullRequestDataResponse struct {
+	// Lookup a given repository by the owner and repository name.
+	Repository getPullRequestDataRepository `json:"repository"`
+}
+
+// GetRepository returns getPullRequestDataResponse.Repository, and is useful for accessing the field via an interface.
+func (v *getPullRequestDataResponse) GetRepository() getPullRequestDataRepository {
+	return v.Repository
+}
 
 // getRepoDataBySearchResponse is returned by getRepoDataBySearch on success.
 type getRepoDataBySearchResponse struct {
@@ -1189,6 +1358,100 @@ func getCommitData(
 	var err error
 
 	var data getCommitDataResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+// The query or mutation executed by getPullRequestCount.
+const getPullRequestCount_Operation = `
+query getPullRequestCount ($name: String!, $owner: String!) {
+	repository(name: $name, owner: $owner) {
+		pullRequests {
+			totalCount
+		}
+	}
+}
+`
+
+func getPullRequestCount(
+	ctx context.Context,
+	client graphql.Client,
+	name string,
+	owner string,
+) (*getPullRequestCountResponse, error) {
+	req := &graphql.Request{
+		OpName: "getPullRequestCount",
+		Query:  getPullRequestCount_Operation,
+		Variables: &__getPullRequestCountInput{
+			Name:  name,
+			Owner: owner,
+		},
+	}
+	var err error
+
+	var data getPullRequestCountResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+// The query or mutation executed by getPullRequestData.
+const getPullRequestData_Operation = `
+query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCursor: String) {
+	repository(name: $name, owner: $owner) {
+		pullRequests(first: $prFirst, after: $prCursor) {
+			nodes {
+				... on PullRequest {
+					id
+					createdAt
+					closed
+					closedAt
+				}
+				headRefName
+			}
+			pageInfo {
+				hasNextPage
+				endCursor
+			}
+		}
+	}
+}
+`
+
+func getPullRequestData(
+	ctx context.Context,
+	client graphql.Client,
+	name string,
+	owner string,
+	prFirst int,
+	prCursor *string,
+) (*getPullRequestDataResponse, error) {
+	req := &graphql.Request{
+		OpName: "getPullRequestData",
+		Query:  getPullRequestData_Operation,
+		Variables: &__getPullRequestDataInput{
+			Name:     name,
+			Owner:    owner,
+			PrFirst:  prFirst,
+			PrCursor: prCursor,
+		},
+	}
+	var err error
+
+	var data getPullRequestDataResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
