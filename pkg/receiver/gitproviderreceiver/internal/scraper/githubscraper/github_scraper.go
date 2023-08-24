@@ -267,10 +267,11 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			if err != nil {
 				ghs.logger.Sugar().Errorf("error getting pull request count", zap.Error(err))
 			}
-			ghs.logger.Sugar().Debugf("amount of pull requests: %v for repo %v", prCount, repo)
+			ghs.logger.Sugar().Debugf("pull request count: %v for repo %v", prCount, repo)
 
 			prPages := getNumPages(float64(perPage), float64(prCount.Repository.PullRequests.TotalCount))
 			ghs.logger.Sugar().Debugf("pull request pages: %v for repo %v", prPages, repo)
+
 			for i := 0; i < prPages; i++ {
 				pr, err := getPullRequestData(ctx, genClient, name, ghs.cfg.GitHubOrg, perPage, prCursor)
 				if err != nil {
