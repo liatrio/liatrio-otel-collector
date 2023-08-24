@@ -9,6 +9,10 @@ all_set:
       enabled: true
     git.repository.count:
       enabled: true
+    git.repository.pull_request.approval.time:
+      enabled: true
+    git.repository.pull_request.merge.time:
+      enabled: true
     git.repository.pull_request.time:
       enabled: true
   resource_attributes:
@@ -25,6 +29,10 @@ none_set:
     git.repository.contributor.count:
       enabled: false
     git.repository.count:
+      enabled: false
+    git.repository.pull_request.approval.time:
+      enabled: false
+    git.repository.pull_request.merge.time:
       enabled: false
     git.repository.pull_request.time:
       enabled: false

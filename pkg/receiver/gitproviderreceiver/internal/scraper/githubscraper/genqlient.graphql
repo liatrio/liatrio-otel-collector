@@ -118,6 +118,7 @@ query getPullRequestCount($name: String!, $owner: String!) {
 query getPullRequestData(
   $name: String!
   $owner: String!
+  $reviewCount: Int!
   $prFirst: Int!
   # @genqlient(pointer: true)
   $prCursor: String
@@ -130,12 +131,31 @@ query getPullRequestData(
       # @genqlient(typename: "PullRequestNode")
       nodes {
         ... on PullRequest {
-          id
           createdAt
           closed
           closedAt
+          merged
+          mergedAt
+          mergeCommit {
+            deployments(last: 1, orderBy: {field: CREATED_AT, direction: ASC}) {
+              nodes {
+                createdAt
+                environment
+                description
+                state
+              }
+            }
+          }
         }
         headRefName
+        reviews(states: APPROVED, last: $reviewCount) {
+          totalCount
+          nodes {
+            ... on PullRequestReview{
+              submittedAt
+            }
+          }
+        }
       }
       pageInfo {
         hasNextPage,

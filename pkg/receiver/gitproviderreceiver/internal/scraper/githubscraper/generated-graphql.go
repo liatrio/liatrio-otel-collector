@@ -350,19 +350,21 @@ func (v *CommitNodeTargetTree) GetTypename() string { return v.Typename }
 //
 // A repository pull request.
 type PullRequestNode struct {
-	Id string `json:"id"`
 	// Identifies the date and time when the object was created.
 	CreatedAt time.Time `json:"createdAt"`
 	// `true` if the pull request is closed
 	Closed bool `json:"closed"`
 	// Identifies the date and time when the object was closed.
 	ClosedAt time.Time `json:"closedAt"`
+	// Whether or not the pull request was merged.
+	Merged bool `json:"merged"`
+	// The date and time that the pull request was merged.
+	MergedAt time.Time `json:"mergedAt"`
 	// Identifies the name of the head Ref associated with the pull request, even if the ref has been deleted.
 	HeadRefName string `json:"headRefName"`
+	// A list of reviews associated with the pull request.
+	Reviews PullRequestNodeReviewsPullRequestReviewConnection `json:"reviews"`
 }
-
-// GetId returns PullRequestNode.Id, and is useful for accessing the field via an interface.
-func (v *PullRequestNode) GetId() string { return v.Id }
 
 // GetCreatedAt returns PullRequestNode.CreatedAt, and is useful for accessing the field via an interface.
 func (v *PullRequestNode) GetCreatedAt() time.Time { return v.CreatedAt }
@@ -373,8 +375,52 @@ func (v *PullRequestNode) GetClosed() bool { return v.Closed }
 // GetClosedAt returns PullRequestNode.ClosedAt, and is useful for accessing the field via an interface.
 func (v *PullRequestNode) GetClosedAt() time.Time { return v.ClosedAt }
 
+// GetMerged returns PullRequestNode.Merged, and is useful for accessing the field via an interface.
+func (v *PullRequestNode) GetMerged() bool { return v.Merged }
+
+// GetMergedAt returns PullRequestNode.MergedAt, and is useful for accessing the field via an interface.
+func (v *PullRequestNode) GetMergedAt() time.Time { return v.MergedAt }
+
 // GetHeadRefName returns PullRequestNode.HeadRefName, and is useful for accessing the field via an interface.
 func (v *PullRequestNode) GetHeadRefName() string { return v.HeadRefName }
+
+// GetReviews returns PullRequestNode.Reviews, and is useful for accessing the field via an interface.
+func (v *PullRequestNode) GetReviews() PullRequestNodeReviewsPullRequestReviewConnection {
+	return v.Reviews
+}
+
+// PullRequestNodeReviewsPullRequestReviewConnection includes the requested fields of the GraphQL type PullRequestReviewConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for PullRequestReview.
+type PullRequestNodeReviewsPullRequestReviewConnection struct {
+	// Identifies the total count of items in the connection.
+	TotalCount int `json:"totalCount"`
+	// A list of nodes.
+	Nodes []PullRequestNodeReviewsPullRequestReviewConnectionNodesPullRequestReview `json:"nodes"`
+}
+
+// GetTotalCount returns PullRequestNodeReviewsPullRequestReviewConnection.TotalCount, and is useful for accessing the field via an interface.
+func (v *PullRequestNodeReviewsPullRequestReviewConnection) GetTotalCount() int { return v.TotalCount }
+
+// GetNodes returns PullRequestNodeReviewsPullRequestReviewConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *PullRequestNodeReviewsPullRequestReviewConnection) GetNodes() []PullRequestNodeReviewsPullRequestReviewConnectionNodesPullRequestReview {
+	return v.Nodes
+}
+
+// PullRequestNodeReviewsPullRequestReviewConnectionNodesPullRequestReview includes the requested fields of the GraphQL type PullRequestReview.
+// The GraphQL type's documentation follows.
+//
+// A review object for a given pull request.
+type PullRequestNodeReviewsPullRequestReviewConnectionNodesPullRequestReview struct {
+	// Identifies when the Pull Request Review was submitted
+	SubmittedAt time.Time `json:"submittedAt"`
+}
+
+// GetSubmittedAt returns PullRequestNodeReviewsPullRequestReviewConnectionNodesPullRequestReview.SubmittedAt, and is useful for accessing the field via an interface.
+func (v *PullRequestNodeReviewsPullRequestReviewConnectionNodesPullRequestReview) GetSubmittedAt() time.Time {
+	return v.SubmittedAt
+}
 
 // SearchNode includes the requested fields of the GraphQL interface SearchResultItem.
 //
@@ -730,10 +776,11 @@ func (v *__getPullRequestCountInput) GetOwner() string { return v.Owner }
 
 // __getPullRequestDataInput is used internally by genqlient
 type __getPullRequestDataInput struct {
-	Name     string  `json:"name"`
-	Owner    string  `json:"owner"`
-	PrFirst  int     `json:"prFirst"`
-	PrCursor *string `json:"prCursor"`
+	Name        string  `json:"name"`
+	Owner       string  `json:"owner"`
+	ReviewCount int     `json:"reviewCount"`
+	PrFirst     int     `json:"prFirst"`
+	PrCursor    *string `json:"prCursor"`
 }
 
 // GetName returns __getPullRequestDataInput.Name, and is useful for accessing the field via an interface.
@@ -741,6 +788,9 @@ func (v *__getPullRequestDataInput) GetName() string { return v.Name }
 
 // GetOwner returns __getPullRequestDataInput.Owner, and is useful for accessing the field via an interface.
 func (v *__getPullRequestDataInput) GetOwner() string { return v.Owner }
+
+// GetReviewCount returns __getPullRequestDataInput.ReviewCount, and is useful for accessing the field via an interface.
+func (v *__getPullRequestDataInput) GetReviewCount() int { return v.ReviewCount }
 
 // GetPrFirst returns __getPullRequestDataInput.PrFirst, and is useful for accessing the field via an interface.
 func (v *__getPullRequestDataInput) GetPrFirst() int { return v.PrFirst }
@@ -1410,17 +1460,26 @@ func getPullRequestCount(
 
 // The query or mutation executed by getPullRequestData.
 const getPullRequestData_Operation = `
-query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCursor: String) {
+query getPullRequestData ($name: String!, $owner: String!, $reviewCount: Int!, $prFirst: Int!, $prCursor: String) {
 	repository(name: $name, owner: $owner) {
 		pullRequests(first: $prFirst, after: $prCursor) {
 			nodes {
 				... on PullRequest {
-					id
 					createdAt
 					closed
 					closedAt
+					merged
+					mergedAt
 				}
 				headRefName
+				reviews(states: APPROVED, last: $reviewCount) {
+					totalCount
+					nodes {
+						... on PullRequestReview {
+							submittedAt
+						}
+					}
+				}
 			}
 			pageInfo {
 				hasNextPage
@@ -1436,6 +1495,7 @@ func getPullRequestData(
 	client graphql.Client,
 	name string,
 	owner string,
+	reviewCount int,
 	prFirst int,
 	prCursor *string,
 ) (*getPullRequestDataResponse, error) {
@@ -1443,10 +1503,11 @@ func getPullRequestData(
 		OpName: "getPullRequestData",
 		Query:  getPullRequestData_Operation,
 		Variables: &__getPullRequestDataInput{
-			Name:     name,
-			Owner:    owner,
-			PrFirst:  prFirst,
-			PrCursor: prCursor,
+			Name:        name,
+			Owner:       owner,
+			ReviewCount: reviewCount,
+			PrFirst:     prFirst,
+			PrCursor:    prCursor,
 		},
 	}
 	var err error

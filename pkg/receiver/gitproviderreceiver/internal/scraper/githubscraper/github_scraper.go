@@ -262,6 +262,9 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			var prCursor *string
 			var pullRequests []PullRequestNode
 			var perPage int = 100
+			//depending on the amount of required reviewers, additional logic may be needed or
+			//might just not be needed at all
+			var reviewCount int = 1
 
 			prCount, err := getPullRequestCount(ctx, genClient, name, ghs.cfg.GitHubOrg)
 			if err != nil {
@@ -273,7 +276,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			ghs.logger.Sugar().Debugf("pull request pages: %v for repo %v", prPages, repo)
 
 			for i := 0; i < prPages; i++ {
-				pr, err := getPullRequestData(ctx, genClient, name, ghs.cfg.GitHubOrg, perPage, prCursor)
+				pr, err := getPullRequestData(ctx, genClient, name, ghs.cfg.GitHubOrg, reviewCount, perPage, prCursor)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting pull request data", zap.Error(err))
 				}
@@ -286,13 +289,28 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			for _, pr := range pullRequests {
 				createTime := pr.CreatedAt
 				closedTime := time.Now()
+				mergedTime := time.Now()
+				approvalTime := time.Now()
 				if pr.Closed {
 					closedTime = pr.ClosedAt
 				}
-
+				if pr.Merged {
+					mergedTime = pr.MergedAt
+				}
+				if pr.Reviews.TotalCount > 0 {
+					//May need the CreatedAt instead, not sure when they'll be different.
+					//Nodes look to already be ordered by creation date so the first one should be the last approval
+					//which is what we'd want since it would be the last barrier to approval.
+					approvalTime = pr.Reviews.Nodes[0].SubmittedAt
+				}
+				mergeAge := int64(mergedTime.Sub(createTime).Hours())
+				approvalAge := int64(approvalTime.Sub(createTime).Hours())
 				prAge := int64(closedTime.Sub(createTime).Hours())
 				ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, name, pr.HeadRefName)
+				ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, name, pr.HeadRefName)
+				ghs.mb.RecordGitRepositoryPullRequestApprovalTimeDataPoint(now, approvalAge, name, pr.HeadRefName)
 			}
+
 		}
 
 	}
