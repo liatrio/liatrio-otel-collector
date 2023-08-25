@@ -160,16 +160,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				defaultBranch = n.DefaultBranchRef.Name
 			}
 
-			// TODO: I don't think there's a need for this if we've stored the
-			// entirety of the data previously & can iterate through the slice
-			// directly. Might consider refactoring this later.
-
-			// repoInfo := &Repo{
-			// 	Name:          name,
-			// 	Owner:         ghs.cfg.GitHubOrg,
-			// 	DefaultBranch: defaultBranch,
-			// }
-
 			// Getting contributor count via the graphql api is very process heavy
 			// as you have to get all commits on the default branch and then
 			// iterate through each commit to get the author and committer, and remove
@@ -261,7 +251,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 			var prCursor *string
 			var pullRequests []PullRequestNode
-			var perPage int = 100
 
 			prCount, err := getPullRequestCount(ctx, genClient, name, ghs.cfg.GitHubOrg)
 			if err != nil {
@@ -269,11 +258,11 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 			ghs.logger.Sugar().Debugf("pull request count: %v for repo %v", prCount, repo)
 
-			prPages := getNumPages(float64(perPage), float64(prCount.Repository.PullRequests.TotalCount))
+			prPages := getNumPages(float64(100), float64(prCount.Repository.PullRequests.TotalCount))
 			ghs.logger.Sugar().Debugf("pull request pages: %v for repo %v", prPages, repo)
 
 			for i := 0; i < prPages; i++ {
-				pr, err := getPullRequestData(ctx, genClient, name, ghs.cfg.GitHubOrg, perPage, prCursor)
+				pr, err := getPullRequestData(ctx, genClient, name, ghs.cfg.GitHubOrg, 100, prCursor)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting pull request data", zap.Error(err))
 				}
@@ -285,12 +274,12 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			for _, pr := range pullRequests {
 				createTime := pr.CreatedAt
-				closedTime := time.Now()
+				prAgeUpperBound := time.Now()
 				if pr.Closed {
-					closedTime = pr.ClosedAt
+					prAgeUpperBound = pr.ClosedAt
 				}
 
-				prAge := int64(closedTime.Sub(createTime).Hours())
+				prAge := int64(prAgeUpperBound.Sub(createTime).Hours())
 				ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, name, pr.HeadRefName)
 			}
 		}
