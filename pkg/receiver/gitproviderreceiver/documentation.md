@@ -49,6 +49,20 @@ Number of repositories that exist in an organization
 | ---- | ----------- | ---------- |
 | 1 | Gauge | Int |
 
+### git.repository.pull_request.count
+
+The amount of open pull requests
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+
 ### git.repository.pull_request.time
 
 Time the PR has been open

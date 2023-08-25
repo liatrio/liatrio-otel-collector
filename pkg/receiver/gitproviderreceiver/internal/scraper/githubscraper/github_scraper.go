@@ -252,13 +252,20 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			var prCursor *string
 			var pullRequests []PullRequestNode
 
-			prCount, err := getPullRequestCount(ctx, genClient, name, ghs.cfg.GitHubOrg)
+			prOpenCount, err := getPullRequestCount(ctx, genClient, name, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateOpen})
 			if err != nil {
-				ghs.logger.Sugar().Errorf("error getting pull request count", zap.Error(err))
+				ghs.logger.Sugar().Errorf("error getting open pull request count", zap.Error(err))
 			}
-			ghs.logger.Sugar().Debugf("pull request count: %v for repo %v", prCount, repo)
+			ghs.logger.Sugar().Debugf("open pull request count: %v for repo %v", prOpenCount, repo)
 
-			prPages := getNumPages(float64(100), float64(prCount.Repository.PullRequests.TotalCount))
+			ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(prOpenCount.Repository.PullRequests.TotalCount), name)
+
+			prMergedCount, err := getPullRequestCount(ctx, genClient, name, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateMerged})
+			if err != nil {
+				ghs.logger.Sugar().Errorf("error getting merged pull request count", zap.Error(err))
+			}
+
+			prPages := getNumPages(float64(100), float64(prOpenCount.Repository.PullRequests.TotalCount+prMergedCount.Repository.PullRequests.TotalCount))
 			ghs.logger.Sugar().Debugf("pull request pages: %v for repo %v", prPages, repo)
 
 			for i := 0; i < prPages; i++ {
@@ -275,8 +282,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			for _, pr := range pullRequests {
 				createTime := pr.CreatedAt
 				prAgeUpperBound := time.Now()
-				if pr.Closed {
-					prAgeUpperBound = pr.ClosedAt
+				if pr.Merged {
+					prAgeUpperBound = pr.MergedAt
 				}
 
 				prAge := int64(prAgeUpperBound.Sub(createTime).Hours())

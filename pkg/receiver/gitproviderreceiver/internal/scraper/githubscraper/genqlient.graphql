@@ -107,9 +107,9 @@ query getBranchCount($name: String!, $owner: String!) {
   }
 }
 
-query getPullRequestCount($name: String!, $owner: String!) {
+query getPullRequestCount($name: String!, $owner: String!, $states: [PullRequestState!]) {
   repository(name: $name, owner: $owner) {
-    pullRequests{
+    pullRequests(states: $states){
       totalCount
     }
   }
@@ -126,14 +126,15 @@ query getPullRequestData(
     pullRequests(
       first: $prFirst,
       after: $prCursor,
+      states: [OPEN, MERGED]
     ) {
       # @genqlient(typename: "PullRequestNode")
       nodes {
         ... on PullRequest {
           id
           createdAt
-          closed
-          closedAt
+          merged
+          mergedAt
         }
         headRefName
       }

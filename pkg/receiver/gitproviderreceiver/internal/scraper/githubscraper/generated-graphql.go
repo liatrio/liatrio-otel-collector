@@ -353,10 +353,10 @@ type PullRequestNode struct {
 	Id string `json:"id"`
 	// Identifies the date and time when the object was created.
 	CreatedAt time.Time `json:"createdAt"`
-	// `true` if the pull request is closed
-	Closed bool `json:"closed"`
-	// Identifies the date and time when the object was closed.
-	ClosedAt time.Time `json:"closedAt"`
+	// Whether or not the pull request was merged.
+	Merged bool `json:"merged"`
+	// The date and time that the pull request was merged.
+	MergedAt time.Time `json:"mergedAt"`
 	// Identifies the name of the head Ref associated with the pull request, even if the ref has been deleted.
 	HeadRefName string `json:"headRefName"`
 }
@@ -367,14 +367,26 @@ func (v *PullRequestNode) GetId() string { return v.Id }
 // GetCreatedAt returns PullRequestNode.CreatedAt, and is useful for accessing the field via an interface.
 func (v *PullRequestNode) GetCreatedAt() time.Time { return v.CreatedAt }
 
-// GetClosed returns PullRequestNode.Closed, and is useful for accessing the field via an interface.
-func (v *PullRequestNode) GetClosed() bool { return v.Closed }
+// GetMerged returns PullRequestNode.Merged, and is useful for accessing the field via an interface.
+func (v *PullRequestNode) GetMerged() bool { return v.Merged }
 
-// GetClosedAt returns PullRequestNode.ClosedAt, and is useful for accessing the field via an interface.
-func (v *PullRequestNode) GetClosedAt() time.Time { return v.ClosedAt }
+// GetMergedAt returns PullRequestNode.MergedAt, and is useful for accessing the field via an interface.
+func (v *PullRequestNode) GetMergedAt() time.Time { return v.MergedAt }
 
 // GetHeadRefName returns PullRequestNode.HeadRefName, and is useful for accessing the field via an interface.
 func (v *PullRequestNode) GetHeadRefName() string { return v.HeadRefName }
+
+// The possible states of a pull request.
+type PullRequestState string
+
+const (
+	// A pull request that is still open.
+	PullRequestStateOpen PullRequestState = "OPEN"
+	// A pull request that has been closed without being merged.
+	PullRequestStateClosed PullRequestState = "CLOSED"
+	// A pull request that has been closed by being merged.
+	PullRequestStateMerged PullRequestState = "MERGED"
+)
 
 // SearchNode includes the requested fields of the GraphQL interface SearchResultItem.
 //
@@ -718,8 +730,9 @@ func (v *__getCommitDataInput) GetBranchName() string { return v.BranchName }
 
 // __getPullRequestCountInput is used internally by genqlient
 type __getPullRequestCountInput struct {
-	Name  string `json:"name"`
-	Owner string `json:"owner"`
+	Name   string             `json:"name"`
+	Owner  string             `json:"owner"`
+	States []PullRequestState `json:"states"`
 }
 
 // GetName returns __getPullRequestCountInput.Name, and is useful for accessing the field via an interface.
@@ -727,6 +740,9 @@ func (v *__getPullRequestCountInput) GetName() string { return v.Name }
 
 // GetOwner returns __getPullRequestCountInput.Owner, and is useful for accessing the field via an interface.
 func (v *__getPullRequestCountInput) GetOwner() string { return v.Owner }
+
+// GetStates returns __getPullRequestCountInput.States, and is useful for accessing the field via an interface.
+func (v *__getPullRequestCountInput) GetStates() []PullRequestState { return v.States }
 
 // __getPullRequestDataInput is used internally by genqlient
 type __getPullRequestDataInput struct {
@@ -1371,9 +1387,9 @@ func getCommitData(
 
 // The query or mutation executed by getPullRequestCount.
 const getPullRequestCount_Operation = `
-query getPullRequestCount ($name: String!, $owner: String!) {
+query getPullRequestCount ($name: String!, $owner: String!, $states: [PullRequestState!]) {
 	repository(name: $name, owner: $owner) {
-		pullRequests {
+		pullRequests(states: $states) {
 			totalCount
 		}
 	}
@@ -1385,13 +1401,15 @@ func getPullRequestCount(
 	client graphql.Client,
 	name string,
 	owner string,
+	states []PullRequestState,
 ) (*getPullRequestCountResponse, error) {
 	req := &graphql.Request{
 		OpName: "getPullRequestCount",
 		Query:  getPullRequestCount_Operation,
 		Variables: &__getPullRequestCountInput{
-			Name:  name,
-			Owner: owner,
+			Name:   name,
+			Owner:  owner,
+			States: states,
 		},
 	}
 	var err error
@@ -1412,13 +1430,13 @@ func getPullRequestCount(
 const getPullRequestData_Operation = `
 query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCursor: String) {
 	repository(name: $name, owner: $owner) {
-		pullRequests(first: $prFirst, after: $prCursor) {
+		pullRequests(first: $prFirst, after: $prCursor, states: [OPEN,MERGED]) {
 			nodes {
 				... on PullRequest {
 					id
 					createdAt
-					closed
-					closedAt
+					merged
+					mergedAt
 				}
 				headRefName
 			}

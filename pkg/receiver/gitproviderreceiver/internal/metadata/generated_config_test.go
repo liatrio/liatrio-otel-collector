@@ -30,6 +30,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					GitRepositoryBranchTime:       MetricConfig{Enabled: true},
 					GitRepositoryContributorCount: MetricConfig{Enabled: true},
 					GitRepositoryCount:            MetricConfig{Enabled: true},
+					GitRepositoryPullRequestCount: MetricConfig{Enabled: true},
 					GitRepositoryPullRequestTime:  MetricConfig{Enabled: true},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
@@ -46,6 +47,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					GitRepositoryBranchTime:       MetricConfig{Enabled: false},
 					GitRepositoryContributorCount: MetricConfig{Enabled: false},
 					GitRepositoryCount:            MetricConfig{Enabled: false},
+					GitRepositoryPullRequestCount: MetricConfig{Enabled: false},
 					GitRepositoryPullRequestTime:  MetricConfig{Enabled: false},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
