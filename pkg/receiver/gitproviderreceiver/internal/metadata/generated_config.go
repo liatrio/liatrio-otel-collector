@@ -25,13 +25,14 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for gitprovider metrics.
 type MetricsConfig struct {
-	GitRepositoryBranchCount             MetricConfig `mapstructure:"git.repository.branch.count"`
-	GitRepositoryBranchTime              MetricConfig `mapstructure:"git.repository.branch.time"`
-	GitRepositoryContributorCount        MetricConfig `mapstructure:"git.repository.contributor.count"`
-	GitRepositoryCount                   MetricConfig `mapstructure:"git.repository.count"`
-	GitRepositoryPullRequestApprovalTime MetricConfig `mapstructure:"git.repository.pull_request.approval.time"`
-	GitRepositoryPullRequestMergeTime    MetricConfig `mapstructure:"git.repository.pull_request.merge.time"`
-	GitRepositoryPullRequestTime         MetricConfig `mapstructure:"git.repository.pull_request.time"`
+	GitRepositoryBranchCount               MetricConfig `mapstructure:"git.repository.branch.count"`
+	GitRepositoryBranchTime                MetricConfig `mapstructure:"git.repository.branch.time"`
+	GitRepositoryContributorCount          MetricConfig `mapstructure:"git.repository.contributor.count"`
+	GitRepositoryCount                     MetricConfig `mapstructure:"git.repository.count"`
+	GitRepositoryPullRequestApprovalTime   MetricConfig `mapstructure:"git.repository.pull_request.approval.time"`
+	GitRepositoryPullRequestDeploymentTime MetricConfig `mapstructure:"git.repository.pull_request.deployment.time"`
+	GitRepositoryPullRequestMergeTime      MetricConfig `mapstructure:"git.repository.pull_request.merge.time"`
+	GitRepositoryPullRequestTime           MetricConfig `mapstructure:"git.repository.pull_request.time"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
@@ -49,6 +50,9 @@ func DefaultMetricsConfig() MetricsConfig {
 			Enabled: true,
 		},
 		GitRepositoryPullRequestApprovalTime: MetricConfig{
+			Enabled: true,
+		},
+		GitRepositoryPullRequestDeploymentTime: MetricConfig{
 			Enabled: true,
 		},
 		GitRepositoryPullRequestMergeTime: MetricConfig{

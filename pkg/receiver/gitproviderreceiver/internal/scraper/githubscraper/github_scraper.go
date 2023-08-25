@@ -160,16 +160,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				defaultBranch = n.DefaultBranchRef.Name
 			}
 
-			// TODO: I don't think there's a need for this if we've stored the
-			// entirety of the data previously & can iterate through the slice
-			// directly. Might consider refactoring this later.
-
-			// repoInfo := &Repo{
-			// 	Name:          name,
-			// 	Owner:         ghs.cfg.GitHubOrg,
-			// 	DefaultBranch: defaultBranch,
-			// }
-
 			// Getting contributor count via the graphql api is very process heavy
 			// as you have to get all commits on the default branch and then
 			// iterate through each commit to get the author and committer, and remove
@@ -261,7 +251,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 			var prCursor *string
 			var pullRequests []PullRequestNode
-			var perPage int = 100
 			//depending on the amount of required reviewers, additional logic may be needed or
 			//might just not be needed at all
 			var reviewCount int = 1
@@ -272,11 +261,11 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 			ghs.logger.Sugar().Debugf("pull request count: %v for repo %v", prCount, repo)
 
-			prPages := getNumPages(float64(perPage), float64(prCount.Repository.PullRequests.TotalCount))
+			prPages := getNumPages(float64(100), float64(prCount.Repository.PullRequests.TotalCount))
 			ghs.logger.Sugar().Debugf("pull request pages: %v for repo %v", prPages, repo)
 
 			for i := 0; i < prPages; i++ {
-				pr, err := getPullRequestData(ctx, genClient, name, ghs.cfg.GitHubOrg, reviewCount, perPage, prCursor)
+				pr, err := getPullRequestData(ctx, genClient, name, ghs.cfg.GitHubOrg, reviewCount, 100, prCursor)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting pull request data", zap.Error(err))
 				}
@@ -291,6 +280,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				closedTime := time.Now()
 				mergedTime := time.Now()
 				approvalTime := time.Now()
+				deploymentTime := time.Now()
 				if pr.Closed {
 					closedTime = pr.ClosedAt
 				}
@@ -303,12 +293,17 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					//which is what we'd want since it would be the last barrier to approval.
 					approvalTime = pr.Reviews.Nodes[0].SubmittedAt
 				}
+				if pr.Merged && pr.MergeCommit.Deployments.TotalCount > 0 {
+					deploymentTime = pr.MergeCommit.Deployments.Nodes[0].CreatedAt
+				}
 				mergeAge := int64(mergedTime.Sub(createTime).Hours())
 				approvalAge := int64(approvalTime.Sub(createTime).Hours())
 				prAge := int64(closedTime.Sub(createTime).Hours())
+				deploymentAge := int64(deploymentTime.Sub(createTime).Hours())
 				ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, name, pr.HeadRefName)
 				ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, name, pr.HeadRefName)
 				ghs.mb.RecordGitRepositoryPullRequestApprovalTimeDataPoint(now, approvalAge, name, pr.HeadRefName)
+				ghs.mb.RecordGitRepositoryPullRequestDeploymentTimeDataPoint(now, deploymentAge, name, pr.HeadRefName)
 			}
 
 		}

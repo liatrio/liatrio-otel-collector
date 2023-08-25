@@ -64,6 +64,21 @@ Time for the PR to be approved
 | repository.name | The full name of the Git repository | Any Str |
 | branch.name | The name of the branch in a given repository | Any Str |
 
+### git.repository.pull_request.deployment.time
+
+Time for the merged PR to be deployed
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| branch.name | The name of the branch in a given repository | Any Str |
+
 ### git.repository.pull_request.merge.time
 
 Time for the PR to be merged

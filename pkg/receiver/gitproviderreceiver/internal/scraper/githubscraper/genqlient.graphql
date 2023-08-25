@@ -140,10 +140,8 @@ query getPullRequestData(
             deployments(last: 1, orderBy: {field: CREATED_AT, direction: ASC}) {
               nodes {
                 createdAt
-                environment
-                description
-                state
               }
+              totalCount
             }
           }
         }
