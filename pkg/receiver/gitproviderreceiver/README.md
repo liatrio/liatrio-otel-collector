@@ -65,10 +65,11 @@ receivers:
     gitprovider:
         initial_delay: 1s
         collection_interval: 60s
-        git.repository.contributor.count:
-            enabled: true
         scrapers:
             github:
+                metrics:
+                    git.repository.contributor.count:
+                        enabled: true
                 github_org: myfancyorg
                 search_query: "org:myfancyorg topic:o11yalltheway" #optional query override, defaults to "{org,user}:<github_org>"
                 auth:

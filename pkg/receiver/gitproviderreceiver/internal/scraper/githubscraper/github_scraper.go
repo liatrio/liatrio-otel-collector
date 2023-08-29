@@ -281,7 +281,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			for _, pr := range pullRequests {
 				createTime := pr.CreatedAt
-				prAgeUpperBound := now
+				prAgeUpperBound := now.AsTime()
 				if pr.Merged {
 					prAgeUpperBound = pr.MergedAt
 				}
