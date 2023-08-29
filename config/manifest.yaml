@@ -4,12 +4,12 @@ dist:
     module: github.com/liatrio/liatrio-otel-collector
     description: Basic OTel Collector distribution for Developers
     otelcol_version: 0.83.0
-    # version: 0.83.0
     output_path: ./build
     debug_compilation: false
 
 extensions:
     - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.83.0
+    - gomod: go.opentelemetry.io/collector/extension/ballastextension v0.83.0
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension v0.83.0
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.83.0
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.83.0
@@ -23,13 +23,18 @@ exporters:
 
 processors:
     - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.83.0
+    - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.83.0
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.83.0
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.83.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.83.0
 
 receivers:
     - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.83.0
     - gomod: github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver v0.1.0
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.83.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver v0.83.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver v0.83.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.83.0
 
 
 replaces:
