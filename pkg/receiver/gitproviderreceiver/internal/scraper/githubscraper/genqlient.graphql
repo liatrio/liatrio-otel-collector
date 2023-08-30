@@ -106,3 +106,42 @@ query getBranchCount($name: String!, $owner: String!) {
     }
   }
 }
+
+query getPullRequestCount($name: String!, $owner: String!, $states: [PullRequestState!]) {
+  repository(name: $name, owner: $owner) {
+    pullRequests(states: $states){
+      totalCount
+    }
+  }
+}
+
+query getPullRequestData(
+  $name: String!
+  $owner: String!
+  $prFirst: Int!
+  # @genqlient(pointer: true)
+  $prCursor: String
+) {
+  repository(name: $name, owner: $owner) {
+    pullRequests(
+      first: $prFirst,
+      after: $prCursor,
+      states: [OPEN, MERGED]
+    ) {
+      # @genqlient(typename: "PullRequestNode")
+      nodes {
+        ... on PullRequest {
+          id
+          createdAt
+          merged
+          mergedAt
+        }
+        headRefName
+      }
+      pageInfo {
+        hasNextPage,
+        endCursor
+      }
+    }
+  }
+}

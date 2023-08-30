@@ -8,7 +8,6 @@ import (
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/google/go-github/v53/github"
-	"github.com/shurcooL/githubv4"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -22,6 +21,7 @@ var (
 	errClientNotInitErr = errors.New("http client not initialized")
 )
 
+// Not sure if this needs to be here after the refactor
 type PullRequest struct {
 	Title       string
 	CreatedDate time.Time
@@ -45,14 +45,6 @@ type githubScraper struct {
 	mb       *metadata.MetricsBuilder
 }
 
-type PullRequestNode struct {
-	Node struct {
-		Title     string
-		CreatedAt string
-		ClosedAt  string
-	}
-}
-
 func (ghs *githubScraper) start(_ context.Context, host component.Host) (err error) {
 	ghs.logger.Sugar().Info("Starting the scraper inside scraper.go")
 	// TODO: Fix the ToClient configuration
@@ -70,70 +62,6 @@ func newGitHubScraper(
 		settings: settings.TelemetrySettings,
 		logger:   settings.Logger,
 		mb:       metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, settings),
-	}
-}
-
-func (ghs *githubScraper) getRepoPullRequestInformation(repo *Repo) {
-	graphqlClient := githubv4.NewClient(ghs.client)
-
-	var query struct {
-		Repository struct {
-			PullRequests struct {
-				Edges    []PullRequestNode
-				PageInfo struct {
-					EndCursor   githubv4.String
-					HasNextPage bool
-				}
-			} `graphql:"pullRequests(first: 100, after: $prCursor)"`
-		} `graphql:"repository(name: $repoName, owner: $owner)"`
-	}
-
-	variables := map[string]interface{}{
-		"repoName": githubv4.String(repo.Name),
-		"owner":    githubv4.String(repo.Owner),
-		"prCursor": (*githubv4.String)(nil),
-	}
-
-	var pullRequestsResults []PullRequestNode
-	for {
-		err := graphqlClient.Query(context.Background(), &query, variables)
-
-		if err != nil {
-			ghs.logger.Sugar().Errorf("Error getting branch details", zap.Error(err))
-		}
-
-		pullRequestsResults = append(pullRequestsResults, query.Repository.PullRequests.Edges...)
-
-		if !query.Repository.PullRequests.PageInfo.HasNextPage {
-			break
-		}
-
-		variables["prCursor"] = githubv4.NewString(query.Repository.PullRequests.PageInfo.EndCursor)
-	}
-
-	for _, prNode := range pullRequestsResults {
-		var closedDate time.Time
-
-		creationDate, err := time.Parse(time.RFC3339, prNode.Node.CreatedAt)
-		if err != nil {
-			ghs.logger.Sugar().Errorf("Error converting timestamp for PR creation date", zap.Error(err))
-		}
-
-		if prNode.Node.ClosedAt != "" {
-			closedDate, err = time.Parse(time.RFC3339, prNode.Node.ClosedAt)
-			if err != nil {
-				ghs.logger.Sugar().Errorf("Error converting timestamp for PR closed date", zap.Error(err))
-			}
-		} else {
-			closedDate = time.Now()
-		}
-
-		pullRequest := &PullRequest{
-			Title:       prNode.Node.Title,
-			CreatedDate: creationDate,
-			ClosedDate:  closedDate,
-		}
-		repo.PullRequests = append(repo.PullRequests, *pullRequest)
 	}
 }
 
@@ -232,15 +160,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				defaultBranch = n.DefaultBranchRef.Name
 			}
 
-			// TODO: I don't think there's a need for this if we've stored the
-			// entirety of the data previously & can iterate through the slice
-			// directly. Might consider refactoring this later.
-			repoInfo := &Repo{
-				Name:          name,
-				Owner:         ghs.cfg.GitHubOrg,
-				DefaultBranch: defaultBranch,
-			}
-
 			// Getting contributor count via the graphql api is very process heavy
 			// as you have to get all commits on the default branch and then
 			// iterate through each commit to get the author and committer, and remove
@@ -330,8 +249,46 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					}
 				}
 			}
+			var prCursor *string
+			var pullRequests []PullRequestNode
 
-			ghs.getRepoPullRequestInformation(repoInfo)
+			prOpenCount, err := getPullRequestCount(ctx, genClient, name, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateOpen})
+			if err != nil {
+				ghs.logger.Sugar().Errorf("error getting open pull request count", zap.Error(err))
+			}
+			ghs.logger.Sugar().Debugf("open pull request count: %v for repo %v", prOpenCount, repo)
+
+			ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(prOpenCount.Repository.PullRequests.TotalCount), name)
+
+			prMergedCount, err := getPullRequestCount(ctx, genClient, name, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateMerged})
+			if err != nil {
+				ghs.logger.Sugar().Errorf("error getting merged pull request count", zap.Error(err))
+			}
+
+			prPages := getNumPages(float64(100), float64(prOpenCount.Repository.PullRequests.TotalCount+prMergedCount.Repository.PullRequests.TotalCount))
+			ghs.logger.Sugar().Debugf("pull request pages: %v for repo %v", prPages, repo)
+
+			for i := 0; i < prPages; i++ {
+				pr, err := getPullRequestData(ctx, genClient, name, ghs.cfg.GitHubOrg, 100, prCursor)
+				if err != nil {
+					ghs.logger.Sugar().Errorf("error getting pull request data", zap.Error(err))
+				}
+
+				pullRequests = append(pullRequests, pr.Repository.PullRequests.Nodes...)
+
+				prCursor = &pr.Repository.PullRequests.PageInfo.EndCursor
+			}
+
+			for _, pr := range pullRequests {
+				createTime := pr.CreatedAt
+				prAgeUpperBound := now.AsTime()
+				if pr.Merged {
+					prAgeUpperBound = pr.MergedAt
+				}
+
+				prAge := int64(prAgeUpperBound.Sub(createTime).Hours())
+				ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, name, pr.HeadRefName)
+			}
 		}
 
 	}
