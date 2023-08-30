@@ -80,7 +80,10 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}
 	}
 
+	// TODO: this only works for top level groups with 1 level of subgroups
 	for _, group := range subgroups.Group.DescendantGroups.Nodes {
+		// full path should be a function that takes in a list of strings and returns a string
+		// concatenated together. This makes it testable & works with multiple subgroups
 		projects, err := getGroupProjects(context.Background(), graphClient, gls.cfg.GitLabOrg+"/"+group.Name)
 		if err != nil {
 			gls.logger.Sugar().Errorf("error getting descendant groups: %v", err)
@@ -90,35 +93,31 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}
 	}
 
-	var branchList []string
-	//branchList = append(branchList, )
+	// TODO: Must paginate and update query to get all branches of projects in the list
+	//for _, project := range projectList {
 
-	for _, project := range projectList {
+	//	gls.logger.Sugar().Debugf("project: %v", project)
 
-		gls.logger.Sugar().Debugf("project: %v", project)
+	//	branches, err := getBranchNames(context.Background(), graphClient, project)
 
-		branches, err := getBranchNames(context.Background(), graphClient, project)
+	//	if err != nil {
+	//		gls.logger.Sugar().Errorf("error getting branches: %v", err)
+	//	}
 
-		if err != nil {
-			gls.logger.Sugar().Errorf("error getting branches: %v", err)
-		}
+	//	var branchList []string
+	//	branchList = append(branchList, branches.Project.Repository.BranchNames...)
 
-		branchList = append(branchList, branches.Project.Repository.BranchNames...)
+	//	gls.logger.Sugar().Debugf("branch: %v", branches.Project.Repository.BranchNames)
 
-		//gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, int64(project.), project.Name)
+	//	gls.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(branchList)), project)
 
-		gls.logger.Sugar().Debugf("branch: %v", branches.Project.Repository.BranchNames)
-
-		// set the metric with metric builder
-		//gls.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(branches.Project.Repository.BranchNames)), project)
-
-	}
+	//}
 
 	if err != nil {
 		gls.logger.Sugar().Errorf("error: %v", err)
 	}
 
-	//gls.mb.RecordGitRepositoryCountDataPoint(now, int64(len(projectList)))
+	gls.mb.RecordGitRepositoryCountDataPoint(now, int64(len(projectList)))
 
 	gls.logger.Sugar().Debugf("metrics: %v", gls.cfg.Metrics.GitRepositoryCount)
 

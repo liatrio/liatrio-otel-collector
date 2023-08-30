@@ -27,24 +27,25 @@ query getGroupDescendents($fullPath: ID!) {
     }
   }
 }
-query getBranchNames($fullPath: ID!) {
-  project(fullPath: $fullPath) {
-    repository {
-      branchNames(searchPattern: "*", offset: 0, limit: 100)
-    }
-  }
-}
 
-query getOpenedMergeRequests($fullPath: ID!) {
-  project(fullPath: $fullPath) {
-    mergeRequests(state: opened) {
-      nodes {
-        iid
-        sourceBranch
-        targetBranch
-        createdAt
-        updatedAt
-      }
-    }
-  }
-}
+#query getBranchNames($fullPath: ID!) {
+#  project(fullPath: $fullPath) {
+#    repository {
+#      branchNames(searchPattern: "*", offset: 0, limit: 100)
+#    }
+#  }
+#}
+#
+#query getOpenedMergeRequests($fullPath: ID!) {
+#  project(fullPath: $fullPath) {
+#    mergeRequests(state: opened) {
+#      nodes {
+#        iid
+#        sourceBranch
+#        targetBranch
+#        createdAt
+#        updatedAt
+#      }
+#    }
+#  }
+#}
