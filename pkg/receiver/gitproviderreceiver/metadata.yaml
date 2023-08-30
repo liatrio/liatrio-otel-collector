@@ -59,6 +59,13 @@ metrics:
         gauge:
             value_type: int
         attributes: [repository.name, branch.name]
+    git.repository.pull_request.count:
+        enabled: true
+        description: The amount of open pull requests
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name]
     git.repository.pull_request.time:
         enabled: true
         description: Time the PR has been open

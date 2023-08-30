@@ -75,11 +75,11 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordGitRepositoryPullRequestDeploymentTimeDataPoint(ts, 1, "repository.name-val", "branch.name-val")
+			mb.RecordGitRepositoryPullRequestCountDataPoint(ts, 1, "repository.name-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(ts, 1, "repository.name-val", "branch.name-val")
+			mb.RecordGitRepositoryPullRequestDeploymentTimeDataPoint(ts, 1, "repository.name-val", "branch.name-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -188,12 +188,12 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("branch.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "branch.name-val", attrVal.Str())
-				case "git.repository.pull_request.deployment.time":
-					assert.False(t, validatedMetrics["git.repository.pull_request.deployment.time"], "Found a duplicate in the metrics slice: git.repository.pull_request.deployment.time")
-					validatedMetrics["git.repository.pull_request.deployment.time"] = true
+				case "git.repository.pull_request.count":
+					assert.False(t, validatedMetrics["git.repository.pull_request.count"], "Found a duplicate in the metrics slice: git.repository.pull_request.count")
+					validatedMetrics["git.repository.pull_request.count"] = true
 					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "Time for the merged PR to be deployed", ms.At(i).Description())
+					assert.Equal(t, "The amount of open pull requests", ms.At(i).Description())
 					assert.Equal(t, "1", ms.At(i).Unit())
 					dp := ms.At(i).Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
@@ -203,15 +203,12 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok := dp.Attributes().Get("repository.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "repository.name-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("branch.name")
-					assert.True(t, ok)
-					assert.EqualValues(t, "branch.name-val", attrVal.Str())
-				case "git.repository.pull_request.merge.time":
-					assert.False(t, validatedMetrics["git.repository.pull_request.merge.time"], "Found a duplicate in the metrics slice: git.repository.pull_request.merge.time")
-					validatedMetrics["git.repository.pull_request.merge.time"] = true
+				case "git.repository.pull_request.deployment.time":
+					assert.False(t, validatedMetrics["git.repository.pull_request.deployment.time"], "Found a duplicate in the metrics slice: git.repository.pull_request.deployment.time")
+					validatedMetrics["git.repository.pull_request.deployment.time"] = true
 					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "Time for the PR to be merged", ms.At(i).Description())
+					assert.Equal(t, "Time for the merged PR to be deployed", ms.At(i).Description())
 					assert.Equal(t, "1", ms.At(i).Unit())
 					dp := ms.At(i).Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())

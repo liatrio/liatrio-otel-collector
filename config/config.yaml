@@ -5,16 +5,20 @@ extensions:
         endpoint: 0.0.0.0:1777
     zpages:
         endpoint: 0.0.0.0:55679
-  ## Uncomment below if you want to enable authentication to GitHub
-  ## Presume that GH_USER and GH_PAT are set as env variables.
-  #basicauth/github:
-  #    client_auth:
-  #        username: ${env:GH_USER}
-  #        password: ${env:GH_PAT}
-  #basicauth/grafana:
-  #  client_auth:
-  #    username: ${env:GRAF_USER}
-  #    password: ${env:GRAF_PAT}
+    ## Uncomment below if you want to enable authentication to GitHub
+    ## Presume that GH_USER and GH_PAT are set as env variables.
+    #basicauth/gitlab:
+    #    client_auth:
+    #        username: "${env:GITLAB_USER}"
+    #        password: ${env:GITLAB_PAT}
+    ## Uncomment below if you want to enable authentication to Grafana
+    #basicauth/grafana:
+    #  client_auth:
+    #    username: ${env:GRAF_USER}
+    #    password: ${env:GRAF_PAT}
+    ## Uncomment below if you want to enable authentication to GitLab
+    #bearertokenauth/gitlab:
+    #  token: ${env:GL_PAT}
 
 receivers:
     otlp:
@@ -38,10 +42,17 @@ receivers:
         scrapers:
             github:
                 github_org: ${env:GITHUB_ORG}
-              ## Uncomment if you want to view private authentication required
-              ## GitHub data or and decrease rate limiting.
-              #auth:
-              #    authenticator: basicauth/github
+                search_query: org:${env.GITHUB_ORG}
+            ## Uncomment if you want to view private authentication required
+            ## GitHub data or and decrease rate limiting.
+            #auth:
+            #    authenticator: basicauth/github
+            gitlab:
+                gitlab_org: ${env:GL_ORG}
+            ## Uncomment if you want to view private authentication required
+            ## GitHub data or and decrease rate limiting.
+            #auth:
+            #  authenticator: bearertokenauth/gitlab
 
 processors:
     batch:
@@ -64,16 +75,17 @@ exporters:
 
 service:
     ## Add basicauth/* if you want to use basic auth extensions
+    ## Add bearertokenauth/* if you want to use bearer token auth extensions
     extensions: [health_check, pprof, zpages]
     pipelines:
         metrics:
             receivers: [otlp, prometheus, gitprovider]
-            processors: [resourcedetection,batch]
+            processors: [resourcedetection, batch]
             exporters: [logging]
 
         traces:
             receivers: [otlp]
-            processors: [resourcedetection,batch]
+            processors: [resourcedetection, batch]
             exporters: [logging]
 
     telemetry:

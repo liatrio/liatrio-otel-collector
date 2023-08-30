@@ -251,21 +251,24 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 			var prCursor *string
 			var pullRequests []PullRequestNode
-			//depending on the amount of required reviewers, additional logic may be needed or
-			//might just not be needed at all
-			var reviewCount int = 1
 
-			prCount, err := getPullRequestCount(ctx, genClient, name, ghs.cfg.GitHubOrg)
+			prOpenCount, err := getPullRequestCount(ctx, genClient, name, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateOpen})
 			if err != nil {
-				ghs.logger.Sugar().Errorf("error getting pull request count", zap.Error(err))
+				ghs.logger.Sugar().Errorf("error getting open pull request count", zap.Error(err))
 			}
-			ghs.logger.Sugar().Debugf("pull request count: %v for repo %v", prCount, repo)
+			ghs.logger.Sugar().Debugf("open pull request count: %v for repo %v", prOpenCount, repo)
+			ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(prOpenCount.Repository.PullRequests.TotalCount), name)
 
-			prPages := getNumPages(float64(100), float64(prCount.Repository.PullRequests.TotalCount))
+			prMergedCount, err := getPullRequestCount(ctx, genClient, name, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateMerged})
+			if err != nil {
+				ghs.logger.Sugar().Errorf("error getting merged pull request count", zap.Error(err))
+			}
+
+			prPages := getNumPages(float64(100), float64(prOpenCount.Repository.PullRequests.TotalCount+prMergedCount.Repository.PullRequests.TotalCount))
 			ghs.logger.Sugar().Debugf("pull request pages: %v for repo %v", prPages, repo)
 
 			for i := 0; i < prPages; i++ {
-				pr, err := getPullRequestData(ctx, genClient, name, ghs.cfg.GitHubOrg, reviewCount, 100, prCursor)
+				pr, err := getPullRequestData(ctx, genClient, name, ghs.cfg.GitHubOrg, 100, prCursor)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting pull request data", zap.Error(err))
 				}
@@ -277,35 +280,29 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			for _, pr := range pullRequests {
 				createTime := pr.CreatedAt
-				closedTime := time.Now()
-				mergedTime := time.Now()
-				approvalTime := time.Now()
-				deploymentTime := time.Now()
-				if pr.Closed {
-					closedTime = pr.ClosedAt
-				}
+				prAgeUpperBound := now.AsTime()
+				approvalAgeUpperBound := now.AsTime()
+				deploymentAgeUpperBound := now.AsTime()
+
 				if pr.Merged {
-					mergedTime = pr.MergedAt
+					prAgeUpperBound = pr.MergedAt
 				}
 				if pr.Reviews.TotalCount > 0 {
-					//May need the CreatedAt instead, not sure when they'll be different.
-					//Nodes look to already be ordered by creation date so the first one should be the last approval
-					//which is what we'd want since it would be the last barrier to approval.
-					approvalTime = pr.Reviews.Nodes[0].SubmittedAt
+					//Nodes ordered by creation date so the first one should be the last approval
+					//which is what we'd want since it would be the last barrier to being approved.
+					approvalAgeUpperBound = pr.Reviews.Nodes[0].CreatedAt
 				}
 				if pr.Merged && pr.MergeCommit.Deployments.TotalCount > 0 {
-					deploymentTime = pr.MergeCommit.Deployments.Nodes[0].CreatedAt
+					deploymentAgeUpperBound = pr.MergeCommit.Deployments.Nodes[0].CreatedAt
 				}
-				mergeAge := int64(mergedTime.Sub(createTime).Hours())
-				approvalAge := int64(approvalTime.Sub(createTime).Hours())
-				prAge := int64(closedTime.Sub(createTime).Hours())
-				deploymentAge := int64(deploymentTime.Sub(createTime).Hours())
-				ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, name, pr.HeadRefName)
-				ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, name, pr.HeadRefName)
+
+				approvalAge := int64(approvalAgeUpperBound.Sub(createTime).Hours())
+				deploymentAge := int64(deploymentAgeUpperBound.Sub(createTime).Hours())
+				prAge := int64(prAgeUpperBound.Sub(createTime).Hours())
 				ghs.mb.RecordGitRepositoryPullRequestApprovalTimeDataPoint(now, approvalAge, name, pr.HeadRefName)
 				ghs.mb.RecordGitRepositoryPullRequestDeploymentTimeDataPoint(now, deploymentAge, name, pr.HeadRefName)
+				ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, name, pr.HeadRefName)
 			}
-
 		}
 
 	}

@@ -64,9 +64,9 @@ Time for the PR to be approved
 | repository.name | The full name of the Git repository | Any Str |
 | branch.name | The name of the branch in a given repository | Any Str |
 
-### git.repository.pull_request.deployment.time
+### git.repository.pull_request.count
 
-Time for the merged PR to be deployed
+The amount of open pull requests
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
@@ -77,11 +77,10 @@ Time for the merged PR to be deployed
 | Name | Description | Values |
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
-| branch.name | The name of the branch in a given repository | Any Str |
 
-### git.repository.pull_request.merge.time
+### git.repository.pull_request.deployment.time
 
-Time for the PR to be merged
+Time for the merged PR to be deployed
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |

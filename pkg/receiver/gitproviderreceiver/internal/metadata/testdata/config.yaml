@@ -11,9 +11,9 @@ all_set:
       enabled: true
     git.repository.pull_request.approval.time:
       enabled: true
-    git.repository.pull_request.deployment.time:
+    git.repository.pull_request.count:
       enabled: true
-    git.repository.pull_request.merge.time:
+    git.repository.pull_request.deployment.time:
       enabled: true
     git.repository.pull_request.time:
       enabled: true
@@ -34,9 +34,9 @@ none_set:
       enabled: false
     git.repository.pull_request.approval.time:
       enabled: false
-    git.repository.pull_request.deployment.time:
+    git.repository.pull_request.count:
       enabled: false
-    git.repository.pull_request.merge.time:
+    git.repository.pull_request.deployment.time:
       enabled: false
     git.repository.pull_request.time:
       enabled: false

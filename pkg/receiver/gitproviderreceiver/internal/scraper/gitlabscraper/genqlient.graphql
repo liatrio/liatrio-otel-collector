@@ -1,0 +1,51 @@
+query getGroupProjects($fullPath: ID!) {
+  group(fullPath: $fullPath) {
+    projects {
+      nodes {
+        name
+        createdAt
+        lastActivityAt
+      }
+    }
+  }
+}
+
+query getProject($fullPath: ID!) {
+  project(fullPath: $fullPath) {
+    name
+    createdAt
+    lastActivityAt
+  }
+}
+
+query getGroupDescendents($fullPath: ID!) {
+  group(fullPath: $fullPath) {
+    descendantGroups {
+      nodes {
+        name
+      }
+    }
+  }
+}
+
+#query getBranchNames($fullPath: ID!) {
+#  project(fullPath: $fullPath) {
+#    repository {
+#      branchNames(searchPattern: "*", offset: 0, limit: 100)
+#    }
+#  }
+#}
+#
+#query getOpenedMergeRequests($fullPath: ID!) {
+#  project(fullPath: $fullPath) {
+#    mergeRequests(state: opened) {
+#      nodes {
+#        iid
+#        sourceBranch
+#        targetBranch
+#        createdAt
+#        updatedAt
+#      }
+#    }
+#  }
+#}
