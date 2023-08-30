@@ -36,6 +36,10 @@ func getNumPages(p float64, n float64) int {
 	return int(numPages)
 }
 
+func add(a int, b int) int {
+	return a + b
+}
+
 // Ensure that the type of owner is user or organization
 func checkOwnerTypeValid(ownertype string) (bool, error) {
 	if ownertype == "org" || ownertype == "user" {

@@ -39,6 +39,38 @@ func TestGetNumPages1(t *testing.T) {
 	assert.Equal(t, expected, num)
 }
 
+func TestAdd100(t *testing.T) {
+	a := 100
+	b := 100
+
+	expected := 200
+
+	num := add(a, b)
+
+	assert.Equal(t, expected, num)
+}
+
+func TestAdd10(t *testing.T) {
+	a := 10
+	b := 10
+
+	expected := 20
+
+	num := add(a, b)
+
+	assert.Equal(t, expected, num)
+}
+
+func TestAdd1(t *testing.T) {
+	a := 1
+	b := 1
+
+	expected := 2
+
+	num := add(a, b)
+
+	assert.Equal(t, expected, num)
+}
 func TestGenDefaultSearchQueryOrg(t *testing.T) {
 	st := "org"
 	org := "empire"
