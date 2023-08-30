@@ -61,11 +61,22 @@ func TestAdd10(t *testing.T) {
 	assert.Equal(t, expected, num)
 }
 
-func TestAdd1(t *testing.T) {
+func TestAddNegative1(t *testing.T) {
 	a := 1
-	b := 1
+	b := -1
 
-	expected := 2
+	expected := 0
+
+	num := add(a, b)
+
+	assert.Equal(t, expected, num)
+}
+
+func TestAddNegative10(t *testing.T) {
+	a := 1
+	b := -10
+
+	expected := -9
 
 	num := add(a, b)
 
