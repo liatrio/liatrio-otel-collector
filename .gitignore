@@ -23,5 +23,8 @@ tmp
 
 dist/
 
+# MacOS
+.DS_Store
+
 # JetBrains IDEs
 .idea/
