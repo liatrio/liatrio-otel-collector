@@ -36,7 +36,7 @@ func getNumPages(p float64, n float64) int {
 	return int(numPages)
 }
 
-func add(a int, b int) int {
+func add[T ~int | ~float64](a, b T) T {
 	return a + b
 }
 

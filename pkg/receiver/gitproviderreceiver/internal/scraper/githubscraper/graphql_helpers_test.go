@@ -39,7 +39,7 @@ func TestGetNumPages1(t *testing.T) {
 	assert.Equal(t, expected, num)
 }
 
-func TestAdd100(t *testing.T) {
+func TestAddInt(t *testing.T) {
 	a := 100
 	b := 100
 
@@ -50,18 +50,18 @@ func TestAdd100(t *testing.T) {
 	assert.Equal(t, expected, num)
 }
 
-func TestAdd10(t *testing.T) {
-	a := 10
-	b := 10
+func TestAddFloat(t *testing.T) {
+	a := 10.5
+	b := 10.5
 
-	expected := 20
+	expected := 21.0
 
 	num := add(a, b)
 
 	assert.Equal(t, expected, num)
 }
 
-func TestAddNegative1(t *testing.T) {
+func TestAddNegativeInt(t *testing.T) {
 	a := 1
 	b := -1
 
@@ -72,11 +72,11 @@ func TestAddNegative1(t *testing.T) {
 	assert.Equal(t, expected, num)
 }
 
-func TestAddNegative10(t *testing.T) {
-	a := 1
-	b := -10
+func TestAddNegativeFloat(t *testing.T) {
+	a := 1.5
+	b := -10.0
 
-	expected := -9
+	expected := -8.5
 
 	num := add(a, b)
 
