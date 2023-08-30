@@ -9,14 +9,6 @@ import (
 	"github.com/Khan/genqlient/graphql"
 )
 
-// __getBranchNamesInput is used internally by genqlient
-type __getBranchNamesInput struct {
-	FullPath string `json:"fullPath"`
-}
-
-// GetFullPath returns __getBranchNamesInput.FullPath, and is useful for accessing the field via an interface.
-func (v *__getBranchNamesInput) GetFullPath() string { return v.FullPath }
-
 // __getGroupDescendentsInput is used internally by genqlient
 type __getGroupDescendentsInput struct {
 	FullPath string `json:"fullPath"`
@@ -33,14 +25,6 @@ type __getGroupProjectsInput struct {
 // GetFullPath returns __getGroupProjectsInput.FullPath, and is useful for accessing the field via an interface.
 func (v *__getGroupProjectsInput) GetFullPath() string { return v.FullPath }
 
-// __getOpenedMergeRequestsInput is used internally by genqlient
-type __getOpenedMergeRequestsInput struct {
-	FullPath string `json:"fullPath"`
-}
-
-// GetFullPath returns __getOpenedMergeRequestsInput.FullPath, and is useful for accessing the field via an interface.
-func (v *__getOpenedMergeRequestsInput) GetFullPath() string { return v.FullPath }
-
 // __getProjectInput is used internally by genqlient
 type __getProjectInput struct {
 	FullPath string `json:"fullPath"`
@@ -48,33 +32,6 @@ type __getProjectInput struct {
 
 // GetFullPath returns __getProjectInput.FullPath, and is useful for accessing the field via an interface.
 func (v *__getProjectInput) GetFullPath() string { return v.FullPath }
-
-// getBranchNamesProject includes the requested fields of the GraphQL type Project.
-type getBranchNamesProject struct {
-	// Git repository of the project.
-	Repository getBranchNamesProjectRepository `json:"repository"`
-}
-
-// GetRepository returns getBranchNamesProject.Repository, and is useful for accessing the field via an interface.
-func (v *getBranchNamesProject) GetRepository() getBranchNamesProjectRepository { return v.Repository }
-
-// getBranchNamesProjectRepository includes the requested fields of the GraphQL type Repository.
-type getBranchNamesProjectRepository struct {
-	// Names of branches available in this repository that match the search pattern.
-	BranchNames []string `json:"branchNames"`
-}
-
-// GetBranchNames returns getBranchNamesProjectRepository.BranchNames, and is useful for accessing the field via an interface.
-func (v *getBranchNamesProjectRepository) GetBranchNames() []string { return v.BranchNames }
-
-// getBranchNamesResponse is returned by getBranchNames on success.
-type getBranchNamesResponse struct {
-	// Find a project.
-	Project getBranchNamesProject `json:"project"`
-}
-
-// GetProject returns getBranchNamesResponse.Project, and is useful for accessing the field via an interface.
-func (v *getBranchNamesResponse) GetProject() getBranchNamesProject { return v.Project }
 
 // getGroupDescendentsGroup includes the requested fields of the GraphQL type Group.
 type getGroupDescendentsGroup struct {
@@ -178,79 +135,6 @@ type getGroupProjectsResponse struct {
 // GetGroup returns getGroupProjectsResponse.Group, and is useful for accessing the field via an interface.
 func (v *getGroupProjectsResponse) GetGroup() getGroupProjectsGroup { return v.Group }
 
-// getOpenedMergeRequestsProject includes the requested fields of the GraphQL type Project.
-type getOpenedMergeRequestsProject struct {
-	// Merge requests of the project.
-	MergeRequests getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection `json:"mergeRequests"`
-}
-
-// GetMergeRequests returns getOpenedMergeRequestsProject.MergeRequests, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProject) GetMergeRequests() getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection {
-	return v.MergeRequests
-}
-
-// getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection includes the requested fields of the GraphQL type MergeRequestConnection.
-// The GraphQL type's documentation follows.
-//
-// The connection type for MergeRequest.
-type getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection struct {
-	// A list of nodes.
-	Nodes []getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest `json:"nodes"`
-}
-
-// GetNodes returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection.Nodes, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection) GetNodes() []getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest {
-	return v.Nodes
-}
-
-// getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest includes the requested fields of the GraphQL type MergeRequest.
-type getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest struct {
-	// Internal ID of the merge request.
-	Iid string `json:"iid"`
-	// Source branch of the merge request.
-	SourceBranch string `json:"sourceBranch"`
-	// Target branch of the merge request.
-	TargetBranch string `json:"targetBranch"`
-	// Timestamp of when the merge request was created.
-	CreatedAt time.Time `json:"createdAt"`
-	// Timestamp of when the merge request was last updated.
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-// GetIid returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.Iid, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetIid() string {
-	return v.Iid
-}
-
-// GetSourceBranch returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.SourceBranch, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetSourceBranch() string {
-	return v.SourceBranch
-}
-
-// GetTargetBranch returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.TargetBranch, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetTargetBranch() string {
-	return v.TargetBranch
-}
-
-// GetCreatedAt returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.CreatedAt, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetCreatedAt() time.Time {
-	return v.CreatedAt
-}
-
-// GetUpdatedAt returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.UpdatedAt, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetUpdatedAt() time.Time {
-	return v.UpdatedAt
-}
-
-// getOpenedMergeRequestsResponse is returned by getOpenedMergeRequests on success.
-type getOpenedMergeRequestsResponse struct {
-	// Find a project.
-	Project getOpenedMergeRequestsProject `json:"project"`
-}
-
-// GetProject returns getOpenedMergeRequestsResponse.Project, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsResponse) GetProject() getOpenedMergeRequestsProject { return v.Project }
-
 // getProjectProject includes the requested fields of the GraphQL type Project.
 type getProjectProject struct {
 	// Name of the project (without namespace).
@@ -278,43 +162,6 @@ type getProjectResponse struct {
 
 // GetProject returns getProjectResponse.Project, and is useful for accessing the field via an interface.
 func (v *getProjectResponse) GetProject() getProjectProject { return v.Project }
-
-// The query or mutation executed by getBranchNames.
-const getBranchNames_Operation = `
-query getBranchNames ($fullPath: ID!) {
-	project(fullPath: $fullPath) {
-		repository {
-			branchNames(searchPattern: "*", offset: 0, limit: 100)
-		}
-	}
-}
-`
-
-func getBranchNames(
-	ctx context.Context,
-	client graphql.Client,
-	fullPath string,
-) (*getBranchNamesResponse, error) {
-	req := &graphql.Request{
-		OpName: "getBranchNames",
-		Query:  getBranchNames_Operation,
-		Variables: &__getBranchNamesInput{
-			FullPath: fullPath,
-		},
-	}
-	var err error
-
-	var data getBranchNamesResponse
-	resp := &graphql.Response{Data: &data}
-
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
-	)
-
-	return &data, err
-}
 
 // The query or mutation executed by getGroupDescendents.
 const getGroupDescendents_Operation = `
@@ -385,49 +232,6 @@ func getGroupProjects(
 	var err error
 
 	var data getGroupProjectsResponse
-	resp := &graphql.Response{Data: &data}
-
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
-	)
-
-	return &data, err
-}
-
-// The query or mutation executed by getOpenedMergeRequests.
-const getOpenedMergeRequests_Operation = `
-query getOpenedMergeRequests ($fullPath: ID!) {
-	project(fullPath: $fullPath) {
-		mergeRequests(state: opened) {
-			nodes {
-				iid
-				sourceBranch
-				targetBranch
-				createdAt
-				updatedAt
-			}
-		}
-	}
-}
-`
-
-func getOpenedMergeRequests(
-	ctx context.Context,
-	client graphql.Client,
-	fullPath string,
-) (*getOpenedMergeRequestsResponse, error) {
-	req := &graphql.Request{
-		OpName: "getOpenedMergeRequests",
-		Query:  getOpenedMergeRequests_Operation,
-		Variables: &__getOpenedMergeRequestsInput{
-			FullPath: fullPath,
-		},
-	}
-	var err error
-
-	var data getOpenedMergeRequestsResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
