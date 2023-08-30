@@ -118,3 +118,16 @@ jobs:
                   github-token: ${{ secrets.SEMANTIC_RELEASE_GH_PAT }}
                   changelog-generator-opt: emojis=true
                   allow-initial-development-versions: true
+
+    otel-export-trace:
+      if: always()
+      name: OpenTelemetry Export Trace
+      runs-on: ubuntu-latest
+      needs: [lint, build, test, go-semantic-release] # must run when all jobs are complete
+      steps:
+        - name: Export Workflow Trace
+          uses: inception-health/otel-export-trace-action@latest
+          with:
+            otlpEndpoint: ${{ secrets.OTLP_ENDPOINT }}
+            otlpHeaders: ${{ secrets.OTLP_HEADERS }}
+            githubToken: ${{ secrets.GITHUB_TOKEN }}
