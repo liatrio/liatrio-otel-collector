@@ -104,20 +104,20 @@ jobs:
             - name: Make test-all
               run: make test-all
 
-    # go-semantic-release:
-    #     if: ${{ github.ref == 'refs/heads/main' }}
-    #     needs: [lint, build]
-    #     runs-on:
-    #         group: bigger
-    #     permissions:
-    #         contents: write
-    #     steps:
-    #         - name: Run go-semantic-release
-    #           uses: go-semantic-release/action@v1
-    #           with:
-    #               github-token: ${{ secrets.SEMANTIC_RELEASE_GH_PAT }}
-    #               changelog-generator-opt: emojis=true
-    #               allow-initial-development-versions: true
+    go-semantic-release:
+        if: ${{ github.ref == 'refs/heads/main' }}
+        needs: [lint, build]
+        runs-on:
+            group: bigger
+        permissions:
+            contents: write
+        steps:
+            - name: Run go-semantic-release
+              uses: go-semantic-release/action@v1
+              with:
+                  github-token: ${{ secrets.SEMANTIC_RELEASE_GH_PAT }}
+                  changelog-generator-opt: emojis=true
+                  allow-initial-development-versions: true
 
     otel-export-trace:
       if: always()
