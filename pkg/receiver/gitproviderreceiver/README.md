@@ -31,6 +31,10 @@ The current metrics available via scraping from GitHub are:
 * repository contributor count
 * repository pull request time
 
+> Note: Some metrics may be disabled by default and have to be explicitly enabled.
+> For example, the repository contributor count metric is one such metric. This is
+> becasuse this metric relies on the REST API which is subject to lower rate limits.
+
 
 ## Getting Started
 
@@ -63,6 +67,9 @@ receivers:
         collection_interval: 60s
         scrapers:
             github:
+                metrics:
+                    git.repository.contributor.count:
+                        enabled: true
                 github_org: myfancyorg
                 search_query: "org:myfancyorg topic:o11yalltheway" #optional query override, defaults to "{org,user}:<github_org>"
                 auth:

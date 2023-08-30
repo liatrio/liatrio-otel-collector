@@ -29,6 +29,7 @@ type MetricsConfig struct {
 	GitRepositoryBranchTime       MetricConfig `mapstructure:"git.repository.branch.time"`
 	GitRepositoryContributorCount MetricConfig `mapstructure:"git.repository.contributor.count"`
 	GitRepositoryCount            MetricConfig `mapstructure:"git.repository.count"`
+	GitRepositoryPullRequestCount MetricConfig `mapstructure:"git.repository.pull_request.count"`
 	GitRepositoryPullRequestTime  MetricConfig `mapstructure:"git.repository.pull_request.time"`
 }
 
@@ -41,9 +42,12 @@ func DefaultMetricsConfig() MetricsConfig {
 			Enabled: true,
 		},
 		GitRepositoryContributorCount: MetricConfig{
-			Enabled: true,
+			Enabled: false,
 		},
 		GitRepositoryCount: MetricConfig{
+			Enabled: true,
+		},
+		GitRepositoryPullRequestCount: MetricConfig{
 			Enabled: true,
 		},
 		GitRepositoryPullRequestTime: MetricConfig{

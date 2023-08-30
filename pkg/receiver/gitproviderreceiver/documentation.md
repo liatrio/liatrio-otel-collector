@@ -41,9 +41,17 @@ Time the branch has existed
 | repository.name | The full name of the Git repository | Any Str |
 | branch.name | The name of the branch in a given repository | Any Str |
 
-### git.repository.contributor.count
+### git.repository.count
 
-Total number of unique contributors to this repository
+Number of repositories that exist in an organization
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+### git.repository.pull_request.count
+
+The amount of open pull requests
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
@@ -54,14 +62,6 @@ Total number of unique contributors to this repository
 | Name | Description | Values |
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
-
-### git.repository.count
-
-Number of repositories that exist in an organization
-
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
 
 ### git.repository.pull_request.time
 
@@ -77,6 +77,30 @@ Time the PR has been open
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
 | branch.name | The name of the branch in a given repository | Any Str |
+
+## Optional Metrics
+
+The following metrics are not emitted by default. Each of them can be enabled by applying the following configuration:
+
+```yaml
+metrics:
+  <metric_name>:
+    enabled: true
+```
+
+### git.repository.contributor.count
+
+Total number of unique contributors to this repository
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
 
 ## Resource Attributes
 

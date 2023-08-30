@@ -3,10 +3,10 @@ package githubscraper
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 
 	"github.com/Khan/genqlient/graphql"
-	//"go.uber.org/zap"
 )
 
 // TODO: getRepoData and getBranchData should be a singular function since we can
@@ -15,7 +15,7 @@ import (
 func getRepoData(
 	ctx context.Context,
 	client graphql.Client,
-	cfg *Config,
+	searchQuery string,
 	ownertype string,
 	// here we use a pointer to a string so that graphql will receive null if the
 	// value is not set since the after: $repoCursor is optional to graphql
@@ -23,33 +23,15 @@ func getRepoData(
 	// since we're using a interface{} here we do type checking when data
 	// is returned to the calling function
 ) (interface{}, error) {
-	if cfg.SearchQuery != "" {
-		data, err := getRepoDataBySearch(ctx, client, cfg.SearchQuery, repoCursor)
-		if err != nil {
-			return nil, err
-		}
-		return data, nil
-	} else if ownertype == "user" {
-		data, err := getUserRepoData(ctx, client, cfg.GitHubOrg, repoCursor)
-		if err != nil {
-			return nil, err
-		}
-		return data, nil
-	} else if ownertype == "org" {
-		data, err := getOrgRepoData(ctx, client, cfg.GitHubOrg, repoCursor)
-		if err != nil {
-			return nil, err
-		}
-		return data, nil
+	data, err := getRepoDataBySearch(ctx, client, searchQuery, repoCursor)
+	if err != nil {
+		return nil, err
 	}
-
-	return nil, errors.New("not able to get repo count")
+	return data, nil
 }
 
-func getNumPages(n float64) int {
-	pageCap := 100.0
-
-	numPages := math.Ceil(n / pageCap)
+func getNumPages(p float64, n float64) int {
+	numPages := math.Ceil(n / p)
 
 	return int(numPages)
 }
@@ -71,6 +53,8 @@ func (ghs *githubScraper) checkOwnerExists(ctx context.Context, client graphql.C
 	exists = false
 	ownerType = ""
 
+	// These types are used later to generate the default string for the search query
+	// and thus must match the convention for user: and org: searches in GitHub
 	if loginResp.User.Login == owner {
 		exists = true
 		ownerType = "user"
@@ -84,4 +68,10 @@ func (ghs *githubScraper) checkOwnerExists(ctx context.Context, client graphql.C
 	}
 
 	return
+}
+
+// Returns the default search query string based on input of owner type
+// and GitHubOrg name with a default of archived:false to ignore archived repos
+func genDefaultSearchQuery(ownertype string, ghorg string) string {
+	return fmt.Sprintf("%s:%s archived:false", ownertype, ghorg)
 }
