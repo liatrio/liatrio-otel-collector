@@ -129,5 +129,5 @@ jobs:
           uses: inception-health/otel-export-trace-action@latest
           with:
             otlpEndpoint: grpc://tempo-us-central1.grafana.net:443/
-            otlpHeaders: ${{ secrets.OTLP_HEADERS }}
+            otlpHeaders: "authorization=Basic ${{ secrets.OTLP_HEADERS }}"
             githubToken: ${{ secrets.GITHUB_TOKEN }}
