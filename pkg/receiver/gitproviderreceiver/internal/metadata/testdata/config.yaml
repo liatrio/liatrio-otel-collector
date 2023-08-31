@@ -15,6 +15,8 @@ all_set:
       enabled: true
     git.repository.pull_request.deployment.time:
       enabled: true
+    git.repository.pull_request.merge.time:
+      enabled: true
     git.repository.pull_request.time:
       enabled: true
   resource_attributes:
@@ -37,6 +39,8 @@ none_set:
     git.repository.pull_request.count:
       enabled: false
     git.repository.pull_request.deployment.time:
+      enabled: false
+    git.repository.pull_request.merge.time:
       enabled: false
     git.repository.pull_request.time:
       enabled: false

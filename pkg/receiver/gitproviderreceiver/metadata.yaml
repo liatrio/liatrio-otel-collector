@@ -73,6 +73,13 @@ metrics:
         gauge:
             value_type: int
         attributes: [repository.name, branch.name]
+    git.repository.pull_request.merge.time:
+        enabled: true
+        description: Time the PR has been merged
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
     git.repository.pull_request.approval.time:
         enabled: true
         description: Time for the PR to be approved
