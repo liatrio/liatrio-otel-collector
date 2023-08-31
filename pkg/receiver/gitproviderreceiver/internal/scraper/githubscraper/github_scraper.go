@@ -264,7 +264,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				ghs.logger.Sugar().Errorf("error getting merged pull request count", zap.Error(err))
 			}
 
-			prPages := getNumPages(float64(100), float64(prOpenCount.Repository.PullRequests.TotalCount+prMergedCount.Repository.PullRequests.TotalCount))
+			totalPrCount := add(prOpenCount.Repository.PullRequests.TotalCount, prMergedCount.Repository.PullRequests.TotalCount)
+			prPages := getNumPages(float64(100), float64(totalPrCount))
 			ghs.logger.Sugar().Debugf("pull request pages: %v for repo %v", prPages, repo)
 
 			for i := 0; i < prPages; i++ {
