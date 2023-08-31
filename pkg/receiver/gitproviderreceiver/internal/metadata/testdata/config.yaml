@@ -3,6 +3,8 @@ all_set:
   metrics:
     git.repository.branch.count:
       enabled: true
+    git.repository.branch.diff:
+      enabled: true
     git.repository.branch.time:
       enabled: true
     git.repository.contributor.count:
@@ -21,6 +23,8 @@ all_set:
 none_set:
   metrics:
     git.repository.branch.count:
+      enabled: false
+    git.repository.branch.diff:
       enabled: false
     git.repository.branch.time:
       enabled: false

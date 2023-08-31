@@ -26,6 +26,21 @@ Number of branches that exist in the repository
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
 
+### git.repository.branch.diff
+
+Difference in commits between the branch and main
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| branch.name | The name of the branch in a given repository | Any Str |
+
 ### git.repository.branch.time
 
 Time the branch has existed
