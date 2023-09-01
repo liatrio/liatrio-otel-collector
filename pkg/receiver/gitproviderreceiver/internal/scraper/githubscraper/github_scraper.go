@@ -217,7 +217,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				// the default branch. Doing it this way involves less queries because
 				// we don't have to know the queried branch name ahead of time.
 				cp := getNumPages(float64(100), float64(branch.Compare.BehindBy))
-
 				var cc *string
 
 				for i := 0; i < cp; i++ {
@@ -257,7 +256,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				ghs.logger.Sugar().Errorf("error getting open pull request count", zap.Error(err))
 			}
 			ghs.logger.Sugar().Debugf("open pull request count: %v for repo %v", prOpenCount, repo)
-
 			ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(prOpenCount.Repository.PullRequests.TotalCount), name)
 
 			prMergedCount, err := getPullRequestCount(ctx, genClient, name, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateMerged})
@@ -281,14 +279,25 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 
 			for _, pr := range pullRequests {
-				createTime := pr.CreatedAt
-				prAgeUpperBound := now.AsTime()
 				if pr.Merged {
-					prAgeUpperBound = pr.MergedAt
+					prMergedTime := pr.MergedAt
+					mergeAge := int64(prMergedTime.Sub(pr.CreatedAt).Hours())
+					ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, name, pr.HeadRefName)
+					//only exists if the pr is merged
+					if pr.MergeCommit.Deployments.TotalCount > 0 {
+						deploymentAgeUpperBound := pr.MergeCommit.Deployments.Nodes[0].CreatedAt
+						deploymentAge := int64(deploymentAgeUpperBound.Sub(pr.CreatedAt).Hours())
+						ghs.mb.RecordGitRepositoryPullRequestDeploymentTimeDataPoint(now, deploymentAge, name, pr.HeadRefName)
+					}
+				} else {
+					prAge := int64(now.AsTime().Sub(pr.CreatedAt).Hours())
+					ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, name, pr.HeadRefName)
 				}
-
-				prAge := int64(prAgeUpperBound.Sub(createTime).Hours())
-				ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, name, pr.HeadRefName)
+				if pr.Reviews.TotalCount > 0 {
+					approvalAgeUpperBound := pr.Reviews.Nodes[0].CreatedAt
+					approvalAge := int64(approvalAgeUpperBound.Sub(pr.CreatedAt).Hours())
+					ghs.mb.RecordGitRepositoryPullRequestApprovalTimeDataPoint(now, approvalAge, name, pr.HeadRefName)
+				}
 			}
 		}
 
