@@ -23,6 +23,13 @@ var (
 	errClientNotInitErr = errors.New("http client not initialized")
 )
 
+type gitlabProject struct {
+	Name           string
+	Path           string
+	CreatedAt      string
+	LastActivityAt string
+}
+
 type gitlabScraper struct {
 	client   *http.Client
 	cfg      *Config
@@ -70,26 +77,14 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	graphClient := graphql.NewClient("https://gitlab.com/api/graphql", gls.client)
 
-	subgroups, err := getGroupDescendents(context.Background(), graphClient, gls.cfg.GitLabOrg)
+	projects, err := getAllGroupProjects(context.Background(), graphClient, gls.cfg.GitLabOrg)
 
-	var projectList []string
+	//
+	var projectList []gitlabProject
 
-	if len(subgroups.Group.DescendantGroups.Nodes) > 0 {
-		for _, d := range subgroups.Group.DescendantGroups.Nodes {
-			projectList = append(projectList, d.Name)
-		}
-	}
-
-	// TODO: this only works for top level groups with 1 level of subgroups
-	for _, group := range subgroups.Group.DescendantGroups.Nodes {
-		// full path should be a function that takes in a list of strings and returns a string
-		// concatenated together. This makes it testable & works with multiple subgroups
-		projects, err := getGroupProjects(context.Background(), graphClient, gls.cfg.GitLabOrg+"/"+group.Name)
-		if err != nil {
-			gls.logger.Sugar().Errorf("error getting descendant groups: %v", err)
-		}
-		for _, project := range projects.Group.Projects.Nodes {
-			projectList = append(projectList, project.Name)
+	if len(projects.Group.Projects.Nodes) > 0 {
+		for _, p := range projects.Group.Projects.Nodes {
+			projectList = append(projectList, gitlabProject{Name: p.Name, Path: p.FullPath, CreatedAt: p.CreatedAt.String(), LastActivityAt: p.LastActivityAt.String()})
 		}
 	}
 
