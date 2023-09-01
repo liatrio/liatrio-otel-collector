@@ -79,7 +79,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	projects, err := getAllGroupProjects(context.Background(), graphClient, gls.cfg.GitLabOrg)
 
-	//
+	// get all projects for group/org
 	var projectList []gitlabProject
 
 	if len(projects.Group.Projects.Nodes) > 0 {
@@ -89,31 +89,14 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	}
 
 	// TODO: Must paginate and update query to get all branches of projects in the list
-	//for _, project := range projectList {
 
-	//	gls.logger.Sugar().Debugf("project: %v", project)
-
-	//	branches, err := getBranchNames(context.Background(), graphClient, project)
-
-	//	if err != nil {
-	//		gls.logger.Sugar().Errorf("error getting branches: %v", err)
-	//	}
-
-	//	var branchList []string
-	//	branchList = append(branchList, branches.Project.Repository.BranchNames...)
-
-	//	gls.logger.Sugar().Debugf("branch: %v", branches.Project.Repository.BranchNames)
-
-	//	gls.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(branchList)), project)
-
-	//}
-
+	// log error
 	if err != nil {
 		gls.logger.Sugar().Errorf("error: %v", err)
 	}
 
+	// record metrics
 	gls.mb.RecordGitRepositoryCountDataPoint(now, int64(len(projectList)))
-
 	gls.logger.Sugar().Debugf("metrics: %v", gls.cfg.Metrics.GitRepositoryCount)
 
 	return gls.mb.Emit(), nil
