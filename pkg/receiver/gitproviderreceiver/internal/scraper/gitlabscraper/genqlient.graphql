@@ -1,8 +1,10 @@
-query getGroupProjects($fullPath: ID!) {
+
+query getAllGroupProjects($fullPath: ID!) {
   group(fullPath: $fullPath) {
-    projects {
+    projects(includeSubgroups: true) {
       nodes {
         name
+        fullPath
         createdAt
         lastActivityAt
       }
@@ -10,42 +12,36 @@ query getGroupProjects($fullPath: ID!) {
   }
 }
 
-query getProject($fullPath: ID!) {
-  project(fullPath: $fullPath) {
-    name
-    createdAt
-    lastActivityAt
-  }
-}
-
-query getGroupDescendents($fullPath: ID!) {
-  group(fullPath: $fullPath) {
-    descendantGroups {
-      nodes {
-        name
-      }
+query getProjectsByTopic($org: String!, $topics: [String!]) {
+  projects(searchNamespaces: true, search: $org, topics: $topics) {
+    nodes {
+      name
+      fullPath
+      createdAt
+      lastActivityAt
     }
   }
 }
 
-#query getBranchNames($fullPath: ID!) {
-#  project(fullPath: $fullPath) {
-#    repository {
-#      branchNames(searchPattern: "*", offset: 0, limit: 100)
-#    }
-#  }
-#}
-#
-#query getOpenedMergeRequests($fullPath: ID!) {
-#  project(fullPath: $fullPath) {
-#    mergeRequests(state: opened) {
-#      nodes {
-#        iid
-#        sourceBranch
-#        targetBranch
-#        createdAt
-#        updatedAt
-#      }
-#    }
-#  }
-#}
+query getBranchNames($fullPath: ID!) {
+  project(fullPath: $fullPath) {
+    repository {
+      branchNames(searchPattern: "*", offset: 0, limit: 100)
+    }
+  }
+}
+
+query getOpenedMergeRequests($fullPath: ID!) {
+  project(fullPath: $fullPath) {
+    mergeRequests(state: opened) {
+      nodes {
+        iid
+        title
+        sourceBranch
+        targetBranch
+        createdAt
+        updatedAt
+      }
+    }
+  }
+}
