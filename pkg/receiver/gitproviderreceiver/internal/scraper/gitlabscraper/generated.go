@@ -320,7 +320,7 @@ const getBranchNames_Operation = `
 query getBranchNames ($fullPath: ID!) {
 	project(fullPath: $fullPath) {
 		repository {
-			branchNames(searchPattern: "*", offset: 0, limit: 100)
+			branchNames(searchPattern: "*", offset: 0, limit: 100000)
 		}
 	}
 }
