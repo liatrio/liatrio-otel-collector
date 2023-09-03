@@ -76,6 +76,9 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	graphClient := graphql.NewClient("https://gitlab.com/api/graphql", gls.client)
 
 	projects, err := getAllGroupProjects(context.Background(), graphClient, gls.cfg.GitLabOrg)
+	if err != nil {
+		gls.logger.Sugar().Errorf("error: %v", err)
+	}
 
 	// get all projects for group/org
 	var projectList []gitlabProject
@@ -89,6 +92,9 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				LastActivityAt: p.LastActivityAt,
 			})
 		}
+	} else {
+		gls.logger.Sugar().Error("No GitLab projects found for the given group/org.")
+		// return gls.mb.Emit(), err
 	}
 
 	// TODO: Must paginate and update query to get all branches of projects in the list
