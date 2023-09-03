@@ -97,7 +97,26 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		// return gls.mb.Emit(), err
 	}
 
-	// TODO: Must paginate and update query to get all branches of projects in the list
+	// TODO: Must account for when there are more than 100,000 branch names in a project.
+	// get all branches for each project
+
+	// A map that maps a project name to an array of branch names.
+	var branchNames map[string][]string = make(map[string][]string, len(projectList))
+
+	if len(projectList) > 0 {
+		for _, project := range projectList {
+			branches, err := getBranchNames(context.Background(), graphClient, project.Path)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error: %v", err)
+			}
+
+			branchCount := int64(len(branches.Project.Repository.BranchNames))
+
+			branchNames[project.Name] = branches.Project.Repository.BranchNames
+			gls.mb.RecordGitRepositoryBranchCountDataPoint(now, branchCount, project.Name)
+			gls.logger.Sugar().Debug("branch count: ", branchCount)
+		}
+	}
 
 	// log error
 	if err != nil {
