@@ -19,9 +19,7 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
 )
 
-var (
-	errClientNotInitErr = errors.New("http client not initialized")
-)
+var errClientNotInitErr = errors.New("http client not initialized")
 
 type gitlabProject struct {
 	Name           string
