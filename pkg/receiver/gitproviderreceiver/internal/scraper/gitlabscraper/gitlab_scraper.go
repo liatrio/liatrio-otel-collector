@@ -24,8 +24,8 @@ var errClientNotInitErr = errors.New("http client not initialized")
 type gitlabProject struct {
 	Name           string
 	Path           string
-	CreatedAt      string
-	LastActivityAt string
+	CreatedAt      time.Time
+	LastActivityAt time.Time
 }
 
 type gitlabScraper struct {
@@ -82,7 +82,12 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	if len(projects.Group.Projects.Nodes) > 0 {
 		for _, p := range projects.Group.Projects.Nodes {
-			projectList = append(projectList, gitlabProject{Name: p.Name, Path: p.FullPath, CreatedAt: p.CreatedAt.String(), LastActivityAt: p.LastActivityAt.String()})
+			projectList = append(projectList, gitlabProject{
+				Name:           p.Name,
+				Path:           p.FullPath,
+				CreatedAt:      p.CreatedAt,
+				LastActivityAt: p.LastActivityAt,
+			})
 		}
 	}
 
