@@ -2,6 +2,13 @@
 query getAllGroupProjects($fullPath: ID!) {
   group(fullPath: $fullPath) {
     projects(includeSubgroups: true) {
+      count
+
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+
       nodes {
         name
         fullPath
