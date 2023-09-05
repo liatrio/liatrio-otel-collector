@@ -85,24 +85,26 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			gls.logger.Sugar().Errorf("error: %v", err)
 		}
 
+		if len(projects.Group.Projects.Nodes) == 0 {
+			err = errors.New("no GitLab projects found for the given group/org")
+			gls.logger.Sugar().Error(err)
+
+			return gls.mb.Emit(), err
+		}
+
 		// Check if there is a next page
 		hasNextPage = projects.Group.Projects.PageInfo.HasNextPage
 
 		// Set the cursor to the end cursor of the current page
 		projectsCursor = &projects.Group.Projects.PageInfo.EndCursor
 
-		if len(projects.Group.Projects.Nodes) > 0 {
-			for _, p := range projects.Group.Projects.Nodes {
-				projectList = append(projectList, gitlabProject{
-					Name:           p.Name,
-					Path:           p.FullPath,
-					CreatedAt:      p.CreatedAt,
-					LastActivityAt: p.LastActivityAt,
-				})
-			}
-		} else {
-			gls.logger.Sugar().Error("No GitLab projects found for the given group/org.")
-			// return gls.mb.Emit(), err
+		for _, p := range projects.Group.Projects.Nodes {
+			projectList = append(projectList, gitlabProject{
+				Name:           p.Name,
+				Path:           p.FullPath,
+				CreatedAt:      p.CreatedAt,
+				LastActivityAt: p.LastActivityAt,
+			})
 		}
 	}
 
@@ -110,19 +112,17 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	var branchNames map[string][]string = make(map[string][]string, len(projectList))
 
 	// TODO: Must account for when there are more than 100,000 branch names in a project.
-	if len(projectList) > 0 {
-		for _, project := range projectList {
-			branches, err := getBranchNames(context.Background(), graphClient, project.Path)
-			if err != nil {
-				gls.logger.Sugar().Errorf("error: %v", err)
-			}
-
-			branchCount := int64(len(branches.Project.Repository.BranchNames))
-
-			branchNames[project.Name] = branches.Project.Repository.BranchNames
-			gls.mb.RecordGitRepositoryBranchCountDataPoint(now, branchCount, project.Name)
-			gls.logger.Sugar().Debug("branch count: ", branchCount)
+	for _, project := range projectList {
+		branches, err := getBranchNames(context.Background(), graphClient, project.Path)
+		if err != nil {
+			gls.logger.Sugar().Errorf("error: %v", err)
 		}
+
+		branchCount := int64(len(branches.Project.Repository.BranchNames))
+
+		branchNames[project.Name] = branches.Project.Repository.BranchNames
+		gls.mb.RecordGitRepositoryBranchCountDataPoint(now, branchCount, project.Name)
+		gls.logger.Sugar().Debug("branch count: ", branchCount)
 	}
 
 	// record metrics
