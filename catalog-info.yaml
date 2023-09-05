@@ -1,0 +1,43 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: liatrio-otel-collector
+  description: The Liatrio distribution of the OpenTelemetry Collector
+
+  # Annotations Docs: https://backstage.io/docs/features/software-catalog/well-known-annotations
+  annotations:
+    github.com/project-slug: liatrio/liatrio-otel-collector
+
+  # Tags Docs: https://backstage.io/docs/features/software-catalog/descriptor-format/#metadatatags-optional
+  tags:
+    - go
+    - docker
+    - makefile
+    - o11y
+    - observability
+    - monitoring
+    - open source
+    - open telemetry
+    - otel
+    - metrics
+    - team effectiveness
+    - sensible defaults
+
+  # Links Docs: https://backstage.io/docs/features/software-catalog/descriptor-format/#links-optional
+  links:
+    - url: https://projecto11y.io
+      title: Project O11y Home Page
+      icon: web
+    - url: https://openo11y.dev
+      title: Open O11y Home Page
+      icon: web
+
+spec:
+  # https://backstage.io/docs/features/software-catalog/descriptor-format/#spectype-required
+  type: service
+  # Review lifecycle and pick one of the three that make the most sense.
+  # https://backstage.io/docs/features/software-catalog/descriptor-format/#speclifecycle-required
+  lifecycle: production
+  # Please update to include the GitHub Team name tied to this project.
+  # https://backstage.io/docs/features/software-catalog/descriptor-format/#specowner-required
+  owner: o11y-owners

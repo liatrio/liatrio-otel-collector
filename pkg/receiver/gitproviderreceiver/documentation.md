@@ -49,6 +49,21 @@ Number of repositories that exist in an organization
 | ---- | ----------- | ---------- |
 | 1 | Gauge | Int |
 
+### git.repository.pull_request.approval.time
+
+Time for the PR to be approved
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| branch.name | The name of the branch in a given repository | Any Str |
+
 ### git.repository.pull_request.count
 
 The amount of open pull requests
@@ -62,6 +77,36 @@ The amount of open pull requests
 | Name | Description | Values |
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
+
+### git.repository.pull_request.deployment.time
+
+Time for the merged PR to be deployed
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| branch.name | The name of the branch in a given repository | Any Str |
+
+### git.repository.pull_request.merge.time
+
+Time the PR has been merged
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| branch.name | The name of the branch in a given repository | Any Str |
 
 ### git.repository.pull_request.time
 
