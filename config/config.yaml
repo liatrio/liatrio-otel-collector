@@ -75,7 +75,7 @@ exporters:
 service:
     ## Add basicauth/* if you want to use basic auth extensions
     ## Add bearertokenauth/* if you want to use bearer token auth extensions
-    extensions: [health_check, pprof, zpages, bearertokenauth/gitlab]
+    extensions: [health_check, pprof, zpages]
     pipelines:
         metrics:
             receivers: [otlp, prometheus, gitprovider]
