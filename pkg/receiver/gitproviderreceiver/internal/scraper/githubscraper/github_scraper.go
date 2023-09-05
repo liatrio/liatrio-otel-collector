@@ -221,13 +221,20 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				// we don't have to know the queried branch name ahead of time.
 				cp := getNumPages(float64(100), float64(branch.Compare.BehindBy))
 				var cc *string
-
+				var totalLineDiff int
+				var branchPageCount int = 100
 				for i := 0; i < cp; i++ {
 					if branch.Name == defaultBranch || branch.Compare.BehindBy == 0 {
 						break
 					}
-
-					c, err := getCommitData(ctx, genClient, name, ghs.cfg.GitHubOrg, 1, 100, cc, branch.Name)
+					// the query inside the getCommitData function will return commits on a branch
+					// INCLUDING the commits that were on the branch it was created from so this
+					// just trims down the amount returned to only the ones made since creation.
+					// Before, the branch age gets calculated incorrectly.
+					if i == cp-1 {
+						branchPageCount = branch.Compare.BehindBy % 100
+					}
+					c, err := getCommitData(ctx, genClient, name, ghs.cfg.GitHubOrg, 1, branchPageCount, cc, branch.Name)
 					if err != nil {
 						ghs.logger.Sugar().Errorf("error getting commit data", zap.Error(err))
 					}
@@ -235,11 +242,9 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					if len(c.Repository.GetRefs().Nodes) == 0 {
 						break
 					}
-
 					tar := c.Repository.GetRefs().Nodes[0].GetTarget()
 					if ct, ok := tar.(*CommitNodeTargetCommit); ok {
 						cc = &ct.History.PageInfo.EndCursor
-
 						if i == cp-1 {
 							e := ct.History.GetEdges()
 
@@ -248,8 +253,14 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 							ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, name, branch.Name)
 						}
+						for i := 0; i < len(ct.History.GetEdges()); i++ {
+							lineDiff := add(ct.History.Edges[i].Node.Additions, ct.History.Edges[i].Node.Deletions)
+							totalLineDiff = add(totalLineDiff, lineDiff)
+						}
 					}
 				}
+				ghs.mb.RecordGitRepositoryBranchDiffLinesDataPoint(now, int64(totalLineDiff), name, branch.Name)
+
 			}
 			var prCursor *string
 			var pullRequests []PullRequestNode

@@ -27,6 +27,7 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 type MetricsConfig struct {
 	GitRepositoryBranchCount               MetricConfig `mapstructure:"git.repository.branch.count"`
 	GitRepositoryBranchDiff                MetricConfig `mapstructure:"git.repository.branch.diff"`
+	GitRepositoryBranchDiffLines           MetricConfig `mapstructure:"git.repository.branch.diff.lines"`
 	GitRepositoryBranchTime                MetricConfig `mapstructure:"git.repository.branch.time"`
 	GitRepositoryContributorCount          MetricConfig `mapstructure:"git.repository.contributor.count"`
 	GitRepositoryCount                     MetricConfig `mapstructure:"git.repository.count"`
@@ -43,6 +44,9 @@ func DefaultMetricsConfig() MetricsConfig {
 			Enabled: true,
 		},
 		GitRepositoryBranchDiff: MetricConfig{
+			Enabled: true,
+		},
+		GitRepositoryBranchDiffLines: MetricConfig{
 			Enabled: true,
 		},
 		GitRepositoryBranchTime: MetricConfig{

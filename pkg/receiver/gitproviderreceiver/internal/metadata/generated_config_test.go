@@ -28,6 +28,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 				Metrics: MetricsConfig{
 					GitRepositoryBranchCount:               MetricConfig{Enabled: true},
 					GitRepositoryBranchDiff:                MetricConfig{Enabled: true},
+					GitRepositoryBranchDiffLines:           MetricConfig{Enabled: true},
 					GitRepositoryBranchTime:                MetricConfig{Enabled: true},
 					GitRepositoryContributorCount:          MetricConfig{Enabled: true},
 					GitRepositoryCount:                     MetricConfig{Enabled: true},
@@ -49,6 +50,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 				Metrics: MetricsConfig{
 					GitRepositoryBranchCount:               MetricConfig{Enabled: false},
 					GitRepositoryBranchDiff:                MetricConfig{Enabled: false},
+					GitRepositoryBranchDiffLines:           MetricConfig{Enabled: false},
 					GitRepositoryBranchTime:                MetricConfig{Enabled: false},
 					GitRepositoryContributorCount:          MetricConfig{Enabled: false},
 					GitRepositoryCount:                     MetricConfig{Enabled: false},

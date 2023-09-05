@@ -66,6 +66,13 @@ metrics:
         gauge:
             value_type: int
         attributes: [repository.name, branch.name]
+    git.repository.branch.diff.lines:
+        enabled: true
+        description: Difference in lines between the branch and main
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
     git.repository.pull_request.count:
         enabled: true
         description: The amount of open pull requests

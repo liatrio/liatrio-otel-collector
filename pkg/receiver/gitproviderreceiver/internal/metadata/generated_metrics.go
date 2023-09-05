@@ -115,6 +115,58 @@ func newMetricGitRepositoryBranchDiff(cfg MetricConfig) metricGitRepositoryBranc
 	return m
 }
 
+type metricGitRepositoryBranchDiffLines struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills git.repository.branch.diff.lines metric with initial data.
+func (m *metricGitRepositoryBranchDiffLines) init() {
+	m.data.SetName("git.repository.branch.diff.lines")
+	m.data.SetDescription("Difference in lines between the branch and main")
+	m.data.SetUnit("1")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricGitRepositoryBranchDiffLines) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, branchNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("repository.name", repositoryNameAttributeValue)
+	dp.Attributes().PutStr("branch.name", branchNameAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricGitRepositoryBranchDiffLines) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricGitRepositoryBranchDiffLines) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricGitRepositoryBranchDiffLines(cfg MetricConfig) metricGitRepositoryBranchDiffLines {
+	m := metricGitRepositoryBranchDiffLines{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 type metricGitRepositoryBranchTime struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	config   MetricConfig   // metric config provided by user.
@@ -536,6 +588,7 @@ type MetricsBuilder struct {
 	buildInfo                                    component.BuildInfo  // contains version information.
 	metricGitRepositoryBranchCount               metricGitRepositoryBranchCount
 	metricGitRepositoryBranchDiff                metricGitRepositoryBranchDiff
+	metricGitRepositoryBranchDiffLines           metricGitRepositoryBranchDiffLines
 	metricGitRepositoryBranchTime                metricGitRepositoryBranchTime
 	metricGitRepositoryContributorCount          metricGitRepositoryContributorCount
 	metricGitRepositoryCount                     metricGitRepositoryCount
@@ -564,6 +617,7 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.CreateSetting
 		buildInfo:                                    settings.BuildInfo,
 		metricGitRepositoryBranchCount:               newMetricGitRepositoryBranchCount(mbc.Metrics.GitRepositoryBranchCount),
 		metricGitRepositoryBranchDiff:                newMetricGitRepositoryBranchDiff(mbc.Metrics.GitRepositoryBranchDiff),
+		metricGitRepositoryBranchDiffLines:           newMetricGitRepositoryBranchDiffLines(mbc.Metrics.GitRepositoryBranchDiffLines),
 		metricGitRepositoryBranchTime:                newMetricGitRepositoryBranchTime(mbc.Metrics.GitRepositoryBranchTime),
 		metricGitRepositoryContributorCount:          newMetricGitRepositoryContributorCount(mbc.Metrics.GitRepositoryContributorCount),
 		metricGitRepositoryCount:                     newMetricGitRepositoryCount(mbc.Metrics.GitRepositoryCount),
@@ -636,6 +690,7 @@ func (mb *MetricsBuilder) EmitForResource(rmo ...ResourceMetricsOption) {
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
 	mb.metricGitRepositoryBranchCount.emit(ils.Metrics())
 	mb.metricGitRepositoryBranchDiff.emit(ils.Metrics())
+	mb.metricGitRepositoryBranchDiffLines.emit(ils.Metrics())
 	mb.metricGitRepositoryBranchTime.emit(ils.Metrics())
 	mb.metricGitRepositoryContributorCount.emit(ils.Metrics())
 	mb.metricGitRepositoryCount.emit(ils.Metrics())
@@ -672,6 +727,11 @@ func (mb *MetricsBuilder) RecordGitRepositoryBranchCountDataPoint(ts pcommon.Tim
 // RecordGitRepositoryBranchDiffDataPoint adds a data point to git.repository.branch.diff metric.
 func (mb *MetricsBuilder) RecordGitRepositoryBranchDiffDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, branchNameAttributeValue string) {
 	mb.metricGitRepositoryBranchDiff.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, branchNameAttributeValue)
+}
+
+// RecordGitRepositoryBranchDiffLinesDataPoint adds a data point to git.repository.branch.diff.lines metric.
+func (mb *MetricsBuilder) RecordGitRepositoryBranchDiffLinesDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, branchNameAttributeValue string) {
+	mb.metricGitRepositoryBranchDiffLines.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, branchNameAttributeValue)
 }
 
 // RecordGitRepositoryBranchTimeDataPoint adds a data point to git.repository.branch.time metric.

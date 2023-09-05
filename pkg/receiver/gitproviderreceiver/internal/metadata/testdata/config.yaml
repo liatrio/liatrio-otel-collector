@@ -5,6 +5,8 @@ all_set:
       enabled: true
     git.repository.branch.diff:
       enabled: true
+    git.repository.branch.diff.lines:
+      enabled: true
     git.repository.branch.time:
       enabled: true
     git.repository.contributor.count:
@@ -31,6 +33,8 @@ none_set:
     git.repository.branch.count:
       enabled: false
     git.repository.branch.diff:
+      enabled: false
+    git.repository.branch.diff.lines:
       enabled: false
     git.repository.branch.time:
       enabled: false
