@@ -208,6 +208,9 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 
 			for _, branch := range branches {
+				branchDiff := add(branch.Compare.AheadBy, branch.Compare.BehindBy)
+				ghs.mb.RecordGitRepositoryBranchDiffDataPoint(now, int64(branchDiff), name, branch.Name)
+
 				// We're using BehindBy here because we're comparing against the target
 				// branch, which is the default branch. In essence the response is saying
 				// the default branch is behind the queried branch by X commits which is
