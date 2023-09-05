@@ -11,11 +11,15 @@ import (
 
 // __getAllGroupProjectsInput is used internally by genqlient
 type __getAllGroupProjectsInput struct {
-	FullPath string `json:"fullPath"`
+	FullPath string  `json:"fullPath"`
+	After    *string `json:"after"`
 }
 
 // GetFullPath returns __getAllGroupProjectsInput.FullPath, and is useful for accessing the field via an interface.
 func (v *__getAllGroupProjectsInput) GetFullPath() string { return v.FullPath }
+
+// GetAfter returns __getAllGroupProjectsInput.After, and is useful for accessing the field via an interface.
+func (v *__getAllGroupProjectsInput) GetAfter() *string { return v.After }
 
 // __getBranchNamesInput is used internally by genqlient
 type __getBranchNamesInput struct {
@@ -61,8 +65,20 @@ func (v *getAllGroupProjectsGroup) GetProjects() getAllGroupProjectsGroupProject
 //
 // The connection type for Project.
 type getAllGroupProjectsGroupProjectsProjectConnection struct {
+	// Total count of collection.
+	Count int `json:"count"`
+	// Information to aid in pagination.
+	PageInfo getAllGroupProjectsGroupProjectsProjectConnectionPageInfo `json:"pageInfo"`
 	// A list of nodes.
 	Nodes []getAllGroupProjectsGroupProjectsProjectConnectionNodesProject `json:"nodes"`
+}
+
+// GetCount returns getAllGroupProjectsGroupProjectsProjectConnection.Count, and is useful for accessing the field via an interface.
+func (v *getAllGroupProjectsGroupProjectsProjectConnection) GetCount() int { return v.Count }
+
+// GetPageInfo returns getAllGroupProjectsGroupProjectsProjectConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *getAllGroupProjectsGroupProjectsProjectConnection) GetPageInfo() getAllGroupProjectsGroupProjectsProjectConnectionPageInfo {
+	return v.PageInfo
 }
 
 // GetNodes returns getAllGroupProjectsGroupProjectsProjectConnection.Nodes, and is useful for accessing the field via an interface.
@@ -100,6 +116,27 @@ func (v *getAllGroupProjectsGroupProjectsProjectConnectionNodesProject) GetCreat
 // GetLastActivityAt returns getAllGroupProjectsGroupProjectsProjectConnectionNodesProject.LastActivityAt, and is useful for accessing the field via an interface.
 func (v *getAllGroupProjectsGroupProjectsProjectConnectionNodesProject) GetLastActivityAt() time.Time {
 	return v.LastActivityAt
+}
+
+// getAllGroupProjectsGroupProjectsProjectConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+// The GraphQL type's documentation follows.
+//
+// Information about pagination in a connection.
+type getAllGroupProjectsGroupProjectsProjectConnectionPageInfo struct {
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
+}
+
+// GetHasNextPage returns getAllGroupProjectsGroupProjectsProjectConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *getAllGroupProjectsGroupProjectsProjectConnectionPageInfo) GetHasNextPage() bool {
+	return v.HasNextPage
+}
+
+// GetEndCursor returns getAllGroupProjectsGroupProjectsProjectConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *getAllGroupProjectsGroupProjectsProjectConnectionPageInfo) GetEndCursor() string {
+	return v.EndCursor
 }
 
 // getAllGroupProjectsResponse is returned by getAllGroupProjects on success.
@@ -275,9 +312,14 @@ func (v *getProjectsByTopicResponse) GetProjects() getProjectsByTopicProjectsPro
 
 // The query or mutation executed by getAllGroupProjects.
 const getAllGroupProjects_Operation = `
-query getAllGroupProjects ($fullPath: ID!) {
+query getAllGroupProjects ($fullPath: ID!, $after: String) {
 	group(fullPath: $fullPath) {
-		projects(includeSubgroups: true) {
+		projects(includeSubgroups: true, after: $after) {
+			count
+			pageInfo {
+				hasNextPage
+				endCursor
+			}
 			nodes {
 				name
 				fullPath
@@ -293,12 +335,14 @@ func getAllGroupProjects(
 	ctx context.Context,
 	client graphql.Client,
 	fullPath string,
+	after *string,
 ) (*getAllGroupProjectsResponse, error) {
 	req := &graphql.Request{
 		OpName: "getAllGroupProjects",
 		Query:  getAllGroupProjects_Operation,
 		Variables: &__getAllGroupProjectsInput{
 			FullPath: fullPath,
+			After:    after,
 		},
 	}
 	var err error
