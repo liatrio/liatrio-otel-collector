@@ -19,8 +19,7 @@
 
 # liatrio-otel-collector
 
-A repository containing custom OpenTelemetry (otel) packages to be used when
-building and configuring custom collectors.
+A repository containing custom OpenTelemetry (otel) packages to be used when building and configuring custom collectors.
 
 ## Quick Start Guide
 
@@ -46,30 +45,43 @@ Here are the steps to quickly get started with this project:
     pre-commit install
     ```
 
-4. **Generate a Personal Access Token (PAT) for GitHub:** Ensure it only has read access.
+4. Set up [GitHub][0] and/or [GitLab][1] scraper(s).
 
-5. **Set your GitHub username and PAT as environment variables:** Replace `<user>` with your GitHub username and `<pat>` with your generated PAT, then run the following commands:
+5. **Start the collector:** Finally, initiate the program:
+
+    ```bash
+    make run
+    ```
+
+### Configure GitHub Scraper
+
+1. **Generate a Personal Access Token (PAT) for GitHub:** Ensure it only has read access.
+
+2. **Set your GitHub username and PAT as environment variables:** Replace `<user>` with your GitHub username and `<pat>` with your generated PAT, then run the following commands:
 
     ```bash
     export GH_USER=<user>
     export GH_PAT=<pat>
     ```
 
-6. **Start the collector:** Finally, initiate the program:
+### Configure GitLab Scraper
 
-    ```bash
-    make run
-    ```
+1. **Generate a Personal Access Token (PAT) for GitLab**
 
-> **Note:** If you wish to terminate the program, you can use the `ctrl+c` command in the terminal. Keep in mind that it might take a few moments for the program to exit gracefully. 
+2. **Set your GitLab pat as an environment variable:**
+
+   ```bash
+   export GITLAB_PAT=<pat>
+   ```
+
+> **Note:** If you wish to terminate the program, you can use the `ctrl+c` command in the terminal. Keep in mind that it might take a few moments for the program to exit gracefully.
 
 ### Exporting to Grafana Cloud
 
-If you want to export your data to Grafana Cloud through their OTLP endpoint, 
-there's a couple of extra things you'll need to do.
+If you want to export your data to Grafana Cloud through their OTLP endpoint, there's a couple of extra things you'll need to do.
 
 1. Run `export GRAF_USER` and `export GRAF_PAT` with your instance id and cloud api key
-2. Update the [config/config.yaml](./config/config.yaml) file with the following:
+2. Update the [config/config.yaml][2] file with the following:
 
 ```yaml
 extensions:
@@ -141,10 +153,19 @@ There are a few main concepts that should help you get started:
 
 ### References & Useful Resources
 
-* [builder command - go.opentelemetry.io/collector/cmd/builder - Go Packages](https://pkg.go.dev/go.opentelemetry.io/collector/cmd/builder#section-readme)
-* [Building a Trace Receiver](https://opentelemetry.io/docs/collector/trace-receiver/#representing-operations-with-spans)
-* [Building a custom collector](https://opentelemetry.io/docs/collector/custom-collector/)
-* [otel4devs/builder-config.yaml at main · rquedas/otel4devs](https://github.com/rquedas/otel4devs/blob/main/collector/receiver/trace-receiver/builder-config.yaml)
-* [opentelemetry-collector-contrib/receiver/activedirectorydsreceiver at main · open-telemetry/opentelemetry-collector-contrib](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/activedirectorydsreceiver)
-* [opentelemetry-collector-contrib/extension/basicauthextension at main · open-telemetry/opentelemetry-collector-contrib](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/basicauthextension)
+* [builder command - go.opentelemetry.io/collector/cmd/builder - Go Packages][3]
+* [Building a Trace Receiver][4]
+* [Building a custom collector][5]
+* [otel4devs/builder-config.yaml at main · rquedas/otel4devs][6]
+* [opentelemetry-collector-contrib/receiver/activedirectorydsreceiver at main · open-telemetry/opentelemetry-collector-contrib][7]
+* [opentelemetry-collector-contrib/extension/basicauthextension at main · open-telemetry/opentelemetry-collector-contrib][8]
 
+[0]: #configure-github-scraper
+[1]: #configure-gitlab-scraper
+[2]: ./config/config.yaml
+[3]: https://pkg.go.dev/go.opentelemetry.io/collector/cmd/builder#section-readme
+[4]: https://opentelemetry.io/docs/collector/trace-receiver/#representing-operations-with-spans
+[5]: https://opentelemetry.io/docs/collector/custom-collector/
+[6]: https://github.com/rquedas/otel4devs/blob/main/collector/receiver/trace-receiver/builder-config.yaml
+[7]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/activedirectorydsreceiver
+[8]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/basicauthextension
