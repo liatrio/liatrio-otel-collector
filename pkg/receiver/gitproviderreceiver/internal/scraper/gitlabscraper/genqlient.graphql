@@ -1,7 +1,10 @@
-
-query getAllGroupProjects($fullPath: ID!) {
+query getAllGroupProjects(
+  $fullPath: ID!,
+  # @genqlient(pointer: true)
+  $after: String
+) {
   group(fullPath: $fullPath) {
-    projects(includeSubgroups: true) {
+    projects(includeSubgroups: true, after: $after) {
       count
 
       pageInfo {
