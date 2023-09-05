@@ -7,23 +7,30 @@ metadata:
   # Annotations Docs: https://backstage.io/docs/features/software-catalog/well-known-annotations
   annotations:
     github.com/project-slug: liatrio/liatrio-otel-collector
-    # https://github.com/K-Phoen/backstage-plugin-grafana/blob/main/docs/embed-dashboards-on-page.md
-    grafana/dashboard-selector: backstage-test
 
   # Tags Docs: https://backstage.io/docs/features/software-catalog/descriptor-format/#metadatatags-optional
   tags:
     - go
     - docker
     - makefile
+    - o11y
+    - observability
+    - monitoring
+    - open source
+    - open telemetry
+    - otel
+    - metrics
+    - team effectiveness
+    - sensible defaults
 
   # Links Docs: https://backstage.io/docs/features/software-catalog/descriptor-format/#links-optional
-  # links:
-  #   - url: https://example.com/user
-  #     title: Examples Users
-  #     icon: user
-  #   - url: https://example.com/group
-  #     title: Example Group
-  #     icon: group
+  links:
+    - url: https://projecto11y.io
+      title: Project O11y Home Page
+      icon: web
+    - url: https://openo11y.dev
+      title: Open O11y Home Page
+      icon: web
 
 spec:
   # https://backstage.io/docs/features/software-catalog/descriptor-format/#spectype-required
@@ -33,4 +40,4 @@ spec:
   lifecycle: production
   # Please update to include the GitHub Team name tied to this project.
   # https://backstage.io/docs/features/software-catalog/descriptor-format/#specowner-required
-  owner: liatrio-team-members
+  owner: o11y-owners
