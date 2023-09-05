@@ -19,7 +19,7 @@
 
 # liatrio-otel-collector
 
-A repository containing custom OpenTelemetry (otel) packages to be used when building and configuring custom collectors.
+The Liatrio OTEL Collector is an upstream distribution of the Open Telemetry collector, rebuilt with custom packages hosted within this repository.  These custom packages are by default targeted for downstream contribution to Open Telemetry; pursuant acceptance by the community.
 
 ## Quick Start Guide
 
