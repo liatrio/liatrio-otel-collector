@@ -101,8 +101,11 @@ jobs:
                   go-version: ${{ matrix.go }}
                   cache: false
 
-            - name: Make test-all
-              run: make test-all
+            - name: go test
+              run: go test -v ./.. -coverprofile=coverage.out -covermode=atomic
+
+            - name: Upload coverage to Codecov
+              uses: codecov/codecov-action@v3
 
     go-semantic-release:
         if: ${{ github.ref == 'refs/heads/main' }}
