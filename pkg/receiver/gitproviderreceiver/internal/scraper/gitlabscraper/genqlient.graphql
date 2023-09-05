@@ -36,6 +36,10 @@ query getProjectsByTopic($org: String!, $topics: [String!]) {
 query getBranchNames($fullPath: ID!) {
   project(fullPath: $fullPath) {
     repository {
+      # We limit the number of branches to 100000 since the API will let us get as much as we want
+      # but it will take a long time to get all the branches. The biggest repo we found was a GitLab
+      # repo with just over 100,000 branches which is an extreme edge case which we believe is not
+      # worth supporting.
       branchNames(searchPattern: "*", offset: 0, limit: 100000)
     }
   }
