@@ -142,7 +142,14 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		wg.Add(1)
 
 		// TODO: Must account for when there are more than 100,000 branch names in a project.
-		go getBranches(ctx, graphClient, project.Path, ch, &wg)
+
+		project := project // created shadowed declaration due to loop variable because Loop variables captured by 'func' literals in 'go' statements might have unexpected values
+		go func() {
+			err := getBranches(ctx, graphClient, project.Path, ch, &wg)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error: %v", err)
+			}
+		}()
 	}
 
 	go func() {
