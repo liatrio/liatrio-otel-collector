@@ -254,7 +254,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 							ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, name, branch.Name)
 						}
 						for i := 0; i < len(ct.History.GetEdges()); i++ {
-							lineDiff := add(ct.History.Edges[i].Node.Additions, ct.History.Edges[i].Node.Deletions)
+							lineDiff := sub(ct.History.Edges[i].Node.Additions, ct.History.Edges[i].Node.Deletions)
 							totalLineDiff = add(totalLineDiff, lineDiff)
 						}
 					}
