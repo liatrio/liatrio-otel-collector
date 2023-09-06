@@ -50,6 +50,17 @@ func TestAddInt(t *testing.T) {
 	assert.Equal(t, expected, num)
 }
 
+func TestAddZero(t *testing.T) {
+	a := 0
+	b := 1
+
+	expected := 1
+
+	num := add(a, b)
+
+	assert.Equal(t, expected, num)
+}
+
 func TestAddFloat(t *testing.T) {
 	a := 10.5
 	b := 10.5
