@@ -77,9 +77,9 @@ func getBranches(
 ) error {
 	defer waitGroup.Done()
 	branches, err := getBranchNames(context.Background(), graphClient, projectPath)
-
-	ch <- branchData{ProjectPath: projectPath, BranchNames: branches.Project.Repository.BranchNames}
-
+	if err != nil {
+		ch <- branchData{ProjectPath: projectPath, BranchNames: branches.Project.Repository.BranchNames}
+	}
 	return err
 }
 
@@ -136,14 +136,16 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	}
 
 	ch := make(chan branchData)
+
 	var wg sync.WaitGroup
 
+	// TODO: Must account for when there are more than 100,000 branch names in a project.
 	for _, project := range projectList {
 		wg.Add(1)
 
-		// TODO: Must account for when there are more than 100,000 branch names in a project.
-
-		project := project // created shadowed declaration due to loop variable because Loop variables captured by 'func' literals in 'go' statements might have unexpected values
+		// created shadowed declaration due to loop variable because Loop variables
+		// captured by 'func' literals in 'go' statements might have unexpected values
+		project := project
 		go func() {
 			err := getBranches(ctx, graphClient, project.Path, ch, &wg)
 			if err != nil {
