@@ -59,6 +59,13 @@ metrics:
         gauge:
             value_type: int
         attributes: [repository.name, branch.name]
+    git.repository.branch.diff:
+        enabled: true
+        description: Difference in commits between the branch and main
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
     git.repository.pull_request.count:
         enabled: true
         description: The amount of open pull requests
@@ -69,6 +76,27 @@ metrics:
     git.repository.pull_request.time:
         enabled: true
         description: Time the PR has been open
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
+    git.repository.pull_request.merge.time:
+        enabled: true
+        description: Time the PR has been merged
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
+    git.repository.pull_request.approval.time:
+        enabled: true
+        description: Time for the PR to be approved
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
+    git.repository.pull_request.deployment.time:
+        enabled: true
+        description: Time for the merged PR to be deployed
         unit: 1
         gauge:
             value_type: int
