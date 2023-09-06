@@ -7,18 +7,18 @@ extensions:
         endpoint: 0.0.0.0:55679
     ## Uncomment below if you want to enable authentication to GitHub
     ## Presume that GH_USER and GH_PAT are set as env variables.
-    #bearertokenauth/gitlab:
-    #    client_auth:
-    #        username: "${env:GITLAB_USER}"
-    #        password: ${env:GITLAB_PAT}
+    # basicauth/github:
+    #     client_auth:
+    #         username: ${env:GITHUB_USER}
+    #         password: ${env:GITHUB_PAT}
     ## Uncomment below if you want to enable authentication to Grafana
-    #basicauth/grafana:
-    #  client_auth:
-    #    username: ${env:GRAF_USER}
-    #    password: ${env:GRAF_PAT}
+    # basicauth/grafana:
+    #     client_auth:
+    #         username: ${env:GRAF_USER}
+    #         password: ${env:GRAF_PAT}
     ## Uncomment below if you want to enable authentication to GitLab
-    bearertokenauth/gitlab:
-        token: ${env:GITLAB_PAT}
+    # bearertokenauth/gitlab:
+    #     token: ${env:GITLAB_PAT}
 
 receivers:
     otlp:
