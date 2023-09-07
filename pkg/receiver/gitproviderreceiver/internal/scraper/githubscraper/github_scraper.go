@@ -142,12 +142,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	}
 
-	// TODO: End of refactor to using genqlient
-
-	// Slightly refactoring this and making it more nested during the refactor
-	// to maintain parady with the original code while using genqlient and
-	// not having to use the original query login interspection and types
-
 	if _, ok := data.(*getRepoDataBySearchResponse); ok {
 		for _, repo := range searchRepos {
 			var name string
@@ -214,7 +208,9 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					continue
 				}
 
-				ghs.logger.Sugar().Debugf("default branch behind by: %d\n %s branch behind by: %d in repo: %s", branch.Compare.BehindBy, branch.Name, branch.Compare.AheadBy, name)
+				ghs.logger.Sugar().Debugf(
+					"default branch behind by: %d\n %s branch behind by: %d in repo: %s",
+					branch.Compare.BehindBy, branch.Name, branch.Compare.AheadBy, name)
 
 				// Yes, this looks weird. The aheadby metric is referring to the number of commits the branch is AHEAD OF the
 				// default branch, which in the context of the query is the behind by value. See the above below comment about
