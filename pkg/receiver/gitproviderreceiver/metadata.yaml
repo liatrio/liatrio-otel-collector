@@ -59,9 +59,17 @@ metrics:
         gauge:
             value_type: int
         attributes: [repository.name, branch.name]
-    git.repository.branch.diff:
+    # may need to be separate metrics
+    git.repository.branch.commit.aheadby.count:
         enabled: true
-        description: Difference in commits between the branch and main
+        description: Number of commits the branch is ahead of the default branch
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
+    git.repository.branch.commit.behindby.count:
+        enabled: true
+        description: Number of commits the branch is behind the default branch
         unit: 1
         gauge:
             value_type: int

@@ -12,6 +12,51 @@ metrics:
     enabled: false
 ```
 
+### git.repository.branch.addition.count
+
+Total additional lines of code in the branch
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| branch.name | The name of the branch in a given repository | Any Str |
+
+### git.repository.branch.commit.aheadby.count
+
+Number of commits the branch is ahead of the default branch
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| branch.name | The name of the branch in a given repository | Any Str |
+
+### git.repository.branch.commit.behindby.count
+
+Number of commits the branch is behind the default branch
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| branch.name | The name of the branch in a given repository | Any Str |
+
 ### git.repository.branch.count
 
 Number of branches that exist in the repository
@@ -26,24 +71,9 @@ Number of branches that exist in the repository
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
 
-### git.repository.branch.diff
+### git.repository.branch.deletion.count
 
-Difference in commits between the branch and main
-
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
-
-#### Attributes
-
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| repository.name | The full name of the Git repository | Any Str |
-| branch.name | The name of the branch in a given repository | Any Str |
-
-### git.repository.branch.diff.lines
-
-Difference in lines between the branch and main
+Total deleted lines of code in the branch
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
