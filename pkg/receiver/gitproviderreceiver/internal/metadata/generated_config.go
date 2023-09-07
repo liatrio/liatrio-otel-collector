@@ -25,8 +25,9 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for gitprovider metrics.
 type MetricsConfig struct {
+	GitRepositoryBranchCommitAheadbyCount  MetricConfig `mapstructure:"git.repository.branch.commit.aheadby.count"`
+	GitRepositoryBranchCommitBehindbyCount MetricConfig `mapstructure:"git.repository.branch.commit.behindby.count"`
 	GitRepositoryBranchCount               MetricConfig `mapstructure:"git.repository.branch.count"`
-	GitRepositoryBranchDiff                MetricConfig `mapstructure:"git.repository.branch.diff"`
 	GitRepositoryBranchTime                MetricConfig `mapstructure:"git.repository.branch.time"`
 	GitRepositoryContributorCount          MetricConfig `mapstructure:"git.repository.contributor.count"`
 	GitRepositoryCount                     MetricConfig `mapstructure:"git.repository.count"`
@@ -39,10 +40,13 @@ type MetricsConfig struct {
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		GitRepositoryBranchCount: MetricConfig{
+		GitRepositoryBranchCommitAheadbyCount: MetricConfig{
 			Enabled: true,
 		},
-		GitRepositoryBranchDiff: MetricConfig{
+		GitRepositoryBranchCommitBehindbyCount: MetricConfig{
+			Enabled: true,
+		},
+		GitRepositoryBranchCount: MetricConfig{
 			Enabled: true,
 		},
 		GitRepositoryBranchTime: MetricConfig{
