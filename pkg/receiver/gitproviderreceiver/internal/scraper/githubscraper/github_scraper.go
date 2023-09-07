@@ -214,8 +214,13 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					continue
 				}
 
-				branchDiff := add(branch.Compare.AheadBy, branch.Compare.BehindBy)
-				ghs.mb.RecordGitRepositoryBranchDiffDataPoint(now, int64(branchDiff), name, branch.Name)
+                ghs.logger.Sugar().Debugf("default branch behind by: %d\n %s branch behind by: %d in repo: %s", branch.Compare.BehindBy, branch.Name, branch.Compare.AheadBy, name)
+
+                // Yes, this looks weird. The aheadby metric is referring to the number of commits the branch is AHEAD OF the 
+                // default branch, which in the context of the query is the behind by value. See the above below comment about
+                // BehindBy vs AheadBy.
+                ghs.mb.RecordGitRepositoryBranchCommitAheadbyCountDataPoint(now, int64(branch.Compare.BehindBy), name, branch.Name) 
+                ghs.mb.RecordGitRepositoryBranchCommitBehindbyCountDataPoint(now, int64(branch.Compare.AheadBy), name, branch.Name) 
 
 				// We're using BehindBy here because we're comparing against the target
 				// branch, which is the default branch. In essence the response is saying
