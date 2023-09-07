@@ -76,13 +76,15 @@ func (gls *gitlabScraper) getBranches(
 	waitGroup *sync.WaitGroup,
 ) {
 	defer waitGroup.Done()
+	// TODO: since we pass in a context param already, do we need to create a new background context?
 	branches, err := getBranchNames(context.Background(), graphClient, projectPath)
-	ch <- branchData{ProjectPath: projectPath, BranchNames: branches.Project.Repository.BranchNames}
+
 	if err != nil {
 		gls.logger.Sugar().Errorf("error: %v", err)
-		// terminate channel if error occurs
-		close(ch)
+		return
 	}
+
+	ch <- branchData{ProjectPath: projectPath, BranchNames: branches.Project.Repository.BranchNames}
 }
 
 // Scrape the GitLab GraphQL API for the various metrics. took 9m56s to complete.
@@ -108,6 +110,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	var projectsCursor *string
 
 	for hasNextPage := true; hasNextPage; {
+		// TODO: since we pass in a context already, do we need to create a new background context?
 		// Get the next page of data
 		projects, err := getAllGroupProjects(context.Background(), graphClient, gls.cfg.GitLabOrg, projectsCursor)
 		if err != nil {
