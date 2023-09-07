@@ -74,9 +74,16 @@ metrics:
         gauge:
             value_type: int
         attributes: [repository.name, branch.name]
-    git.repository.branch.diff.lines:
+    git.repository.branch.addition.count:
         enabled: true
-        description: Difference in lines between the branch and main
+        description: Total additional lines of code in the branch 
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
+    git.repository.branch.deletion.count:
+        enabled: true
+        description: Total deleted lines of code in the branch 
         unit: 1
         gauge:
             value_type: int
