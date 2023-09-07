@@ -210,6 +210,10 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 
 			for _, branch := range branches {
+				if branch.Name == defaultBranch || branch.Compare.BehindBy == 0 {
+					continue
+				}
+
 				branchDiff := add(branch.Compare.AheadBy, branch.Compare.BehindBy)
 				ghs.mb.RecordGitRepositoryBranchDiffDataPoint(now, int64(branchDiff), name, branch.Name)
 
@@ -220,14 +224,17 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				// the default branch. Doing it this way involves less queries because
 				// we don't have to know the queried branch name ahead of time.
 				cp := getNumPages(float64(100), float64(branch.Compare.BehindBy))
+				comCount := 100
+
 				var cc *string
 
 				for i := 0; i < cp; i++ {
-					if branch.Name == defaultBranch || branch.Compare.BehindBy == 0 {
-						break
+
+					if i == cp-1 {
+						comCount = branch.Compare.BehindBy % 100
 					}
 
-					c, err := getCommitData(ctx, genClient, name, ghs.cfg.GitHubOrg, 1, 100, cc, branch.Name)
+					c, err := getCommitData(ctx, genClient, name, ghs.cfg.GitHubOrg, 1, comCount, cc, branch.Name)
 					if err != nil {
 						ghs.logger.Sugar().Errorf("error getting commit data", zap.Error(err))
 					}
