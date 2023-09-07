@@ -68,19 +68,21 @@ type branchData struct {
 // as much as we want but it will take a long time to get all the branches. The biggest repo we
 // found was a GitLab repo with just over 100,000 branches which is an extreme edge case which we
 // believe is not worth supporting.
-func getBranches(
+func (gls *gitlabScraper) getBranches(
 	ctx context.Context,
 	graphClient graphql.Client,
 	projectPath string,
 	ch chan branchData,
 	waitGroup *sync.WaitGroup,
-) error {
+) {
 	defer waitGroup.Done()
 	branches, err := getBranchNames(context.Background(), graphClient, projectPath)
+	ch <- branchData{ProjectPath: projectPath, BranchNames: branches.Project.Repository.BranchNames}
 	if err != nil {
-		ch <- branchData{ProjectPath: projectPath, BranchNames: branches.Project.Repository.BranchNames}
+		gls.logger.Sugar().Errorf("error: %v", err)
+		// terminate channel if error occurs
+		close(ch)
 	}
-	return err
 }
 
 // Scrape the GitLab GraphQL API for the various metrics. took 9m56s to complete.
@@ -147,10 +149,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		// captured by 'func' literals in 'go' statements might have unexpected values
 		project := project
 		go func() {
-			err := getBranches(ctx, graphClient, project.Path, ch, &wg)
-			if err != nil {
-				gls.logger.Sugar().Errorf("error: %v", err)
-			}
+			gls.getBranches(ctx, graphClient, project.Path, ch, &wg)
 		}()
 	}
 
