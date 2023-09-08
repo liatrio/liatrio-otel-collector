@@ -169,9 +169,6 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	// record repository count metric
 	gls.mb.RecordGitRepositoryCountDataPoint(now, int64(len(projectList)))
-	gls.logger.Sugar().Debugf("metrics: %v", gls.cfg.Metrics.GitRepositoryCount)
-
-	gls.logger.Sugar().Infof("took %v\n", time.Since(now.AsTime()))
 
 	return gls.mb.Emit(), nil
 }
