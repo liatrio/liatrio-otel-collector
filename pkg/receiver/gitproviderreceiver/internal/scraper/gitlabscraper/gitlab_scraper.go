@@ -59,7 +59,7 @@ func newGitLabScraper(
 
 type branchData struct {
 	ProjectPath string
-	BranchNames []string
+	BranchCount int64
 }
 
 // Returns a struct with the project path and an array of branch names via the given channel.
@@ -83,7 +83,7 @@ func (gls *gitlabScraper) getBranches(
 		return
 	}
 
-	ch <- branchData{ProjectPath: projectPath, BranchNames: branches.Project.Repository.BranchNames}
+	ch <- branchData{ProjectPath: projectPath, BranchCount: int64(len(branches.Project.Repository.BranchNames))}
 }
 
 // Scrape the GitLab GraphQL API for the various metrics. took 9m56s to complete.
@@ -160,11 +160,9 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		close(ch)
 	}()
 
-	for branch := range ch {
-		branchCount := int64(len(branch.BranchNames))
-
-		gls.mb.RecordGitRepositoryBranchCountDataPoint(now, branchCount, branch.ProjectPath)
-		gls.logger.Sugar().Debugf("%s branch count: %v", branch.ProjectPath, branchCount)
+	for proj := range ch {
+		gls.mb.RecordGitRepositoryBranchCountDataPoint(now, proj.BranchCount, proj.ProjectPath)
+		gls.logger.Sugar().Debugf("%s branch count: %v", proj.ProjectPath, proj.BranchCount)
 	}
 
 	// record repository count metric
