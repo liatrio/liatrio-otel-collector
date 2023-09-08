@@ -57,7 +57,7 @@ func newGitLabScraper(
 	}
 }
 
-type branchData struct {
+type projectData struct {
 	ProjectPath string
 	BranchCount int64
 }
@@ -72,7 +72,7 @@ func (gls *gitlabScraper) getBranches(
 	ctx context.Context,
 	graphClient graphql.Client,
 	projectPath string,
-	ch chan branchData,
+	ch chan projectData,
 	waitGroup *sync.WaitGroup,
 ) {
 	defer waitGroup.Done()
@@ -83,7 +83,7 @@ func (gls *gitlabScraper) getBranches(
 		return
 	}
 
-	ch <- branchData{ProjectPath: projectPath, BranchCount: int64(len(branches.Project.Repository.BranchNames))}
+	ch <- projectData{ProjectPath: projectPath, BranchCount: int64(len(branches.Project.Repository.BranchNames))}
 }
 
 // Scrape the GitLab GraphQL API for the various metrics. took 9m56s to complete.
@@ -139,7 +139,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}
 	}
 
-	ch := make(chan branchData)
+	ch := make(chan projectData)
 
 	var wg sync.WaitGroup
 
