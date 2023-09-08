@@ -76,9 +76,8 @@ func (gls *gitlabScraper) getBranches(
 	waitGroup *sync.WaitGroup,
 ) {
 	defer waitGroup.Done()
-	// TODO: since we pass in a context param already, do we need to create a new background context?
-	branches, err := getBranchNames(context.Background(), graphClient, projectPath)
 
+	branches, err := getBranchNames(context.Background(), graphClient, projectPath)
 	if err != nil {
 		gls.logger.Sugar().Errorf("error: %v", err)
 		return
