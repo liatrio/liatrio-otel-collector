@@ -77,7 +77,7 @@ func (gls *gitlabScraper) getBranches(
 ) {
 	defer waitGroup.Done()
 
-	branches, err := getBranchNames(context.Background(), graphClient, projectPath)
+	branches, err := getBranchNames(ctx, graphClient, projectPath)
 	if err != nil {
 		gls.logger.Sugar().Errorf("error: %v", err)
 		return
