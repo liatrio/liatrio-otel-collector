@@ -55,26 +55,23 @@ Here are the steps to quickly get started with this project:
 
 ### Configure GitHub Scraper
 
-1. **Generate a Personal Access Token (PAT) for GitHub:** Ensure it only has read access.
+To configure the GitHub Scraper you'll need to make changes near the top of the [config/config.yaml][2] file, lines 10 - 13:
 
-2. **Set your GitHub username and PAT as environment variables:** Replace `<user>` with your GitHub username and `<pat>` with your generated PAT, then run the following commands:
-
-    ```bash
-    export GH_USER=<user>
-    export GH_PAT=<pat>
-    ```
+```yaml
+basicauth/github:
+    client_auth:
+        username: ${env:GITHUB_USER}
+        password: ${env:GITHUB_PAT}
+```
 
 ### Configure GitLab Scraper
 
-1. **Generate a Personal Access Token (PAT) for GitLab**
+To configure the GitLab Scraper you'll need to make changes near the top of the [config/config.yaml][2] file, lines 20 & 21:
 
-2. **Set your GitLab pat as an environment variable:**
-
-   ```bash
-   export GITLAB_PAT=<pat>
-   ```
-
-> **Note:** If you wish to terminate the program, you can use the `ctrl+c` command in the terminal. Keep in mind that it might take a few moments for the program to exit gracefully.
+```yaml
+bearertokenauth/gitlab:
+    token: ${env:GITLAB_PAT}
+```
 
 ### Exporting to Grafana Cloud
 
