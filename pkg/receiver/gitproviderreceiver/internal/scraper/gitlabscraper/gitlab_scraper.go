@@ -217,7 +217,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	// Handling the merge request data
 	for mrs := range mrCh {
 		for _, mr := range mrs {
-			mrAge := time.Now().Sub(mr.CreatedAt)
+			mrAge := time.Since(mr.CreatedAt)
 			gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, int64(mrAge), mr.ProjectPath, mr.SourceBranch)
 		}
 	}
