@@ -17,9 +17,7 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
 )
 
-var (
-	errClientNotInitErr = errors.New("http client not initialized")
-)
+var errClientNotInitErr = errors.New("http client not initialized")
 
 // Not sure if this needs to be here after the refactor
 type PullRequest struct {
@@ -158,11 +156,11 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			// as you have to get all commits on the default branch and then
 			// iterate through each commit to get the author and committer, and remove
 			// duplicate values. The default branch could be thousands of commits,
-			// which would require tons of pageation and requests to the api. Doing
+			// which would require tons of pagination and requests to the api. Doing
 			// so via the rest api is much more efficient as it's a direct endpoint
-			// with limited pageation.
+			// with limited pagination.
 			// Due to the above, we'll only run this actual code when the metric
-			// is excplicitly enabled.
+			// is explicitly enabled.
 			if ghs.cfg.MetricsBuilderConfig.Metrics.GitRepositoryContributorCount.Enabled {
 				gc := github.NewClient(ghs.client)
 				contribs, _, err := gc.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, name, nil)
@@ -315,7 +313,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				}
 			}
 		}
-
 	}
 
 	return ghs.mb.Emit(), nil
