@@ -58,6 +58,8 @@ query getCommitData(
               edges {
                 node {
                   committedDate
+                  additions
+                  deletions
                 }
               }
               pageInfo {

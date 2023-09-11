@@ -50,6 +50,17 @@ func TestAddInt(t *testing.T) {
 	assert.Equal(t, expected, num)
 }
 
+func TestAddZero(t *testing.T) {
+	a := 0
+	b := 1
+
+	expected := 1
+
+	num := add(a, b)
+
+	assert.Equal(t, expected, num)
+}
+
 func TestAddFloat(t *testing.T) {
 	a := 10.5
 	b := 10.5
@@ -79,6 +90,50 @@ func TestAddNegativeFloat(t *testing.T) {
 	expected := -8.5
 
 	num := add(a, b)
+
+	assert.Equal(t, expected, num)
+}
+
+func TestSubInt(t *testing.T) {
+	a := 100
+	b := 10
+
+	expected := 90
+
+	num := sub(a, b)
+
+	assert.Equal(t, expected, num)
+}
+
+func TestSubFloat(t *testing.T) {
+	a := 10.5
+	b := 10.5
+
+	expected := 0.0
+
+	num := sub(a, b)
+
+	assert.Equal(t, expected, num)
+}
+
+func TestSubNegativeInt(t *testing.T) {
+	a := 1
+	b := -1
+
+	expected := 2
+
+	num := sub(a, b)
+
+	assert.Equal(t, expected, num)
+}
+
+func TestSubNegativeFloat(t *testing.T) {
+	a := 1.5
+	b := -10.0
+
+	expected := 11.5
+
+	num := sub(a, b)
 
 	assert.Equal(t, expected, num)
 }

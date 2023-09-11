@@ -68,6 +68,14 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
+			mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(ts, 1, "repository.name-val", "branch.name-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(ts, 1, "repository.name-val", "branch.name-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
 			mb.RecordGitRepositoryBranchTimeDataPoint(ts, 1, "repository.name-val", "branch.name-val")
 
 			allMetricsCount++
@@ -173,6 +181,42 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok := dp.Attributes().Get("repository.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "repository.name-val", attrVal.Str())
+				case "git.repository.branch.line.addition.count":
+					assert.False(t, validatedMetrics["git.repository.branch.line.addition.count"], "Found a duplicate in the metrics slice: git.repository.branch.line.addition.count")
+					validatedMetrics["git.repository.branch.line.addition.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Total additional lines of code in the branch", ms.At(i).Description())
+					assert.Equal(t, "1", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("repository.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("branch.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "branch.name-val", attrVal.Str())
+				case "git.repository.branch.line.deletion.count":
+					assert.False(t, validatedMetrics["git.repository.branch.line.deletion.count"], "Found a duplicate in the metrics slice: git.repository.branch.line.deletion.count")
+					validatedMetrics["git.repository.branch.line.deletion.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Total deleted lines of code in the branch", ms.At(i).Description())
+					assert.Equal(t, "1", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("repository.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("branch.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "branch.name-val", attrVal.Str())
 				case "git.repository.branch.time":
 					assert.False(t, validatedMetrics["git.repository.branch.time"], "Found a duplicate in the metrics slice: git.repository.branch.time")
 					validatedMetrics["git.repository.branch.time"] = true

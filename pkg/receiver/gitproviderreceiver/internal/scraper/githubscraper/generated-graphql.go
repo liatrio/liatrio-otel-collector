@@ -195,11 +195,25 @@ func (v *CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge) Ge
 type CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit struct {
 	// The datetime when this commit was committed.
 	CommittedDate time.Time `json:"committedDate"`
+	// The number of additions in this commit.
+	Additions int `json:"additions"`
+	// The number of deletions in this commit.
+	Deletions int `json:"deletions"`
 }
 
 // GetCommittedDate returns CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit.CommittedDate, and is useful for accessing the field via an interface.
 func (v *CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit) GetCommittedDate() time.Time {
 	return v.CommittedDate
+}
+
+// GetAdditions returns CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit.Additions, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit) GetAdditions() int {
+	return v.Additions
+}
+
+// GetDeletions returns CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit.Deletions, and is useful for accessing the field via an interface.
+func (v *CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit) GetDeletions() int {
+	return v.Deletions
 }
 
 // CommitNodeTargetCommitHistoryCommitHistoryConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
@@ -1424,6 +1438,8 @@ query getCommitData ($name: String!, $owner: String!, $branchFirst: Int!, $commi
 							edges {
 								node {
 									committedDate
+									additions
+									deletions
 								}
 							}
 							pageInfo {
