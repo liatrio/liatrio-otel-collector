@@ -25,11 +25,11 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for gitprovider metrics.
 type MetricsConfig struct {
-	GitRepositoryBranchAdditionCount       MetricConfig `mapstructure:"git.repository.branch.addition.count"`
 	GitRepositoryBranchCommitAheadbyCount  MetricConfig `mapstructure:"git.repository.branch.commit.aheadby.count"`
 	GitRepositoryBranchCommitBehindbyCount MetricConfig `mapstructure:"git.repository.branch.commit.behindby.count"`
 	GitRepositoryBranchCount               MetricConfig `mapstructure:"git.repository.branch.count"`
-	GitRepositoryBranchDeletionCount       MetricConfig `mapstructure:"git.repository.branch.deletion.count"`
+	GitRepositoryBranchLineAdditionCount   MetricConfig `mapstructure:"git.repository.branch.line.addition.count"`
+	GitRepositoryBranchLineDeletionCount   MetricConfig `mapstructure:"git.repository.branch.line.deletion.count"`
 	GitRepositoryBranchTime                MetricConfig `mapstructure:"git.repository.branch.time"`
 	GitRepositoryContributorCount          MetricConfig `mapstructure:"git.repository.contributor.count"`
 	GitRepositoryCount                     MetricConfig `mapstructure:"git.repository.count"`
@@ -42,9 +42,6 @@ type MetricsConfig struct {
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		GitRepositoryBranchAdditionCount: MetricConfig{
-			Enabled: true,
-		},
 		GitRepositoryBranchCommitAheadbyCount: MetricConfig{
 			Enabled: true,
 		},
@@ -54,7 +51,10 @@ func DefaultMetricsConfig() MetricsConfig {
 		GitRepositoryBranchCount: MetricConfig{
 			Enabled: true,
 		},
-		GitRepositoryBranchDeletionCount: MetricConfig{
+		GitRepositoryBranchLineAdditionCount: MetricConfig{
+			Enabled: true,
+		},
+		GitRepositoryBranchLineDeletionCount: MetricConfig{
 			Enabled: true,
 		},
 		GitRepositoryBranchTime: MetricConfig{

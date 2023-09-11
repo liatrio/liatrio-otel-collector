@@ -73,12 +73,12 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	}
 
 	now := pcommon.NewTimestampFromTime(time.Now())
-	//ghs.logger.Sugar().Debugf("current time: %v", now)
+	ghs.logger.Sugar().Debugf("current time: %v", now)
 
 	currentDate := time.Now().Day()
 	ghs.logger.Sugar().Debugf("current date: %v", currentDate)
 
-	//ghs.logger.Sugar().Debug("creating a new github client")
+	ghs.logger.Sugar().Debug("creating a new github client")
 
 	// TODO: Below is the beginnning of the refactor to using genqlient
 	// This is a secondary instantiation of the GraphQL client for the purpose of
@@ -107,7 +107,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	if ghs.cfg.SearchQuery != "" {
 		sq = ghs.cfg.SearchQuery
-		//ghs.logger.Sugar().Debugf("using search query where query is: %v", ghs.cfg.SearchQuery)
+		ghs.logger.Sugar().Debugf("using search query where query is: %v", ghs.cfg.SearchQuery)
 	}
 
 	data, err = getRepoData(ctx, genClient, sq, ownertype, repoCursor)
@@ -125,7 +125,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(searchData.Search.RepositoryCount))
 
 		pages := getNumPages(float64(100), float64(searchData.Search.RepositoryCount))
-		//ghs.logger.Sugar().Debugf("pages: %v", pages)
+		ghs.logger.Sugar().Debugf("pages: %v", pages)
 
 		for i := 0; i < pages; i++ {
 			results := searchData.GetSearch()
@@ -138,7 +138,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 		}
 
-		//ghs.logger.Sugar().Debugf("repos: %v", searchRepos)
+		ghs.logger.Sugar().Debugf("repos: %v", searchRepos)
 
 	}
 
@@ -228,8 +228,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				comCount := 100
 
 				var cc *string
-				var totalAdditions int = 0
-				var totalDeletions int = 0
+				var adds int = 0
+				var dels int = 0
 				for i := 0; i < cp; i++ {
 
 					if i == cp-1 {
@@ -255,13 +255,13 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 							ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, name, branch.Name)
 						}
 						for b := 0; b < len(ct.History.Edges); b++ {
-							totalAdditions = add(totalAdditions, ct.History.Edges[b].Node.Additions)
-							totalDeletions = add(totalDeletions, ct.History.Edges[b].Node.Deletions)
+							adds = add(adds, ct.History.Edges[b].Node.Additions)
+							dels = add(dels, ct.History.Edges[b].Node.Deletions)
 						}
 					}
 				}
-				ghs.mb.RecordGitRepositoryBranchDeletionCountDataPoint(now, int64(totalDeletions), name, branch.Name)
-				ghs.mb.RecordGitRepositoryBranchAdditionCountDataPoint(now, int64(totalAdditions), name, branch.Name)
+				ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), name, branch.Name)
+				ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), name, branch.Name)
 			}
 			var prCursor *string
 			var pullRequests []PullRequestNode

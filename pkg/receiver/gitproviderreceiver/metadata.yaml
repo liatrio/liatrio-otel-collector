@@ -81,7 +81,7 @@ metrics:
         gauge:
             value_type: int
         attributes: [repository.name, branch.name]
-    git.repository.branch.deletion.count:
+    git.repository.branch.line.deletion.count:
         enabled: true
         description: Total deleted lines of code in the branch 
         unit: 1

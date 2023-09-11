@@ -12,21 +12,6 @@ metrics:
     enabled: false
 ```
 
-### git.repository.branch.addition.count
-
-Total additional lines of code in the branch
-
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
-
-#### Attributes
-
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| repository.name | The full name of the Git repository | Any Str |
-| branch.name | The name of the branch in a given repository | Any Str |
-
 ### git.repository.branch.commit.aheadby.count
 
 Number of commits the branch is ahead of the default branch
@@ -71,7 +56,22 @@ Number of branches that exist in the repository
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
 
-### git.repository.branch.deletion.count
+### git.repository.branch.line.addition.count
+
+Total additional lines of code in the branch
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| 1 | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| branch.name | The name of the branch in a given repository | Any Str |
+
+### git.repository.branch.line.deletion.count
 
 Total deleted lines of code in the branch
 
