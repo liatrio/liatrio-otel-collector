@@ -68,6 +68,7 @@ type mergeRequest struct {
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	SourceBranch string
+	TargetBranch string
 }
 
 // Returns a struct with the project path and an array of branch names via the given channel.
@@ -120,6 +121,7 @@ func (gls *gitlabScraper) getOpenedMergeRequests(
 			CreatedAt:    node.CreatedAt,
 			UpdatedAt:    node.UpdatedAt,
 			SourceBranch: node.SourceBranch,
+			TargetBranch: node.TargetBranch,
 		})
 	}
 	ch <- mrs
@@ -218,7 +220,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	for mrs := range mrCh {
 		for _, mr := range mrs {
 			mrAge := time.Since(mr.CreatedAt)
-			gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, int64(mrAge), mr.ProjectPath, mr.SourceBranch)
+			gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, int64(mrAge), mr.ProjectPath, mr.TargetBranch)
 		}
 	}
 
