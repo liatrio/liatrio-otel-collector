@@ -74,7 +74,7 @@ metrics:
         gauge:
             value_type: int
         attributes: [repository.name, branch.name]
-    git.repository.branch.addition.count:
+    git.repository.branch.line.addition.count:
         enabled: true
         description: Total additional lines of code in the branch 
         unit: 1
