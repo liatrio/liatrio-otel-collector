@@ -13,9 +13,10 @@
   <a href="https://api.securityscorecards.dev/projects/github.com/liatrio/liatrio-otel-collector/badge">
     <img alt="OpenSSF Scorecard" src="https://img.shields.io/ossf-scorecard/github.com/liatrio/liatrio-otel-collector?label=openssf%20scorecard&style=for-the-badge">
   </a>
-  <a href="https://codeclimate.com/github/liatrio/liatrio-otel-collector/test_coverage">
-    <img src="https://api.codeclimate.com/v1/badges/c85dc9ae42b4a088165a/test_coverage" />
+  <a href="https://codecov.io/gh/liatrio/liatrio-otel-collector" > 
+    <img src="https://codecov.io/gh/liatrio/liatrio-otel-collector/graph/badge.svg?token=tRemsrLn0R"/> 
   </a>
+
 </p>
 
 ---
