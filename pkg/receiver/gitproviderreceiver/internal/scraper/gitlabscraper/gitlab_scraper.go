@@ -61,15 +61,6 @@ type projectData struct {
 	BranchCount int64
 }
 
-type mergeRequest struct {
-	ProjectPath  string
-	ID           string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	SourceBranch string
-	TargetBranch string
-}
-
 // Returns a struct with the project path and an array of branch names via the given channel.
 //
 // The max number of branch names currently returned is 100,000 since the GitLab API will let us get
@@ -98,25 +89,30 @@ func (gls *gitlabScraper) getOpenedMergeRequests(
 	ctx context.Context,
 	graphClient graphql.Client,
 	projectPath string,
-) []mergeRequest {
+) []MergeRequestNode {
 
-	mergeRequestsData, err := getOpenedMergeRequests(ctx, graphClient, projectPath)
-	if err != nil {
-		gls.logger.Sugar().Errorf("error: %v", err)
-		return nil
+	var mergeRequestData []MergeRequestNode
+	var mrCursor *string
+
+	for hasNextPage := true; hasNextPage; {
+		// Get the next page of data
+		mr, err := getOpenedMergeRequests(ctx, graphClient, projectPath, mrCursor)
+		if err != nil {
+			gls.logger.Sugar().Errorf("error: %v", err)
+		}
+
+		if len(mr.Project.MergeRequests.Nodes) == 0 {
+			break
+		}
+
+		// Check if there is a next page
+		hasNextPage = mr.Project.MergeRequests.PageInfo.HasNextPage
+
+		// Set the cursor to the end cursor of the current page
+		mrCursor = &mr.Project.MergeRequests.PageInfo.EndCursor
+		mergeRequestData = append(mergeRequestData, mr.Project.MergeRequests.Nodes...)
 	}
-	var mrs []mergeRequest
-	for _, node := range mergeRequestsData.Project.MergeRequests.Nodes {
-		mrs = append(mrs, mergeRequest{
-			ProjectPath:  projectPath,
-			ID:           node.Iid,
-			CreatedAt:    node.CreatedAt,
-			UpdatedAt:    node.UpdatedAt,
-			SourceBranch: node.SourceBranch,
-			TargetBranch: node.TargetBranch,
-		})
-	}
-	return mrs
+	return mergeRequestData
 }
 
 // Scrape the GitLab GraphQL API for the various metrics. took 9m56s to complete.
@@ -172,7 +168,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}
 	}
 
-	var mergeData [][]mergeRequest
+	var mergeData [][]MergeRequestNode
 	var branchData []projectData
 	// TODO: Must account for when there are more than 100,000 branch names in a project.
 	for _, project := range projectList {
@@ -192,8 +188,8 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	for _, mrs := range mergeData {
 		for _, mr := range mrs {
 			mrAge := int64(time.Since(mr.CreatedAt).Hours())
-			gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, mr.ProjectPath, mr.TargetBranch)
-			gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", mr.ProjectPath, mr.TargetBranch, mrAge)
+			gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, mr.Project.FullPath, mr.TargetBranch)
+			gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", mr.Project.FullPath, mr.TargetBranch, mrAge)
 		}
 	}
 
