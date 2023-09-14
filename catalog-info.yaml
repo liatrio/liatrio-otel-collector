@@ -16,12 +16,12 @@ metadata:
     - o11y
     - observability
     - monitoring
-    - open source
-    - open telemetry
+    - open-source
+    - open-telemetry
     - otel
     - metrics
-    - team effectiveness
-    - sensible defaults
+    - team-effectiveness
+    - sensible-defaults
 
   # Links Docs: https://backstage.io/docs/features/software-catalog/descriptor-format/#links-optional
   links:

@@ -17,9 +17,7 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
 )
 
-var (
-	errClientNotInitErr = errors.New("http client not initialized")
-)
+var errClientNotInitErr = errors.New("http client not initialized")
 
 // Not sure if this needs to be here after the refactor
 type PullRequest struct {
@@ -67,7 +65,7 @@ func newGitHubScraper(
 
 // scrape and return metrics
 func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
-	ghs.logger.Sugar().Debug("checking if client is initialized")
+	//ghs.logger.Sugar().Debug("checking if client is initialized")
 	if ghs.client == nil {
 		return pmetric.NewMetrics(), errClientNotInitErr
 	}
@@ -142,18 +140,12 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	}
 
-	// TODO: End of refactor to using genqlient
-
-	// Slightly refactoring this and making it more nested during the refactor
-	// to maintain parady with the original code while using genqlient and
-	// not having to use the original query login interspection and types
-	var branchCursor *string
-	var branches []BranchNode
-
 	if _, ok := data.(*getRepoDataBySearchResponse); ok {
 		for _, repo := range searchRepos {
 			var name string
 			var defaultBranch string
+			var branchCursor *string
+			var branches []BranchNode
 
 			if n, ok := repo.Node.(*SearchNodeRepository); ok {
 				name = n.Name
@@ -164,11 +156,11 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			// as you have to get all commits on the default branch and then
 			// iterate through each commit to get the author and committer, and remove
 			// duplicate values. The default branch could be thousands of commits,
-			// which would require tons of pageation and requests to the api. Doing
+			// which would require tons of pagination and requests to the api. Doing
 			// so via the rest api is much more efficient as it's a direct endpoint
-			// with limited pageation.
+			// with limited pagination.
 			// Due to the above, we'll only run this actual code when the metric
-			// is excplicitly enabled.
+			// is explicitly enabled.
 			if ghs.cfg.MetricsBuilderConfig.Metrics.GitRepositoryContributorCount.Enabled {
 				gc := github.NewClient(ghs.client)
 				contribs, _, err := gc.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, name, nil)
@@ -210,6 +202,20 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 
 			for _, branch := range branches {
+				if branch.Name == defaultBranch || branch.Compare.BehindBy == 0 {
+					continue
+				}
+
+				ghs.logger.Sugar().Debugf(
+					"default branch behind by: %d\n %s branch behind by: %d in repo: %s",
+					branch.Compare.BehindBy, branch.Name, branch.Compare.AheadBy, name)
+
+				// Yes, this looks weird. The aheadby metric is referring to the number of commits the branch is AHEAD OF the
+				// default branch, which in the context of the query is the behind by value. See the above below comment about
+				// BehindBy vs AheadBy.
+				ghs.mb.RecordGitRepositoryBranchCommitAheadbyCountDataPoint(now, int64(branch.Compare.BehindBy), name, branch.Name)
+				ghs.mb.RecordGitRepositoryBranchCommitBehindbyCountDataPoint(now, int64(branch.Compare.AheadBy), name, branch.Name)
+
 				// We're using BehindBy here because we're comparing against the target
 				// branch, which is the default branch. In essence the response is saying
 				// the default branch is behind the queried branch by X commits which is
@@ -217,14 +223,17 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				// the default branch. Doing it this way involves less queries because
 				// we don't have to know the queried branch name ahead of time.
 				cp := getNumPages(float64(100), float64(branch.Compare.BehindBy))
+				comCount := 100
+
 				var cc *string
-
+				var adds int = 0
+				var dels int = 0
 				for i := 0; i < cp; i++ {
-					if branch.Name == defaultBranch || branch.Compare.BehindBy == 0 {
-						break
-					}
 
-					c, err := getCommitData(ctx, genClient, name, ghs.cfg.GitHubOrg, 1, 100, cc, branch.Name)
+					if i == cp-1 {
+						comCount = branch.Compare.BehindBy % 100
+					}
+					c, err := getCommitData(ctx, genClient, name, ghs.cfg.GitHubOrg, 1, comCount, cc, branch.Name)
 					if err != nil {
 						ghs.logger.Sugar().Errorf("error getting commit data", zap.Error(err))
 					}
@@ -232,11 +241,9 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					if len(c.Repository.GetRefs().Nodes) == 0 {
 						break
 					}
-
 					tar := c.Repository.GetRefs().Nodes[0].GetTarget()
 					if ct, ok := tar.(*CommitNodeTargetCommit); ok {
 						cc = &ct.History.PageInfo.EndCursor
-
 						if i == cp-1 {
 							e := ct.History.GetEdges()
 
@@ -245,8 +252,14 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 							ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, name, branch.Name)
 						}
+						for b := 0; b < len(ct.History.Edges); b++ {
+							adds = add(adds, ct.History.Edges[b].Node.Additions)
+							dels = add(dels, ct.History.Edges[b].Node.Deletions)
+						}
 					}
 				}
+				ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), name, branch.Name)
+				ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), name, branch.Name)
 			}
 			var prCursor *string
 			var pullRequests []PullRequestNode
@@ -300,7 +313,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				}
 			}
 		}
-
 	}
 
 	return ghs.mb.Emit(), nil

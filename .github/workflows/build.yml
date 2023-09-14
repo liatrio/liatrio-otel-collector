@@ -15,7 +15,7 @@ jobs:
         name: lint
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   fetch-depth: 0
 
@@ -56,7 +56,7 @@ jobs:
             group: bigger
         steps:
             - name: Check out code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                   fetch-depth: 0
 
@@ -73,7 +73,7 @@ jobs:
               uses: docker/setup-buildx-action@v2
 
             - name: Run GoReleaser
-              uses: goreleaser/goreleaser-action@v4
+              uses: goreleaser/goreleaser-action@v5
               if: steps.cache.outputs.cache-hit != 'true'
               with:
                   distribution: goreleaser-pro
@@ -91,7 +91,7 @@ jobs:
         name: test
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   fetch-depth: 0
 

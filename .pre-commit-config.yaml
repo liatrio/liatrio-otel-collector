@@ -21,3 +21,8 @@ repos:
       hooks:
           - id: yamlfmt
             stages: [commit]
+
+    - repo: https://github.com/DavidAnson/markdownlint-cli2
+      rev: v0.9.2
+      hooks:
+          - id: markdownlint-cli2
