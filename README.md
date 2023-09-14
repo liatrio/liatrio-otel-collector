@@ -16,7 +16,6 @@
   <a href="https://codecov.io/gh/liatrio/liatrio-otel-collector" > 
     <img src="https://codecov.io/gh/liatrio/liatrio-otel-collector/graph/badge.svg?token=tRemsrLn0R"/> 
   </a>
-
 </p>
 
 ---
