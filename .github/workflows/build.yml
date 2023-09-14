@@ -3,9 +3,9 @@ name: Build and Test
 
 on:
     pull_request:
-        branches: [codecov]
+        branches: [main]
     push:
-        branches: [codecov]
+        branches: [main]
 
 jobs:
     lint:
