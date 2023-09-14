@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
@@ -81,18 +80,15 @@ func (gls *gitlabScraper) getBranches(
 	ctx context.Context,
 	graphClient graphql.Client,
 	projectPath string,
-	ch chan projectData,
-	waitGroup *sync.WaitGroup,
-) {
-	defer waitGroup.Done()
+) projectData {
 
 	branches, err := getBranchNames(ctx, graphClient, projectPath)
 	if err != nil {
 		gls.logger.Sugar().Errorf("error: %v", err)
-		return
+		return projectData{}
 	}
 
-	ch <- projectData{
+	return projectData{
 		ProjectPath: projectPath,
 		BranchCount: int64(len(branches.Project.Repository.BranchNames)),
 	}
@@ -102,17 +98,13 @@ func (gls *gitlabScraper) getOpenedMergeRequests(
 	ctx context.Context,
 	graphClient graphql.Client,
 	projectPath string,
-	ch chan []mergeRequest,
-	waitGroup *sync.WaitGroup,
-) {
-	defer waitGroup.Done()
+) []mergeRequest {
 
 	mergeRequestsData, err := getOpenedMergeRequests(ctx, graphClient, projectPath)
 	if err != nil {
 		gls.logger.Sugar().Errorf("error: %v", err)
-		return
+		return nil
 	}
-
 	var mrs []mergeRequest
 	for _, node := range mergeRequestsData.Project.MergeRequests.Nodes {
 		mrs = append(mrs, mergeRequest{
@@ -124,7 +116,7 @@ func (gls *gitlabScraper) getOpenedMergeRequests(
 			TargetBranch: node.TargetBranch,
 		})
 	}
-	ch <- mrs
+	return mrs
 }
 
 // Scrape the GitLab GraphQL API for the various metrics. took 9m56s to complete.
@@ -180,47 +172,28 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}
 	}
 
-	branchCh := make(chan projectData)
-	mrCh := make(chan []mergeRequest)
-
-	var wg sync.WaitGroup
-
+	var mergeData [][]mergeRequest
+	var branchData []projectData
 	// TODO: Must account for when there are more than 100,000 branch names in a project.
 	for _, project := range projectList {
-		wg.Add(2) // One for getBranches and one for getOpenedMergeRequests
+		b := gls.getBranches(ctx, graphClient, project.Path)
+		branchData = append(branchData, b)
 
-		// created shadowed declaration due to loop variable because Loop variables
-		// captured by 'func' literals in 'go' statements might have unexpected values
-		project := project
-
-		// Goroutine for getting branches
-		go func() {
-			gls.getBranches(ctx, graphClient, project.Path, branchCh, &wg)
-		}()
-
-		// Goroutine for getting merge requests
-		go func() {
-			gls.getOpenedMergeRequests(ctx, graphClient, project.Path, mrCh, &wg)
-		}()
+		m := gls.getOpenedMergeRequests(ctx, graphClient, project.Path)
+		mergeData = append(mergeData, m)
 	}
 
-	go func() {
-		wg.Wait()
-		close(branchCh)
-		close(mrCh)
-	}()
-
 	// Handling the branch data
-	for proj := range branchCh {
+	for _, proj := range branchData {
 		gls.mb.RecordGitRepositoryBranchCountDataPoint(now, proj.BranchCount, proj.ProjectPath)
 		gls.logger.Sugar().Debugf("%s branch count: %v", proj.ProjectPath, proj.BranchCount)
 	}
-
 	// Handling the merge request data
-	for mrs := range mrCh {
+	for _, mrs := range mergeData {
 		for _, mr := range mrs {
-			mrAge := time.Since(mr.CreatedAt)
-			gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, int64(mrAge), mr.ProjectPath, mr.TargetBranch)
+			mrAge := int64(time.Since(mr.CreatedAt).Hours())
+			gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, mr.ProjectPath, mr.TargetBranch)
+			gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", mr.ProjectPath, mr.TargetBranch, mrAge)
 		}
 	}
 
