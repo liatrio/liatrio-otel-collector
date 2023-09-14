@@ -13,6 +13,7 @@
   <a href="https://api.securityscorecards.dev/projects/github.com/liatrio/liatrio-otel-collector/badge">
     <img alt="OpenSSF Scorecard" src="https://img.shields.io/ossf-scorecard/github.com/liatrio/liatrio-otel-collector?label=openssf%20scorecard&style=for-the-badge">
   </a>
+  <br>
   <a href="https://codecov.io/gh/liatrio/liatrio-otel-collector" > 
     <img src="https://codecov.io/gh/liatrio/liatrio-otel-collector/graph/badge.svg?token=tRemsrLn0R"/> 
   </a>
