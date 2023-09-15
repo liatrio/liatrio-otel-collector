@@ -107,37 +107,6 @@ jobs:
             - name: Upload coverage to Codecov
               uses: codecov/codecov-action@v3
 
-            - name: Grab existing SVG badge and check if passing or failing
-              id: check_badge
-              env:
-                  badge_url: https://github.com/liatrio/liatrio-otel-collector/actions/workflows/github-code-scanning/codeql/badge.svg
-              run: |
-                  svg_content=$(curl -s ${{ env.badge_url }})
-                  if echo "$svg_content" | grep -qi "passing"; then
-                      badge_status="passing"
-                      badge_color="green"
-                  elif echo "$svg_content" | grep -qi "failing"; then
-                      badge_status="failing"
-                      badge_color="red"
-                  else
-                      badge_status="unknown"
-                  fi
-                  echo "::set-output name=badge_status::$badge_status"
-                  echo "::set-output name=badge_color::$badge_color"
-
-            - name: Add the CodeQL badge to the README.md
-              uses: wow-actions/add-badges@v1
-              with:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  badges: |
-                      [
-                        {
-                          "badge": "https://img.shields.io/badge/CodeQL-${{ steps.check-badge.outputs.badge_status }}-${{ steps.check-badge.outputs.badge_color }}?style=for-the-badge",
-                          "alt": "CodeQL Badge",
-                          "link": "https://github.com/liatrio/liatrio-otel-collector/actions/workflows/github-code-scanning/codeql"
-                        }
-                      ]
-
     go-semantic-release:
         if: ${{ github.ref == 'refs/heads/main' }}
         needs: [lint, build]
