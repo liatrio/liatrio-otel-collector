@@ -126,17 +126,14 @@ jobs:
                   echo "::set-output name=badge_color::$badge_color"
 
             - name: Add the CodeQL badge to the README.md
-              uses: wow-actions/add-badges@v1
+              uses: RubbaBoy/BYOB@v1.3.0
               with:
+                  NAME: CodeQL
+                  LABEL: CodeQL
+                  ICON: github
+                  STATUS: ${{ steps.check-badge.outputs.badge_status }}
+                  COLOR: ${{ steps.check-badge.outputs.badge_color }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  badges: |
-                      [
-                        {
-                          "badge": "https://img.shields.io/badge/CodeQL-${{ steps.check-badge.outputs.badge_status }}-${{ steps.check-badge.outputs.badge_color }}?style=for-the-badge",
-                          "alt": "CodeQL Badge",
-                          "link": "https://github.com/liatrio/liatrio-otel-collector/actions/workflows/github-code-scanning/codeql"
-                        }
-                      ]
 
     go-semantic-release:
         if: ${{ github.ref == 'refs/heads/main' }}
