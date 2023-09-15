@@ -16,9 +16,6 @@
   <a href="https://api.securityscorecards.dev/projects/github.com/liatrio/liatrio-otel-collector/badge">
     <img alt="OpenSSF Scorecard" src="https://img.shields.io/ossf-scorecard/github.com/liatrio/liatrio-otel-collector?label=openssf%20scorecard&style=for-the-badge">
   </a>
-  <a href="https://github.com/liatrio/liatrio-otel-collector/actions/workflows/github-code-scanning/codeql">
-    <img src="https://github.com/liatrio/liatrio-otel-collector/actions/workflows/github-code-scanning/codeql/badge.svg" alt="CodeQL">
-  </a>
 </p>
 
 ---
