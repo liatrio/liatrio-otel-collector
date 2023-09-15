@@ -7,6 +7,9 @@
   <a href="https://goreportcard.com/report/github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver">
     <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver?style=for-the-badge">
   </a>
+  <a href="https://codecov.io/gh/liatrio/liatrio-otel-collector/branch/main" > 
+    <img alt="Codecov Status" src="https://img.shields.io/codecov/c/github/liatrio/liatrio-otel-collector?style=for-the-badge"/> 
+  </a>
   <a href="https://github.com/liatrio/liatrio-otel-collector/releases">
     <img alt="GitHub release" src="https://img.shields.io/github/v/release/liatrio/liatrio-otel-collector?include_prereleases&style=for-the-badge">
   </a>

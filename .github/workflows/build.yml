@@ -104,6 +104,9 @@ jobs:
             - name: Make test-all
               run: make test-all
 
+            - name: Upload coverage to Codecov
+              uses: codecov/codecov-action@v3
+
     go-semantic-release:
         if: ${{ github.ref == 'refs/heads/main' }}
         needs: [lint, build]
