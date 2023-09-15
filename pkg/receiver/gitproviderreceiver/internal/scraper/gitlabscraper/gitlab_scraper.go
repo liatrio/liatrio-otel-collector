@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
@@ -71,15 +72,18 @@ func (gls *gitlabScraper) getBranches(
 	ctx context.Context,
 	graphClient graphql.Client,
 	projectPath string,
-) projectData {
+	ch chan projectData,
+	waitGroup *sync.WaitGroup,
+) {
+	defer waitGroup.Done()
 
 	branches, err := getBranchNames(ctx, graphClient, projectPath)
 	if err != nil {
 		gls.logger.Sugar().Errorf("error: %v", err)
-		return projectData{}
+		return
 	}
 
-	return projectData{
+	ch <- projectData{
 		ProjectPath: projectPath,
 		BranchCount: int64(len(branches.Project.Repository.BranchNames)),
 	}
@@ -89,10 +93,13 @@ func (gls *gitlabScraper) getOpenedMergeRequests(
 	ctx context.Context,
 	graphClient graphql.Client,
 	projectPath string,
-) []MergeRequestNode {
-
+	ch chan []MergeRequestNode,
+	waitGroup *sync.WaitGroup,
+) {
 	var mergeRequestData []MergeRequestNode
 	var mrCursor *string
+
+	defer waitGroup.Done()
 
 	for hasNextPage := true; hasNextPage; {
 		// Get the next page of data
@@ -110,12 +117,14 @@ func (gls *gitlabScraper) getOpenedMergeRequests(
 
 		// Set the cursor to the end cursor of the current page
 		mrCursor = &mr.Project.MergeRequests.PageInfo.EndCursor
+
 		mergeRequestData = append(mergeRequestData, mr.Project.MergeRequests.Nodes...)
 	}
-	return mergeRequestData
+
+	ch <- mergeRequestData
 }
 
-// Scrape the GitLab GraphQL API for the various metrics. took 9m56s to complete.
+// Scrape the GitLab GraphQL API for the various metrics.
 func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	gls.logger.Sugar().Debug("checking if client is initialized")
 	if gls.client == nil {
@@ -168,28 +177,54 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}
 	}
 
-	var mergeData [][]MergeRequestNode
-	var branchData []projectData
+	var wg1 sync.WaitGroup
+	var wg2 sync.WaitGroup
+
+	branchCh := make(chan projectData)
+
 	// TODO: Must account for when there are more than 100,000 branch names in a project.
 	for _, project := range projectList {
-		b := gls.getBranches(ctx, graphClient, project.Path)
-		branchData = append(branchData, b)
+		wg1.Add(1)
 
-		m := gls.getOpenedMergeRequests(ctx, graphClient, project.Path)
-		mergeData = append(mergeData, m)
+		go func(project gitlabProject) {
+			gls.getBranches(ctx, graphClient, project.Path, branchCh, &wg1)
+		}(project)
 	}
 
+	go func() {
+		wg1.Wait()
+		close(branchCh)
+	}()
+
+	mergeCh := make(chan []MergeRequestNode)
+
+	for _, project := range projectList {
+		wg2.Add(1)
+
+		go func(project gitlabProject) {
+			gls.getOpenedMergeRequests(ctx, graphClient, project.Path, mergeCh, &wg2)
+		}(project)
+	}
+
+	go func() {
+		wg2.Wait()
+		close(mergeCh)
+	}()
+
 	// Handling the branch data
-	for _, proj := range branchData {
+	for proj := range branchCh {
 		gls.mb.RecordGitRepositoryBranchCountDataPoint(now, proj.BranchCount, proj.ProjectPath)
 		gls.logger.Sugar().Debugf("%s branch count: %v", proj.ProjectPath, proj.BranchCount)
 	}
+
 	// Handling the merge request data
-	for _, mrs := range mergeData {
-		for _, mr := range mrs {
-			mrAge := int64(time.Since(mr.CreatedAt).Hours())
-			gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, mr.Project.FullPath, mr.TargetBranch)
-			gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", mr.Project.FullPath, mr.TargetBranch, mrAge)
+	for mrs := range mergeCh {
+		if len(mrs) != 0 {
+			for _, mr := range mrs {
+				mrAge := int64(time.Since(mr.CreatedAt).Hours())
+				gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, mr.Project.FullPath, mr.TargetBranch)
+				gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", mr.Project.FullPath, mr.TargetBranch, mrAge)
+			}
 		}
 	}
 
