@@ -65,7 +65,7 @@ func newGitHubScraper(
 
 // scrape and return metrics
 func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
-	ghs.logger.Sugar().Debug("checking if client is initialized")
+	//ghs.logger.Sugar().Debug("checking if client is initialized")
 	if ghs.client == nil {
 		return pmetric.NewMetrics(), errClientNotInitErr
 	}
@@ -226,13 +226,13 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				comCount := 100
 
 				var cc *string
-
+				var adds int = 0
+				var dels int = 0
 				for i := 0; i < cp; i++ {
 
 					if i == cp-1 {
 						comCount = branch.Compare.BehindBy % 100
 					}
-
 					c, err := getCommitData(ctx, genClient, name, ghs.cfg.GitHubOrg, 1, comCount, cc, branch.Name)
 					if err != nil {
 						ghs.logger.Sugar().Errorf("error getting commit data", zap.Error(err))
@@ -241,11 +241,9 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					if len(c.Repository.GetRefs().Nodes) == 0 {
 						break
 					}
-
 					tar := c.Repository.GetRefs().Nodes[0].GetTarget()
 					if ct, ok := tar.(*CommitNodeTargetCommit); ok {
 						cc = &ct.History.PageInfo.EndCursor
-
 						if i == cp-1 {
 							e := ct.History.GetEdges()
 
@@ -254,8 +252,14 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 							ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, name, branch.Name)
 						}
+						for b := 0; b < len(ct.History.Edges); b++ {
+							adds = add(adds, ct.History.Edges[b].Node.Additions)
+							dels = add(dels, ct.History.Edges[b].Node.Deletions)
+						}
 					}
 				}
+				ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), name, branch.Name)
+				ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), name, branch.Name)
 			}
 			var prCursor *string
 			var pullRequests []PullRequestNode

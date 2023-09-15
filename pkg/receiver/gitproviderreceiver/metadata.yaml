@@ -74,6 +74,20 @@ metrics:
         gauge:
             value_type: int
         attributes: [repository.name, branch.name]
+    git.repository.branch.line.addition.count:
+        enabled: true
+        description: Total additional lines of code in the branch 
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
+    git.repository.branch.line.deletion.count:
+        enabled: true
+        description: Total deleted lines of code in the branch 
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
     git.repository.pull_request.count:
         enabled: true
         description: The amount of open pull requests

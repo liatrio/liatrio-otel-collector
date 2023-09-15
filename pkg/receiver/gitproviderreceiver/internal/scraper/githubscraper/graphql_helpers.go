@@ -40,6 +40,10 @@ func add[T ~int | ~float64](a, b T) T {
 	return a + b
 }
 
+func sub[T ~int | ~float64](a, b T) T {
+	return a - b
+}
+
 // Ensure that the type of owner is user or organization
 func checkOwnerTypeValid(ownertype string) (bool, error) {
 	if ownertype == "org" || ownertype == "user" {
