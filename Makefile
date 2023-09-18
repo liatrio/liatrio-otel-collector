@@ -99,3 +99,37 @@ tidy-all:
 .PHONY: fmt-all
 fmt-all:
 	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) fmt
+
+.PHONY: checks
+checks: prep lint-all metagen-all test-all genqlient-all tidy-all fmt-all 
+# 	echo "Downloading OpenTelemetry Collector Build"
+# 	mkdir -p $(OCB_PATH)
+# 	curl -LO $(OCB_URL)v$(OCB_VERSION)/ocb_$(OCB_VERSION)_$(OS)_$(ARCH)
+# 	mv ocb_$(OCB_VERSION)_$(OS)_$(ARCH) $(OCB_PATH)/ocb
+# 	chmod +x $(OCB_PATH)/ocb
+# 	cd $(OCB_PATH) && git clone --depth 1 $(OTEL_CONTRIB_REPO); \
+# 		cd opentelemetry-collector-contrib && git fetch --depth 1 origin v$(OCB_VERSION) && git checkout FETCH_HEAD;
+# 	cd $(OCB_PATH)/opentelemetry-collector-contrib/cmd/mdatagen && go install .
+
+# 	go install honnef.co/go/tools/cmd/staticcheck@latest
+# 	go install github.com/securego/gosec/v2/cmd/gosec@latest
+# 	go install golang.org/x/tools/cmd/goimports@latest
+# 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+# 	go install github.com/Khan/genqlient@latest
+
+# 	cd tmp/opentelemetry-collector-contrib/cmd/mdatagen && go install .
+
+# # $(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) lint
+# 	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) metagen
+
+# 	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) test
+# 	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) genqlient
+
+# 	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) tidy
+# 	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) fmt
+
+
+# 	cd tmp/opentelemetry-collector-contrib/cmd/mdatagen && go install .
+# 	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) metagen
+
+
