@@ -105,7 +105,10 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	gls.logger.Sugar().Debug("creating a new gitlab client")
 
 	graphClient := graphql.NewClient("https://gitlab.com/api/graphql", gls.client)
-	restClient, _ := gitlab.NewClient("", gitlab.WithHTTPClient(gls.client))
+	restClient, err := gitlab.NewClient("", gitlab.WithHTTPClient(gls.client))
+	if err != nil {
+		gls.logger.Sugar().Errorf("error: %v", err)
+	}
 
 	var projectList []gitlabProject
 	var projectsCursor *string
@@ -171,7 +174,11 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				continue
 			}
 
-			diff, _, _ := restClient.Repositories.Compare(proj.ProjectPath, &gitlab.CompareOptions{From: gitlab.String("main"), To: gitlab.String(branch)})
+			diff, _, err := restClient.Repositories.Compare(proj.ProjectPath, &gitlab.CompareOptions{From: gitlab.String("main"), To: gitlab.String(branch)})
+			if err != nil {
+				gls.logger.Sugar().Errorf("error: %v", err)
+			}
+
 			if len(diff.Commits) != 0 {
 				branchAge := time.Since(*diff.Commits[0].CreatedAt).Hours()
 				gls.logger.Sugar().Debugf("%v age: %v hours, commit name: %s", branch, branchAge, diff.Commits[0].Title)
