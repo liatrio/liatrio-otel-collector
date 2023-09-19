@@ -9,6 +9,54 @@ import (
 	"github.com/Khan/genqlient/graphql"
 )
 
+// MergeRequestNode includes the requested fields of the GraphQL type MergeRequest.
+type MergeRequestNode struct {
+	// Internal ID of the merge request.
+	Iid string `json:"iid"`
+	// Title of the merge request.
+	Title string `json:"title"`
+	// Source branch of the merge request.
+	SourceBranch string `json:"sourceBranch"`
+	// Target branch of the merge request.
+	TargetBranch string `json:"targetBranch"`
+	// Timestamp of when the merge request was created.
+	CreatedAt time.Time `json:"createdAt"`
+	// Timestamp of when the merge request was last updated.
+	UpdatedAt time.Time `json:"updatedAt"`
+	// Alias for target_project.
+	Project MergeRequestNodeProject `json:"project"`
+}
+
+// GetIid returns MergeRequestNode.Iid, and is useful for accessing the field via an interface.
+func (v *MergeRequestNode) GetIid() string { return v.Iid }
+
+// GetTitle returns MergeRequestNode.Title, and is useful for accessing the field via an interface.
+func (v *MergeRequestNode) GetTitle() string { return v.Title }
+
+// GetSourceBranch returns MergeRequestNode.SourceBranch, and is useful for accessing the field via an interface.
+func (v *MergeRequestNode) GetSourceBranch() string { return v.SourceBranch }
+
+// GetTargetBranch returns MergeRequestNode.TargetBranch, and is useful for accessing the field via an interface.
+func (v *MergeRequestNode) GetTargetBranch() string { return v.TargetBranch }
+
+// GetCreatedAt returns MergeRequestNode.CreatedAt, and is useful for accessing the field via an interface.
+func (v *MergeRequestNode) GetCreatedAt() time.Time { return v.CreatedAt }
+
+// GetUpdatedAt returns MergeRequestNode.UpdatedAt, and is useful for accessing the field via an interface.
+func (v *MergeRequestNode) GetUpdatedAt() time.Time { return v.UpdatedAt }
+
+// GetProject returns MergeRequestNode.Project, and is useful for accessing the field via an interface.
+func (v *MergeRequestNode) GetProject() MergeRequestNodeProject { return v.Project }
+
+// MergeRequestNodeProject includes the requested fields of the GraphQL type Project.
+type MergeRequestNodeProject struct {
+	// Full path of the project.
+	FullPath string `json:"fullPath"`
+}
+
+// GetFullPath returns MergeRequestNodeProject.FullPath, and is useful for accessing the field via an interface.
+func (v *MergeRequestNodeProject) GetFullPath() string { return v.FullPath }
+
 // __getAllGroupProjectsInput is used internally by genqlient
 type __getAllGroupProjectsInput struct {
 	FullPath string  `json:"fullPath"`
@@ -31,11 +79,15 @@ func (v *__getBranchNamesInput) GetFullPath() string { return v.FullPath }
 
 // __getOpenedMergeRequestsInput is used internally by genqlient
 type __getOpenedMergeRequestsInput struct {
-	FullPath string `json:"fullPath"`
+	FullPath string  `json:"fullPath"`
+	After    *string `json:"after"`
 }
 
 // GetFullPath returns __getOpenedMergeRequestsInput.FullPath, and is useful for accessing the field via an interface.
 func (v *__getOpenedMergeRequestsInput) GetFullPath() string { return v.FullPath }
+
+// GetAfter returns __getOpenedMergeRequestsInput.After, and is useful for accessing the field via an interface.
+func (v *__getOpenedMergeRequestsInput) GetAfter() *string { return v.After }
 
 // __getProjectsByTopicInput is used internally by genqlient
 type __getProjectsByTopicInput struct {
@@ -191,59 +243,41 @@ func (v *getOpenedMergeRequestsProject) GetMergeRequests() getOpenedMergeRequest
 //
 // The connection type for MergeRequest.
 type getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection struct {
+	// Information to aid in pagination.
+	PageInfo getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo `json:"pageInfo"`
 	// A list of nodes.
-	Nodes []getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest `json:"nodes"`
+	Nodes []MergeRequestNode `json:"nodes"`
+}
+
+// GetPageInfo returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection) GetPageInfo() getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo {
+	return v.PageInfo
 }
 
 // GetNodes returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection.Nodes, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection) GetNodes() []getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest {
+func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnection) GetNodes() []MergeRequestNode {
 	return v.Nodes
 }
 
-// getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest includes the requested fields of the GraphQL type MergeRequest.
-type getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest struct {
-	// Internal ID of the merge request.
-	Iid string `json:"iid"`
-	// Title of the merge request.
-	Title string `json:"title"`
-	// Source branch of the merge request.
-	SourceBranch string `json:"sourceBranch"`
-	// Target branch of the merge request.
-	TargetBranch string `json:"targetBranch"`
-	// Timestamp of when the merge request was created.
-	CreatedAt time.Time `json:"createdAt"`
-	// Timestamp of when the merge request was last updated.
-	UpdatedAt time.Time `json:"updatedAt"`
+// getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+// The GraphQL type's documentation follows.
+//
+// Information about pagination in a connection.
+type getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo struct {
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
 }
 
-// GetIid returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.Iid, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetIid() string {
-	return v.Iid
+// GetHasNextPage returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo) GetHasNextPage() bool {
+	return v.HasNextPage
 }
 
-// GetTitle returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.Title, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetTitle() string {
-	return v.Title
-}
-
-// GetSourceBranch returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.SourceBranch, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetSourceBranch() string {
-	return v.SourceBranch
-}
-
-// GetTargetBranch returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.TargetBranch, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetTargetBranch() string {
-	return v.TargetBranch
-}
-
-// GetCreatedAt returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.CreatedAt, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetCreatedAt() time.Time {
-	return v.CreatedAt
-}
-
-// GetUpdatedAt returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest.UpdatedAt, and is useful for accessing the field via an interface.
-func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionNodesMergeRequest) GetUpdatedAt() time.Time {
-	return v.UpdatedAt
+// GetEndCursor returns getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *getOpenedMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo) GetEndCursor() string {
+	return v.EndCursor
 }
 
 // getOpenedMergeRequestsResponse is returned by getOpenedMergeRequests on success.
@@ -398,9 +432,13 @@ func getBranchNames(
 
 // The query or mutation executed by getOpenedMergeRequests.
 const getOpenedMergeRequests_Operation = `
-query getOpenedMergeRequests ($fullPath: ID!) {
+query getOpenedMergeRequests ($fullPath: ID!, $after: String) {
 	project(fullPath: $fullPath) {
-		mergeRequests(state: opened) {
+		mergeRequests(state: opened, after: $after) {
+			pageInfo {
+				hasNextPage
+				endCursor
+			}
 			nodes {
 				iid
 				title
@@ -408,6 +446,9 @@ query getOpenedMergeRequests ($fullPath: ID!) {
 				targetBranch
 				createdAt
 				updatedAt
+				project {
+					fullPath
+				}
 			}
 		}
 	}
@@ -418,12 +459,14 @@ func getOpenedMergeRequests(
 	ctx context.Context,
 	client graphql.Client,
 	fullPath string,
+	after *string,
 ) (*getOpenedMergeRequestsResponse, error) {
 	req := &graphql.Request{
 		OpName: "getOpenedMergeRequests",
 		Query:  getOpenedMergeRequests_Operation,
 		Variables: &__getOpenedMergeRequestsInput{
 			FullPath: fullPath,
+			After:    after,
 		},
 	}
 	var err error
