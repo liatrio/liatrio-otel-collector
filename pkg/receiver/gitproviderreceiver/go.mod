@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/Khan/genqlient v0.6.0
+	github.com/brianvoe/gofakeit/v6 v6.23.2
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-github/v53 v53.2.0
 	github.com/stretchr/testify v1.8.4
@@ -22,7 +23,6 @@ require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/brianvoe/gofakeit/v6 v6.23.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
