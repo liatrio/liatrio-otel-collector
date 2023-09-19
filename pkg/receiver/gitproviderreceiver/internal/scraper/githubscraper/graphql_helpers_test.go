@@ -3,6 +3,7 @@ package githubscraper
 import (
 	"testing"
 
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -137,6 +138,7 @@ func TestSubNegativeFloat(t *testing.T) {
 
 	assert.Equal(t, expected, num)
 }
+
 func TestGenDefaultSearchQueryOrg(t *testing.T) {
 	st := "org"
 	org := "empire"
@@ -157,4 +159,26 @@ func TestGenDefaultSearchQueryUser(t *testing.T) {
 	actual := genDefaultSearchQuery(st, org)
 
 	assert.Equal(t, expected, actual)
+}
+
+func TestCheckOwnerTypeValid(t *testing.T) {
+	validOptions := []string{"org", "user"}
+
+	for _, option := range validOptions {
+		valid, err := checkOwnerTypeValid(option)
+
+		assert.True(t, valid)
+		assert.Nil(t, err)
+	}
+}
+
+func TestCheckOwnerTypeValidRandom(t *testing.T) {
+	for i := 0; i < 5; i++ {
+		option := gofakeit.Word()
+
+		valid, err := checkOwnerTypeValid(option)
+
+		assert.False(t, valid)
+		assert.NotNil(t, err)
+	}
 }
