@@ -3,7 +3,6 @@ package githubscraper
 import (
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -173,9 +172,9 @@ func TestCheckOwnerTypeValid(t *testing.T) {
 }
 
 func TestCheckOwnerTypeValidRandom(t *testing.T) {
-	for i := 0; i < 5; i++ {
-		option := gofakeit.Word()
+	invalidOptions := []string{"random", "text", "words", "here", "there"}
 
+	for _, option := range invalidOptions {
 		valid, err := checkOwnerTypeValid(option)
 
 		assert.False(t, valid)

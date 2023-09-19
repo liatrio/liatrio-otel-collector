@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/Khan/genqlient v0.6.0
-	github.com/brianvoe/gofakeit/v6 v6.23.2
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-github/v53 v53.2.0
 	github.com/stretchr/testify v1.8.4
