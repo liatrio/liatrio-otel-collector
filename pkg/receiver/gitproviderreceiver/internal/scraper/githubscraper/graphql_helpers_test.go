@@ -172,7 +172,7 @@ func TestCheckOwnerTypeValid(t *testing.T) {
 }
 
 func TestCheckOwnerTypeValidRandom(t *testing.T) {
-	invalidOptions := []string{"random", "text", "words", "here", "there"}
+	invalidOptions := []string{"sorg", "suser", "users", "orgs", "invalid", "text"}
 
 	for _, option := range invalidOptions {
 		valid, err := checkOwnerTypeValid(option)
