@@ -7,10 +7,10 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
+	"github.com/xanzy/go-gitlab"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -59,7 +59,7 @@ func newGitLabScraper(
 
 type projectData struct {
 	ProjectPath string
-	BranchCount int64
+	Branches    []string
 }
 
 // Returns a struct with the project path and an array of branch names via the given channel.
@@ -72,18 +72,15 @@ func (gls *gitlabScraper) getBranches(
 	ctx context.Context,
 	graphClient graphql.Client,
 	projectPath string,
-	ch chan projectData,
-	waitGroup *sync.WaitGroup,
-) {
-	defer waitGroup.Done()
+) projectData {
 
 	branches, err := getBranchNames(ctx, graphClient, projectPath)
 	if err != nil {
 		gls.logger.Sugar().Errorf("error: %v", err)
-		return
+		return projectData{}
 	}
 
-	ch <- projectData{ProjectPath: projectPath, BranchCount: int64(len(branches.Project.Repository.BranchNames))}
+	return projectData{ProjectPath: projectPath, Branches: branches.Project.Repository.BranchNames}
 }
 
 // Scrape the GitLab GraphQL API for the various metrics. took 9m56s to complete.
@@ -104,6 +101,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	gls.logger.Sugar().Debug("creating a new gitlab client")
 
 	graphClient := graphql.NewClient("https://gitlab.com/api/graphql", gls.client)
+	restClient, _ := gitlab.NewClient("", gitlab.WithHTTPClient(gls.client))
 
 	var projectList []gitlabProject
 	var projectsCursor *string
@@ -139,30 +137,33 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}
 	}
 
-	ch := make(chan projectData)
-
-	var wg sync.WaitGroup
+	var projects []projectData
 
 	// TODO: Must account for when there are more than 100,000 branch names in a project.
 	for _, project := range projectList {
-		wg.Add(1)
 
 		// created shadowed declaration due to loop variable because Loop variables
 		// captured by 'func' literals in 'go' statements might have unexpected values
-		project := project
-		go func() {
-			gls.getBranches(ctx, graphClient, project.Path, ch, &wg)
-		}()
+		p := gls.getBranches(ctx, graphClient, project.Path)
+		projects = append(projects, p)
 	}
 
-	go func() {
-		wg.Wait()
-		close(ch)
-	}()
-
-	for proj := range ch {
-		gls.mb.RecordGitRepositoryBranchCountDataPoint(now, proj.BranchCount, proj.ProjectPath)
-		gls.logger.Sugar().Debugf("%s branch count: %v", proj.ProjectPath, proj.BranchCount)
+	for _, proj := range projects {
+		gls.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(proj.Branches)), proj.ProjectPath)
+		gls.logger.Sugar().Debugf("%s branch count: %v", proj.ProjectPath, int64(len(proj.Branches)))
+		for _, branch := range proj.Branches {
+			if branch == "main" {
+				continue
+			}
+			diff, _, _ := restClient.Repositories.Compare(proj.ProjectPath, &gitlab.CompareOptions{From: gitlab.String("main"), To: gitlab.String(branch)})
+			if len(diff.Commits) != 0 {
+				branchAge := time.Since(*diff.Commits[0].CreatedAt).Hours()
+				gls.logger.Sugar().Debugf("%v age: %v hours commit name: %s", branch, branchAge, diff.Commits[0].Title)
+				gls.mb.RecordGitRepositoryBranchTimeDataPoint(now, int64(branchAge), proj.ProjectPath, branch)
+			} else {
+				gls.logger.Sugar().Debugf("%v the same as main", branch)
+			}
+		}
 	}
 
 	// record repository count metric
