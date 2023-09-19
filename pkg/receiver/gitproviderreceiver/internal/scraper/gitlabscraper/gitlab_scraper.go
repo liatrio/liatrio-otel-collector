@@ -23,13 +23,6 @@ import (
 
 var errClientNotInitErr = errors.New("http client not initialized")
 
-type gitlabProject struct {
-	Name           string
-	Path           string
-	CreatedAt      time.Time
-	LastActivityAt time.Time
-}
-
 type gitlabScraper struct {
 	client   *http.Client
 	cfg      *Config
@@ -56,6 +49,13 @@ func newGitLabScraper(
 		logger:   settings.Logger,
 		mb:       metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, settings),
 	}
+}
+
+type gitlabProject struct {
+	Name           string
+	Path           string
+	CreatedAt      time.Time
+	LastActivityAt time.Time
 }
 
 type projectData struct {
@@ -87,7 +87,42 @@ func (gls *gitlabScraper) getBranches(
 	ch <- projectData{ProjectPath: projectPath, Branches: branches.Project.Repository.BranchNames}
 }
 
-// Scrape the GitLab GraphQL API for the various metrics. took 9m56s to complete.
+func (gls *gitlabScraper) getOpenedMergeRequests(
+	ctx context.Context,
+	graphClient graphql.Client,
+	projectPath string,
+	ch chan []MergeRequestNode,
+	waitGroup *sync.WaitGroup,
+) {
+	var mergeRequestData []MergeRequestNode
+	var mrCursor *string
+
+	defer waitGroup.Done()
+
+	for hasNextPage := true; hasNextPage; {
+		// Get the next page of data
+		mr, err := getOpenedMergeRequests(ctx, graphClient, projectPath, mrCursor)
+		if err != nil {
+			gls.logger.Sugar().Errorf("error: %v", err)
+		}
+
+		if len(mr.Project.MergeRequests.Nodes) == 0 {
+			break
+		}
+
+		// Check if there is a next page
+		hasNextPage = mr.Project.MergeRequests.PageInfo.HasNextPage
+
+		// Set the cursor to the end cursor of the current page
+		mrCursor = &mr.Project.MergeRequests.PageInfo.EndCursor
+
+		mergeRequestData = append(mergeRequestData, mr.Project.MergeRequests.Nodes...)
+	}
+
+	ch <- mergeRequestData
+}
+
+// Scrape the GitLab GraphQL API for the various metrics.
 func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	gls.logger.Sugar().Debug("checking if client is initialized")
 	if gls.client == nil {
@@ -144,25 +179,38 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}
 	}
 
-	ch := make(chan projectData)
+	var wg1 sync.WaitGroup
+	var wg2 sync.WaitGroup
 
-	var wg sync.WaitGroup
+	branchCh := make(chan projectData)
 
 	// TODO: Must account for when there are more than 100,000 branch names in a project.
 	for _, project := range projectList {
-		wg.Add(1)
+		wg1.Add(1)
 
-		// created shadowed declaration due to loop variable because Loop variables
-		// captured by 'func' literals in 'go' statements might have unexpected values
-		project := project
-		go func() {
-			gls.getBranches(ctx, graphClient, project.Path, ch, &wg)
-		}()
+		go func(project gitlabProject) {
+			gls.getBranches(ctx, graphClient, project.Path, branchCh, &wg1)
+		}(project)
 	}
 
 	go func() {
-		wg.Wait()
-		close(ch)
+		wg1.Wait()
+		close(branchCh)
+	}()
+
+	mergeCh := make(chan []MergeRequestNode)
+
+	for _, project := range projectList {
+		wg2.Add(1)
+
+		go func(project gitlabProject) {
+			gls.getOpenedMergeRequests(ctx, graphClient, project.Path, mergeCh, &wg2)
+		}(project)
+	}
+
+	go func() {
+		wg2.Wait()
+		close(mergeCh)
 	}()
 
 	for proj := range ch {
@@ -183,6 +231,17 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				branchAge := time.Since(*diff.Commits[0].CreatedAt).Hours()
 				gls.logger.Sugar().Debugf("%v age: %v hours, commit name: %s", branch, branchAge, diff.Commits[0].Title)
 				gls.mb.RecordGitRepositoryBranchTimeDataPoint(now, int64(branchAge), proj.ProjectPath, branch)
+			}
+		}
+	}
+
+	// Handling the merge request data
+	for mrs := range mergeCh {
+		if len(mrs) != 0 {
+			for _, mr := range mrs {
+				mrAge := int64(time.Since(mr.CreatedAt).Hours())
+				gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, mr.Project.FullPath, mr.TargetBranch)
+				gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", mr.Project.FullPath, mr.TargetBranch, mrAge)
 			}
 		}
 	}

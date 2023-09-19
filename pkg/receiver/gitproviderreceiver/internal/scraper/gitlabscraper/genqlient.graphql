@@ -45,9 +45,18 @@ query getBranchNames($fullPath: ID!) {
   }
 }
 
-query getOpenedMergeRequests($fullPath: ID!) {
+query getOpenedMergeRequests(
+  $fullPath: ID!
+  # @genqlient(pointer: true)
+  $after: String
+) {
   project(fullPath: $fullPath) {
-    mergeRequests(state: opened) {
+    mergeRequests(state: opened, after: $after) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      # @genqlient(typename: "MergeRequestNode")
       nodes {
         iid
         title
@@ -55,6 +64,9 @@ query getOpenedMergeRequests($fullPath: ID!) {
         targetBranch
         createdAt
         updatedAt
+        project{
+          fullPath
+        }
       }
     }
   }
