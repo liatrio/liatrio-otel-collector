@@ -76,7 +76,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	ghs.logger.Sugar().Debug("creating a new github client")
 
-	// TODO: Below is the beginnning of the refactor to using genqlient
+	// TODO: Below is the beginning of the refactor to using genqlient
 	// This is a secondary instantiation of the GraphQL client for the purpose of
 	// using genqlient during the refactor.
 	genClient := graphql.NewClient("https://api.github.com/graphql", ghs.client)
