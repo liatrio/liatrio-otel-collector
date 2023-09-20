@@ -89,10 +89,11 @@ func (gls *gitlabScraper) getBranches(
 	}
 }
 
-func (gls *gitlabScraper) getOpenedMergeRequests(
+func (gls *gitlabScraper) getMergeRequests(
 	ctx context.Context,
 	graphClient graphql.Client,
 	projectPath string,
+	state MergeRequestState,
 	ch chan []MergeRequestNode,
 	waitGroup *sync.WaitGroup,
 ) {
@@ -103,7 +104,7 @@ func (gls *gitlabScraper) getOpenedMergeRequests(
 
 	for hasNextPage := true; hasNextPage; {
 		// Get the next page of data
-		mr, err := getOpenedMergeRequests(ctx, graphClient, projectPath, mrCursor)
+		mr, err := getMergeRequests(ctx, graphClient, projectPath, mrCursor, state)
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
 		}
@@ -111,7 +112,6 @@ func (gls *gitlabScraper) getOpenedMergeRequests(
 		if len(mr.Project.MergeRequests.Nodes) == 0 {
 			break
 		}
-
 		// Check if there is a next page
 		hasNextPage = mr.Project.MergeRequests.PageInfo.HasNextPage
 
@@ -199,10 +199,11 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	mergeCh := make(chan []MergeRequestNode)
 
 	for _, project := range projectList {
-		wg2.Add(1)
+		wg2.Add(2)
 
 		go func(project gitlabProject) {
-			gls.getOpenedMergeRequests(ctx, graphClient, project.Path, mergeCh, &wg2)
+			gls.getMergeRequests(ctx, graphClient, project.Path, MergeRequestStateOpened, mergeCh, &wg2)
+			gls.getMergeRequests(ctx, graphClient, project.Path, MergeRequestStateMerged, mergeCh, &wg2)
 		}(project)
 	}
 
@@ -220,10 +221,17 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	// Handling the merge request data
 	for mrs := range mergeCh {
 		if len(mrs) != 0 {
+			gls.logger.Sugar().Debugf("merge request count: %v", len(mrs))
 			for _, mr := range mrs {
-				mrAge := int64(time.Since(mr.CreatedAt).Hours())
-				gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, mr.Project.FullPath, mr.TargetBranch)
-				gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", mr.Project.FullPath, mr.TargetBranch, mrAge)
+				if mr.MergedAt.IsZero() {
+					mrAge := int64(time.Since(mr.CreatedAt).Hours())
+					gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, mr.Project.FullPath, mr.SourceBranch)
+					gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", mr.Project.FullPath, mr.SourceBranch, mrAge)
+				} else {
+					mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Hours())
+					gls.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergedAge, mr.Project.FullPath, mr.SourceBranch)
+					gls.logger.Sugar().Debugf("%s merge request for branch %v, merged age: %v", mr.Project.FullPath, mr.SourceBranch, mergedAge)
+				}
 			}
 		}
 	}
