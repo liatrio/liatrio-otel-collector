@@ -67,6 +67,10 @@ query getOpenedMergeRequests(
         project{
           fullPath
         }
+        diffStatsSummary{
+          additions
+          deletions
+        }
       }
     }
   }
