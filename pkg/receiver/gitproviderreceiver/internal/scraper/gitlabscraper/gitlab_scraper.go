@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
+	"github.com/xanzy/go-gitlab"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -59,7 +60,7 @@ type gitlabProject struct {
 
 type projectData struct {
 	ProjectPath string
-	BranchCount int64
+	Branches    []string
 }
 
 // Returns a struct with the project path and an array of branch names via the given channel.
@@ -83,10 +84,7 @@ func (gls *gitlabScraper) getBranches(
 		return
 	}
 
-	ch <- projectData{
-		ProjectPath: projectPath,
-		BranchCount: int64(len(branches.Project.Repository.BranchNames)),
-	}
+	ch <- projectData{ProjectPath: projectPath, Branches: branches.Project.Repository.BranchNames}
 }
 
 func (gls *gitlabScraper) getMergeRequests(
@@ -142,6 +140,10 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	gls.logger.Sugar().Debug("creating a new gitlab client")
 
 	graphClient := graphql.NewClient("https://gitlab.com/api/graphql", gls.client)
+	restClient, err := gitlab.NewClient("", gitlab.WithHTTPClient(gls.client))
+	if err != nil {
+		gls.logger.Sugar().Errorf("error: %v", err)
+	}
 
 	var projectList []gitlabProject
 	var projectsCursor *string
@@ -212,10 +214,26 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		close(mergeCh)
 	}()
 
-	// Handling the branch data
 	for proj := range branchCh {
-		gls.mb.RecordGitRepositoryBranchCountDataPoint(now, proj.BranchCount, proj.ProjectPath)
-		gls.logger.Sugar().Debugf("%s branch count: %v", proj.ProjectPath, proj.BranchCount)
+		gls.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(proj.Branches)), proj.ProjectPath)
+		gls.logger.Sugar().Debugf("%s branch count: %v", proj.ProjectPath, int64(len(proj.Branches)))
+
+		for _, branch := range proj.Branches {
+			if branch == "main" {
+				continue
+			}
+
+			diff, _, err := restClient.Repositories.Compare(proj.ProjectPath, &gitlab.CompareOptions{From: gitlab.String("main"), To: gitlab.String(branch)})
+			if err != nil {
+				gls.logger.Sugar().Errorf("error: %v", err)
+			}
+
+			if len(diff.Commits) != 0 {
+				branchAge := time.Since(*diff.Commits[0].CreatedAt).Hours()
+				gls.logger.Sugar().Debugf("%v age: %v hours, commit name: %s", branch, branchAge, diff.Commits[0].Title)
+				gls.mb.RecordGitRepositoryBranchTimeDataPoint(now, int64(branchAge), proj.ProjectPath, branch)
+			}
+		}
 	}
 
 	// Handling the merge request data
