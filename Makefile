@@ -9,12 +9,13 @@ OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 ARCH := $(shell uname -m)
 GORELEASER_VERSION = 1.20.0
 GOLANGCI_LINT_VERSION ?= v1.53.2
+RED='\033[0;41m'
 
 # Arguments for getting directories & executing commands against them
 # PKG_RECEIVER_DIRS = $(shell find ./pkg/receiver/* -type f -name "go.mod" -print -exec dirname {} \; | sort | uniq)
 PKG_RECEIVER_DIRS = $(shell find ./pkg/receiver/* -type f -name '*go.mod*' | sed -r 's|/[^/]+$$||' |sort | uniq )
-#CHECKS = prep lint-all metagen-all test-all genqlient-all tidy-all fmt-all
-CHECKS = genqlient-all
+# CHECKS = prep lint-all metagen-all test-all genqlient-all tidy-all fmt-all
+CHECKS = genqlient-all metagen-all tidy-all
 
 # set ARCH var based on output
 ifeq ($(ARCH),x86_64)
@@ -105,9 +106,15 @@ fmt-all:
 .PHONY: checks
 checks:
 	$(MAKE) $(CHECKS)
-	@if [ -n "$$(git diff --name-only -- $(GENQLIENT_DIRS))" ]; then \
-		echo "genqlient-all has generated changes. Please commit them."; \
+#@GENQLIENT_DIFF := $$(git diff --exit-code --name-only -- $(GENQLIENT_DIRS))
+# GENQLIENT_CHANGES=$(shell git diff --name-only -- $(GENQLIENT_DIRS))
+# echo "GENQLIENT_CHANGES: $(GENQLIENT_CHANGES)"
+	@if [ -n "$$(git diff --name-only -- $(GENQLIENT_DIRS))" ] || [ -n "$$(git diff --name-only -- $(METAGEN_DIRS))"] || [ -n "$$(git diff --name-only -- go.mod go.sum)"]; then \
+		echo "Some files have changed. Please commit them."; \
 		exit 1; \
 	else \
-		echo "genqlient-all completed successfully."; \
+		echo "completed successfully."; \
 	fi	
+
+#@GOTIDY_DIFF := $$(git diff --exit-code --name-only -- go.mod go.sum)
+
