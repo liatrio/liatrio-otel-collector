@@ -357,7 +357,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 				ghs.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contribCount), name)
 			}
-      
+
 			branches := ghs.getBranches(ctx, genClient, name, defaultBranch, now)
 			ghs.processBranches(ctx, genClient, name, defaultBranch, now, branches)
 			pullRequests := ghs.getPullRequests(ctx, genClient, name, defaultBranch, now)
