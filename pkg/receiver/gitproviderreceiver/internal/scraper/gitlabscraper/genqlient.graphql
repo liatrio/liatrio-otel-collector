@@ -45,13 +45,14 @@ query getBranchNames($fullPath: ID!) {
   }
 }
 
-query getOpenedMergeRequests(
+query getMergeRequests(
   $fullPath: ID!
   # @genqlient(pointer: true)
   $after: String
+  $state: MergeRequestState
 ) {
   project(fullPath: $fullPath) {
-    mergeRequests(state: opened, after: $after) {
+    mergeRequests(state: $state, after: $after) {
       pageInfo {
         hasNextPage
         endCursor
@@ -63,9 +64,13 @@ query getOpenedMergeRequests(
         sourceBranch
         targetBranch
         createdAt
-        updatedAt
+        mergedAt
         project{
           fullPath
+        }
+        diffStatsSummary{
+          additions
+          deletions
         }
       }
     }
