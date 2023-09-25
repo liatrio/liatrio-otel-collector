@@ -19,6 +19,8 @@ extensions:
 exporters:
     - gomod: go.opentelemetry.io/collector/exporter/loggingexporter v0.85.0
     - gomod: go.opentelemetry.io/collector/exporter/otlphttpexporter v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awsxrayexporter v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awscloudwatchlogsexporter v0.85.0
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/jaegerexporter v0.85.0
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/influxdbexporter v0.85.0
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v0.85.0
@@ -44,6 +46,3 @@ receivers:
 
 replaces:
     - github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver => ../pkg/receiver/gitproviderreceiver/
-    ## TODO: remove this line once v0.82.0 fixes: `ambiguous import: found package github.com/knadh/koanf/providers/confmap in multiple modules`
-    ## for now must use v0.80.0 for this package.
-    #- go.opentelemetry.io/collector/confmap => go.opentelemetry.io/collector/confmap v0.80.0
