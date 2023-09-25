@@ -26,7 +26,6 @@ type PullRequest struct {
 	ClosedDate  time.Time
 }
 
-// TODO: Keep this
 type Repo struct {
 	Name          string
 	Owner         string
@@ -34,7 +33,6 @@ type Repo struct {
 	PullRequests  []PullRequest
 }
 
-// TODO: Keep this
 type githubScraper struct {
 	client   *http.Client
 	cfg      *Config
@@ -65,7 +63,7 @@ func newGitHubScraper(
 
 // scrape and return metrics
 func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
-	//ghs.logger.Sugar().Debug("checking if client is initialized")
+	// ghs.logger.Sugar().Debug("checking if client is initialized")
 	if ghs.client == nil {
 		return pmetric.NewMetrics(), errClientNotInitErr
 	}
@@ -78,7 +76,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	ghs.logger.Sugar().Debug("creating a new github client")
 
-	// TODO: Below is the beginnning of the refactor to using genqlient
+	// TODO: Below is the beginning of the refactor to using genqlient
 	// This is a secondary instantiation of the GraphQL client for the purpose of
 	// using genqlient during the refactor.
 	genClient := graphql.NewClient("https://api.github.com/graphql", ghs.client)
@@ -296,7 +294,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					prMergedTime := pr.MergedAt
 					mergeAge := int64(prMergedTime.Sub(pr.CreatedAt).Hours())
 					ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, name, pr.HeadRefName)
-					//only exists if the pr is merged
+					// only exists if the pr is merged
 					if pr.MergeCommit.Deployments.TotalCount > 0 {
 						deploymentAgeUpperBound := pr.MergeCommit.Deployments.Nodes[0].CreatedAt
 						deploymentAge := int64(deploymentAgeUpperBound.Sub(pr.CreatedAt).Hours())
