@@ -13,6 +13,7 @@ GOLANGCI_LINT_VERSION ?= v1.53.2
 # Arguments for getting directories & executing commands against them
 # PKG_RECEIVER_DIRS = $(shell find ./pkg/receiver/* -type f -name "go.mod" -print -exec dirname {} \; | sort | uniq)
 PKG_RECEIVER_DIRS = $(shell find ./pkg/receiver/* -type f -name '*go.mod*' | sed -r 's|/[^/]+$$||' |sort | uniq )
+CHECKS = prep lint-all genqlient-all metagen-all test-all tidy-all fmt-all
 
 # set ARCH var based on output
 ifeq ($(ARCH),x86_64)
@@ -99,3 +100,13 @@ tidy-all:
 .PHONY: fmt-all
 fmt-all:
 	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) fmt
+
+.PHONY: checks
+checks:
+	$(MAKE) -j 4 $(CHECKS)
+	@if [ -n "$$(git diff --name-only -- $(GENQLIENT_DIRS))" ] || [ -n "$$(git diff --name-only -- $(METAGEN_DIRS))"] || [ -n "$$(git diff --name-only -- go.mod go.sum)"]; then \
+		echo "Some files have changed. Please commit them."; \
+		exit 1; \
+	else \
+		echo "completed successfully."; \
+	fi	
