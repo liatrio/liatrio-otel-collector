@@ -25,6 +25,8 @@ type MergeRequestNode struct {
 	MergedAt time.Time `json:"mergedAt"`
 	// Alias for target_project.
 	Project MergeRequestNodeProject `json:"project"`
+	// Summary of which files were changed in this merge request.
+	DiffStatsSummary MergeRequestNodeDiffStatsSummary `json:"diffStatsSummary"`
 }
 
 // GetIid returns MergeRequestNode.Iid, and is useful for accessing the field via an interface.
@@ -47,6 +49,28 @@ func (v *MergeRequestNode) GetMergedAt() time.Time { return v.MergedAt }
 
 // GetProject returns MergeRequestNode.Project, and is useful for accessing the field via an interface.
 func (v *MergeRequestNode) GetProject() MergeRequestNodeProject { return v.Project }
+
+// GetDiffStatsSummary returns MergeRequestNode.DiffStatsSummary, and is useful for accessing the field via an interface.
+func (v *MergeRequestNode) GetDiffStatsSummary() MergeRequestNodeDiffStatsSummary {
+	return v.DiffStatsSummary
+}
+
+// MergeRequestNodeDiffStatsSummary includes the requested fields of the GraphQL type DiffStatsSummary.
+// The GraphQL type's documentation follows.
+//
+// Aggregated summary of changes
+type MergeRequestNodeDiffStatsSummary struct {
+	// Number of lines added.
+	Additions int `json:"additions"`
+	// Number of lines deleted.
+	Deletions int `json:"deletions"`
+}
+
+// GetAdditions returns MergeRequestNodeDiffStatsSummary.Additions, and is useful for accessing the field via an interface.
+func (v *MergeRequestNodeDiffStatsSummary) GetAdditions() int { return v.Additions }
+
+// GetDeletions returns MergeRequestNodeDiffStatsSummary.Deletions, and is useful for accessing the field via an interface.
+func (v *MergeRequestNodeDiffStatsSummary) GetDeletions() int { return v.Deletions }
 
 // MergeRequestNodeProject includes the requested fields of the GraphQL type Project.
 type MergeRequestNodeProject struct {
@@ -468,6 +492,10 @@ query getMergeRequests ($fullPath: ID!, $after: String, $state: MergeRequestStat
 				mergedAt
 				project {
 					fullPath
+				}
+				diffStatsSummary {
+					additions
+					deletions
 				}
 			}
 		}

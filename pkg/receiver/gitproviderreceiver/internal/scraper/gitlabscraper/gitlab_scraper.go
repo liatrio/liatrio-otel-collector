@@ -238,18 +238,19 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	// Handling the merge request data
 	for mrs := range mergeCh {
-		if len(mrs) != 0 {
-			gls.logger.Sugar().Debugf("merge request count: %v", len(mrs))
-			for _, mr := range mrs {
-				if mr.MergedAt.IsZero() {
-					mrAge := int64(time.Since(mr.CreatedAt).Hours())
-					gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, mr.Project.FullPath, mr.SourceBranch)
-					gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", mr.Project.FullPath, mr.SourceBranch, mrAge)
-				} else {
-					mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Hours())
-					gls.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergedAge, mr.Project.FullPath, mr.SourceBranch)
-					gls.logger.Sugar().Debugf("%s merge request for branch %v, merged age: %v", mr.Project.FullPath, mr.SourceBranch, mergedAge)
-				}
+		for _, mr := range mrs {
+			gls.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(mr.DiffStatsSummary.Additions), mr.Project.FullPath, mr.SourceBranch)
+			gls.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(mr.DiffStatsSummary.Deletions), mr.Project.FullPath, mr.SourceBranch)
+
+			//IsZero() tells us if the time is or isnt  January 1, year 1, 00:00:00 UTC, which is what null graphql date values get returned as in Go
+			if mr.MergedAt.IsZero() {
+				mrAge := int64(time.Since(mr.CreatedAt).Hours())
+				gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, mr.Project.FullPath, mr.SourceBranch)
+				gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", mr.Project.FullPath, mr.SourceBranch, mrAge)
+			} else {
+				mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Hours())
+				gls.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergedAge, mr.Project.FullPath, mr.SourceBranch)
+				gls.logger.Sugar().Debugf("%s merge request for branch %v, merged age: %v", mr.Project.FullPath, mr.SourceBranch, mergedAge)
 			}
 		}
 	}
