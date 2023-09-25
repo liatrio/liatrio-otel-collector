@@ -108,13 +108,6 @@ query getBranchCount($name: String!, $owner: String!) {
     }
   }
 }
-query getBranchCountTESTING($name: String!, $owner: String!) {
-  repository(name: $name, owner: $owner) {
-    refs(refPrefix: "refs/heads/") {
-      totalCount
-    }
-  }
-}
 
 query getPullRequestCount($name: String!, $owner: String!, $states: [PullRequestState!]) {
   repository(name: $name, owner: $owner) {
