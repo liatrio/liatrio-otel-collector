@@ -20,6 +20,8 @@ type BranchNode struct {
 	Name string `json:"name"`
 	// Compares the current ref as a base ref to another head ref, if the comparison can be made.
 	Compare BranchNodeCompareComparison `json:"compare"`
+	// The repository the ref belongs to.
+	Repository BranchNodeRepository `json:"repository"`
 }
 
 // GetName returns BranchNode.Name, and is useful for accessing the field via an interface.
@@ -27,6 +29,9 @@ func (v *BranchNode) GetName() string { return v.Name }
 
 // GetCompare returns BranchNode.Compare, and is useful for accessing the field via an interface.
 func (v *BranchNode) GetCompare() BranchNodeCompareComparison { return v.Compare }
+
+// GetRepository returns BranchNode.Repository, and is useful for accessing the field via an interface.
+func (v *BranchNode) GetRepository() BranchNodeRepository { return v.Repository }
 
 // BranchNodeCompareComparison includes the requested fields of the GraphQL type Comparison.
 // The GraphQL type's documentation follows.
@@ -44,6 +49,37 @@ func (v *BranchNodeCompareComparison) GetAheadBy() int { return v.AheadBy }
 
 // GetBehindBy returns BranchNodeCompareComparison.BehindBy, and is useful for accessing the field via an interface.
 func (v *BranchNodeCompareComparison) GetBehindBy() int { return v.BehindBy }
+
+// BranchNodeRepository includes the requested fields of the GraphQL type Repository.
+// The GraphQL type's documentation follows.
+//
+// A repository contains the content for a project.
+type BranchNodeRepository struct {
+	// The name of the repository.
+	Name string `json:"name"`
+	// The Ref associated with the repository's default branch.
+	DefaultBranchRef BranchNodeRepositoryDefaultBranchRef `json:"defaultBranchRef"`
+}
+
+// GetName returns BranchNodeRepository.Name, and is useful for accessing the field via an interface.
+func (v *BranchNodeRepository) GetName() string { return v.Name }
+
+// GetDefaultBranchRef returns BranchNodeRepository.DefaultBranchRef, and is useful for accessing the field via an interface.
+func (v *BranchNodeRepository) GetDefaultBranchRef() BranchNodeRepositoryDefaultBranchRef {
+	return v.DefaultBranchRef
+}
+
+// BranchNodeRepositoryDefaultBranchRef includes the requested fields of the GraphQL type Ref.
+// The GraphQL type's documentation follows.
+//
+// Represents a Git reference.
+type BranchNodeRepositoryDefaultBranchRef struct {
+	// The ref name.
+	Name string `json:"name"`
+}
+
+// GetName returns BranchNodeRepositoryDefaultBranchRef.Name, and is useful for accessing the field via an interface.
+func (v *BranchNodeRepositoryDefaultBranchRef) GetName() string { return v.Name }
 
 // CommitNode includes the requested fields of the GraphQL type Ref.
 // The GraphQL type's documentation follows.
@@ -376,6 +412,8 @@ type PullRequestNode struct {
 	HeadRefName string `json:"headRefName"`
 	// A list of reviews associated with the pull request.
 	Reviews PullRequestNodeReviewsPullRequestReviewConnection `json:"reviews"`
+	// The repository associated with this node.
+	Repository PullRequestNodeRepository `json:"repository"`
 }
 
 // GetCreatedAt returns PullRequestNode.CreatedAt, and is useful for accessing the field via an interface.
@@ -397,6 +435,9 @@ func (v *PullRequestNode) GetHeadRefName() string { return v.HeadRefName }
 func (v *PullRequestNode) GetReviews() PullRequestNodeReviewsPullRequestReviewConnection {
 	return v.Reviews
 }
+
+// GetRepository returns PullRequestNode.Repository, and is useful for accessing the field via an interface.
+func (v *PullRequestNode) GetRepository() PullRequestNodeRepository { return v.Repository }
 
 // PullRequestNodeMergeCommit includes the requested fields of the GraphQL type Commit.
 // The GraphQL type's documentation follows.
@@ -446,6 +487,18 @@ type PullRequestNodeMergeCommitDeploymentsDeploymentConnectionNodesDeployment st
 func (v *PullRequestNodeMergeCommitDeploymentsDeploymentConnectionNodesDeployment) GetCreatedAt() time.Time {
 	return v.CreatedAt
 }
+
+// PullRequestNodeRepository includes the requested fields of the GraphQL type Repository.
+// The GraphQL type's documentation follows.
+//
+// A repository contains the content for a project.
+type PullRequestNodeRepository struct {
+	// The name of the repository.
+	Name string `json:"name"`
+}
+
+// GetName returns PullRequestNodeRepository.Name, and is useful for accessing the field via an interface.
+func (v *PullRequestNodeRepository) GetName() string { return v.Name }
 
 // PullRequestNodeReviewsPullRequestReviewConnection includes the requested fields of the GraphQL type PullRequestReviewConnection.
 // The GraphQL type's documentation follows.
@@ -1172,8 +1225,8 @@ func (v *getRepoDataBySearchResponse) GetSearch() getRepoDataBySearchSearchSearc
 type getRepoDataBySearchSearchSearchResultItemConnection struct {
 	// The total number of repositories that matched the search query. Regardless of the total number of matches, a maximum of 1,000 results will be available across all types.
 	RepositoryCount int `json:"repositoryCount"`
-	// A list of edges.
-	Edges []getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge `json:"edges"`
+	// A list of nodes.
+	Nodes []SearchNode `json:"-"`
 	// Information to aid in pagination.
 	PageInfo getRepoDataBySearchSearchSearchResultItemConnectionPageInfo `json:"pageInfo"`
 }
@@ -1183,42 +1236,26 @@ func (v *getRepoDataBySearchSearchSearchResultItemConnection) GetRepositoryCount
 	return v.RepositoryCount
 }
 
-// GetEdges returns getRepoDataBySearchSearchSearchResultItemConnection.Edges, and is useful for accessing the field via an interface.
-func (v *getRepoDataBySearchSearchSearchResultItemConnection) GetEdges() []getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge {
-	return v.Edges
-}
+// GetNodes returns getRepoDataBySearchSearchSearchResultItemConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *getRepoDataBySearchSearchSearchResultItemConnection) GetNodes() []SearchNode { return v.Nodes }
 
 // GetPageInfo returns getRepoDataBySearchSearchSearchResultItemConnection.PageInfo, and is useful for accessing the field via an interface.
 func (v *getRepoDataBySearchSearchSearchResultItemConnection) GetPageInfo() getRepoDataBySearchSearchSearchResultItemConnectionPageInfo {
 	return v.PageInfo
 }
 
-// getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge includes the requested fields of the GraphQL type SearchResultItemEdge.
-// The GraphQL type's documentation follows.
-//
-// An edge in a connection.
-type getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge struct {
-	// The item at the end of the edge.
-	Node SearchNode `json:"-"`
-}
-
-// GetNode returns getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge.Node, and is useful for accessing the field via an interface.
-func (v *getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge) GetNode() SearchNode {
-	return v.Node
-}
-
-func (v *getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge) UnmarshalJSON(b []byte) error {
+func (v *getRepoDataBySearchSearchSearchResultItemConnection) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
 		return nil
 	}
 
 	var firstPass struct {
-		*getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge
-		Node json.RawMessage `json:"node"`
+		*getRepoDataBySearchSearchSearchResultItemConnection
+		Nodes []json.RawMessage `json:"nodes"`
 		graphql.NoUnmarshalJSON
 	}
-	firstPass.getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge = v
+	firstPass.getRepoDataBySearchSearchSearchResultItemConnection = v
 
 	err := json.Unmarshal(b, &firstPass)
 	if err != nil {
@@ -1226,25 +1263,35 @@ func (v *getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultIte
 	}
 
 	{
-		dst := &v.Node
-		src := firstPass.Node
-		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshalSearchNode(
-				src, dst)
-			if err != nil {
-				return fmt.Errorf(
-					"unable to unmarshal getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge.Node: %w", err)
+		dst := &v.Nodes
+		src := firstPass.Nodes
+		*dst = make(
+			[]SearchNode,
+			len(src))
+		for i, src := range src {
+			dst := &(*dst)[i]
+			if len(src) != 0 && string(src) != "null" {
+				err = __unmarshalSearchNode(
+					src, dst)
+				if err != nil {
+					return fmt.Errorf(
+						"unable to unmarshal getRepoDataBySearchSearchSearchResultItemConnection.Nodes: %w", err)
+				}
 			}
 		}
 	}
 	return nil
 }
 
-type __premarshalgetRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge struct {
-	Node json.RawMessage `json:"node"`
+type __premarshalgetRepoDataBySearchSearchSearchResultItemConnection struct {
+	RepositoryCount int `json:"repositoryCount"`
+
+	Nodes []json.RawMessage `json:"nodes"`
+
+	PageInfo getRepoDataBySearchSearchSearchResultItemConnectionPageInfo `json:"pageInfo"`
 }
 
-func (v *getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge) MarshalJSON() ([]byte, error) {
+func (v *getRepoDataBySearchSearchSearchResultItemConnection) MarshalJSON() ([]byte, error) {
 	premarshaled, err := v.__premarshalJSON()
 	if err != nil {
 		return nil, err
@@ -1252,21 +1299,29 @@ func (v *getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultIte
 	return json.Marshal(premarshaled)
 }
 
-func (v *getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge) __premarshalJSON() (*__premarshalgetRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge, error) {
-	var retval __premarshalgetRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge
+func (v *getRepoDataBySearchSearchSearchResultItemConnection) __premarshalJSON() (*__premarshalgetRepoDataBySearchSearchSearchResultItemConnection, error) {
+	var retval __premarshalgetRepoDataBySearchSearchSearchResultItemConnection
 
+	retval.RepositoryCount = v.RepositoryCount
 	{
 
-		dst := &retval.Node
-		src := v.Node
-		var err error
-		*dst, err = __marshalSearchNode(
-			&src)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"unable to marshal getRepoDataBySearchSearchSearchResultItemConnectionEdgesSearchResultItemEdge.Node: %w", err)
+		dst := &retval.Nodes
+		src := v.Nodes
+		*dst = make(
+			[]json.RawMessage,
+			len(src))
+		for i, src := range src {
+			dst := &(*dst)[i]
+			var err error
+			*dst, err = __marshalSearchNode(
+				&src)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"unable to marshal getRepoDataBySearchSearchSearchResultItemConnection.Nodes: %w", err)
+			}
 		}
 	}
+	retval.PageInfo = v.PageInfo
 	return &retval, nil
 }
 
@@ -1379,6 +1434,12 @@ query getBranchData ($name: String!, $owner: String!, $branchFirst: Int!, $targe
 				compare(headRef: $targetBranch) {
 					aheadBy
 					behindBy
+				}
+				repository {
+					name
+					defaultBranchRef {
+						name
+					}
 				}
 			}
 			pageInfo {
@@ -1560,6 +1621,9 @@ query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCu
 						}
 					}
 				}
+				repository {
+					name
+				}
 			}
 			pageInfo {
 				hasNextPage
@@ -1607,15 +1671,13 @@ const getRepoDataBySearch_Operation = `
 query getRepoDataBySearch ($searchQuery: String!, $repoCursor: String) {
 	search(query: $searchQuery, type: REPOSITORY, first: 100, after: $repoCursor) {
 		repositoryCount
-		edges {
-			node {
-				__typename
-				... on Repository {
-					id
+		nodes {
+			__typename
+			... on Repository {
+				id
+				name
+				defaultBranchRef {
 					name
-					defaultBranchRef {
-						name
-					}
 				}
 			}
 		}

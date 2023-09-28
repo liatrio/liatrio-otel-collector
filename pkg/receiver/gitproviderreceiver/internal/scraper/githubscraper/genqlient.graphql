@@ -10,15 +10,13 @@ query getRepoDataBySearch(
     after: $repoCursor
   ) {
     repositoryCount
-    edges {
-      # @genqlient(typename: "SearchNode")
-      node {
-        ... on Repository {
-          id
+    # @genqlient(typename: "SearchNode")
+    nodes {
+      ... on Repository {
+        id
+        name
+        defaultBranchRef {
           name
-          defaultBranchRef {
-            name
-          }
         }
       }
     }
@@ -92,6 +90,12 @@ query getBranchData(
           aheadBy
           behindBy
         }
+        repository{
+          name
+          defaultBranchRef {
+            name
+          }
+        }
       }
       pageInfo {
         endCursor
@@ -153,6 +157,9 @@ query getPullRequestData(
               createdAt
             }
           }
+        }
+        repository{
+          name
         }
       }
       pageInfo {
