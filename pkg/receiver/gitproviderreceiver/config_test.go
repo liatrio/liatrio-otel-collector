@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
 
@@ -51,6 +52,26 @@ func TestLoadConfig(t *testing.T) {
 	}
 
 	assert.Equal(t, expectedConfig, r1)
+}
+
+func TestLoadConfig_CompnentParcerNil(t *testing.T) {
+	factories, err := otelcoltest.NopFactories()
+	require.NoError(t, err)
+
+	factory := NewFactory()
+	factories.Receivers[metadata.Type] = factory
+
+	// p := confmap.New()
+	p := (*confmap.Conf)(nil)
+	var cfg = (*Config)(nil)
+	err = cfg.Unmarshal(p)
+
+	// cfg, err := otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config-nilconfig.yaml"), factories)
+
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	// assert.Equal(t, len(cfg.Receivers), 2)
 }
 
 func TestLoadInvalidConfig_NoScrapers(t *testing.T) {
