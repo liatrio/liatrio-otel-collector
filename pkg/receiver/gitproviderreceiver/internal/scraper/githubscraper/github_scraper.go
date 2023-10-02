@@ -68,9 +68,9 @@ func (ghs *githubScraper) getPullRequests(
 	repos []SearchNode,
 	now pcommon.Timestamp,
 	pullRequestCh chan []PullRequestNode,
-	//waitGroup *sync.WaitGroup,
+	waitGroup *sync.WaitGroup,
 ) {
-	//defer waitGroup.Done()
+	defer waitGroup.Done()
 
 	for _, repo := range repos {
 		var repoName string
@@ -124,9 +124,9 @@ func (ghs *githubScraper) processPullRequests(
 		for _, pr := range prs {
 			repoName := pr.Repository.Name
 			if pr.Merged {
-				//prMergedTime := pr.MergedAt
-				//mergeAge := int64(prMergedTime.Sub(pr.CreatedAt).Hours())
-				//ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, repoName, pr.HeadRefName)
+				prMergedTime := pr.MergedAt
+				mergeAge := int64(prMergedTime.Sub(pr.CreatedAt).Hours())
+				ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, repoName, pr.HeadRefName)
 				//only exists if the pr is merged
 				if pr.MergeCommit.Deployments.TotalCount > 0 {
 					deploymentAgeUpperBound := pr.MergeCommit.Deployments.Nodes[0].CreatedAt
@@ -144,7 +144,7 @@ func (ghs *githubScraper) processPullRequests(
 			}
 		}
 	}
-	close(pullRequests)
+	//close(pullRequests)
 }
 
 func (ghs *githubScraper) processCommits(
@@ -198,9 +198,9 @@ func (ghs *githubScraper) getBranches(
 	repos []SearchNode,
 	now pcommon.Timestamp,
 	branchCh chan []BranchNode,
-	//waitGroup *sync.WaitGroup,
+	waitGroup *sync.WaitGroup,
 ) {
-	//defer waitGroup.Done()
+	defer waitGroup.Done()
 
 	for _, repo := range repos {
 		var repoName string
@@ -243,9 +243,7 @@ func (ghs *githubScraper) processBranches(
 	client graphql.Client,
 	now pcommon.Timestamp,
 	branchCh chan []BranchNode,
-	//waitGroup *sync.WaitGroup,
 ) {
-	//defer waitGroup.Done()
 
 	for branches := range branchCh {
 		for _, branch := range branches {
@@ -273,7 +271,7 @@ func (ghs *githubScraper) processBranches(
 			ghs.processCommits(ctx, client, repoName, now, cp, branch)
 		}
 	}
-	close(branchCh)
+	//close(branchCh)
 }
 
 func (ghs *githubScraper) getContributorCount(
@@ -281,9 +279,9 @@ func (ghs *githubScraper) getContributorCount(
 	client graphql.Client,
 	repos []SearchNode,
 	now pcommon.Timestamp,
-	//waitGroup *sync.WaitGroup,
+	waitGroup *sync.WaitGroup,
 ) {
-	//defer waitGroup.Done()
+	defer waitGroup.Done()
 
 	gc := github.NewClient(ghs.client)
 	for _, repo := range repos {
@@ -404,37 +402,39 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	if _, ok := data.(*getRepoDataBySearchResponse); ok {
 
 		var wg1 sync.WaitGroup
-		//var wg2 sync.WaitGroup
+		var workers_per_op int = 3
 
-		var workers int = 1
-		chunkSize := (len(searchRepos) + workers - 1) / workers
+		chunkSize := (len(searchRepos) + workers_per_op - 1) / workers_per_op
 		var work [][]SearchNode = chunkSlice(searchRepos, chunkSize)
-		branchCh := make(chan []BranchNode, workers)
-		pullRequestCh := make(chan []PullRequestNode, workers)
+
+		branchCh := make(chan []BranchNode, workers_per_op)
+		pullRequestCh := make(chan []PullRequestNode, workers_per_op)
 		ghs.logger.Sugar().Debugf("There are %v repos", len(searchRepos))
-		for i := 0; i < workers; i++ {
+		for i := 0; i < workers_per_op; i++ {
 			ghs.logger.Sugar().Debugf("worker %v has work of size %v", i, len(work[i]))
 		}
+
 		// TODO: Must account for when there are more than 100,000 branch names in a project.
-		for i := 0; i < workers; i++ {
-			wg1.Add(1)
+		for i := 0; i < workers_per_op; i++ {
 			i := i
-			go func() {
-				defer wg1.Done()
-				ghs.getBranches(ctx, genClient, work[i], now, branchCh)
-				ghs.getPullRequests(ctx, genClient, work[i], now, pullRequestCh)
-				if ghs.cfg.MetricsBuilderConfig.Metrics.GitRepositoryContributorCount.Enabled {
-					ghs.getContributorCount(ctx, genClient, work[i], now)
-				}
-			}()
+
+			wg1.Add(2)
+			go ghs.getBranches(ctx, genClient, work[i], now, branchCh, &wg1)
+			go ghs.getPullRequests(ctx, genClient, work[i], now, pullRequestCh, &wg1)
+			if ghs.cfg.MetricsBuilderConfig.Metrics.GitRepositoryContributorCount.Enabled {
+				wg1.Add(1)
+				go ghs.getContributorCount(ctx, genClient, work[i], now, &wg1)
+			}
 		}
 
-		//wg1.Add(1)
-		//wg2.Add(1)
-		go ghs.processBranches(ctx, genClient, now, branchCh)
-		go ghs.processPullRequests(ctx, genClient, now, pullRequestCh)
+		for i := 0; i < workers_per_op; i++ {
+			go ghs.processPullRequests(ctx, genClient, now, pullRequestCh)
+			go ghs.processBranches(ctx, genClient, now, branchCh)
+		}
 
 		wg1.Wait()
+		close(branchCh)
+		close(pullRequestCh)
 	}
 
 	return ghs.mb.Emit(), nil
