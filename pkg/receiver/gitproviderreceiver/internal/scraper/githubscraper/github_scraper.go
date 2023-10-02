@@ -386,20 +386,20 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	if _, ok := data.(*getRepoDataBySearchResponse); ok {
 
 		var wg1 sync.WaitGroup
-		var workers_per_op int = 3
+		var opBuf int = 3
 
-		chunkSize := (len(searchRepos) + workers_per_op - 1) / workers_per_op
+		chunkSize := (len(searchRepos) + opBuf - 1) / opBuf
 		var work [][]SearchNode = chunkSlice(searchRepos, chunkSize)
 
-		branchCh := make(chan []BranchNode, workers_per_op)
-		pullRequestCh := make(chan []PullRequestNode, workers_per_op)
+		branchCh := make(chan []BranchNode, opBuf)
+		pullRequestCh := make(chan []PullRequestNode, opBuf)
 		ghs.logger.Sugar().Debugf("There are %v repos", len(searchRepos))
-		for i := 0; i < workers_per_op; i++ {
+		for i := 0; i < opBuf; i++ {
 			ghs.logger.Sugar().Debugf("worker %v has work of size %v", i, len(work[i]))
 		}
 
 		// TODO: Must account for when there are more than 100,000 branch names in a project.
-		for i := 0; i < workers_per_op; i++ {
+		for i := 0; i < opBuf; i++ {
 			i := i
 
 			wg1.Add(2)
@@ -411,7 +411,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 		}
 
-		for i := 0; i < workers_per_op; i++ {
+		for i := 0; i < opBuf; i++ {
 			go ghs.processPullRequests(ctx, genClient, now, pullRequestCh)
 			go ghs.processBranches(ctx, genClient, now, branchCh)
 		}
