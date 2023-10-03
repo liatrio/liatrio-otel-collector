@@ -388,6 +388,9 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 		chunkSize := (len(searchRepos) + opBuf - 1) / opBuf
 		var work [][]SearchNode = chunkSlice(searchRepos, chunkSize)
+		if opBuf > len(work) {
+			opBuf = len(work)
+		}
 
 		branchCh := make(chan []BranchNode, opBuf)
 		pullRequestCh := make(chan []PullRequestNode, opBuf)
