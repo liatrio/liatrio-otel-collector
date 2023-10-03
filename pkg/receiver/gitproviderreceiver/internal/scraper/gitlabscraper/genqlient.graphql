@@ -41,6 +41,7 @@ query getBranchNames($fullPath: ID!) {
       # repo with just over 100,000 branches which is an extreme edge case which we believe is not
       # worth supporting.
       branchNames(searchPattern: "*", offset: 0, limit: 100000)
+      rootRef
     }
   }
 }
