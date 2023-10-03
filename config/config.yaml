@@ -17,8 +17,8 @@ extensions:
     #         username: ${env:GRAF_USER}
     #         password: ${env:GRAF_PAT}
     ## Uncomment below if you want to enable authentication to GitLab
-    bearertokenauth/gitlab:
-        token: "glpat-zoPx4Lv6hWMy94WjoEHz"
+    # bearertokenauth/gitlab:
+    #     token: ${env:GITLAB_PAT}
 
 receivers:
     otlp:
@@ -40,19 +40,19 @@ receivers:
         initial_delay: 1s
         collection_interval: 60s
         scrapers:
-            # github:
-            #     github_org: ${env:GITHUB_ORG}
-            #     search_query: org:${env.GITHUB_ORG}
+            github:
+                github_org: ${env:GITHUB_ORG}
+                search_query: org:${env.GITHUB_ORG}
             ## Uncomment if you want to view private authentication required
             ## GitHub data or and decrease rate limiting.
             #auth:
             #    authenticator: basicauth/github
             gitlab:
-                gitlab_org: "liatrioinc"
+                gitlab_org: ${env:GL_ORG}
             ## Uncomment if you want to view private authentication required
             ## GitHub data or and decrease rate limiting.
-                auth:
-                    authenticator: bearertokenauth/gitlab
+            #auth:
+            #authenticator: bearertokenauth/gitlab
 
 processors:
     batch:
@@ -75,7 +75,7 @@ exporters:
 service:
     ## Add basicauth/* if you want to use basic auth extensions
     ## Add bearertokenauth/* if you want to use bearer token auth extensions
-    extensions: [health_check, pprof, zpages, bearertokenauth/gitlab]
+    extensions: [health_check, pprof, zpages]
     pipelines:
         metrics:
             receivers: [otlp, prometheus, gitprovider]
