@@ -257,10 +257,15 @@ func (v *getBranchNamesProject) GetRepository() getBranchNamesProjectRepository 
 type getBranchNamesProjectRepository struct {
 	// Names of branches available in this repository that match the search pattern.
 	BranchNames []string `json:"branchNames"`
+	// Default branch of the repository.
+	RootRef string `json:"rootRef"`
 }
 
 // GetBranchNames returns getBranchNamesProjectRepository.BranchNames, and is useful for accessing the field via an interface.
 func (v *getBranchNamesProjectRepository) GetBranchNames() []string { return v.BranchNames }
+
+// GetRootRef returns getBranchNamesProjectRepository.RootRef, and is useful for accessing the field via an interface.
+func (v *getBranchNamesProjectRepository) GetRootRef() string { return v.RootRef }
 
 // getBranchNamesResponse is returned by getBranchNames on success.
 type getBranchNamesResponse struct {
@@ -443,6 +448,7 @@ query getBranchNames ($fullPath: ID!) {
 	project(fullPath: $fullPath) {
 		repository {
 			branchNames(searchPattern: "*", offset: 0, limit: 100000)
+			rootRef
 		}
 	}
 }
