@@ -144,7 +144,6 @@ func (ghs *githubScraper) processPullRequests(
 			}
 		}
 	}
-	//close(pullRequests)
 }
 
 func (ghs *githubScraper) processCommits(
@@ -271,7 +270,6 @@ func (ghs *githubScraper) processBranches(
 			ghs.processCommits(ctx, client, repoName, now, cp, branch)
 		}
 	}
-	//close(branchCh)
 }
 
 func (ghs *githubScraper) getContributorCount(
