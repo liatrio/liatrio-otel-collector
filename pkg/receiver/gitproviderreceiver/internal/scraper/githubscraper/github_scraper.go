@@ -89,7 +89,7 @@ func (ghs *githubScraper) getPullRequests(
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting open pull request count", zap.Error(err))
 		}
-		ghs.logger.Sugar().Debugf("open pull request count: %v for repo ", repoName)
+		ghs.logger.Sugar().Debugf("open pull request count: %v for repo %v", prOpenCount, repoName)
 		ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(prOpenCount.Repository.PullRequests.TotalCount), repoName)
 
 		prMergedCount, err := getPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateMerged})
