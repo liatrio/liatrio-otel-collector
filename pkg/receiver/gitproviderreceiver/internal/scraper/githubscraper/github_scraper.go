@@ -101,17 +101,21 @@ func (ghs *githubScraper) getPullRequests(
 		prPages := getNumPages(float64(100), float64(totalPrCount))
 		ghs.logger.Sugar().Debugf("pull request pages: %v for repo %v", prPages, repoName)
 
-		for i := 0; i < prPages; i++ {
-			pr, err := getPullRequestData(ctx, client, repoName, ghs.cfg.GitHubOrg, 100, prCursor)
-			if err != nil {
-				ghs.logger.Sugar().Errorf("error getting pull request data", zap.Error(err))
+		if prPages != 0 {
+			for i := 0; i < prPages; i++ {
+				pr, err := getPullRequestData(ctx, client, repoName, ghs.cfg.GitHubOrg, 100, prCursor)
+				if err != nil {
+					ghs.logger.Sugar().Errorf("error getting pull request data", zap.Error(err))
+				}
+
+				pullRequests = append(pullRequests, pr.Repository.PullRequests.Nodes...)
+
+				prCursor = &pr.Repository.PullRequests.PageInfo.EndCursor
 			}
+			pullRequestCh <- pullRequests
 
-			pullRequests = append(pullRequests, pr.Repository.PullRequests.Nodes...)
-
-			prCursor = &pr.Repository.PullRequests.PageInfo.EndCursor
 		}
-		pullRequestCh <- pullRequests
+
 	}
 }
 
