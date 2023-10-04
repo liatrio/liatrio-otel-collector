@@ -7,6 +7,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-github/v53 v53.2.0
 	github.com/stretchr/testify v1.8.4
+	github.com/xanzy/go-gitlab v0.91.1
 	go.opentelemetry.io/collector v0.85.0
 	go.opentelemetry.io/collector/component v0.85.0
 	go.opentelemetry.io/collector/config/confighttp v0.85.0
@@ -16,11 +17,6 @@ require (
 	go.opentelemetry.io/collector/receiver v0.85.0
 	go.opentelemetry.io/collector/semconv v0.85.0
 	go.uber.org/zap v1.26.0
-)
-
-require (
-	github.com/golang/mock v1.6.0 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
 )
 
 require (
@@ -72,10 +68,10 @@ require (
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.10 // indirect
-	github.com/xanzy/go-gitlab v0.91.1
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/collector/config/configauth v0.85.0 // indirect
@@ -124,6 +120,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-//replace go.opentelemetry.io/collector/confmap => go.opentelemetry.io/collector/confmap v0.81.0
-//replace go.opentelemetry.io/collector/component => go.opentelemetry.io/collector/component v0.81.0
