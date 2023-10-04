@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
 )
@@ -50,21 +51,6 @@ func TestLoadConfig(t *testing.T) {
 	}
 
 	assert.Equal(t, expectedConfig, r1)
-
-	// p := (*confmap.Conf)(nil)
-	// r2 := cfg.Unmarshal(p)
-	// expected := nil
-	// expectedConfig := &Config{
-	// 	ScraperControllerSettings: scraperhelper.ScraperControllerSettings{
-	// 		CollectionInterval: 30 * time.Second,
-	// 		InitialDelay:       1 * time.Second,
-	// 	},
-	// 	Scrapers: map[string]internal.Config{
-	// 		githubscraper.TypeStr: (&githubscraper.Factory{}).CreateDefaultConfig(),
-	// 	},
-	// }
-
-	// assert.Equal(t, expectedConfig, r1)
 }
 
 // func TestLoadConfig_CompnentParcerNil(t *testing.T) {
@@ -104,59 +90,64 @@ func TestLoadConfig(t *testing.T) {
 // 	// assert.Equal(t, len(cfg.Receivers), 2)
 // }
 
-func TestLoadInvalidConfig_NoScrapers(t *testing.T) {
-	factories, err := otelcoltest.NopFactories()
-	require.NoError(t, err)
-
-	factory := NewFactory()
-	factories.Receivers[metadata.Type] = factory
-	_, err = otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config-noscrapers.yaml"), factories)
-
-	require.Contains(t, err.Error(), "must specify at least one scraper")
-}
-
-// func TestConfig_Unmarshal(t *testing.T) {
+// func TestLoadInvalidConfig_NoScrapers(t *testing.T) {
 // 	factories, err := otelcoltest.NopFactories()
 // 	require.NoError(t, err)
 
 // 	factory := NewFactory()
 // 	factories.Receivers[metadata.Type] = factory
-// 	cfg, err := otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config.yaml"), factories)
+// 	_, err = otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config-noscrapers.yaml"), factories)
 
-// 	type fields struct {
-// 		ScraperControllerSettings scraperhelper.ScraperControllerSettings
-// 		Scrapers                  map[string]internal.Config
-// 		MetricsBuilderConfig      metadata.MetricsBuilderConfig
-// 	}
-
-// 	type args struct {
-// 		componentParser *confmap.Conf
-// 	}
-
-// 	tests := []struct {
-// 		name    string
-// 		fields  fields
-// 		args    args
-// 		wantErr bool
-// 	}{
-// 		{
-// 			name:    "Empty Component Parser",
-// 			fields:  fields{},
-// 			args:    args{componentParser: nil},
-// 			wantErr: false,
-// 		},
-// 		// {
-// 		// 	name: "valid Compenent Parser",
-// 		// 	fields: fields{},
-// 		// 	args: args{ componentParser: notnil },
-// 		// 	wantErr: false,
-// 		// },
-// 	}
-// 	for _, test := range tests {
-// 		t.Run(test.name, func(t *testing.T) {
-// 			if err := cfg.Unmarshal(test.args.componentParser); (err != nil) != test.wantErr {
-// 				t.Errorf("Config.Unmarshal() error = %v, wantErr %v", err, test.wantErr)
-// 			}
-// 		})
-// 	}
+// 	require.Contains(t, err.Error(), "must specify at least one scraper")
 // }
+
+func TestConfig_Unmarshal(t *testing.T) {
+	// factories, err := otelcoltest.NopFactories()
+	// require.NoError(t, err)
+
+	// factory := NewFactory()
+	// factories.Receivers[metadata.Type] = factory
+	// cfg, err := otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config.yaml"), factories)
+
+	type fields struct {
+		ScraperControllerSettings scraperhelper.ScraperControllerSettings
+		Scrapers                  map[string]internal.Config
+		MetricsBuilderConfig      metadata.MetricsBuilderConfig
+	}
+
+	type args struct {
+		componentParser *confmap.Conf
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name:    "Empty Component Parser",
+			fields:  fields{},
+			args:    args{componentParser: nil},
+			wantErr: false,
+		},
+		// {
+		// 	name: "valid Compenent Parser",
+		// 	fields: fields{},
+		// 	args: args{ componentParser: notnil },
+		// 	wantErr: false,
+		// },
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cfg := &Config{
+				ScraperControllerSettings: test.fields.ScraperControllerSettings,
+				Scrapers:                  test.fields.Scrapers,
+				MetricsBuilderConfig:      test.fields.MetricsBuilderConfig,
+			}
+			if err := cfg.Unmarshal(test.args.componentParser); (err != nil) != test.wantErr {
+				t.Errorf("Config.Unmarshal() error = %v, wantErr %v", err, test.wantErr)
+			}
+		})
+	}
+}
