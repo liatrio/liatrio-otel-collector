@@ -18,7 +18,6 @@ SRC_ROOT := $(shell git rev-parse --show-toplevel)
 
 .PHONY: lint
 lint: 
-	goimports -w ./
 	golangci-lint run
 	
 .PHONY: tidy
@@ -36,6 +35,7 @@ test:
 
 .PHONY: fmt
 fmt:
+	goimports -w ./
 	go fmt ./...
 
 .PHONY: genqlient
