@@ -1,0 +1,21 @@
+---
+foobar:
+    morefoobar:
+
+receivers:
+    gitprovider:
+        nomeaning:
+
+processors:
+    nop:
+
+exporters:
+    nop:
+
+service:
+    pipelines:
+        metrics:
+            receivers: [gitprovider, gitprovider/customname]
+            processors: [nop]
+            exporters: [nop]
+
