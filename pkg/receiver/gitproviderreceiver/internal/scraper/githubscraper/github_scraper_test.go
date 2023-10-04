@@ -5,14 +5,15 @@ package githubscraper
 
 import (
 	"context"
+	"sync"
+	"testing"
+	"time"
+
 	"github.com/Khan/genqlient/graphql"
 	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/scraper/githubscraper/mocks"
 	"github.com/stretchr/testify/mock"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/receiver/receivertest"
-	"sync"
-	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/receiver"
