@@ -11,7 +11,6 @@ type MySearchNode struct {
 	Id       string `json:"id"`
 	// The name of the repository.
 	Name string `json:"name"`
-
 }
 
 // GetTypename provides a mock function with given fields:
@@ -41,7 +40,7 @@ func NewMySearchNode(t interface {
 	mock := &MySearchNode{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { })
+	t.Cleanup(func() {})
 
 	return mock
 }

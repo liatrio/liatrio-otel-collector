@@ -57,7 +57,7 @@ func TestGetPullRequests(t *testing.T) {
 
 			data.Repository.PullRequests.TotalCount = 10
 
-			resp = &graphql.Response{Data: &data}
+			resp.Data = data
 
 			return err
 		})
