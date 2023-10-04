@@ -249,6 +249,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	for i := 0; i < opBuf; i++ {
 		gls.logger.Sugar().Debugf("worker %v has work of size %v", i, len(work[i]))
 	}
+
 	// TODO: Must account for when there are more than 100,000 branch names in a project.
 	for i := 0; i < opBuf; i++ {
 		wg1.Add(3)
