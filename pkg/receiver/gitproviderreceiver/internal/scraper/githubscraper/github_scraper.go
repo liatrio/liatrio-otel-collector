@@ -62,6 +62,8 @@ func newGitHubScraper(
 	}
 }
 
+var zgetPullRequestCount = getPullRequestCount
+
 func (ghs *githubScraper) getPullRequests(
 	ctx context.Context,
 	client graphql.Client,
@@ -83,11 +85,11 @@ func (ghs *githubScraper) getPullRequests(
 		var prCursor *string
 		var pullRequests []PullRequestNode
 
-		prOpenCount, err := getPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateOpen})
+		prOpenCount, err := zgetPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateOpen})
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting open pull request count", zap.Error(err))
 		}
-		ghs.logger.Sugar().Debugf("open pull request count: %v for repo %v", prOpenCount, repoName)
+		ghs.logger.Sugar().Debugf("open pull request count: %v for repo ", repoName)
 		ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(prOpenCount.Repository.PullRequests.TotalCount), repoName)
 
 		prMergedCount, err := getPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateMerged})

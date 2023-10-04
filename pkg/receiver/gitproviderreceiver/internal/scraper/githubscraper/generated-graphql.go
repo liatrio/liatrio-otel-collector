@@ -560,19 +560,19 @@ const (
 //
 // The results of a search.
 type SearchNode interface {
-	implementsGraphQLInterfaceSearchNode()
+	ImplementsGraphQLInterfaceSearchNode()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() string
 }
 
-func (v *SearchNodeApp) implementsGraphQLInterfaceSearchNode()                {}
-func (v *SearchNodeDiscussion) implementsGraphQLInterfaceSearchNode()         {}
-func (v *SearchNodeIssue) implementsGraphQLInterfaceSearchNode()              {}
-func (v *SearchNodeMarketplaceListing) implementsGraphQLInterfaceSearchNode() {}
-func (v *SearchNodeOrganization) implementsGraphQLInterfaceSearchNode()       {}
-func (v *SearchNodePullRequest) implementsGraphQLInterfaceSearchNode()        {}
-func (v *SearchNodeRepository) implementsGraphQLInterfaceSearchNode()         {}
-func (v *SearchNodeUser) implementsGraphQLInterfaceSearchNode()               {}
+func (v *SearchNodeApp) ImplementsGraphQLInterfaceSearchNode()                {}
+func (v *SearchNodeDiscussion) ImplementsGraphQLInterfaceSearchNode()         {}
+func (v *SearchNodeIssue) ImplementsGraphQLInterfaceSearchNode()              {}
+func (v *SearchNodeMarketplaceListing) ImplementsGraphQLInterfaceSearchNode() {}
+func (v *SearchNodeOrganization) ImplementsGraphQLInterfaceSearchNode()       {}
+func (v *SearchNodePullRequest) ImplementsGraphQLInterfaceSearchNode()        {}
+func (v *SearchNodeRepository) ImplementsGraphQLInterfaceSearchNode()         {}
+func (v *SearchNodeUser) ImplementsGraphQLInterfaceSearchNode()               {}
 
 func __unmarshalSearchNode(b []byte, v *SearchNode) error {
 	if string(b) == "null" {
