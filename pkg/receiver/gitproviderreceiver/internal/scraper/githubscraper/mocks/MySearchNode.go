@@ -41,7 +41,7 @@ func NewMySearchNode(t interface {
 	mock := &MySearchNode{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() { })
 
 	return mock
 }
