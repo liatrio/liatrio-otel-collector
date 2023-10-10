@@ -59,8 +59,9 @@ type gitlabProject struct {
 }
 
 type projectData struct {
-	ProjectPath string
-	Branches    []string
+	ProjectPath   string
+	DefaultBranch string
+	Branches      []string
 }
 
 // Returns a struct with the project path and an array of branch names via the given channel.
@@ -84,7 +85,7 @@ func (gls *gitlabScraper) getBranches(
 		return
 	}
 
-	ch <- projectData{ProjectPath: projectPath, Branches: branches.Project.Repository.BranchNames}
+	ch <- projectData{ProjectPath: projectPath, DefaultBranch: branches.Project.Repository.RootRef, Branches: branches.Project.Repository.BranchNames}
 }
 
 func (gls *gitlabScraper) getMergeRequests(
@@ -219,11 +220,11 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		gls.logger.Sugar().Debugf("%s branch count: %v", proj.ProjectPath, int64(len(proj.Branches)))
 
 		for _, branch := range proj.Branches {
-			if branch == "main" {
+			if branch == proj.DefaultBranch {
 				continue
 			}
 
-			diff, _, err := restClient.Repositories.Compare(proj.ProjectPath, &gitlab.CompareOptions{From: gitlab.String("main"), To: gitlab.String(branch)})
+			diff, _, err := restClient.Repositories.Compare(proj.ProjectPath, &gitlab.CompareOptions{From: &proj.DefaultBranch, To: gitlab.String(branch)})
 			if err != nil {
 				gls.logger.Sugar().Errorf("error: %v", err)
 			}
