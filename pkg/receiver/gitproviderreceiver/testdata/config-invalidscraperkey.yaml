@@ -6,13 +6,6 @@ receivers:
         scrapers:
             invalidscraperkey:
 
-    gitprovider/customname:
-        initial_delay: 1s
-        collection_interval: 30s
-        scrapers:
-            invalidscraperkey2:
-
-
 processors:
     nop:
 
@@ -22,6 +15,6 @@ exporters:
 service:
     pipelines:
         metrics:
-            receivers: [gitprovider, gitprovider/customname]
+            receivers: [gitprovider]
             processors: [nop]
             exporters: [nop]
