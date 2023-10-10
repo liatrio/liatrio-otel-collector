@@ -53,62 +53,29 @@ func TestLoadConfig(t *testing.T) {
 	assert.Equal(t, expectedConfig, r1)
 }
 
-// func TestLoadConfig_CompnentParcerNil(t *testing.T) {
-// 	factories, err := otelcoltest.NopFactories()
-// 	require.NoError(t, err)
+func TestLoadInvalidConfig_NoScrapers(t *testing.T) {
+	factories, err := otelcoltest.NopFactories()
+	require.NoError(t, err)
 
-// 	factory := NewFactory()
-// 	factories.Receivers[metadata.Type] = factory
+	factory := NewFactory()
+	factories.Receivers[metadata.Type] = factory
+	_, err = otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config-noscrapers.yaml"), factories)
 
-// 	// Is this mocking?
-// 	p := (*confmap.Conf)(nil)
-// 	cfg := (*Config)(nil)
-// 	err = cfg.Unmarshal(p)
+	require.Contains(t, err.Error(), "must specify at least one scraper")
+}
 
-// 	require.NoError(t, err)
+func TestLoadInvalidConfig_InvalidScraperKey(t *testing.T) {
+	factories, err := otelcoltest.NopFactories()
+	require.NoError(t, err)
 
-// 	// assert.Equal(t, len(cfg.Receivers), 2)
-// }
+	factory := NewFactory()
+	factories.Receivers[metadata.Type] = factory
+	_, err = otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config-invalidscraperkey.yaml"), factories)
 
-// // Mock componentParser.Unmarshal()
-// func TestLoadConfig_CompnentParcerError(t *testing.T) {
-// 	factories, err := otelcoltest.NopFactories()
-// 	require.NoError(t, err)
-
-// 	factory := NewFactory()
-// 	factories.Receivers[metadata.Type] = factory
-
-// 	// cfg, err := otelcoltest.LoadConfig(filepath.Join("testdata", "config-nilconfig.yaml"), factories)
-// 	componentParser := (*confmap.Conf)
-// 	cfg := (*Config)(nil)
-
-// 	err = cfg.Unmarshal(componentParser)
-
-// 	// require.Error(t, err)
-// 	// require.NotNil(t, cfg)
-
-// 	// assert.Equal(t, len(cfg.Receivers), 2)
-// }
-
-// func TestLoadInvalidConfig_NoScrapers(t *testing.T) {
-// 	factories, err := otelcoltest.NopFactories()
-// 	require.NoError(t, err)
-
-// 	factory := NewFactory()
-// 	factories.Receivers[metadata.Type] = factory
-// 	_, err = otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config-noscrapers.yaml"), factories)
-
-// 	require.Contains(t, err.Error(), "must specify at least one scraper")
-// }
+	require.Contains(t, err.Error(), "error reading configuration for \"gitprovider/customname\": invalid scraper key: invalidscraperkey2")
+}
 
 func TestConfig_Unmarshal(t *testing.T) {
-	// factories, err := otelcoltest.NopFactories()
-	// require.NoError(t, err)
-
-	// factory := NewFactory()
-	// factories.Receivers[metadata.Type] = factory
-	// cfg, err := otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config.yaml"), factories)
-
 	type fields struct {
 		ScraperControllerSettings scraperhelper.ScraperControllerSettings
 		Scrapers                  map[string]internal.Config
