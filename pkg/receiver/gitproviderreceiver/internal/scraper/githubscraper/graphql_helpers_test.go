@@ -19,16 +19,23 @@ func TestGetPrCount(t *testing.T) {
 		state         []PullRequestState
 	}{
 		{
-			desc:          "valid",
-			client:        &mockClient{prCount: 3},
+			desc:          "valid open pr count",
+			client:        &mockClient{openPrCount: 3},
 			expectedErr:   nil,
 			expectedCount: 3,
 			state:         []PullRequestState{PullRequestStateOpen},
 		},
 		{
+			desc:          "valid merged pr count",
+			client:        &mockClient{mergedPrCount: 20},
+			expectedErr:   nil,
+			expectedCount: 20,
+			state:         []PullRequestState{PullRequestStateMerged},
+		},
+		{
 			desc:          "no state",
-			client:        &mockClient{prCount: 3},
-			expectedErr:   errors.New("state was not included in the query"),
+			client:        &mockClient{},
+			expectedErr:   errors.New("no pull request state provided"),
 			expectedCount: 0,
 			state:         []PullRequestState{},
 		},

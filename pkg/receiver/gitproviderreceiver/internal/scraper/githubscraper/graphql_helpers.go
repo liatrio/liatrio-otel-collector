@@ -22,7 +22,7 @@ func getRepoData(
 	repoCursor *string,
 	// since we're using a interface{} here we do type checking when data
 	// is returned to the calling function
-) (interface{}, error) {
+) (*getRepoDataBySearchResponse, error) {
 	data, err := getRepoDataBySearch(ctx, client, searchQuery, repoCursor)
 	if err != nil {
 		return nil, err
@@ -31,18 +31,38 @@ func getRepoData(
 }
 
 type mockClient struct {
-	prCount int
+	openPrCount   int
+	mergedPrCount int
+	err           bool
+	errString     string
+	prs           getPullRequestDataRepositoryPullRequestsPullRequestConnection
 }
 
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
 	switch op := req.OpName; op {
 	case "getPullRequestCount":
-		if len(req.Variables.(*__getPullRequestCountInput).States) == 0 {
-			return errors.New("state was not included in the query")
+		//for forcing arbitrary errors
+		if m.err {
+			return errors.New(m.errString)
 		}
+
 		r := resp.Data.(*getPullRequestCountResponse)
-		r.Repository.PullRequests.TotalCount = m.prCount
-		// case "getPullRequestData":
+		if len(req.Variables.(*__getPullRequestCountInput).States) == 0 {
+			return errors.New("no pull request state provided")
+		} else if req.Variables.(*__getPullRequestCountInput).States[0] == "OPEN" {
+			r.Repository.PullRequests.TotalCount = m.openPrCount
+		} else if req.Variables.(*__getPullRequestCountInput).States[0] == "MERGED" {
+			r.Repository.PullRequests.TotalCount = m.mergedPrCount
+		} else {
+			return errors.New("invalid pull request state")
+		}
+	case "getPullRequestData":
+		//for forcing arbitrary errors
+		if m.err {
+			return errors.New(m.errString)
+		}
+		r := resp.Data.(*getPullRequestDataResponse)
+		r.Repository.PullRequests = m.prs
 		// case "getBranchData":
 		// case "getBranchCount":
 		// case "getCommitData":
