@@ -62,7 +62,8 @@ func newGitHubScraper(
 	}
 }
 
-func (ghs *githubScraper) getPullRequests(
+func getPullRequests(
+	ghs *githubScraper,
 	ctx context.Context,
 	client graphql.Client,
 	repos []SearchNode,
@@ -83,19 +84,19 @@ func (ghs *githubScraper) getPullRequests(
 		var prCursor *string
 		var pullRequests []PullRequestNode
 
-		prOpenCount, err := getPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateOpen})
+		prOpenCount, err := ghs.getPrCount(ctx, client, repoName, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateOpen})
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting open pull request count", zap.Error(err))
 		}
 		ghs.logger.Sugar().Debugf("open pull request count: %v for repo %v", prOpenCount, repoName)
-		ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(prOpenCount.Repository.PullRequests.TotalCount), repoName)
+		ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(prOpenCount), repoName)
 
-		prMergedCount, err := getPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateMerged})
+		prMergedCount, err := ghs.getPrCount(ctx, client, repoName, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateMerged})
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting merged pull request count", zap.Error(err))
 		}
 
-		totalPrCount := add(prOpenCount.Repository.PullRequests.TotalCount, prMergedCount.Repository.PullRequests.TotalCount)
+		totalPrCount := add(prOpenCount, prMergedCount)
 		prPages := getNumPages(float64(100), float64(totalPrCount))
 		ghs.logger.Sugar().Debugf("pull request pages: %v for repo %v", prPages, repoName)
 
@@ -405,7 +406,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			wg1.Add(2)
 			go ghs.getBranches(ctx, genClient, work[i], now, branchCh, &wg1)
-			go ghs.getPullRequests(ctx, genClient, work[i], now, pullRequestCh, &wg1)
+			go getPullRequests(ghs, ctx, genClient, work[i], now, pullRequestCh, &wg1)
 			if ghs.cfg.MetricsBuilderConfig.Metrics.GitRepositoryContributorCount.Enabled {
 				wg1.Add(1)
 				go ghs.getContributorCount(ctx, genClient, work[i], now, &wg1)

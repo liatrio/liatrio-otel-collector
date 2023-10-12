@@ -1,10 +1,56 @@
 package githubscraper
 
 import (
+	"context"
+	"errors"
 	"testing"
 
+	"github.com/Khan/genqlient/graphql"
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/receiver/receivertest"
 )
+
+func TestGetPrCount(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		client        graphql.Client
+		expectedErr   error
+		expectedCount int
+		state         []PullRequestState
+	}{
+		{
+			desc:          "valid",
+			client:        &mockClient{prCount: 3},
+			expectedErr:   nil,
+			expectedCount: 3,
+			state:         []PullRequestState{PullRequestStateOpen},
+		},
+		{
+			desc:          "no state",
+			client:        &mockClient{prCount: 3},
+			expectedErr:   errors.New("state was not included in the query"),
+			expectedCount: 0,
+			state:         []PullRequestState{},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+
+			count, err := ghs.getPrCount(context.Background(), tc.client, "repo", "owner", tc.state)
+
+			assert.Equal(t, tc.expectedCount, count)
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+		})
+	}
+}
 
 func TestGetNumPages100(t *testing.T) {
 	p := float64(100)

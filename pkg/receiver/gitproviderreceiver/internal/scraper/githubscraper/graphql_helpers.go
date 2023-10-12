@@ -30,6 +30,35 @@ func getRepoData(
 	return data, nil
 }
 
+type mockClient struct {
+	prCount int
+}
+
+func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
+	switch op := req.OpName; op {
+	case "getPullRequestCount":
+		if len(req.Variables.(*__getPullRequestCountInput).States) == 0 {
+			return errors.New("state was not included in the query")
+		}
+		r := resp.Data.(*getPullRequestCountResponse)
+		r.Repository.PullRequests.TotalCount = m.prCount
+		// case "getPullRequestData":
+		// case "getBranchData":
+		// case "getBranchCount":
+		// case "getCommitData":
+		// case "getRepoDataBySearch":
+	}
+	return nil
+}
+
+func (ghs *githubScraper) getPrCount(ctx context.Context, client graphql.Client, repoName string, owner string, states []PullRequestState) (int, error) {
+	count, err := getPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, states)
+	if err != nil {
+		return 0, err
+	}
+	return count.Repository.PullRequests.TotalCount, nil
+}
+
 func getNumPages(p float64, n float64) int {
 	numPages := math.Ceil(n / p)
 
