@@ -18,8 +18,6 @@ require (
 	go.uber.org/zap v1.26.0
 )
 
-require github.com/stretchr/objx v0.5.0 // indirect
-
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
