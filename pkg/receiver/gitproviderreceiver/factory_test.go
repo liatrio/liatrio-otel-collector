@@ -54,13 +54,3 @@ func TestCreateReceiver_ScraperKeyConfigError(t *testing.T) {
 	_, err := factory.CreateMetricsReceiver(context.Background(), creationSet, cfg, consumertest.NewNop())
 	assert.EqualError(t, err, fmt.Sprintf("git provider scraper factory not found for key: %q", errorKey))
 }
-
-func TestScrapperFactoryNil(t *Testing.T) {
-
-	factory := NewFactory()
-	cfg := factory.CreateDefaultConfig()
-
-	string stoof := nil
-	factory.getScraperFactory()
-
-}
