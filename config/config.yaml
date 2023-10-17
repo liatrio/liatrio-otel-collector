@@ -7,10 +7,10 @@ extensions:
         endpoint: 0.0.0.0:55679
     ## Uncomment below if you want to enable authentication to GitHub
     ## Presume that GH_USER and GH_PAT are set as env variables.
-    # basicauth/github:
-    #     client_auth:
-    #         username: ${env:GITHUB_USER}
-    #         password: ${env:GITHUB_PAT}
+    basicauth/github:
+        client_auth:
+            username: ${env:GITHUB_USER}
+            password: ${env:GITHUB_PAT}
     ## Uncomment below if you want to enable authentication to Grafana
     # basicauth/grafana:
     #     client_auth:
