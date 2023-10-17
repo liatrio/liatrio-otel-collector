@@ -76,12 +76,14 @@ func getNumPrPages(
 		return 0, err
 	}
 	ghs.logger.Sugar().Debugf("open pull request count: %v for repo %v", prOpenCount, repoName)
-	ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(prOpenCount), repoName)
+	ghs.mb.RecordGitRepositoryPullRequestOpenCountDataPoint(now, int64(prOpenCount), repoName)
 
 	prMergedCount, err := ghs.getPrCount(ctx, client, repoName, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateMerged})
 	if err != nil {
 		return 0, err
 	}
+	ghs.logger.Sugar().Debugf("merged pull request count: %v for repo %v", prMergedCount, repoName)
+	ghs.mb.RecordGitRepositoryPullRequestMergedCountDataPoint(now, int64(prMergedCount), repoName)
 
 	totalPrCount := add(prOpenCount, prMergedCount)
 	prPages := getNumPages(float64(100), float64(totalPrCount))
