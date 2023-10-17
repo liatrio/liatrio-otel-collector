@@ -26,7 +26,7 @@ func TestNewGitHubScraper(t *testing.T) {
 	assert.NotNil(t, s)
 }
 
-func TestGetTotalPrPages(t *testing.T) {
+func TestGetNumPrPages(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		client        graphql.Client
@@ -53,7 +53,7 @@ func TestGetTotalPrPages(t *testing.T) {
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 			now := pcommon.NewTimestampFromTime(time.Now())
-			pages, err := getTotalPrPages(ghs, context.Background(), tc.client, "repo", "owner", now)
+			pages, err := getNumPrPages(ghs, context.Background(), tc.client, "repo", "owner", now)
 
 			assert.Equal(t, tc.expectedPages, pages)
 			if tc.expectedErr == nil {
@@ -251,6 +251,36 @@ func TestGetPullRequests(t *testing.T) {
 			expectedErr:        nil,
 			expectedChannelLen: 2, //one per repo
 			expectedPrCount:    6, // 3 PRs per page, 1 page, 2 repos
+		},
+		{
+			desc: "no next page",
+			client: &mockClient{
+				prs: getPullRequestDataRepositoryPullRequestsPullRequestConnection{
+					PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
+						HasNextPage: false,
+					},
+					Nodes: []PullRequestNode{},
+				},
+				openPrCount:   0,
+				mergedPrCount: 0,
+			},
+			repos: []SearchNodeRepository{
+				{
+					Name: "repo1",
+					DefaultBranchRef: SearchNodeDefaultBranchRef{
+						Name: "main",
+					},
+				},
+				{
+					Name: "repo2",
+					DefaultBranchRef: SearchNodeDefaultBranchRef{
+						Name: "main",
+					},
+				},
+			},
+			expectedErr:        nil,
+			expectedChannelLen: 0, // adding empty prs
+			expectedPrCount:    0, // no prs
 		},
 		{
 			desc:        "error",

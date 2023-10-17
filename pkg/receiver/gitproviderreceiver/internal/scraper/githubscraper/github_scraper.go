@@ -63,7 +63,7 @@ func newGitHubScraper(
 	}
 }
 
-func getTotalPrPages(
+func getNumPrPages(
 	ghs *githubScraper,
 	ctx context.Context,
 	client graphql.Client,
@@ -131,7 +131,7 @@ func getPullRequests(
 
 		//var defaultBranch string
 
-		prPages, err := getTotalPrPages(ghs, ctx, client, repoName, ghs.cfg.GitHubOrg, now)
+		prPages, err := getNumPrPages(ghs, ctx, client, repoName, ghs.cfg.GitHubOrg, now)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting total pr pages", zap.Error(err))
 		}
@@ -139,7 +139,10 @@ func getPullRequests(
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting pr data", zap.Error(err))
 		}
-		pullRequestCh <- pullRequests
+
+		if pullRequests != nil {
+			pullRequestCh <- pullRequests
+		}
 	}
 }
 
