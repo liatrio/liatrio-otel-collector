@@ -93,23 +93,6 @@ func sub[T ~int | ~float64](a, b T) T {
 	return a - b
 }
 
-// breaks up a slice into chunks of size chunkSize or as close to it as possible
-func chunkSlice[T any](slice []T, chunkSize int) [][]T {
-	var chunks [][]T
-
-	for i := 0; i < len(slice); i += chunkSize {
-		end := i + chunkSize
-
-		if end > len(slice) {
-			end = len(slice)
-		}
-
-		chunks = append(chunks, slice[i:end])
-	}
-
-	return chunks
-}
-
 // Ensure that the type of owner is user or organization
 func checkOwnerTypeValid(ownertype string) (bool, error) {
 	if ownertype == "org" || ownertype == "user" {

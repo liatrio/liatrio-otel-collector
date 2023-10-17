@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	"go.uber.org/zap"
 
+	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/common"
 	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
 )
 
@@ -412,7 +413,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		var opBuf int = 3
 
 		chunkSize := (len(searchRepos) + opBuf - 1) / opBuf
-		var work [][]SearchNodeRepository = chunkSlice(searchRepos, chunkSize)
+		var work [][]SearchNodeRepository = common.ChunkSlice(searchRepos, chunkSize)
 		if opBuf > len(work) {
 			opBuf = len(work)
 		}
