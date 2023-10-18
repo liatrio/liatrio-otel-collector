@@ -370,7 +370,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
 		var err error
 
-		graphCURL, err = url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "api/graphql")
+		graphCURL, err = url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "graphql")
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error: %v", err)
 		}
