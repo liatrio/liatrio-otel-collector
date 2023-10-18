@@ -88,6 +88,7 @@ receivers:
                         enabled: true
                 github_org: myfancyorg
                 search_query: "org:myfancyorg topic:o11yalltheway" #optional query override, defaults to "{org,user}:<github_org>"
+                endpoint: "https://selfmanagedenterpriseserver.com"
                 auth:
                     authenticator: basicauth/github
 service:
