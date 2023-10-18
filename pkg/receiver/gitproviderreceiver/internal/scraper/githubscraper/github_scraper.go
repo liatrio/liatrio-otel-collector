@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -313,6 +314,20 @@ func (ghs *githubScraper) getContributorCount(
 	defer waitGroup.Done()
 
 	gc := github.NewClient(ghs.client)
+
+	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
+
+		restCURL, err := url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "/")
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error: %v", err)
+		}
+
+		gc, err = github.NewEnterpriseClient(restCURL, restCURL, ghs.client)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error: %v", err)
+		}
+	}
+
 	for _, repo := range repos {
 		var repoName string = repo.Name
 
@@ -333,7 +348,6 @@ func (ghs *githubScraper) getContributorCount(
 
 // scrape and return metrics
 func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
-	// ghs.logger.Sugar().Debug("checking if client is initialized")
 	if ghs.client == nil {
 		return pmetric.NewMetrics(), errClientNotInitErr
 	}
@@ -349,7 +363,20 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	// TODO: Below is the beginning of the refactor to using genqlient
 	// This is a secondary instantiation of the GraphQL client for the purpose of
 	// using genqlient during the refactor.
-	genClient := graphql.NewClient("https://api.github.com/graphql", ghs.client)
+
+	// Enable the ability to override the endpoint for self-hosted github instances
+	graphCURL := "https://api.github.com/graphql"
+
+	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
+		var err error
+
+		graphCURL, err = url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "graphql")
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error: %v", err)
+		}
+	}
+
+	genClient := graphql.NewClient(graphCURL, ghs.client)
 
 	exists, ownertype, err := ghs.checkOwnerExists(ctx, genClient, ghs.cfg.GitHubOrg)
 	if err != nil {
