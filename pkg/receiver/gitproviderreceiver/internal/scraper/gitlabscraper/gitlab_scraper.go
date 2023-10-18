@@ -6,7 +6,9 @@ package gitlabscraper
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -147,36 +149,46 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	}
 
 	var projectList []gitlabProject
-	var projectsCursor *string
 
-	for hasNextPage := true; hasNextPage; {
+	for nextPage := 0; nextPage > 0; {
 		// TODO: since we pass in a context already, do we need to create a new background context?
-		// Get the next page of data
-		projects, err := getAllGroupProjects(context.Background(), graphClient, gls.cfg.GitLabOrg, projectsCursor)
+		projects, res, err := restClient.Groups.ListGroupProjects(gls.cfg.GitLabOrg, &gitlab.ListGroupProjectsOptions{
+			IncludeSubGroups: gitlab.Bool(true),
+			Topic:            gitlab.String(gls.cfg.ProjectTopic),
+			Search:           gitlab.String(gls.cfg.ProjectSearch),
+		})
+		// projects, err := getProjects(ctx, graphClient, gls.cfg.GitLabOrg, gls.cfg.RepoTopics, projectsCursor)
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
 		}
 
-		if len(projects.Group.Projects.Nodes) == 0 {
-			err = errors.New("no GitLab projects found for the given group/org")
+		if len(projects) == 0 {
+			errMsg := fmt.Sprintf("no GitLab projects found for the given group/org: %s", gls.cfg.GitLabOrg)
+			err = errors.New(errMsg)
 			gls.logger.Sugar().Error(err)
 
 			return gls.mb.Emit(), err
 		}
 
-		// Check if there is a next page
-		hasNextPage = projects.Group.Projects.PageInfo.HasNextPage
-
-		// Set the cursor to the end cursor of the current page
-		projectsCursor = &projects.Group.Projects.PageInfo.EndCursor
-
-		for _, p := range projects.Group.Projects.Nodes {
+		for _, p := range projects {
 			projectList = append(projectList, gitlabProject{
 				Name:           p.Name,
-				Path:           p.FullPath,
-				CreatedAt:      p.CreatedAt,
-				LastActivityAt: p.LastActivityAt,
+				Path:           p.Path,
+				CreatedAt:      *p.CreatedAt,
+				LastActivityAt: *p.LastActivityAt,
 			})
+		}
+
+		nextPageHeader := res.Header.Get("x-next-page")
+		if len(nextPageHeader) > 0 {
+			nextPage, err = strconv.Atoi(nextPageHeader)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error: %v", err)
+
+				return gls.mb.Emit(), err
+			}
+		} else {
+			nextPage = 0
 		}
 	}
 
@@ -243,7 +255,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			gls.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(mr.DiffStatsSummary.Additions), mr.Project.FullPath, mr.SourceBranch)
 			gls.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(mr.DiffStatsSummary.Deletions), mr.Project.FullPath, mr.SourceBranch)
 
-			//IsZero() tells us if the time is or isnt  January 1, year 1, 00:00:00 UTC, which is what null graphql date values get returned as in Go
+			// IsZero() tells us if the time is or isnt  January 1, year 1, 00:00:00 UTC, which is what null graphql date values get returned as in Go
 			if mr.MergedAt.IsZero() {
 				mrAge := int64(time.Since(mr.CreatedAt).Hours())
 				gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, mr.Project.FullPath, mr.SourceBranch)

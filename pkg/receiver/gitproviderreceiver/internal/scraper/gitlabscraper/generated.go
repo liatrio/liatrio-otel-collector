@@ -137,6 +137,7 @@ func (v *__getMergeRequestsInput) GetState() MergeRequestState { return v.State 
 type __getProjectsByTopicInput struct {
 	Org    string   `json:"org"`
 	Topics []string `json:"topics"`
+	After  *string  `json:"after"`
 }
 
 // GetOrg returns __getProjectsByTopicInput.Org, and is useful for accessing the field via an interface.
@@ -144,6 +145,25 @@ func (v *__getProjectsByTopicInput) GetOrg() string { return v.Org }
 
 // GetTopics returns __getProjectsByTopicInput.Topics, and is useful for accessing the field via an interface.
 func (v *__getProjectsByTopicInput) GetTopics() []string { return v.Topics }
+
+// GetAfter returns __getProjectsByTopicInput.After, and is useful for accessing the field via an interface.
+func (v *__getProjectsByTopicInput) GetAfter() *string { return v.After }
+
+// __getProjectsInput is used internally by genqlient
+type __getProjectsInput struct {
+	Org    string   `json:"org"`
+	Topics []string `json:"topics"`
+	After  *string  `json:"after"`
+}
+
+// GetOrg returns __getProjectsInput.Org, and is useful for accessing the field via an interface.
+func (v *__getProjectsInput) GetOrg() string { return v.Org }
+
+// GetTopics returns __getProjectsInput.Topics, and is useful for accessing the field via an interface.
+func (v *__getProjectsInput) GetTopics() []string { return v.Topics }
+
+// GetAfter returns __getProjectsInput.After, and is useful for accessing the field via an interface.
+func (v *__getProjectsInput) GetAfter() *string { return v.After }
 
 // getAllGroupProjectsGroup includes the requested fields of the GraphQL type Group.
 type getAllGroupProjectsGroup struct {
@@ -343,8 +363,20 @@ func (v *getMergeRequestsResponse) GetProject() getMergeRequestsProject { return
 //
 // The connection type for Project.
 type getProjectsByTopicProjectsProjectConnection struct {
+	// Total count of collection.
+	Count int `json:"count"`
+	// Information to aid in pagination.
+	PageInfo getProjectsByTopicProjectsProjectConnectionPageInfo `json:"pageInfo"`
 	// A list of nodes.
 	Nodes []getProjectsByTopicProjectsProjectConnectionNodesProject `json:"nodes"`
+}
+
+// GetCount returns getProjectsByTopicProjectsProjectConnection.Count, and is useful for accessing the field via an interface.
+func (v *getProjectsByTopicProjectsProjectConnection) GetCount() int { return v.Count }
+
+// GetPageInfo returns getProjectsByTopicProjectsProjectConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *getProjectsByTopicProjectsProjectConnection) GetPageInfo() getProjectsByTopicProjectsProjectConnectionPageInfo {
+	return v.PageInfo
 }
 
 // GetNodes returns getProjectsByTopicProjectsProjectConnection.Nodes, and is useful for accessing the field via an interface.
@@ -382,6 +414,27 @@ func (v *getProjectsByTopicProjectsProjectConnectionNodesProject) GetLastActivit
 	return v.LastActivityAt
 }
 
+// getProjectsByTopicProjectsProjectConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+// The GraphQL type's documentation follows.
+//
+// Information about pagination in a connection.
+type getProjectsByTopicProjectsProjectConnectionPageInfo struct {
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
+}
+
+// GetHasNextPage returns getProjectsByTopicProjectsProjectConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *getProjectsByTopicProjectsProjectConnectionPageInfo) GetHasNextPage() bool {
+	return v.HasNextPage
+}
+
+// GetEndCursor returns getProjectsByTopicProjectsProjectConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *getProjectsByTopicProjectsProjectConnectionPageInfo) GetEndCursor() string {
+	return v.EndCursor
+}
+
 // getProjectsByTopicResponse is returned by getProjectsByTopic on success.
 type getProjectsByTopicResponse struct {
 	// Find projects visible to the current user.
@@ -392,6 +445,86 @@ type getProjectsByTopicResponse struct {
 func (v *getProjectsByTopicResponse) GetProjects() getProjectsByTopicProjectsProjectConnection {
 	return v.Projects
 }
+
+// getProjectsProjectsProjectConnection includes the requested fields of the GraphQL type ProjectConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Project.
+type getProjectsProjectsProjectConnection struct {
+	// Total count of collection.
+	Count int `json:"count"`
+	// Information to aid in pagination.
+	PageInfo getProjectsProjectsProjectConnectionPageInfo `json:"pageInfo"`
+	// A list of nodes.
+	Nodes []getProjectsProjectsProjectConnectionNodesProject `json:"nodes"`
+}
+
+// GetCount returns getProjectsProjectsProjectConnection.Count, and is useful for accessing the field via an interface.
+func (v *getProjectsProjectsProjectConnection) GetCount() int { return v.Count }
+
+// GetPageInfo returns getProjectsProjectsProjectConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *getProjectsProjectsProjectConnection) GetPageInfo() getProjectsProjectsProjectConnectionPageInfo {
+	return v.PageInfo
+}
+
+// GetNodes returns getProjectsProjectsProjectConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *getProjectsProjectsProjectConnection) GetNodes() []getProjectsProjectsProjectConnectionNodesProject {
+	return v.Nodes
+}
+
+// getProjectsProjectsProjectConnectionNodesProject includes the requested fields of the GraphQL type Project.
+type getProjectsProjectsProjectConnectionNodesProject struct {
+	// Name of the project (without namespace).
+	Name string `json:"name"`
+	// Full path of the project.
+	FullPath string `json:"fullPath"`
+	// Timestamp of the project creation.
+	CreatedAt time.Time `json:"createdAt"`
+	// Timestamp of the project last activity.
+	LastActivityAt time.Time `json:"lastActivityAt"`
+}
+
+// GetName returns getProjectsProjectsProjectConnectionNodesProject.Name, and is useful for accessing the field via an interface.
+func (v *getProjectsProjectsProjectConnectionNodesProject) GetName() string { return v.Name }
+
+// GetFullPath returns getProjectsProjectsProjectConnectionNodesProject.FullPath, and is useful for accessing the field via an interface.
+func (v *getProjectsProjectsProjectConnectionNodesProject) GetFullPath() string { return v.FullPath }
+
+// GetCreatedAt returns getProjectsProjectsProjectConnectionNodesProject.CreatedAt, and is useful for accessing the field via an interface.
+func (v *getProjectsProjectsProjectConnectionNodesProject) GetCreatedAt() time.Time {
+	return v.CreatedAt
+}
+
+// GetLastActivityAt returns getProjectsProjectsProjectConnectionNodesProject.LastActivityAt, and is useful for accessing the field via an interface.
+func (v *getProjectsProjectsProjectConnectionNodesProject) GetLastActivityAt() time.Time {
+	return v.LastActivityAt
+}
+
+// getProjectsProjectsProjectConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+// The GraphQL type's documentation follows.
+//
+// Information about pagination in a connection.
+type getProjectsProjectsProjectConnectionPageInfo struct {
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
+}
+
+// GetHasNextPage returns getProjectsProjectsProjectConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *getProjectsProjectsProjectConnectionPageInfo) GetHasNextPage() bool { return v.HasNextPage }
+
+// GetEndCursor returns getProjectsProjectsProjectConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *getProjectsProjectsProjectConnectionPageInfo) GetEndCursor() string { return v.EndCursor }
+
+// getProjectsResponse is returned by getProjects on success.
+type getProjectsResponse struct {
+	// Find projects visible to the current user.
+	Projects getProjectsProjectsProjectConnection `json:"projects"`
+}
+
+// GetProjects returns getProjectsResponse.Projects, and is useful for accessing the field via an interface.
+func (v *getProjectsResponse) GetProjects() getProjectsProjectsProjectConnection { return v.Projects }
 
 // The query or mutation executed by getAllGroupProjects.
 const getAllGroupProjects_Operation = `
@@ -539,10 +672,64 @@ func getMergeRequests(
 	return &data, err
 }
 
+// The query or mutation executed by getProjects.
+const getProjects_Operation = `
+query getProjects ($org: String!, $topics: [String!], $after: String) {
+	projects(search: $org, topics: $topics, after: $after) {
+		count
+		pageInfo {
+			hasNextPage
+			endCursor
+		}
+		nodes {
+			name
+			fullPath
+			createdAt
+			lastActivityAt
+		}
+	}
+}
+`
+
+func getProjects(
+	ctx context.Context,
+	client graphql.Client,
+	org string,
+	topics []string,
+	after *string,
+) (*getProjectsResponse, error) {
+	req := &graphql.Request{
+		OpName: "getProjects",
+		Query:  getProjects_Operation,
+		Variables: &__getProjectsInput{
+			Org:    org,
+			Topics: topics,
+			After:  after,
+		},
+	}
+	var err error
+
+	var data getProjectsResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
 // The query or mutation executed by getProjectsByTopic.
 const getProjectsByTopic_Operation = `
-query getProjectsByTopic ($org: String!, $topics: [String!]) {
-	projects(searchNamespaces: true, search: $org, topics: $topics) {
+query getProjectsByTopic ($org: String!, $topics: [String!], $after: String) {
+	projects(searchNamespaces: true, search: $org, topics: $topics, after: $after) {
+		count
+		pageInfo {
+			hasNextPage
+			endCursor
+		}
 		nodes {
 			name
 			fullPath
@@ -558,6 +745,7 @@ func getProjectsByTopic(
 	client graphql.Client,
 	org string,
 	topics []string,
+	after *string,
 ) (*getProjectsByTopicResponse, error) {
 	req := &graphql.Request{
 		OpName: "getProjectsByTopic",
@@ -565,6 +753,7 @@ func getProjectsByTopic(
 		Variables: &__getProjectsByTopicInput{
 			Org:    org,
 			Topics: topics,
+			After:  after,
 		},
 	}
 	var err error
