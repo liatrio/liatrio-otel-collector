@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"sync"
 	"time"
@@ -142,8 +143,26 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	gls.logger.Sugar().Debug("creating a new gitlab client")
 
-	graphClient := graphql.NewClient("https://gitlab.com/api/graphql", gls.client)
-	restClient, err := gitlab.NewClient("", gitlab.WithHTTPClient(gls.client))
+	// Enable the ability to override the endpoint for self-hosted gitlab instances
+	graphCURL := "https://gitlab.com/api/graphql"
+	restCURL := "https://gitlab.com/"
+
+	if gls.cfg.HTTPClientSettings.Endpoint != "" {
+		var err error
+
+		graphCURL, err = url.JoinPath(gls.cfg.HTTPClientSettings.Endpoint, "api/graphql")
+		if err != nil {
+			gls.logger.Sugar().Errorf("error: %v", err)
+		}
+
+		restCURL, err = url.JoinPath(gls.cfg.HTTPClientSettings.Endpoint, "/")
+		if err != nil {
+			gls.logger.Sugar().Errorf("error: %v", err)
+		}
+	}
+
+	graphClient := graphql.NewClient(graphCURL, gls.client)
+	restClient, err := gitlab.NewClient("", gitlab.WithHTTPClient(gls.client), gitlab.WithBaseURL(restCURL))
 	if err != nil {
 		gls.logger.Sugar().Errorf("error: %v", err)
 	}
