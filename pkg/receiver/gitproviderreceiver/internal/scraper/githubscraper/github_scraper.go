@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
-    "net/url"
+	"net/url"
 	"sync"
 	"time"
 
@@ -315,18 +315,18 @@ func (ghs *githubScraper) getContributorCount(
 
 	gc := github.NewClient(ghs.client)
 
-    if ghs.cfg.HTTPClientSettings.Endpoint != "" {
+	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
 
-        restCURL, err := url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "/")
-        if err != nil {
-            ghs.logger.Sugar().Errorf("error: %v", err)
-        }
+		restCURL, err := url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "/")
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error: %v", err)
+		}
 
-        gc, err = github.NewEnterpriseClient(restCURL, restCURL, ghs.client)
-        if err != nil {
-            ghs.logger.Sugar().Errorf("error: %v", err)
-        }
-    }
+		gc, err = github.NewEnterpriseClient(restCURL, restCURL, ghs.client)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error: %v", err)
+		}
+	}
 
 	for _, repo := range repos {
 		var repoName string = repo.Name
@@ -364,17 +364,17 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	// This is a secondary instantiation of the GraphQL client for the purpose of
 	// using genqlient during the refactor.
 
-    // Enable the ability to override the endpoint for self-hosted github instances
-    graphCURL := "https://api.github.com/graphql"
+	// Enable the ability to override the endpoint for self-hosted github instances
+	graphCURL := "https://api.github.com/graphql"
 
-    if ghs.cfg.HTTPClientSettings.Endpoint != "" {
-        var err error
+	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
+		var err error
 
-        graphCURL, err = url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "api/graphql")
-        if err != nil {
-            ghs.logger.Sugar().Errorf("error: %v", err)
-        }
-    }
+		graphCURL, err = url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "api/graphql")
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error: %v", err)
+		}
+	}
 
 	genClient := graphql.NewClient(graphCURL, ghs.client)
 
