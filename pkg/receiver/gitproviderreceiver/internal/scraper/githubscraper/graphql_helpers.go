@@ -22,12 +22,61 @@ func getRepoData(
 	repoCursor *string,
 	// since we're using a interface{} here we do type checking when data
 	// is returned to the calling function
-) (interface{}, error) {
+) (*getRepoDataBySearchResponse, error) {
 	data, err := getRepoDataBySearch(ctx, client, searchQuery, repoCursor)
 	if err != nil {
 		return nil, err
 	}
 	return data, nil
+}
+
+type mockClient struct {
+	openPrCount   int
+	mergedPrCount int
+	err           bool
+	errString     string
+	prs           getPullRequestDataRepositoryPullRequestsPullRequestConnection
+}
+
+func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
+	switch op := req.OpName; op {
+	case "getPullRequestCount":
+		//for forcing arbitrary errors
+		if m.err {
+			return errors.New(m.errString)
+		}
+
+		r := resp.Data.(*getPullRequestCountResponse)
+		if len(req.Variables.(*__getPullRequestCountInput).States) == 0 {
+			return errors.New("no pull request state provided")
+		} else if req.Variables.(*__getPullRequestCountInput).States[0] == "OPEN" {
+			r.Repository.PullRequests.TotalCount = m.openPrCount
+		} else if req.Variables.(*__getPullRequestCountInput).States[0] == "MERGED" {
+			r.Repository.PullRequests.TotalCount = m.mergedPrCount
+		} else {
+			return errors.New("invalid pull request state")
+		}
+	case "getPullRequestData":
+		//for forcing arbitrary errors
+		if m.err {
+			return errors.New(m.errString)
+		}
+		r := resp.Data.(*getPullRequestDataResponse)
+		r.Repository.PullRequests = m.prs
+		// case "getBranchData":
+		// case "getBranchCount":
+		// case "getCommitData":
+		// case "getRepoDataBySearch":
+	}
+	return nil
+}
+
+func (ghs *githubScraper) getPrCount(ctx context.Context, client graphql.Client, repoName string, owner string, states []PullRequestState) (int, error) {
+	count, err := getPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, states)
+	if err != nil {
+		return 0, err
+	}
+	return count.Repository.PullRequests.TotalCount, nil
 }
 
 func getNumPages(p float64, n float64) int {
@@ -42,23 +91,6 @@ func add[T ~int | ~float64](a, b T) T {
 
 func sub[T ~int | ~float64](a, b T) T {
 	return a - b
-}
-
-// breaks up a slice into chunks of size chunkSize or as close to it as possible
-func chunkSlice[T any](slice []T, chunkSize int) [][]T {
-	var chunks [][]T
-
-	for i := 0; i < len(slice); i += chunkSize {
-		end := i + chunkSize
-
-		if end > len(slice) {
-			end = len(slice)
-		}
-
-		chunks = append(chunks, slice[i:end])
-	}
-
-	return chunks
 }
 
 // Ensure that the type of owner is user or organization

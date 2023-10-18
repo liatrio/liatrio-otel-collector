@@ -1,10 +1,63 @@
 package githubscraper
 
 import (
+	"context"
+	"errors"
 	"testing"
 
+	"github.com/Khan/genqlient/graphql"
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/receiver/receivertest"
 )
+
+func TestGetPrCount(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		client        graphql.Client
+		expectedErr   error
+		expectedCount int
+		state         []PullRequestState
+	}{
+		{
+			desc:          "valid open pr count",
+			client:        &mockClient{openPrCount: 3},
+			expectedErr:   nil,
+			expectedCount: 3,
+			state:         []PullRequestState{PullRequestStateOpen},
+		},
+		{
+			desc:          "valid merged pr count",
+			client:        &mockClient{mergedPrCount: 20},
+			expectedErr:   nil,
+			expectedCount: 20,
+			state:         []PullRequestState{PullRequestStateMerged},
+		},
+		{
+			desc:          "no state",
+			client:        &mockClient{},
+			expectedErr:   errors.New("no pull request state provided"),
+			expectedCount: 0,
+			state:         []PullRequestState{},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+
+			count, err := ghs.getPrCount(context.Background(), tc.client, "repo", "owner", tc.state)
+
+			assert.Equal(t, tc.expectedCount, count)
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+		})
+	}
+}
 
 func TestGetNumPages100(t *testing.T) {
 	p := float64(100)
@@ -136,45 +189,6 @@ func TestSubNegativeFloat(t *testing.T) {
 	num := sub(a, b)
 
 	assert.Equal(t, expected, num)
-}
-
-func TestChunkSliceInt(t *testing.T) {
-	slice := []int{1, 2, 3, 4, 5, 6, 7, 8}
-
-	expected := [][]int{{1, 2, 3}, {4, 5, 6}, {7, 8}}
-
-	chunks := chunkSlice(slice, 3)
-
-	assert.Equal(t, expected, chunks)
-}
-
-func TestChunkSliceFloat(t *testing.T) {
-	slice := []float64{1.5, 2.5, 3.5, 4.5, 5.5, 6.5}
-
-	expected := [][]float64{{1.5, 2.5, 3.5}, {4.5, 5.5, 6.5}}
-
-	chunks := chunkSlice(slice, 3)
-
-	assert.Equal(t, expected, chunks)
-}
-func TestChunkSliceString(t *testing.T) {
-	slice := []string{"a", "b", "c", "d", "e", "f"}
-
-	expected := [][]string{{"a", "b", "c"}, {"d", "e", "f"}}
-
-	chunks := chunkSlice(slice, 3)
-
-	assert.Equal(t, expected, chunks)
-}
-
-func TestChunkSliceSmall(t *testing.T) {
-	slice := []int{1, 2}
-
-	expected := [][]int{{1, 2}}
-
-	chunks := chunkSlice(slice, 3)
-
-	assert.Equal(t, expected, chunks)
 }
 
 func TestGenDefaultSearchQueryOrg(t *testing.T) {
