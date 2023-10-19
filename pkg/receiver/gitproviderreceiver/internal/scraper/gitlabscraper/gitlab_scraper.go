@@ -175,6 +175,10 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			IncludeSubGroups: gitlab.Bool(true),
 			Topic:            gitlab.String(gls.cfg.SearchTopic),
 			Search:           gitlab.String(gls.cfg.SearchQuery),
+			ListOptions: gitlab.ListOptions{
+				Page:    nextPage,
+				PerPage: 100,
+			},
 		})
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
