@@ -88,9 +88,16 @@ metrics:
         gauge:
             value_type: int
         attributes: [repository.name, branch.name]
-    git.repository.pull_request.count:
+    git.repository.pull_request.open.count:
         enabled: true
         description: The amount of open pull requests
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name]
+    git.repository.pull_request.merged.count:
+        enabled: true
+        description: The amount of merged pull requests
         unit: 1
         gauge:
             value_type: int
