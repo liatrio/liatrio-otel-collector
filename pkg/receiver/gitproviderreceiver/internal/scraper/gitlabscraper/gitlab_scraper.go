@@ -197,7 +197,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		for _, p := range projects {
 			projectList = append(projectList, gitlabProject{
 				Name:           p.Name,
-				Path:           p.Path,
+				Path:           p.PathWithNamespace,
 				CreatedAt:      *p.CreatedAt,
 				LastActivityAt: *p.LastActivityAt,
 			})
