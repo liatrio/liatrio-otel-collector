@@ -176,9 +176,10 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			Topic:            gitlab.String(gls.cfg.ProjectTopic),
 			Search:           gitlab.String(gls.cfg.ProjectSearch),
 		})
-		// projects, err := getProjects(ctx, graphClient, gls.cfg.GitLabOrg, gls.cfg.RepoTopics, projectsCursor)
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
+
+			return gls.mb.Emit(), err
 		}
 
 		if len(projects) == 0 {
