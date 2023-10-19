@@ -173,8 +173,8 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		// TODO: since we pass in a context already, do we need to create a new background context?
 		projects, res, err := restClient.Groups.ListGroupProjects(gls.cfg.GitLabOrg, &gitlab.ListGroupProjectsOptions{
 			IncludeSubGroups: gitlab.Bool(true),
-			Topic:            gitlab.String(gls.cfg.ProjectTopic),
-			Search:           gitlab.String(gls.cfg.ProjectSearch),
+			Topic:            gitlab.String(gls.cfg.SearchTopic),
+			Search:           gitlab.String(gls.cfg.SearchQuery),
 		})
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)

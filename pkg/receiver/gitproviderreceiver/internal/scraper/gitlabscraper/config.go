@@ -18,6 +18,6 @@ type Config struct {
 	// GitLabOrg is the name of the GitLab organization to scrape (gitlab scraper only)
 	GitLabOrg string `mapstructure:"gitlab_org"`
 
-	ProjectTopic  string `mapstructure:"project_topic"`
-	ProjectSearch string `mapstructure:"project_search"`
+	SearchTopic string `mapstructure:"search_topic"`
+	SearchQuery string `mapstructure:"search_query"`
 }
