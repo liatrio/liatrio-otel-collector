@@ -279,7 +279,6 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	}
 
 	for i := 0; i < opBuf; i++ {
-		wg1.Add(2)
 		go gls.processBranches(restClient, branchCh, now)
 		go gls.processMergeRequests(mergeCh, now)
 	}
