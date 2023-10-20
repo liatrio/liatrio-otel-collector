@@ -59,6 +59,45 @@ func TestGetPrCount(t *testing.T) {
 	}
 }
 
+func TestGetBranchCount(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		client        graphql.Client
+		expectedErr   error
+		expectedCount int
+	}{
+		{
+			desc:          "valid branch count",
+			client:        &mockClient{branchCount: 3},
+			expectedErr:   nil,
+			expectedCount: 3,
+		},
+		{
+			desc:          "error",
+			client:        &mockClient{err: true, errString: "this is an error"},
+			expectedErr:   errors.New("this is an error"),
+			expectedCount: 0,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+
+			count, err := ghs.getBranchCount(context.Background(), tc.client, "repo", "owner")
+
+			assert.Equal(t, tc.expectedCount, count)
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+		})
+	}
+}
+
 func TestGetNumPages100(t *testing.T) {
 	p := float64(100)
 	n := float64(375)
