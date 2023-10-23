@@ -30,53 +30,19 @@ func getRepoData(
 	return data, nil
 }
 
-type mockClient struct {
-	openPrCount   int
-	mergedPrCount int
-	err           bool
-	errString     string
-	prs           getPullRequestDataRepositoryPullRequestsPullRequestConnection
-}
-
-func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
-	switch op := req.OpName; op {
-	case "getPullRequestCount":
-		//for forcing arbitrary errors
-		if m.err {
-			return errors.New(m.errString)
-		}
-
-		r := resp.Data.(*getPullRequestCountResponse)
-		if len(req.Variables.(*__getPullRequestCountInput).States) == 0 {
-			return errors.New("no pull request state provided")
-		} else if req.Variables.(*__getPullRequestCountInput).States[0] == "OPEN" {
-			r.Repository.PullRequests.TotalCount = m.openPrCount
-		} else if req.Variables.(*__getPullRequestCountInput).States[0] == "MERGED" {
-			r.Repository.PullRequests.TotalCount = m.mergedPrCount
-		} else {
-			return errors.New("invalid pull request state")
-		}
-	case "getPullRequestData":
-		//for forcing arbitrary errors
-		if m.err {
-			return errors.New(m.errString)
-		}
-		r := resp.Data.(*getPullRequestDataResponse)
-		r.Repository.PullRequests = m.prs
-		// case "getBranchData":
-		// case "getBranchCount":
-		// case "getCommitData":
-		// case "getRepoDataBySearch":
-	}
-	return nil
-}
-
 func (ghs *githubScraper) getPrCount(ctx context.Context, client graphql.Client, repoName string, owner string, states []PullRequestState) (int, error) {
 	count, err := getPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, states)
 	if err != nil {
 		return 0, err
 	}
 	return count.Repository.PullRequests.TotalCount, nil
+}
+func (ghs *githubScraper) getBranchCount(ctx context.Context, client graphql.Client, repoName string, owner string) (int, error) {
+	count, err := getBranchCount(ctx, client, repoName, ghs.cfg.GitHubOrg)
+	if err != nil {
+		return 0, err
+	}
+	return count.Repository.Refs.TotalCount, nil
 }
 
 func getNumPages(p float64, n float64) int {
