@@ -291,7 +291,7 @@ func (ghs *githubScraper) getBranches(
 
 		bp, err := getNumBranchPages(ghs, ctx, client, repoName, now)
 		if err != nil {
-			ghs.logger.Sugar().Errorf("error getting total branch pages", zap.Error(err))
+			ghs.logger.Sugar().Errorf("error getting number of pages for branch data", zap.Error(err))
 		}
 
 		branches, err := getBranchInfo(ghs, ctx, client, repoName, ghs.cfg.GitHubOrg, bp, defaultBranch)
