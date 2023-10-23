@@ -66,8 +66,8 @@ func TestGetBranches(t *testing.T) {
 		},
 		{
 			desc:             "produce error in client",
-			client:           &mockClient{BranchNames: []string{"string1", "string2"}, RootRef: "rootref", err: true, errString: "An error has occured"},
-			expectedErr:      errors.New("An error has occured"),
+			client:           &mockClient{BranchNames: []string{"string1", "string2"}, RootRef: "rootref", err: true, errString: "An error has occurred"},
+			expectedErr:      errors.New("An error has occurred"),
 			expectedBranches: []string{"string1", "string2"},
 		},
 	}
