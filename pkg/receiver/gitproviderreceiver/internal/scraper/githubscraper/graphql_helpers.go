@@ -30,63 +30,6 @@ func getRepoData(
 	return data, nil
 }
 
-type mockClient struct {
-	openPrCount   int
-	mergedPrCount int
-	branchCount   int
-	err           bool
-	errString     string
-	prs           getPullRequestDataRepositoryPullRequestsPullRequestConnection
-	branchData    getBranchDataRepositoryRefsRefConnection
-}
-
-func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
-	switch op := req.OpName; op {
-	case "getPullRequestCount":
-		//for forcing arbitrary errors
-
-		r := resp.Data.(*getPullRequestCountResponse)
-		if len(req.Variables.(*__getPullRequestCountInput).States) == 0 {
-			return errors.New("no pull request state provided")
-		} else if req.Variables.(*__getPullRequestCountInput).States[0] == "OPEN" {
-			if m.err && m.openPrCount != 0 {
-				return errors.New(m.errString)
-			}
-			r.Repository.PullRequests.TotalCount = m.openPrCount
-		} else if req.Variables.(*__getPullRequestCountInput).States[0] == "MERGED" {
-			if m.err && m.mergedPrCount != 0 {
-				return errors.New(m.errString)
-			}
-			r.Repository.PullRequests.TotalCount = m.mergedPrCount
-		} else {
-			return errors.New("invalid pull request state")
-		}
-	case "getPullRequestData":
-		//for forcing arbitrary errors
-		if m.err {
-			return errors.New(m.errString)
-		}
-		r := resp.Data.(*getPullRequestDataResponse)
-		r.Repository.PullRequests = m.prs
-	case "getBranchCount":
-		//for forcing arbitrary errors
-		if m.err {
-			return errors.New(m.errString)
-		}
-		r := resp.Data.(*getBranchCountResponse)
-		r.Repository.Refs.TotalCount = m.branchCount
-	case "getBranchData":
-		if m.err {
-			return errors.New(m.errString)
-		}
-		r := resp.Data.(*getBranchDataResponse)
-		r.Repository.Refs = m.branchData
-		// case "getCommitData":
-		// case "getRepoDataBySearch":
-	}
-	return nil
-}
-
 func (ghs *githubScraper) getPrCount(ctx context.Context, client graphql.Client, repoName string, owner string, states []PullRequestState) (int, error) {
 	count, err := getPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, states)
 	if err != nil {
