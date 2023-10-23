@@ -10,6 +10,63 @@ import (
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
+type mockClient struct {
+	openPrCount   int
+	mergedPrCount int
+	branchCount   int
+	err           bool
+	errString     string
+	prs           getPullRequestDataRepositoryPullRequestsPullRequestConnection
+	branchData    getBranchDataRepositoryRefsRefConnection
+}
+
+func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
+	switch op := req.OpName; op {
+	case "getPullRequestCount":
+		//for forcing arbitrary errors
+
+		r := resp.Data.(*getPullRequestCountResponse)
+		if len(req.Variables.(*__getPullRequestCountInput).States) == 0 {
+			return errors.New("no pull request state provided")
+		} else if req.Variables.(*__getPullRequestCountInput).States[0] == "OPEN" {
+			if m.err && m.openPrCount != 0 {
+				return errors.New(m.errString)
+			}
+			r.Repository.PullRequests.TotalCount = m.openPrCount
+		} else if req.Variables.(*__getPullRequestCountInput).States[0] == "MERGED" {
+			if m.err && m.mergedPrCount != 0 {
+				return errors.New(m.errString)
+			}
+			r.Repository.PullRequests.TotalCount = m.mergedPrCount
+		} else {
+			return errors.New("invalid pull request state")
+		}
+	case "getPullRequestData":
+		//for forcing arbitrary errors
+		if m.err {
+			return errors.New(m.errString)
+		}
+		r := resp.Data.(*getPullRequestDataResponse)
+		r.Repository.PullRequests = m.prs
+	case "getBranchCount":
+		//for forcing arbitrary errors
+		if m.err {
+			return errors.New(m.errString)
+		}
+		r := resp.Data.(*getBranchCountResponse)
+		r.Repository.Refs.TotalCount = m.branchCount
+	case "getBranchData":
+		if m.err {
+			return errors.New(m.errString)
+		}
+		r := resp.Data.(*getBranchDataResponse)
+		r.Repository.Refs = m.branchData
+		// case "getCommitData":
+		// case "getRepoDataBySearch":
+	}
+	return nil
+}
+
 func TestGetPrCount(t *testing.T) {
 	testCases := []struct {
 		desc          string
@@ -48,6 +105,45 @@ func TestGetPrCount(t *testing.T) {
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 
 			count, err := ghs.getPrCount(context.Background(), tc.client, "repo", "owner", tc.state)
+
+			assert.Equal(t, tc.expectedCount, count)
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+		})
+	}
+}
+
+func TestGetBranchCount(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		client        graphql.Client
+		expectedErr   error
+		expectedCount int
+	}{
+		{
+			desc:          "valid branch count",
+			client:        &mockClient{branchCount: 3},
+			expectedErr:   nil,
+			expectedCount: 3,
+		},
+		{
+			desc:          "error",
+			client:        &mockClient{err: true, errString: "this is an error"},
+			expectedErr:   errors.New("this is an error"),
+			expectedCount: 0,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+
+			count, err := ghs.getBranchCount(context.Background(), tc.client, "repo", "owner")
 
 			assert.Equal(t, tc.expectedCount, count)
 			if tc.expectedErr == nil {
