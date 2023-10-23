@@ -40,8 +40,14 @@ func TestGetNumPrPages(t *testing.T) {
 			expectedPages: 2,
 		},
 		{
-			desc:          "error",
-			client:        &mockClient{err: true, errString: "this is an error"},
+			desc:          "error on open pr count",
+			client:        &mockClient{openPrCount: 10, err: true, errString: "this is an error"},
+			expectedErr:   errors.New("this is an error"),
+			expectedPages: 0,
+		},
+		{
+			desc:          "error on merged pr count",
+			client:        &mockClient{mergedPrCount: 10, err: true, errString: "this is an error"},
 			expectedErr:   errors.New("this is an error"),
 			expectedPages: 0,
 		},
@@ -53,7 +59,7 @@ func TestGetNumPrPages(t *testing.T) {
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 			now := pcommon.NewTimestampFromTime(time.Now())
-			pages, err := getNumPrPages(ghs, context.Background(), tc.client, "repo", "owner", now)
+			pages, err := getNumPrPages(ghs, context.Background(), tc.client, "repo", now)
 
 			assert.Equal(t, tc.expectedPages, pages)
 			if tc.expectedErr == nil {
@@ -61,6 +67,125 @@ func TestGetNumPrPages(t *testing.T) {
 			} else {
 				assert.EqualError(t, err, tc.expectedErr.Error())
 			}
+		})
+	}
+}
+
+func TestGetNumBranchPages(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		client        graphql.Client
+		expectedErr   error
+		expectedPages int
+	}{
+		{
+			desc:          "valid",
+			client:        &mockClient{branchCount: 10},
+			expectedErr:   nil,
+			expectedPages: 1,
+		},
+		{
+			desc:          "error",
+			client:        &mockClient{branchCount: 10, err: true, errString: "this is an error"},
+			expectedErr:   errors.New("this is an error"),
+			expectedPages: 0,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			now := pcommon.NewTimestampFromTime(time.Now())
+			pages, err := getNumBranchPages(ghs, context.Background(), tc.client, "repo", now)
+
+			assert.Equal(t, tc.expectedPages, pages)
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+		})
+	}
+}
+
+func TestGetBranchData(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		client              graphql.Client
+		expectedErr         error
+		branchPages         int
+		expectedBranchCount int
+	}{
+		{
+			desc: "valid",
+			client: &mockClient{
+				branchData: getBranchDataRepositoryRefsRefConnection{
+					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+						HasNextPage: true,
+					},
+					Nodes: []BranchNode{
+						{
+							Name: "main",
+						},
+						{
+							Name: "dev",
+						},
+						{
+							Name: "feature",
+						},
+					},
+				},
+			},
+			expectedErr:         nil,
+			branchPages:         2,
+			expectedBranchCount: 6,
+		},
+		{
+			desc: "no next page",
+			client: &mockClient{
+				branchData: getBranchDataRepositoryRefsRefConnection{
+					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+						HasNextPage: false,
+					},
+					Nodes: []BranchNode{
+						{
+							Name: "main",
+						},
+						{
+							Name: "dev",
+						},
+						{
+							Name: "feature",
+						},
+					},
+				},
+			},
+			expectedErr:         nil,
+			branchPages:         2, // 3 PRs per page but shouldnt move to next page
+			expectedBranchCount: 3,
+		},
+		{
+			desc:                "error",
+			client:              &mockClient{err: true, errString: "this is an error"},
+			expectedErr:         errors.New("this is an error"),
+			expectedBranchCount: 0,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			branches, err := getBranchInfo(ghs, context.Background(), tc.client, "repo", "owner", 2, "main")
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+			assert.Equal(t, tc.expectedBranchCount, len(branches))
 		})
 	}
 }
@@ -307,6 +432,182 @@ func TestGetPullRequests(t *testing.T) {
 				totalPrs += len(prs)
 			}
 			assert.Equal(t, tc.expectedPrCount, totalPrs)
+		})
+	}
+}
+func TestGetBranches(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		client              graphql.Client
+		repos               []SearchNodeRepository
+		expectedErr         error
+		expectedChannelLen  int
+		expectedBranchCount int
+	}{
+		{
+			desc: "valid",
+			client: &mockClient{
+				branchData: getBranchDataRepositoryRefsRefConnection{
+					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+						HasNextPage: true,
+					},
+					Nodes: []BranchNode{
+						{
+							Name: "main",
+						},
+						{
+							Name: "dev",
+						},
+						{
+							Name: "feature",
+						},
+					},
+				},
+				branchCount: 3,
+			},
+			repos: []SearchNodeRepository{
+				{
+					Name: "repo1",
+					DefaultBranchRef: SearchNodeDefaultBranchRef{
+						Name: "main",
+					},
+				},
+				{
+					Name: "repo2",
+					DefaultBranchRef: SearchNodeDefaultBranchRef{
+						Name: "main",
+					},
+				},
+				{
+					Name: "repo3",
+					DefaultBranchRef: SearchNodeDefaultBranchRef{
+						Name: "main",
+					},
+				},
+			},
+			expectedErr:         nil,
+			expectedBranchCount: 9, //3 repos, 1 page, 3 branches per page
+			expectedChannelLen:  3, //one per repo
+		},
+		{
+			desc: "three pages",
+			client: &mockClient{
+				branchData: getBranchDataRepositoryRefsRefConnection{
+					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+						HasNextPage: true,
+					},
+					Nodes: []BranchNode{
+						{
+							Name: "main",
+						},
+						{
+							Name: "dev",
+						},
+						{
+							Name: "feature",
+						},
+					},
+				},
+				branchCount: 110,
+			},
+			repos: []SearchNodeRepository{
+				{
+					Name: "repo1",
+					DefaultBranchRef: SearchNodeDefaultBranchRef{
+						Name: "main",
+					},
+				},
+				{
+					Name: "repo2",
+					DefaultBranchRef: SearchNodeDefaultBranchRef{
+						Name: "main",
+					},
+				},
+				{
+					Name: "repo3",
+					DefaultBranchRef: SearchNodeDefaultBranchRef{
+						Name: "main",
+					},
+				},
+			},
+			expectedErr:         nil,
+			expectedBranchCount: 27, //3 repos, 3 pages, 3 branches per page
+			expectedChannelLen:  3,  //only one page
+
+		},
+		{
+			desc: "three pages but no next page",
+			client: &mockClient{
+				branchData: getBranchDataRepositoryRefsRefConnection{
+					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+						HasNextPage: false,
+					},
+					Nodes: []BranchNode{
+						{
+							Name: "main",
+						},
+						{
+							Name: "dev",
+						},
+						{
+							Name: "feature",
+						},
+					},
+				},
+				branchCount: 110,
+			},
+			repos: []SearchNodeRepository{
+				{
+					Name: "repo1",
+					DefaultBranchRef: SearchNodeDefaultBranchRef{
+						Name: "main",
+					},
+				},
+				{
+					Name: "repo2",
+					DefaultBranchRef: SearchNodeDefaultBranchRef{
+						Name: "main",
+					},
+				},
+				{
+					Name: "repo3",
+					DefaultBranchRef: SearchNodeDefaultBranchRef{
+						Name: "main",
+					},
+				},
+			},
+			expectedErr:         nil,
+			expectedBranchCount: 9, //3 repos, 1 pages, 3 branches per page
+			expectedChannelLen:  3, //only one page
+
+		},
+		{
+			desc:                "error",
+			client:              &mockClient{err: true, errString: "this is an error"},
+			expectedErr:         errors.New("this is an error"),
+			expectedBranchCount: 0,
+			expectedChannelLen:  0,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			branchChan := make(chan []BranchNode, 20)
+			now := pcommon.NewTimestampFromTime(time.Now())
+			var wg sync.WaitGroup
+			wg.Add(1)
+			ghs.getBranches(context.Background(), tc.client, tc.repos, now, branchChan, &wg)
+			close(branchChan)
+			wg.Wait()
+			assert.Equal(t, tc.expectedChannelLen, len(branchChan))
+			var totalBranches int
+			for branches := range branchChan {
+				totalBranches += len(branches)
+			}
+			assert.Equal(t, tc.expectedBranchCount, totalBranches)
 		})
 	}
 }

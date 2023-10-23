@@ -17,4 +17,7 @@ type Config struct {
 	internal.ScraperConfig
 	// GitLabOrg is the name of the GitLab organization to scrape (gitlab scraper only)
 	GitLabOrg string `mapstructure:"gitlab_org"`
+
+	SearchTopic string `mapstructure:"search_topic"`
+	SearchQuery string `mapstructure:"search_query"`
 }
