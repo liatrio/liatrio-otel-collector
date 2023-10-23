@@ -1047,16 +1047,16 @@ func (v *getBranchDataRepositoryRefsRefConnection) GetPageInfo() getBranchDataRe
 type getBranchDataRepositoryRefsRefConnectionPageInfo struct {
 	// When paginating forwards, the cursor to continue.
 	EndCursor string `json:"endCursor"`
-	// When paginating backwards, the cursor to continue.
-	StartCursor string `json:"startCursor"`
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
 }
 
 // GetEndCursor returns getBranchDataRepositoryRefsRefConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
 func (v *getBranchDataRepositoryRefsRefConnectionPageInfo) GetEndCursor() string { return v.EndCursor }
 
-// GetStartCursor returns getBranchDataRepositoryRefsRefConnectionPageInfo.StartCursor, and is useful for accessing the field via an interface.
-func (v *getBranchDataRepositoryRefsRefConnectionPageInfo) GetStartCursor() string {
-	return v.StartCursor
+// GetHasNextPage returns getBranchDataRepositoryRefsRefConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *getBranchDataRepositoryRefsRefConnectionPageInfo) GetHasNextPage() bool {
+	return v.HasNextPage
 }
 
 // getBranchDataResponse is returned by getBranchData on success.
@@ -1444,7 +1444,7 @@ query getBranchData ($name: String!, $owner: String!, $branchFirst: Int!, $targe
 			}
 			pageInfo {
 				endCursor
-				startCursor
+				hasNextPage
 			}
 		}
 	}

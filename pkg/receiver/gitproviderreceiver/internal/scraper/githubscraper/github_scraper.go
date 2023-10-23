@@ -64,12 +64,59 @@ func newGitHubScraper(
 	}
 }
 
-func getNumPrPages(
+func getNumBranchPages(
+	ghs *githubScraper,
+	ctx context.Context,
+	client graphql.Client,
+	repoName string,
+	now pcommon.Timestamp,
+) (int, error) {
+	branchCount, err := ghs.getBranchCount(ctx, client, repoName, ghs.cfg.GitHubOrg)
+	if err != nil {
+		ghs.logger.Sugar().Errorf("error getting branch count", zap.Error(err))
+		return 0, err
+	}
+	ghs.logger.Sugar().Debugf("%v repo has %v branches", repoName, branchCount)
+
+	ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(branchCount), repoName)
+
+	bp := getNumPages(float64(50), float64(branchCount))
+	ghs.logger.Sugar().Debugf("branch pages: %v for repo %v", bp, repoName)
+	return bp, nil
+}
+
+func getBranchInfo(
 	ghs *githubScraper,
 	ctx context.Context,
 	client graphql.Client,
 	repoName string,
 	owner string,
+	branchPages int,
+	defaultBranch string,
+) ([]BranchNode, error) {
+	var branchCursor *string
+	var branches []BranchNode
+	for i := 0; i < branchPages; i++ {
+		r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, 50, defaultBranch, branchCursor)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
+			return nil, err
+		}
+
+		branches = append(branches, r.Repository.Refs.Nodes...)
+		branchCursor = &r.Repository.Refs.PageInfo.EndCursor
+		if !r.Repository.Refs.PageInfo.HasNextPage {
+			break
+		}
+	}
+	return branches, nil
+}
+
+func getNumPrPages(
+	ghs *githubScraper,
+	ctx context.Context,
+	client graphql.Client,
+	repoName string,
 	now pcommon.Timestamp,
 ) (int, error) {
 	prOpenCount, err := ghs.getPrCount(ctx, client, repoName, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateOpen})
@@ -134,7 +181,7 @@ func getPullRequests(
 
 		//var defaultBranch string
 
-		prPages, err := getNumPrPages(ghs, ctx, client, repoName, ghs.cfg.GitHubOrg, now)
+		prPages, err := getNumPrPages(ghs, ctx, client, repoName, now)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting total pr pages", zap.Error(err))
 		}
@@ -242,30 +289,19 @@ func (ghs *githubScraper) getBranches(
 		var repoName string = repo.Name
 		var defaultBranch string = repo.DefaultBranchRef.Name
 
-		var branchCursor *string
-		var branches []BranchNode
-		count, err := getBranchCount(ctx, client, repoName, ghs.cfg.GitHubOrg)
+		bp, err := getNumBranchPages(ghs, ctx, client, repoName, now)
 		if err != nil {
-			ghs.logger.Sugar().Errorf("error getting branch count", zap.Error(err))
+			ghs.logger.Sugar().Errorf("error getting number of pages for branch data", zap.Error(err))
 		}
-		ghs.logger.Sugar().Debugf("branch count: %v for repo %v", count.Repository.Refs.TotalCount, repoName)
 
-		ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(count.Repository.Refs.TotalCount), repoName)
-
-		bp := getNumPages(float64(50), float64(count.Repository.Refs.TotalCount))
-		ghs.logger.Sugar().Debugf("branch pages: %v for repo %v", bp, repoName)
-
-		for i := 0; i < bp; i++ {
-			r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, 50, defaultBranch, branchCursor)
-			if err != nil {
-				ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
-			}
-
-			branches = append(branches, r.Repository.Refs.Nodes...)
-
-			branchCursor = &r.Repository.Refs.PageInfo.EndCursor
+		branches, err := getBranchInfo(ghs, ctx, client, repoName, ghs.cfg.GitHubOrg, bp, defaultBranch)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting branch info", zap.Error(err))
 		}
-		branchCh <- branches
+
+		if branches != nil {
+			branchCh <- branches
+		}
 	}
 }
 

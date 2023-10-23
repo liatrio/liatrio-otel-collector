@@ -99,7 +99,7 @@ query getBranchData(
       }
       pageInfo {
         endCursor
-        startCursor
+        hasNextPage
       }
     }
   }
