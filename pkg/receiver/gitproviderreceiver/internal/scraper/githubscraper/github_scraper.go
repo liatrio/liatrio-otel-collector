@@ -76,7 +76,7 @@ func getNumBranchPages(
 		ghs.logger.Sugar().Errorf("error getting branch count", zap.Error(err))
 		return 0, err
 	}
-	ghs.logger.Sugar().Debugf("branch count: %v for repo %v", branchCount, repoName)
+	ghs.logger.Sugar().Debugf("%v repo has %v branches", repoName, branchCount)
 
 	ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(branchCount), repoName)
 
