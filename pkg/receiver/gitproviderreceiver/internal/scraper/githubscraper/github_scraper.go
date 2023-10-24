@@ -507,6 +507,11 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}()
 		}
 
+		//wait until all goroutines are finished
+		for i := 0; i < maxProcesses; i++ {
+			sem <- 1
+		}
+		close(sem)
 	}
 
 	return ghs.mb.Emit(), nil
