@@ -171,13 +171,12 @@ func getPullRequests(
 	now pcommon.Timestamp,
 ) ([]PullRequestNode, error) {
 
-	var repoName string = repo.Name
-	prPages, err := getNumPrPages(ghs, ctx, client, repoName, now)
+	prPages, err := getNumPrPages(ghs, ctx, client, repo.Name, now)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("error getting total pr pages", zap.Error(err))
 		return nil, err
 	}
-	pullRequests, err := getPrData(ghs, ctx, client, prPages, repoName, ghs.cfg.GitHubOrg)
+	pullRequests, err := getPrData(ghs, ctx, client, prPages, repo.Name, ghs.cfg.GitHubOrg)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("error getting pr data", zap.Error(err))
 		return nil, err
@@ -197,25 +196,24 @@ func processPullRequests(
 	pullRequests []PullRequestNode,
 ) {
 	for _, pr := range pullRequests {
-		repoName := pr.Repository.Name
 		if pr.Merged {
 			prMergedTime := pr.MergedAt
 			mergeAge := int64(prMergedTime.Sub(pr.CreatedAt).Hours())
-			ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, repoName, pr.HeadRefName)
+			ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, pr.Repository.Name, pr.HeadRefName)
 			//only exists if the pr is merged
 			if pr.MergeCommit.Deployments.TotalCount > 0 {
 				deploymentAgeUpperBound := pr.MergeCommit.Deployments.Nodes[0].CreatedAt
 				deploymentAge := int64(deploymentAgeUpperBound.Sub(pr.CreatedAt).Hours())
-				ghs.mb.RecordGitRepositoryPullRequestDeploymentTimeDataPoint(now, deploymentAge, repoName, pr.HeadRefName)
+				ghs.mb.RecordGitRepositoryPullRequestDeploymentTimeDataPoint(now, deploymentAge, pr.Repository.Name, pr.HeadRefName)
 			}
 		} else {
 			prAge := int64(now.AsTime().Sub(pr.CreatedAt).Hours())
-			ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, repoName, pr.HeadRefName)
+			ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, pr.Repository.Name, pr.HeadRefName)
 		}
 		if pr.Reviews.TotalCount > 0 {
 			approvalAgeUpperBound := pr.Reviews.Nodes[0].CreatedAt
 			approvalAge := int64(approvalAgeUpperBound.Sub(pr.CreatedAt).Hours())
-			ghs.mb.RecordGitRepositoryPullRequestApprovalTimeDataPoint(now, approvalAge, repoName, pr.HeadRefName)
+			ghs.mb.RecordGitRepositoryPullRequestApprovalTimeDataPoint(now, approvalAge, pr.Repository.Name, pr.HeadRefName)
 		}
 	}
 
@@ -273,16 +271,15 @@ func (ghs *githubScraper) getBranches(
 	now pcommon.Timestamp,
 ) ([]BranchNode, error) {
 
-	var repoName string = repo.Name
 	var defaultBranch string = repo.DefaultBranchRef.Name
 
-	bp, err := getNumBranchPages(ghs, ctx, client, repoName, now)
+	bp, err := getNumBranchPages(ghs, ctx, client, repo.Name, now)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("error getting number of pages for branch data", zap.Error(err))
 		return nil, err
 	}
 
-	branches, err := getBranchInfo(ghs, ctx, client, repoName, ghs.cfg.GitHubOrg, bp, defaultBranch)
+	branches, err := getBranchInfo(ghs, ctx, client, repo.Name, ghs.cfg.GitHubOrg, bp, defaultBranch)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("error getting branch info", zap.Error(err))
 		return nil, err
@@ -306,16 +303,15 @@ func (ghs *githubScraper) processBranches(
 		if branch.Name == branch.Repository.DefaultBranchRef.Name || branch.Compare.BehindBy == 0 {
 			continue
 		}
-		repoName := branch.Repository.Name
 		ghs.logger.Sugar().Debugf(
 			"default branch behind by: %d\n %s branch behind by: %d in repo: %s",
-			branch.Compare.BehindBy, branch.Name, branch.Compare.AheadBy, repoName)
+			branch.Compare.BehindBy, branch.Name, branch.Compare.AheadBy, branch.Repository.Name)
 
 		// Yes, this looks weird. The aheadby metric is referring to the number of commits the branch is AHEAD OF the
 		// default branch, which in the context of the query is the behind by value. See the above below comment about
 		// BehindBy vs AheadBy.
-		ghs.mb.RecordGitRepositoryBranchCommitAheadbyCountDataPoint(now, int64(branch.Compare.BehindBy), repoName, branch.Name)
-		ghs.mb.RecordGitRepositoryBranchCommitBehindbyCountDataPoint(now, int64(branch.Compare.AheadBy), repoName, branch.Name)
+		ghs.mb.RecordGitRepositoryBranchCommitAheadbyCountDataPoint(now, int64(branch.Compare.BehindBy), branch.Repository.Name, branch.Name)
+		ghs.mb.RecordGitRepositoryBranchCommitBehindbyCountDataPoint(now, int64(branch.Compare.AheadBy), branch.Repository.Name, branch.Name)
 
 		// We're using BehindBy here because we're comparing against the target
 		// branch, which is the default branch. In essence the response is saying
@@ -324,7 +320,7 @@ func (ghs *githubScraper) processBranches(
 		// the default branch. Doing it this way involves less queries because
 		// we don't have to know the queried branch name ahead of time.
 		cp := getNumPages(float64(100), float64(branch.Compare.BehindBy))
-		ghs.processCommits(ctx, client, repoName, now, cp, branch)
+		ghs.processCommits(ctx, client, branch.Repository.Name, now, cp, branch)
 	}
 
 }
@@ -352,9 +348,7 @@ func (ghs *githubScraper) getContributorCount(
 		}
 	}
 
-	var repoName string = repo.Name
-
-	contribs, _, err := gc.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, repoName, nil)
+	contribs, _, err := gc.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, repo.Name, nil)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
 		return 0, err
