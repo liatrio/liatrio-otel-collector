@@ -511,7 +511,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		for i := 0; i < maxProcesses; i++ {
 			sem <- 1
 		}
-		close(sem)
 	}
 
 	return ghs.mb.Emit(), nil
