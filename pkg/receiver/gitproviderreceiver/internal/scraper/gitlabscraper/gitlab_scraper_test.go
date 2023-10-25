@@ -32,14 +32,13 @@ func TestNewGitLabScraper(t *testing.T) {
  * Mocks
  */
 type mockClient struct {
-	BranchNames     []string
-	MergeRequests   getMergeRequestsProjectMergeRequestsMergeRequestConnection
-	RootRef         string
-	err             bool
-	errString       string
-	maxPages        int
-	curPage         int
-	expectedNodeLen int
+	BranchNames   []string
+	MergeRequests getMergeRequestsProjectMergeRequestsMergeRequestConnection
+	RootRef       string
+	err           bool
+	errString     string
+	maxPages      int
+	curPage       int
 }
 
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
