@@ -6,7 +6,6 @@ package gitlabscraper
 import (
 	"context"
 	"errors"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -68,57 +67,6 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 }
 
 /*
- *Testing for getBranches
- */
-func TestGetBranches(t *testing.T) {
-	testCases := []struct {
-		desc             string
-		client           graphql.Client
-		expectedErr      error
-		expectedBranches []string
-	}{
-		{
-			desc:             "valid client",
-			client:           &mockClient{BranchNames: []string{"string1", "string2"}, RootRef: "rootref"},
-			expectedErr:      nil,
-			expectedBranches: []string{"string1", "string2"},
-		},
-		{
-			desc:             "produce error in client",
-			client:           &mockClient{BranchNames: []string{"string1", "string2"}, RootRef: "rootref", err: true, errString: "An error has occurred"},
-			expectedErr:      errors.New("An error has occurred"),
-			expectedBranches: []string{"string1", "string2"},
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
-			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
-
-			var wg sync.WaitGroup
-			ch := make(chan projectData, 1)
-
-			wg.Add(1)
-			gls.getBranches(context.Background(), tc.client, "silly-string", ch, &wg)
-			wg.Wait()
-			close(ch)
-
-			if tc.expectedErr != nil {
-				assert.Equal(t, len(ch), 0)
-			} else {
-				assert.Equal(t, len(ch), 1)
-				for project := range ch {
-					assert.Equal(t, tc.expectedBranches, project.Branches)
-				}
-			}
-
-		})
-	}
-}
-
-/*
  * Testing for getMergeRequests
  */
 func TestGetMergeRequests(t *testing.T) {
@@ -135,9 +83,10 @@ func TestGetMergeRequests(t *testing.T) {
 			expectedMergeRequestCount: 0,
 		},
 		{
-			desc:        "produce error in client",
-			client:      &mockClient{err: true, errString: "An error has occurred"},
-			expectedErr: errors.New("An error has occurred"),
+			desc:                      "produce error in client",
+			client:                    &mockClient{err: true, errString: "An error has occurred"},
+			expectedErr:               errors.New("An error has occurred"),
+			expectedMergeRequestCount: 0,
 		},
 		{
 			desc: "valid mergeRequestData",
@@ -163,6 +112,30 @@ func TestGetMergeRequests(t *testing.T) {
 			expectedErr:               nil,
 			expectedMergeRequestCount: 3,
 		},
+		{
+			desc: "valid mergeRequestData",
+			client: &mockClient{
+				maxPages: 5,
+				MergeRequests: getMergeRequestsProjectMergeRequestsMergeRequestConnection{
+					PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+						HasNextPage: true,
+					},
+					Nodes: []MergeRequestNode{
+						{
+							SourceBranch: "main",
+						},
+						{
+							SourceBranch: "dev",
+						},
+						{
+							SourceBranch: "feature",
+						},
+					},
+				},
+			},
+			expectedErr:               nil,
+			expectedMergeRequestCount: 15, // 5 pages * 3 merge requests
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
@@ -172,21 +145,10 @@ func TestGetMergeRequests(t *testing.T) {
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
 			const state MergeRequestState = "merged"
 
-			var wg sync.WaitGroup
-			ch := make(chan []MergeRequestNode, 1)
+			mergeRequestData, err := gls.getMergeRequests(context.Background(), tc.client, "projectPath", state)
 
-			wg.Add(1)
-			gls.getMergeRequests(context.Background(), tc.client, "projectPath", state, ch, &wg)
-			wg.Wait()
-			close(ch)
-
-			assert.Equal(t, len(ch), 1)
-
-			if tc.expectedErr == nil {
-				for data := range ch {
-					assert.Equal(t, len(data), tc.expectedMergeRequestCount)
-				}
-			}
+			assert.Equal(t, tc.expectedMergeRequestCount, len(mergeRequestData))
+			assert.Equal(t, tc.expectedErr, err)
 		})
 	}
 }
