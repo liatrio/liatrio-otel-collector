@@ -42,21 +42,18 @@ type mockClient struct {
 }
 
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
-	switch op := req.OpName; op {
-	case "getBranchNames":
-		if m.err {
-			return errors.New(m.errString)
-		}
+	if m.err {
+		return errors.New(m.errString)
+	}
 
+	switch op := req.OpName; op {
+
+	case "getBranchNames":
 		r := resp.Data.(*getBranchNamesResponse)
 		r.Project.Repository.BranchNames = m.BranchNames
 		r.Project.Repository.RootRef = m.RootRef
 
 	case "getMergeRequests":
-		if m.err {
-			return errors.New(m.errString)
-		}
-
 		m.curPage++
 
 		if m.curPage == m.maxPages {
@@ -66,6 +63,7 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 		r := resp.Data.(*getMergeRequestsResponse)
 		r.Project.MergeRequests = m.MergeRequests
 	}
+
 	return nil
 }
 
@@ -125,16 +123,16 @@ func TestGetBranches(t *testing.T) {
  */
 func TestGetMergeRequests(t *testing.T) {
 	testCases := []struct {
-		desc            string
-		client          graphql.Client
-		expectedErr     error
-		expectedNodeLen int
+		desc                      string
+		client                    graphql.Client
+		expectedErr               error
+		expectedMergeRequestCount int
 	}{
 		{
-			desc:            "empty mergeRequestData",
-			client:          &mockClient{},
-			expectedErr:     nil,
-			expectedNodeLen: 0,
+			desc:                      "empty mergeRequestData",
+			client:                    &mockClient{},
+			expectedErr:               nil,
+			expectedMergeRequestCount: 0,
 		},
 		{
 			desc:        "produce error in client",
@@ -162,8 +160,8 @@ func TestGetMergeRequests(t *testing.T) {
 					},
 				},
 			},
-			expectedErr:     nil,
-			expectedNodeLen: 3,
+			expectedErr:               nil,
+			expectedMergeRequestCount: 3,
 		},
 	}
 	for _, tc := range testCases {
@@ -182,12 +180,11 @@ func TestGetMergeRequests(t *testing.T) {
 			wg.Wait()
 			close(ch)
 
-			if tc.expectedErr != nil {
-				assert.Equal(t, len(ch), 1)
-			} else {
-				assert.Equal(t, len(ch), 1)
+			assert.Equal(t, len(ch), 1)
+
+			if tc.expectedErr == nil {
 				for data := range ch {
-					assert.Equal(t, len(data), tc.expectedNodeLen)
+					assert.Equal(t, len(data), tc.expectedMergeRequestCount)
 				}
 			}
 		})
