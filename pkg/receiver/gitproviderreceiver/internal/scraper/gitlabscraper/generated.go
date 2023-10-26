@@ -23,8 +23,6 @@ type MergeRequestNode struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// Timestamp of when the merge request was merged, null if not merged.
 	MergedAt time.Time `json:"mergedAt"`
-	// Alias for target_project.
-	Project MergeRequestNodeProject `json:"project"`
 	// Summary of which files were changed in this merge request.
 	DiffStatsSummary MergeRequestNodeDiffStatsSummary `json:"diffStatsSummary"`
 }
@@ -47,9 +45,6 @@ func (v *MergeRequestNode) GetCreatedAt() time.Time { return v.CreatedAt }
 // GetMergedAt returns MergeRequestNode.MergedAt, and is useful for accessing the field via an interface.
 func (v *MergeRequestNode) GetMergedAt() time.Time { return v.MergedAt }
 
-// GetProject returns MergeRequestNode.Project, and is useful for accessing the field via an interface.
-func (v *MergeRequestNode) GetProject() MergeRequestNodeProject { return v.Project }
-
 // GetDiffStatsSummary returns MergeRequestNode.DiffStatsSummary, and is useful for accessing the field via an interface.
 func (v *MergeRequestNode) GetDiffStatsSummary() MergeRequestNodeDiffStatsSummary {
 	return v.DiffStatsSummary
@@ -71,15 +66,6 @@ func (v *MergeRequestNodeDiffStatsSummary) GetAdditions() int { return v.Additio
 
 // GetDeletions returns MergeRequestNodeDiffStatsSummary.Deletions, and is useful for accessing the field via an interface.
 func (v *MergeRequestNodeDiffStatsSummary) GetDeletions() int { return v.Deletions }
-
-// MergeRequestNodeProject includes the requested fields of the GraphQL type Project.
-type MergeRequestNodeProject struct {
-	// Full path of the project.
-	FullPath string `json:"fullPath"`
-}
-
-// GetFullPath returns MergeRequestNodeProject.FullPath, and is useful for accessing the field via an interface.
-func (v *MergeRequestNodeProject) GetFullPath() string { return v.FullPath }
 
 // State of a GitLab merge request
 type MergeRequestState string
@@ -496,9 +482,6 @@ query getMergeRequests ($fullPath: ID!, $after: String, $state: MergeRequestStat
 				targetBranch
 				createdAt
 				mergedAt
-				project {
-					fullPath
-				}
 				diffStatsSummary {
 					additions
 					deletions
