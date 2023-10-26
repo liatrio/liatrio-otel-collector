@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
@@ -61,34 +60,26 @@ type gitlabProject struct {
 	LastActivityAt time.Time
 }
 
-type projectData struct {
-	ProjectPath   string
-	DefaultBranch string
-	Branches      []string
-}
+func (gls *gitlabScraper) processBranches(client *gitlab.Client, branches *getBranchNamesProjectRepository, projectPath string, now pcommon.Timestamp) {
+	gls.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(branches.BranchNames)), projectPath)
+	gls.logger.Sugar().Debugf("%s branch count: %v", projectPath, int64(len(branches.BranchNames)))
 
-// Returns a struct with the project path and an array of branch names via the given channel.
-//
-// The max number of branch names currently returned is 100,000 since the GitLab API will let us get
-// as much as we want but it will take a long time to get all the branches. The biggest repo we
-// found was a GitLab repo with just over 100,000 branches which is an extreme edge case which we
-// believe is not worth supporting.
-func (gls *gitlabScraper) getBranches(
-	ctx context.Context,
-	graphClient graphql.Client,
-	projectPath string,
-	ch chan projectData,
-	waitGroup *sync.WaitGroup,
-) {
-	defer waitGroup.Done()
+	for _, branch := range branches.BranchNames {
+		if branch == branches.RootRef {
+			continue
+		}
 
-	branches, err := getBranchNames(ctx, graphClient, projectPath)
-	if err != nil {
-		gls.logger.Sugar().Errorf("error: %v", err)
-		return
+		commit, err := gls.getInitialCommit(client, projectPath, branches.RootRef, branch)
+		if err != nil {
+			gls.logger.Sugar().Errorf("error: %v", err)
+		}
+
+		if commit != nil {
+			branchAge := time.Since(*commit.CreatedAt).Hours()
+			gls.logger.Sugar().Debugf("%v age: %v hours, commit name: %s", branch, branchAge, commit.Title)
+			gls.mb.RecordGitRepositoryBranchTimeDataPoint(now, int64(branchAge), projectPath, branch)
+		}
 	}
-
-	ch <- projectData{ProjectPath: projectPath, DefaultBranch: branches.Project.Repository.RootRef, Branches: branches.Project.Repository.BranchNames}
 }
 
 func (gls *gitlabScraper) getMergeRequests(
@@ -96,34 +87,45 @@ func (gls *gitlabScraper) getMergeRequests(
 	graphClient graphql.Client,
 	projectPath string,
 	state MergeRequestState,
-	ch chan []MergeRequestNode,
-	waitGroup *sync.WaitGroup,
-) {
+) ([]MergeRequestNode, error) {
 	var mergeRequestData []MergeRequestNode
 	var mrCursor *string
-
-	defer waitGroup.Done()
 
 	for hasNextPage := true; hasNextPage; {
 		// Get the next page of data
 		mr, err := getMergeRequests(ctx, graphClient, projectPath, mrCursor, state)
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
+			return nil, err
 		}
-
 		if len(mr.Project.MergeRequests.Nodes) == 0 {
 			break
 		}
-		// Check if there is a next page
-		hasNextPage = mr.Project.MergeRequests.PageInfo.HasNextPage
 
-		// Set the cursor to the end cursor of the current page
 		mrCursor = &mr.Project.MergeRequests.PageInfo.EndCursor
-
+		hasNextPage = mr.Project.MergeRequests.PageInfo.HasNextPage
 		mergeRequestData = append(mergeRequestData, mr.Project.MergeRequests.Nodes...)
 	}
 
-	ch <- mergeRequestData
+	return mergeRequestData, nil
+}
+
+func (gls *gitlabScraper) processMergeRequests(client *gitlab.Client, mrs []MergeRequestNode, projectPath string, now pcommon.Timestamp) {
+	for _, mr := range mrs {
+		gls.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(mr.DiffStatsSummary.Additions), projectPath, mr.SourceBranch)
+		gls.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(mr.DiffStatsSummary.Deletions), projectPath, mr.SourceBranch)
+
+		// IsZero() tells us if the time is or isnt  January 1, year 1, 00:00:00 UTC, which is what null graphql date values get returned as in Go
+		if mr.MergedAt.IsZero() {
+			mrAge := int64(time.Since(mr.CreatedAt).Hours())
+			gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, projectPath, mr.SourceBranch)
+			gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", projectPath, mr.SourceBranch, mrAge)
+		} else {
+			mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Hours())
+			gls.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergedAge, projectPath, mr.SourceBranch)
+			gls.logger.Sugar().Debugf("%s merge request for branch %v, merged age: %v", projectPath, mr.SourceBranch, mergedAge)
+		}
+	}
 }
 
 // Scrape the GitLab GraphQL API for the various metrics.
@@ -216,80 +218,48 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}
 	}
 
-	var wg1 sync.WaitGroup
-	var wg2 sync.WaitGroup
-
-	branchCh := make(chan projectData)
-
+	var maxProcesses int = 3
+	sem := make(chan int, maxProcesses)
 	// TODO: Must account for when there are more than 100,000 branch names in a project.
 	for _, project := range projectList {
-		wg1.Add(1)
-
+		sem <- 1
 		go func(project gitlabProject) {
-			gls.getBranches(ctx, graphClient, project.Path, branchCh, &wg1)
+			branches, err := gls.getBranchNames(ctx, graphClient, project.Path)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error getting branches", zap.Error(err))
+				<-sem
+			}
+			if branches != nil {
+				gls.processBranches(restClient, branches, project.Path, now)
+			}
+			<-sem
 		}(project)
 	}
-
-	go func() {
-		wg1.Wait()
-		close(branchCh)
-	}()
-
-	mergeCh := make(chan []MergeRequestNode)
 
 	for _, project := range projectList {
-		wg2.Add(2)
-
+		sem <- 1
 		go func(project gitlabProject) {
-			gls.getMergeRequests(ctx, graphClient, project.Path, MergeRequestStateOpened, mergeCh, &wg2)
-			gls.getMergeRequests(ctx, graphClient, project.Path, MergeRequestStateMerged, mergeCh, &wg2)
+			openMrs, err := gls.getMergeRequests(ctx, graphClient, project.Path, MergeRequestStateOpened)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error getting open merge requests", zap.Error(err))
+				<-sem
+			}
+			mergedMrs, err := gls.getMergeRequests(ctx, graphClient, project.Path, MergeRequestStateMerged)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error getting merged merge requests", zap.Error(err))
+				<-sem
+			}
+			if openMrs != nil || mergedMrs != nil {
+				mrs := append(openMrs, mergedMrs...)
+				gls.processMergeRequests(restClient, mrs, project.Path, now)
+			}
+			<-sem
 		}(project)
 	}
 
-	go func() {
-		wg2.Wait()
-		close(mergeCh)
-	}()
-
-	for proj := range branchCh {
-		gls.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(proj.Branches)), proj.ProjectPath)
-		gls.logger.Sugar().Debugf("%s branch count: %v", proj.ProjectPath, int64(len(proj.Branches)))
-
-		for _, branch := range proj.Branches {
-			if branch == proj.DefaultBranch {
-				continue
-			}
-
-			diff, _, err := restClient.Repositories.Compare(proj.ProjectPath, &gitlab.CompareOptions{From: &proj.DefaultBranch, To: gitlab.String(branch)})
-			if err != nil {
-				gls.logger.Sugar().Errorf("error: %v", err)
-			}
-
-			if len(diff.Commits) != 0 {
-				branchAge := time.Since(*diff.Commits[0].CreatedAt).Hours()
-				gls.logger.Sugar().Debugf("%v age: %v hours, commit name: %s", branch, branchAge, diff.Commits[0].Title)
-				gls.mb.RecordGitRepositoryBranchTimeDataPoint(now, int64(branchAge), proj.ProjectPath, branch)
-			}
-		}
-	}
-
-	// Handling the merge request data
-	for mrs := range mergeCh {
-		for _, mr := range mrs {
-			gls.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(mr.DiffStatsSummary.Additions), mr.Project.FullPath, mr.SourceBranch)
-			gls.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(mr.DiffStatsSummary.Deletions), mr.Project.FullPath, mr.SourceBranch)
-
-			// IsZero() tells us if the time is or isnt  January 1, year 1, 00:00:00 UTC, which is what null graphql date values get returned as in Go
-			if mr.MergedAt.IsZero() {
-				mrAge := int64(time.Since(mr.CreatedAt).Hours())
-				gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, mr.Project.FullPath, mr.SourceBranch)
-				gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", mr.Project.FullPath, mr.SourceBranch, mrAge)
-			} else {
-				mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Hours())
-				gls.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergedAge, mr.Project.FullPath, mr.SourceBranch)
-				gls.logger.Sugar().Debugf("%s merge request for branch %v, merged age: %v", mr.Project.FullPath, mr.SourceBranch, mergedAge)
-			}
-		}
+	//wait until all goroutines are finished
+	for i := 0; i < maxProcesses; i++ {
+		sem <- 1
 	}
 
 	// record repository count metric
