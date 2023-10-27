@@ -247,10 +247,9 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			if err != nil {
 				gls.logger.Sugar().Errorf("error getting branches", zap.Error(err))
 				<-sem
+				return
 			}
-			if branches != nil {
-				gls.processBranches(restClient, branches, project.Path, now)
-			}
+			gls.processBranches(restClient, branches, project.Path, now)
 			<-sem
 		}(project)
 	}
@@ -261,6 +260,8 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			mrs, err := gls.getCombinedMergeRequests(ctx, graphClient, project.Path)
 			if err != nil {
 				gls.logger.Sugar().Errorf("error getting merge requests", zap.Error(err))
+				<-sem
+				return
 			}
 			gls.processMergeRequests(restClient, mrs, project.Path, now)
 			<-sem
