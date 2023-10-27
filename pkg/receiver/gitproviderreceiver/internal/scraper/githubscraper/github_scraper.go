@@ -324,15 +324,22 @@ func (ghs *githubScraper) getContributorCount(
 	repo SearchNodeRepository,
 	now pcommon.Timestamp,
 ) (int, error) {
+	var err error
+
+	// GitHub Free URL : https://api.github.com/octocat
+	// https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api?apiVersion=2022-11-28
+	// Already managed by Client.initialize(...) with http(s)://HOSTNAME
+	// https://github.com/google/go-github/blob/master/github/github.go#L33
+	// https://github.com/google/go-github/blob/master/github/github.go#L386
 	gc := github.NewClient(ghs.client)
 
+	// Enable the ability to override the endpoint for self-hosted github instances
 	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
-
-		restCURL, err := url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "/")
-		if err != nil {
-			ghs.logger.Sugar().Errorf("error: %v", err)
-			return 0, err
-		}
+		// GitHub Enterprise URL (ghe) : http(s)://HOSTNAME/api/v3/octocat
+		// https://docs.github.com/en/enterprise-server@3.8/rest/guides/getting-started-with-the-rest-api#making-a-request
+		// Already Managed by Client.WithEnterpriseURLs(...) with http(s)://HOSTNAME
+		// https://github.com/google/go-github/blob/master/github/github.go#L351
+		restCURL := ghs.cfg.HTTPClientSettings.Endpoint
 
 		gc, err = github.NewEnterpriseClient(restCURL, restCURL, ghs.client)
 		if err != nil {
@@ -373,12 +380,16 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	// using genqlient during the refactor.
 
 	// Enable the ability to override the endpoint for self-hosted github instances
+	// GitHub Free URL : https://api.github.com/graphql
+	// https://docs.github.com/en/graphql/guides/forming-calls-with-graphql#the-graphql-endpoint
 	graphCURL := "https://api.github.com/graphql"
 
 	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
 		var err error
 
-		graphCURL, err = url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "graphql")
+		// GitHub Enterprise (ghe) URL : http(s)://HOSTNAME/api/graphql
+		// https://docs.github.com/en/enterprise-server@3.8/graphql/guides/forming-calls-with-graphql#the-graphql-endpoint
+		graphCURL, err = url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "api/graphql")
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error: %v", err)
 		}
