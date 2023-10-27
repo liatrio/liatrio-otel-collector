@@ -15,6 +15,7 @@ type mockClient struct {
 	mergedPrCount int
 	branchCount   int
 	err           bool
+	err2          bool
 	errString     string
 	prs           getPullRequestDataRepositoryPullRequestsPullRequestConnection
 	branchData    getBranchDataRepositoryRefsRefConnection
@@ -43,7 +44,7 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 		}
 	case "getPullRequestData":
 		//for forcing arbitrary errors
-		if m.err {
+		if m.err2 {
 			return errors.New(m.errString)
 		}
 		r := resp.Data.(*getPullRequestDataResponse)
@@ -56,7 +57,7 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 		r := resp.Data.(*getBranchCountResponse)
 		r.Repository.Refs.TotalCount = m.branchCount
 	case "getBranchData":
-		if m.err {
+		if m.err2 {
 			return errors.New(m.errString)
 		}
 		r := resp.Data.(*getBranchDataResponse)

@@ -182,10 +182,7 @@ func getPullRequests(
 		return nil, err
 	}
 
-	if pullRequests != nil {
-		return pullRequests, nil
-	}
-	return nil, nil
+	return pullRequests, nil
 }
 
 func processPullRequests(
@@ -285,10 +282,7 @@ func (ghs *githubScraper) getBranches(
 		return nil, err
 	}
 
-	if branches != nil {
-		return branches, nil
-	}
-	return nil, nil
+	return branches, nil
 
 }
 
@@ -327,7 +321,6 @@ func (ghs *githubScraper) processBranches(
 
 func (ghs *githubScraper) getContributorCount(
 	ctx context.Context,
-	client graphql.Client,
 	repo SearchNodeRepository,
 	now pcommon.Timestamp,
 ) (int, error) {
@@ -497,7 +490,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			i := i
 			sem <- 1
 			go func() {
-				contribCount, err := ghs.getContributorCount(ctx, genClient, searchRepos[i], now)
+				contribCount, err := ghs.getContributorCount(ctx, searchRepos[i], now)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
 				}
