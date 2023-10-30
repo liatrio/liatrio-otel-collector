@@ -25,24 +25,37 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for gitprovider metrics.
 type MetricsConfig struct {
+	GitRepositoryBranchCommitAheadbyCount  MetricConfig `mapstructure:"git.repository.branch.commit.aheadby.count"`
+	GitRepositoryBranchCommitBehindbyCount MetricConfig `mapstructure:"git.repository.branch.commit.behindby.count"`
 	GitRepositoryBranchCount               MetricConfig `mapstructure:"git.repository.branch.count"`
-	GitRepositoryBranchDiff                MetricConfig `mapstructure:"git.repository.branch.diff"`
+	GitRepositoryBranchLineAdditionCount   MetricConfig `mapstructure:"git.repository.branch.line.addition.count"`
+	GitRepositoryBranchLineDeletionCount   MetricConfig `mapstructure:"git.repository.branch.line.deletion.count"`
 	GitRepositoryBranchTime                MetricConfig `mapstructure:"git.repository.branch.time"`
 	GitRepositoryContributorCount          MetricConfig `mapstructure:"git.repository.contributor.count"`
 	GitRepositoryCount                     MetricConfig `mapstructure:"git.repository.count"`
 	GitRepositoryPullRequestApprovalTime   MetricConfig `mapstructure:"git.repository.pull_request.approval.time"`
-	GitRepositoryPullRequestCount          MetricConfig `mapstructure:"git.repository.pull_request.count"`
 	GitRepositoryPullRequestDeploymentTime MetricConfig `mapstructure:"git.repository.pull_request.deployment.time"`
 	GitRepositoryPullRequestMergeTime      MetricConfig `mapstructure:"git.repository.pull_request.merge.time"`
+	GitRepositoryPullRequestMergedCount    MetricConfig `mapstructure:"git.repository.pull_request.merged.count"`
+	GitRepositoryPullRequestOpenCount      MetricConfig `mapstructure:"git.repository.pull_request.open.count"`
 	GitRepositoryPullRequestTime           MetricConfig `mapstructure:"git.repository.pull_request.time"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
+		GitRepositoryBranchCommitAheadbyCount: MetricConfig{
+			Enabled: true,
+		},
+		GitRepositoryBranchCommitBehindbyCount: MetricConfig{
+			Enabled: true,
+		},
 		GitRepositoryBranchCount: MetricConfig{
 			Enabled: true,
 		},
-		GitRepositoryBranchDiff: MetricConfig{
+		GitRepositoryBranchLineAdditionCount: MetricConfig{
+			Enabled: true,
+		},
+		GitRepositoryBranchLineDeletionCount: MetricConfig{
 			Enabled: true,
 		},
 		GitRepositoryBranchTime: MetricConfig{
@@ -57,13 +70,16 @@ func DefaultMetricsConfig() MetricsConfig {
 		GitRepositoryPullRequestApprovalTime: MetricConfig{
 			Enabled: true,
 		},
-		GitRepositoryPullRequestCount: MetricConfig{
-			Enabled: true,
-		},
 		GitRepositoryPullRequestDeploymentTime: MetricConfig{
 			Enabled: true,
 		},
 		GitRepositoryPullRequestMergeTime: MetricConfig{
+			Enabled: true,
+		},
+		GitRepositoryPullRequestMergedCount: MetricConfig{
+			Enabled: true,
+		},
+		GitRepositoryPullRequestOpenCount: MetricConfig{
 			Enabled: true,
 		},
 		GitRepositoryPullRequestTime: MetricConfig{

@@ -10,15 +10,13 @@ query getRepoDataBySearch(
     after: $repoCursor
   ) {
     repositoryCount
-    edges {
-      # @genqlient(typename: "SearchNode")
-      node {
-        ... on Repository {
-          id
+    # @genqlient(typename: "SearchNode")
+    nodes {
+      ... on Repository {
+        id
+        name
+        defaultBranchRef {
           name
-          defaultBranchRef {
-            name
-          }
         }
       }
     }
@@ -58,6 +56,8 @@ query getCommitData(
               edges {
                 node {
                   committedDate
+                  additions
+                  deletions
                 }
               }
               pageInfo {
@@ -90,10 +90,16 @@ query getBranchData(
           aheadBy
           behindBy
         }
+        repository{
+          name
+          defaultBranchRef {
+            name
+          }
+        }
       }
       pageInfo {
         endCursor
-        startCursor
+        hasNextPage
       }
     }
   }
@@ -151,6 +157,9 @@ query getPullRequestData(
               createdAt
             }
           }
+        }
+        repository{
+          name
         }
       }
       pageInfo {

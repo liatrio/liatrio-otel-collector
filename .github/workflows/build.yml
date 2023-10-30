@@ -15,7 +15,7 @@ jobs:
         name: lint
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   fetch-depth: 0
 
@@ -56,7 +56,7 @@ jobs:
             group: bigger
         steps:
             - name: Check out code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                   fetch-depth: 0
 
@@ -67,13 +67,13 @@ jobs:
                   cache: false
 
             - name: Set up QEMU
-              uses: docker/setup-qemu-action@v2
+              uses: docker/setup-qemu-action@v3
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v2
+              uses: docker/setup-buildx-action@v3
 
             - name: Run GoReleaser
-              uses: goreleaser/goreleaser-action@v4
+              uses: goreleaser/goreleaser-action@v5
               if: steps.cache.outputs.cache-hit != 'true'
               with:
                   distribution: goreleaser-pro
@@ -91,7 +91,7 @@ jobs:
         name: test
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   fetch-depth: 0
 
@@ -103,6 +103,9 @@ jobs:
 
             - name: Make test-all
               run: make test-all
+
+            - name: Upload coverage to Codecov
+              uses: codecov/codecov-action@v3
 
     go-semantic-release:
         if: ${{ github.ref == 'refs/heads/main' }}

@@ -11,6 +11,7 @@ endif
 
 #GENQLIENT_DIRS = $(shell find . -type f -name 'genqlient.yaml' -exec dirname {} \;)
 GENQLIENT_DIRS = $(shell find . -type f -name 'genqlient.yaml' -exec dirname {} \;)
+METAGEN_DIRS = $(shell find . -type f -name 'documentation.md' -exec dirname {} \;)
 
 # SRC_ROOT is the top of the source tree.
 SRC_ROOT := $(shell git rev-parse --show-toplevel)
@@ -30,7 +31,7 @@ metagen:
 
 .PHONY: test
 test:
-	go test -v ./...
+	go test -v ./... -coverprofile=coverage.out -covermode=atomic
 
 .PHONY: fmt
 fmt:

@@ -3,45 +3,50 @@ dist:
     name: otelcol-custom
     module: github.com/liatrio/liatrio-otel-collector
     description: Basic OTel Collector distribution for Developers
-    otelcol_version: 0.83.0
+    otelcol_version: 0.85.0
     output_path: ./build
     debug_compilation: false
 
 extensions:
-    - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.83.0
-    - gomod: go.opentelemetry.io/collector/extension/ballastextension v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.83.0
+    - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.85.0
+    - gomod: go.opentelemetry.io/collector/extension/ballastextension v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/sigv4authextension v0.85.0
 
 exporters:
-    - gomod: go.opentelemetry.io/collector/exporter/loggingexporter v0.83.0
-    - gomod: go.opentelemetry.io/collector/exporter/otlphttpexporter v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/jaegerexporter v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/influxdbexporter v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/zipkinexporter v0.83.0
+    - gomod: go.opentelemetry.io/collector/exporter/loggingexporter v0.85.0
+    - gomod: go.opentelemetry.io/collector/exporter/otlphttpexporter v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awsxrayexporter v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awscloudwatchlogsexporter v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/jaegerexporter v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/influxdbexporter v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/zipkinexporter v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter v0.85.0
 
 processors:
-    - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.83.0
-    - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.83.0
+    - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.85.0
+    - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.85.0
 
 receivers:
-    - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.83.0
+    - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.85.0
     - gomod: github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver v0.1.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.83.0
-    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.83.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.85.0
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.85.0
 
+connectors:
+    - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/spanmetricsconnector v0.85.0
 
 replaces:
     - github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver => ../pkg/receiver/gitproviderreceiver/
-    ## TODO: remove this line once v0.82.0 fixes: `ambiguous import: found package github.com/knadh/koanf/providers/confmap in multiple modules`
-    ## for now must use v0.80.0 for this package.
-    - go.opentelemetry.io/collector/confmap => go.opentelemetry.io/collector/confmap v0.80.0

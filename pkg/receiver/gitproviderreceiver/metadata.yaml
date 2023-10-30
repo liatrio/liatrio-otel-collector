@@ -59,16 +59,45 @@ metrics:
         gauge:
             value_type: int
         attributes: [repository.name, branch.name]
-    git.repository.branch.diff:
+    # may need to be separate metrics
+    git.repository.branch.commit.aheadby.count:
         enabled: true
-        description: Difference in commits between the branch and main
+        description: Number of commits the branch is ahead of the default branch
         unit: 1
         gauge:
             value_type: int
         attributes: [repository.name, branch.name]
-    git.repository.pull_request.count:
+    git.repository.branch.commit.behindby.count:
+        enabled: true
+        description: Number of commits the branch is behind the default branch
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
+    git.repository.branch.line.addition.count:
+        enabled: true
+        description: Total additional lines of code in the branch 
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
+    git.repository.branch.line.deletion.count:
+        enabled: true
+        description: Total deleted lines of code in the branch 
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name, branch.name]
+    git.repository.pull_request.open.count:
         enabled: true
         description: The amount of open pull requests
+        unit: 1
+        gauge:
+            value_type: int
+        attributes: [repository.name]
+    git.repository.pull_request.merged.count:
+        enabled: true
+        description: The amount of merged pull requests
         unit: 1
         gauge:
             value_type: int

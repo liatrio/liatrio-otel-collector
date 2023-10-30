@@ -1,8 +1,20 @@
-query getGroupProjects($fullPath: ID!) {
+query getAllGroupProjects(
+  $fullPath: ID!,
+  # @genqlient(pointer: true)
+  $after: String
+) {
   group(fullPath: $fullPath) {
-    projects {
+    projects(includeSubgroups: true, after: $after) {
+      count
+
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+
       nodes {
         name
+        fullPath
         createdAt
         lastActivityAt
       }
@@ -10,42 +22,55 @@ query getGroupProjects($fullPath: ID!) {
   }
 }
 
-query getProject($fullPath: ID!) {
-  project(fullPath: $fullPath) {
-    name
-    createdAt
-    lastActivityAt
-  }
-}
-
-query getGroupDescendents($fullPath: ID!) {
-  group(fullPath: $fullPath) {
-    descendantGroups {
-      nodes {
-        name
-      }
+query getProjectsByTopic($org: String!, $topics: [String!]) {
+  projects(searchNamespaces: true, search: $org, topics: $topics) {
+    nodes {
+      name
+      fullPath
+      createdAt
+      lastActivityAt
     }
   }
 }
 
-#query getBranchNames($fullPath: ID!) {
-#  project(fullPath: $fullPath) {
-#    repository {
-#      branchNames(searchPattern: "*", offset: 0, limit: 100)
-#    }
-#  }
-#}
-#
-#query getOpenedMergeRequests($fullPath: ID!) {
-#  project(fullPath: $fullPath) {
-#    mergeRequests(state: opened) {
-#      nodes {
-#        iid
-#        sourceBranch
-#        targetBranch
-#        createdAt
-#        updatedAt
-#      }
-#    }
-#  }
-#}
+query getBranchNames($fullPath: ID!) {
+  project(fullPath: $fullPath) {
+    repository {
+      # We limit the number of branches to 100000 since the API will let us get as much as we want
+      # but it will take a long time to get all the branches. The biggest repo we found was a GitLab
+      # repo with just over 100,000 branches which is an extreme edge case which we believe is not
+      # worth supporting.
+      branchNames(searchPattern: "*", offset: 0, limit: 100000)
+      rootRef
+    }
+  }
+}
+
+query getMergeRequests(
+  $fullPath: ID!
+  # @genqlient(pointer: true)
+  $after: String
+  $state: MergeRequestState
+) {
+  project(fullPath: $fullPath) {
+    mergeRequests(state: $state, after: $after) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      # @genqlient(typename: "MergeRequestNode")
+      nodes {
+        iid
+        title
+        sourceBranch
+        targetBranch
+        createdAt
+        mergedAt
+        diffStatsSummary{
+          additions
+          deletions
+        }
+      }
+    }
+  }
+}

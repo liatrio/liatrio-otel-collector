@@ -22,12 +22,27 @@ func getRepoData(
 	repoCursor *string,
 	// since we're using a interface{} here we do type checking when data
 	// is returned to the calling function
-) (interface{}, error) {
+) (*getRepoDataBySearchResponse, error) {
 	data, err := getRepoDataBySearch(ctx, client, searchQuery, repoCursor)
 	if err != nil {
 		return nil, err
 	}
 	return data, nil
+}
+
+func (ghs *githubScraper) getPrCount(ctx context.Context, client graphql.Client, repoName string, owner string, states []PullRequestState) (int, error) {
+	count, err := getPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, states)
+	if err != nil {
+		return 0, err
+	}
+	return count.Repository.PullRequests.TotalCount, nil
+}
+func (ghs *githubScraper) getBranchCount(ctx context.Context, client graphql.Client, repoName string, owner string) (int, error) {
+	count, err := getBranchCount(ctx, client, repoName, ghs.cfg.GitHubOrg)
+	if err != nil {
+		return 0, err
+	}
+	return count.Repository.Refs.TotalCount, nil
 }
 
 func getNumPages(p float64, n float64) int {
@@ -38,6 +53,10 @@ func getNumPages(p float64, n float64) int {
 
 func add[T ~int | ~float64](a, b T) T {
 	return a + b
+}
+
+func sub[T ~int | ~float64](a, b T) T {
+	return a - b
 }
 
 // Ensure that the type of owner is user or organization

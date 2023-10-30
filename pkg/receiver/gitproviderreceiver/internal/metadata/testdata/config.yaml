@@ -1,9 +1,15 @@
 default:
 all_set:
   metrics:
+    git.repository.branch.commit.aheadby.count:
+      enabled: true
+    git.repository.branch.commit.behindby.count:
+      enabled: true
     git.repository.branch.count:
       enabled: true
-    git.repository.branch.diff:
+    git.repository.branch.line.addition.count:
+      enabled: true
+    git.repository.branch.line.deletion.count:
       enabled: true
     git.repository.branch.time:
       enabled: true
@@ -13,11 +19,13 @@ all_set:
       enabled: true
     git.repository.pull_request.approval.time:
       enabled: true
-    git.repository.pull_request.count:
-      enabled: true
     git.repository.pull_request.deployment.time:
       enabled: true
     git.repository.pull_request.merge.time:
+      enabled: true
+    git.repository.pull_request.merged.count:
+      enabled: true
+    git.repository.pull_request.open.count:
       enabled: true
     git.repository.pull_request.time:
       enabled: true
@@ -28,9 +36,15 @@ all_set:
       enabled: true
 none_set:
   metrics:
+    git.repository.branch.commit.aheadby.count:
+      enabled: false
+    git.repository.branch.commit.behindby.count:
+      enabled: false
     git.repository.branch.count:
       enabled: false
-    git.repository.branch.diff:
+    git.repository.branch.line.addition.count:
+      enabled: false
+    git.repository.branch.line.deletion.count:
       enabled: false
     git.repository.branch.time:
       enabled: false
@@ -40,11 +54,13 @@ none_set:
       enabled: false
     git.repository.pull_request.approval.time:
       enabled: false
-    git.repository.pull_request.count:
-      enabled: false
     git.repository.pull_request.deployment.time:
       enabled: false
     git.repository.pull_request.merge.time:
+      enabled: false
+    git.repository.pull_request.merged.count:
+      enabled: false
+    git.repository.pull_request.open.count:
       enabled: false
     git.repository.pull_request.time:
       enabled: false

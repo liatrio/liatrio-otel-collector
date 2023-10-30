@@ -26,15 +26,19 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
+					GitRepositoryBranchCommitAheadbyCount:  MetricConfig{Enabled: true},
+					GitRepositoryBranchCommitBehindbyCount: MetricConfig{Enabled: true},
 					GitRepositoryBranchCount:               MetricConfig{Enabled: true},
-					GitRepositoryBranchDiff:                MetricConfig{Enabled: true},
+					GitRepositoryBranchLineAdditionCount:   MetricConfig{Enabled: true},
+					GitRepositoryBranchLineDeletionCount:   MetricConfig{Enabled: true},
 					GitRepositoryBranchTime:                MetricConfig{Enabled: true},
 					GitRepositoryContributorCount:          MetricConfig{Enabled: true},
 					GitRepositoryCount:                     MetricConfig{Enabled: true},
 					GitRepositoryPullRequestApprovalTime:   MetricConfig{Enabled: true},
-					GitRepositoryPullRequestCount:          MetricConfig{Enabled: true},
 					GitRepositoryPullRequestDeploymentTime: MetricConfig{Enabled: true},
 					GitRepositoryPullRequestMergeTime:      MetricConfig{Enabled: true},
+					GitRepositoryPullRequestMergedCount:    MetricConfig{Enabled: true},
+					GitRepositoryPullRequestOpenCount:      MetricConfig{Enabled: true},
 					GitRepositoryPullRequestTime:           MetricConfig{Enabled: true},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
@@ -47,15 +51,19 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
+					GitRepositoryBranchCommitAheadbyCount:  MetricConfig{Enabled: false},
+					GitRepositoryBranchCommitBehindbyCount: MetricConfig{Enabled: false},
 					GitRepositoryBranchCount:               MetricConfig{Enabled: false},
-					GitRepositoryBranchDiff:                MetricConfig{Enabled: false},
+					GitRepositoryBranchLineAdditionCount:   MetricConfig{Enabled: false},
+					GitRepositoryBranchLineDeletionCount:   MetricConfig{Enabled: false},
 					GitRepositoryBranchTime:                MetricConfig{Enabled: false},
 					GitRepositoryContributorCount:          MetricConfig{Enabled: false},
 					GitRepositoryCount:                     MetricConfig{Enabled: false},
 					GitRepositoryPullRequestApprovalTime:   MetricConfig{Enabled: false},
-					GitRepositoryPullRequestCount:          MetricConfig{Enabled: false},
 					GitRepositoryPullRequestDeploymentTime: MetricConfig{Enabled: false},
 					GitRepositoryPullRequestMergeTime:      MetricConfig{Enabled: false},
+					GitRepositoryPullRequestMergedCount:    MetricConfig{Enabled: false},
+					GitRepositoryPullRequestOpenCount:      MetricConfig{Enabled: false},
 					GitRepositoryPullRequestTime:           MetricConfig{Enabled: false},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
