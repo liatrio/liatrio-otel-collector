@@ -220,7 +220,7 @@ func TestScrape(t *testing.T) {
 		{
 			name:                "Standard",
 			metricsConfig:       metadata.DefaultMetricsBuilderConfig(),
-			expectedMetricCount: 0,
+			expectedMetricCount: 7,
 		},
 		{
 			name:             "non-empty endpoint", // unknown assert
@@ -259,6 +259,7 @@ func TestScrape(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gls := newGitLabScraper(context.Background(), receivertest.NewNopCreateSettings(), &Config{MetricsBuilderConfig: tc.metricsConfig})
 			gls.cfg.HTTPClientSettings.Endpoint = tc.expectedEndpoint
+			gls.cfg.GitLabOrg = "liatrioinc"
 
 			// if tc.bootTimeFunc != nil {
 			// 	scraper.bootTime = tc.bootTimeFunc
