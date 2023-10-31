@@ -50,7 +50,10 @@ func setupMockHttpServer() (client *github.Client, mux *http.ServeMux, serverURL
 	// client is the GitHub client being tested and is
 	// configured to use test server.
 	client = github.NewClient(nil)
-	url, _ := url.Parse(server.URL + baseURLPath + "/")
+	url, err := url.Parse(server.URL + baseURLPath + "/")
+	if err != nil {
+		return nil, nil, "", nil
+	}
 	client.BaseURL = url
 	client.UploadURL = url
 
@@ -59,6 +62,7 @@ func setupMockHttpServer() (client *github.Client, mux *http.ServeMux, serverURL
 
 func TestGetContributorCount(t *testing.T) {
 	client, mux, _, teardown := setupMockHttpServer()
+
 	defer teardown()
 	mux.HandleFunc("/repos/o/r/contributors", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `[{"id":1}, {"id":2}]`)
