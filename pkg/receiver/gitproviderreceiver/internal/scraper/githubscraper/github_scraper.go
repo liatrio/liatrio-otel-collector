@@ -231,9 +231,13 @@ func (ghs *githubScraper) processCommits(
 	var cc *string
 	var adds int = 0
 	var dels int = 0
-	for i := 0; i < comPages; i++ {
-		if i == comPages-1 {
+	for nPage := 1; nPage <= comPages; nPage++ {
+		if nPage == comPages {
 			comCount = branch.Compare.BehindBy % 100
+			// When the last page is full
+			if comCount == 0 {
+				comCount = 100
+			}
 		}
 		c, err := getCommitData(context.Background(), client, repoName, ghs.cfg.GitHubOrg, 1, comCount, cc, branch.Name)
 		if err != nil {
@@ -246,7 +250,7 @@ func (ghs *githubScraper) processCommits(
 		tar := c.Repository.GetRefs().Nodes[0].GetTarget()
 		if ct, ok := tar.(*CommitNodeTargetCommit); ok {
 			cc = &ct.History.PageInfo.EndCursor
-			if i == comPages-1 {
+			if nPage == comPages {
 				e := ct.History.GetEdges()
 
 				oldest := e[len(e)-1].Node.GetCommittedDate()
