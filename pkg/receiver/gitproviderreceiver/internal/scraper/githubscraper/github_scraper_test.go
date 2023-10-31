@@ -6,15 +6,112 @@ package githubscraper
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
+	"github.com/google/go-github/v53/github"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
+
+// This is from https://github.com/google/go-github/blob/master/github/repos_collaborators_test.go, creates mock http server
+func setupMockHttpServer() (client *github.Client, mux *http.ServeMux, serverURL string, teardown func()) {
+	baseURLPath := "/api-v3"
+
+	// mux is the HTTP request multiplexer used with the test server.
+	mux = http.NewServeMux()
+
+	// We want to ensure that tests catch mistakes where the endpoint URL is
+	// specified as absolute rather than relative. It only makes a difference
+	// when there's a non-empty base URL path. So, use that. See issue #752.
+	apiHandler := http.NewServeMux()
+	apiHandler.Handle(baseURLPath+"/", http.StripPrefix(baseURLPath, mux))
+	apiHandler.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintln(os.Stderr, "FAIL: Client.BaseURL path prefix is not preserved in the request URL:")
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr, "\t"+req.URL.String())
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr, "\tDid you accidentally use an absolute endpoint URL rather than relative?")
+		fmt.Fprintln(os.Stderr, "\tSee https://github.com/google/go-github/issues/752 for information.")
+		http.Error(w, "Client.BaseURL path prefix is not preserved in the request URL.", http.StatusInternalServerError)
+	})
+
+	// server is a test HTTP server used to provide mock API responses.
+	server := httptest.NewServer(apiHandler)
+
+	// client is the GitHub client being tested and is
+	// configured to use test server.
+	client = github.NewClient(nil)
+	url, _ := url.Parse(server.URL + baseURLPath + "/")
+	client.BaseURL = url
+	client.UploadURL = url
+
+	return client, mux, server.URL, server.Close
+}
+
+func TestGetContributorCount(t *testing.T) {
+	client, mux, _, teardown := setupMockHttpServer()
+	defer teardown()
+	mux.HandleFunc("/repos/o/r/contributors", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `[{"id":1}, {"id":2}]`)
+	})
+
+	testCases := []struct {
+		desc          string
+		repo          SearchNodeRepository
+		org           string
+		resp          string
+		expectedErr   error
+		expectedCount int
+	}{
+		{
+			desc:          "valid",
+			repo:          SearchNodeRepository{Name: "r"},
+			org:           "o",
+			resp:          `[{"id":1}, {"id":2}]`,
+			expectedErr:   nil,
+			expectedCount: 2,
+		},
+		{
+			desc:          "error",
+			repo:          SearchNodeRepository{Name: "junk"},
+			org:           "junk",
+			resp:          `[{"id":1}, {"id":2}]`,
+			expectedErr:   errors.New("GET " + client.BaseURL.String() + "repos/junk/r/contributors: 404  []"),
+			expectedCount: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			ghs.cfg.GitHubOrg = tc.org
+			ctx := context.Background()
+			now := pcommon.NewTimestampFromTime(time.Now())
+
+			contribs, err := ghs.getContributorCount(ctx, client, SearchNodeRepository{Name: "r"}, now)
+			if tc.expectedErr != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedErr.Error(), err.Error())
+				assert.Equal(t, tc.expectedCount, contribs)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedCount, contribs)
+			}
+		})
+	}
+}
 
 func TestNewGitHubScraper(t *testing.T) {
 	factory := Factory{}

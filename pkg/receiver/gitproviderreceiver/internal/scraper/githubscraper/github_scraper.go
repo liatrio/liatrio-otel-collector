@@ -327,35 +327,13 @@ func (ghs *githubScraper) processBranches(
 
 func (ghs *githubScraper) getContributorCount(
 	ctx context.Context,
-	client graphql.Client,
+	client *github.Client,
 	repo SearchNodeRepository,
 	now pcommon.Timestamp,
 ) (int, error) {
 	var err error
 
-	// GitHub Free URL : https://api.github.com/octocat
-	// https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api?apiVersion=2022-11-28
-	// Already managed by Client.initialize(...) with http(s)://HOSTNAME
-	// https://github.com/google/go-github/blob/master/github/github.go#L33
-	// https://github.com/google/go-github/blob/master/github/github.go#L386
-	gc := github.NewClient(ghs.client)
-
-	// Enable the ability to override the endpoint for self-hosted github instances
-	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
-		// GitHub Enterprise URL (ghe) : http(s)://HOSTNAME/api/v3/octocat
-		// https://docs.github.com/en/enterprise-server@3.8/rest/guides/getting-started-with-the-rest-api#making-a-request
-		// Already Managed by Client.WithEnterpriseURLs(...) with http(s)://HOSTNAME
-		// https://github.com/google/go-github/blob/master/github/github.go#L351
-		restCURL := ghs.cfg.HTTPClientSettings.Endpoint
-
-		gc, err = github.NewEnterpriseClient(restCURL, restCURL, ghs.client)
-		if err != nil {
-			ghs.logger.Sugar().Errorf("error: %v", err)
-			return 0, err
-		}
-	}
-
-	contribs, _, err := gc.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, repo.Name, nil)
+	contribs, _, err := client.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, repo.Name, nil)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
 		return 0, err
@@ -412,6 +390,18 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	typeValid, err := checkOwnerTypeValid(ownertype)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("Error checking if owner type is valid", zap.Error(err))
+	}
+
+	restClient := github.NewClient(ghs.client)
+
+	// Enable the ability to override the endpoint for self-hosted github instances
+	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
+		restCURL := ghs.cfg.HTTPClientSettings.Endpoint
+
+		restClient, err = github.NewEnterpriseClient(restCURL, restCURL, ghs.client)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error: %v", err)
+		}
 	}
 
 	var data interface{}
@@ -508,7 +498,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			i := i
 			sem <- 1
 			go func() {
-				contribCount, err := ghs.getContributorCount(ctx, genClient, searchRepos[i], now)
+				contribCount, err := ghs.getContributorCount(ctx, restClient, searchRepos[i], now)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
 				}
