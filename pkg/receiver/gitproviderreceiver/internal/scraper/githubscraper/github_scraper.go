@@ -219,49 +219,45 @@ func processPullRequests(
 
 }
 
-func (ghs *githubScraper) processCommits(
+func (ghs *githubScraper) getCommitInfo(
 	ctx context.Context,
 	client graphql.Client,
 	repoName string,
 	now pcommon.Timestamp,
 	comPages int,
 	branch BranchNode,
-) {
+) (int, int, int64, error) {
 	comCount := 100
 	var cc *string
 	var adds int = 0
 	var dels int = 0
+	var age int64 = 0
 	for i := 0; i < comPages; i++ {
 		if i == comPages-1 {
 			comCount = branch.Compare.BehindBy % 100
 		}
-		c, err := getCommitData(context.Background(), client, repoName, ghs.cfg.GitHubOrg, 1, comCount, cc, branch.Name)
+		c, err := ghs.getCommitData(context.Background(), client, repoName, ghs.cfg.GitHubOrg, comCount, cc, branch.Name)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting commit data", zap.Error(err))
+			return 0, 0, 0, err
 		}
 
-		if len(c.Repository.GetRefs().Nodes) == 0 {
+		if len(c.Edges) == 0 {
 			break
 		}
-		tar := c.Repository.GetRefs().Nodes[0].GetTarget()
-		if ct, ok := tar.(*CommitNodeTargetCommit); ok {
-			cc = &ct.History.PageInfo.EndCursor
-			if i == comPages-1 {
-				e := ct.History.GetEdges()
-
-				oldest := e[len(e)-1].Node.GetCommittedDate()
-				age := int64(time.Since(oldest).Hours())
-
-				ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, repoName, branch.Name)
-			}
-			for b := 0; b < len(ct.History.Edges); b++ {
-				adds = add(adds, ct.History.Edges[b].Node.Additions)
-				dels = add(dels, ct.History.Edges[b].Node.Deletions)
-			}
+		cc = &c.PageInfo.EndCursor
+		if i == comPages-1 {
+			e := c.GetEdges()
+			oldest := e[len(e)-1].Node.GetCommittedDate()
+			age = int64(time.Since(oldest).Hours())
 		}
+		for b := 0; b < len(c.Edges); b++ {
+			adds = add(adds, c.Edges[b].Node.Additions)
+			dels = add(dels, c.Edges[b].Node.Deletions)
+		}
+
 	}
-	ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), repoName, branch.Name)
-	ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), repoName, branch.Name)
+	return adds, dels, age, nil
 }
 
 func (ghs *githubScraper) getBranches(
@@ -320,7 +316,14 @@ func (ghs *githubScraper) processBranches(
 		// the default branch. Doing it this way involves less queries because
 		// we don't have to know the queried branch name ahead of time.
 		cp := getNumPages(float64(100), float64(branch.Compare.BehindBy))
-		ghs.processCommits(ctx, client, branch.Repository.Name, now, cp, branch)
+		adds, dels, age, err := ghs.getCommitInfo(ctx, client, branch.Repository.Name, now, cp, branch)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting commit info", zap.Error(err))
+		} else {
+			ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, branch.Repository.Name, branch.Name)
+			ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), branch.Repository.Name, branch.Name)
+			ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), branch.Repository.Name, branch.Name)
+		}
 	}
 
 }

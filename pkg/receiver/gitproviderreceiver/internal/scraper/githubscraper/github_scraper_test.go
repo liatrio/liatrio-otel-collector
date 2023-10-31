@@ -517,3 +517,130 @@ func TestGetBranches(t *testing.T) {
 		})
 	}
 }
+
+func TestGetCommitInfo(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		client      graphql.Client
+		expectedErr error
+		pages       int
+		branch      BranchNode
+		//commits      CommitNodeTargetCommit
+		expectedAge       int64
+		expectedAdditions int
+		expectedDeletions int
+	}{
+		{
+			desc: "valid",
+			client: &mockClient{commitData: CommitNodeTargetCommit{
+				History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
+					Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+						{
+							Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
+								CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+								Additions:     10,
+								Deletions:     9,
+							},
+						},
+					},
+				},
+			}},
+			branch: BranchNode{
+				Name: "branch1",
+				Compare: BranchNodeCompareComparison{
+					AheadBy:  0,
+					BehindBy: 1,
+				},
+			},
+			expectedAge:       int64(time.Since(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)).Hours()),
+			expectedAdditions: 10,
+			expectedDeletions: 9,
+			expectedErr:       nil,
+			pages:             1,
+		},
+		{
+			desc: "valid with multiple pages",
+			client: &mockClient{commitData: CommitNodeTargetCommit{
+				History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
+					Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+						{
+							Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
+								CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+								Additions:     10,
+								Deletions:     9,
+							},
+						},
+					},
+				},
+			}},
+			branch: BranchNode{
+				Name: "branch1",
+				Compare: BranchNodeCompareComparison{
+					AheadBy:  0,
+					BehindBy: 1,
+				},
+			},
+			expectedAge:       int64(time.Since(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)).Hours()),
+			expectedAdditions: 20,
+			expectedDeletions: 18,
+			expectedErr:       nil,
+			pages:             2,
+		},
+		{
+			desc: "no commits",
+			client: &mockClient{commitData: CommitNodeTargetCommit{
+				History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
+					Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{},
+				},
+			}},
+			branch: BranchNode{
+				Name: "branch1",
+				Compare: BranchNodeCompareComparison{
+					AheadBy:  0,
+					BehindBy: 0,
+				},
+			},
+			expectedAge:       0,
+			expectedAdditions: 0,
+			expectedDeletions: 0,
+			expectedErr:       nil,
+			pages:             1,
+		},
+		{
+			desc:              "no pages to iterate over",
+			pages:             0,
+			expectedAge:       0,
+			expectedAdditions: 0,
+			expectedDeletions: 0,
+		},
+		{
+			desc:              "error",
+			client:            &mockClient{err: true, errString: "this is an error"},
+			expectedErr:       errors.New("this is an error"),
+			pages:             1,
+			expectedAge:       0,
+			expectedAdditions: 0,
+			expectedDeletions: 0,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			now := pcommon.NewTimestampFromTime(time.Now())
+			adds, dels, age, err := ghs.getCommitInfo(context.Background(), tc.client, "repo1", now, tc.pages, tc.branch)
+
+			assert.Equal(t, tc.expectedAge, age)
+			assert.Equal(t, tc.expectedDeletions, dels)
+			assert.Equal(t, tc.expectedAdditions, adds)
+
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+		})
+	}
+}
