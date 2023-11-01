@@ -167,7 +167,7 @@ func TestGetBranchData(t *testing.T) {
 		},
 		{
 			desc:                "error",
-			client:              &mockClient{err: true, errString: "this is an error"},
+			client:              &mockClient{err2: true, errString: "this is an error"},
 			expectedErr:         errors.New("this is an error"),
 			expectedBranchCount: 0,
 		},
@@ -253,7 +253,7 @@ func TestGetPrData(t *testing.T) {
 		},
 		{
 			desc:            "error",
-			client:          &mockClient{err: true, errString: "this is an error"},
+			client:          &mockClient{err2: true, errString: "this is an error"},
 			expectedErr:     errors.New("this is an error"),
 			expectedPrCount: 0,
 		},
@@ -351,11 +351,43 @@ func TestGetPullRequests(t *testing.T) {
 			expectedErr:     nil,
 			expectedPrCount: 3, // 3 PRs per page, 1 page
 		},
-		// {
-		// 	desc:        "error",
-		// 	client:      &mockClient{err: true, errString: "this is an error"},
-		// 	expectedErr: errors.New("this is an error"),
-		// },
+		{
+			desc: "error in getNumPrPages",
+			client: &mockClient{
+				prs: getPullRequestDataRepositoryPullRequestsPullRequestConnection{
+					PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
+						HasNextPage: false,
+					},
+					Nodes: []PullRequestNode{
+						{
+							CreatedAt: time.Now(),
+							Merged:    false,
+						},
+						{
+							CreatedAt: time.Now().Add(24 * time.Hour), // 1 day later
+							Merged:    false,
+						},
+						{
+							CreatedAt: time.Now().Add(48 * time.Hour), // 2 days later
+							Merged:    false,
+						},
+					},
+				},
+				openPrCount: 110,
+				err:         true,
+				errString:   "this is an error",
+			},
+			expectedErr: errors.New("this is an error"),
+		},
+		{
+			desc: "error in getPrData",
+			client: &mockClient{
+				err2:        true,
+				errString:   "this is an error",
+				openPrCount: 110,
+			},
+			expectedErr: errors.New("this is an error"),
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
@@ -494,8 +526,21 @@ func TestGetBranches(t *testing.T) {
 			expectedBranchCount: 0,
 		},
 		{
-			desc:                "error",
-			client:              &mockClient{err: true, errString: "this is an error"},
+			desc: "error in getNumBranchPages",
+			client: &mockClient{
+				err:       true,
+				errString: "this is an error",
+			},
+			expectedErr:         errors.New("this is an error"),
+			expectedBranchCount: 0,
+		},
+		{
+			desc: "error in getBranchData",
+			client: &mockClient{
+				branchCount: 110,
+				err2:        true,
+				errString:   "this is an error",
+			},
 			expectedErr:         errors.New("this is an error"),
 			expectedBranchCount: 0,
 		},
