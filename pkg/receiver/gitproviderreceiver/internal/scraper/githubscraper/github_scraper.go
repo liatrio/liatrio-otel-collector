@@ -476,10 +476,10 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				prs, err := getPullRequests(ghs, ctx, genClient, searchRepos[i], now)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting pull requests", zap.Error(err))
+					<-sem
+					return
 				}
-				if prs != nil {
-					processPullRequests(ghs, ctx, genClient, now, prs)
-				}
+				processPullRequests(ghs, ctx, genClient, now, prs)
 				<-sem
 			}()
 		}
@@ -492,10 +492,10 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				branches, err := ghs.getBranches(ctx, genClient, searchRepos[i], now)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting branches", zap.Error(err))
+					<-sem
+					return
 				}
-				if branches != nil {
-					ghs.processBranches(ctx, genClient, now, branches)
-				}
+				ghs.processBranches(ctx, genClient, now, branches)
 				<-sem
 			}()
 		}
@@ -508,6 +508,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				contribCount, err := ghs.getContributorCount(ctx, searchRepos[i], now)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
+					<-sem
+					return
 				}
 				ghs.logger.Sugar().Debugf("contributor count: %v for repo %v", contribCount, searchRepos[i].Name)
 				ghs.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contribCount), searchRepos[i].Name)
