@@ -295,7 +295,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			<-sem
 		}(project)
 	}
-	//wait until all goroutines are finished
+	// wait until all goroutines are finished
 	for i := 0; i < maxProcesses; i++ {
 		sem <- 1
 	}

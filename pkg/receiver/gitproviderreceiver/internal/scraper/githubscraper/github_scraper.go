@@ -163,6 +163,7 @@ func getPrData(
 	}
 	return pullRequests, nil
 }
+
 func getPullRequests(
 	ghs *githubScraper,
 	ctx context.Context,
@@ -170,7 +171,6 @@ func getPullRequests(
 	repo SearchNodeRepository,
 	now pcommon.Timestamp,
 ) ([]PullRequestNode, error) {
-
 	prPages, err := getNumPrPages(ghs, ctx, client, repo.Name, now)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("error getting total pr pages", zap.Error(err))
@@ -197,7 +197,7 @@ func processPullRequests(
 			prMergedTime := pr.MergedAt
 			mergeAge := int64(prMergedTime.Sub(pr.CreatedAt).Hours())
 			ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, pr.Repository.Name, pr.HeadRefName)
-			//only exists if the pr is merged
+			// only exists if the pr is merged
 			if pr.MergeCommit.Deployments.TotalCount > 0 {
 				deploymentAgeUpperBound := pr.MergeCommit.Deployments.Nodes[0].CreatedAt
 				deploymentAge := int64(deploymentAgeUpperBound.Sub(pr.CreatedAt).Hours())
@@ -213,7 +213,6 @@ func processPullRequests(
 			ghs.mb.RecordGitRepositoryPullRequestApprovalTimeDataPoint(now, approvalAge, pr.Repository.Name, pr.HeadRefName)
 		}
 	}
-
 }
 
 func (ghs *githubScraper) processCommits(
@@ -271,7 +270,6 @@ func (ghs *githubScraper) getBranches(
 	repo SearchNodeRepository,
 	now pcommon.Timestamp,
 ) ([]BranchNode, error) {
-
 	var defaultBranch string = repo.DefaultBranchRef.Name
 
 	bp, err := getNumBranchPages(ghs, ctx, client, repo.Name, now)
@@ -287,7 +285,6 @@ func (ghs *githubScraper) getBranches(
 	}
 
 	return branches, nil
-
 }
 
 func (ghs *githubScraper) processBranches(
@@ -296,7 +293,6 @@ func (ghs *githubScraper) processBranches(
 	now pcommon.Timestamp,
 	branches []BranchNode,
 ) {
-
 	for _, branch := range branches {
 		if branch.Name == branch.Repository.DefaultBranchRef.Name || branch.Compare.BehindBy == 0 {
 			continue
@@ -320,7 +316,6 @@ func (ghs *githubScraper) processBranches(
 		cp := getNumPages(float64(100), float64(branch.Compare.BehindBy))
 		ghs.processCommits(ctx, client, branch.Repository.Name, now, cp, branch)
 	}
-
 }
 
 func (ghs *githubScraper) getContributorCount(
@@ -468,7 +463,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		var maxProcesses int = 3
 		sem := make(chan int, maxProcesses)
 
-		//pullrequest information
+		// pullrequest information
 		for i := 0; i < len(searchRepos); i++ {
 			i := i
 			sem <- 1
@@ -484,7 +479,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}()
 		}
 
-		//branch information
+		// branch information
 		for i := 0; i < len(searchRepos); i++ {
 			i := i
 			sem <- 1
@@ -500,7 +495,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}()
 		}
 
-		//contributor count
+		// contributor count
 		for i := 0; i < len(searchRepos); i++ {
 			i := i
 			sem <- 1
@@ -517,7 +512,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}()
 		}
 
-		//wait until all goroutines are finished
+		// wait until all goroutines are finished
 		for i := 0; i < maxProcesses; i++ {
 			sem <- 1
 		}
