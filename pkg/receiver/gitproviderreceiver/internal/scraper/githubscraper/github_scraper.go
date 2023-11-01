@@ -318,11 +318,12 @@ func (ghs *githubScraper) processBranches(
 		adds, dels, age, err := ghs.getCommitInfo(ctx, client, branch.Repository.Name, now, cp, branch)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting commit info", zap.Error(err))
-		} else {
-			ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, branch.Repository.Name, branch.Name)
-			ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), branch.Repository.Name, branch.Name)
-			ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), branch.Repository.Name, branch.Name)
+			continue
 		}
+
+		ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, branch.Repository.Name, branch.Name)
+		ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), branch.Repository.Name, branch.Name)
+		ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), branch.Repository.Name, branch.Name)
 	}
 
 }
