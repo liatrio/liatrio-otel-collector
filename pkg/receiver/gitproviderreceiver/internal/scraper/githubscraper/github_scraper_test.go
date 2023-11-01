@@ -89,7 +89,7 @@ func TestGetContributorCount(t *testing.T) {
 			repo:          SearchNodeRepository{Name: "junk"},
 			org:           "junk",
 			resp:          `[{"id":1}, {"id":2}]`,
-			expectedErr:   errors.New("GET " + client.BaseURL.String() + "repos/junk/r/contributors: 404  []"),
+			expectedErr:   errors.New("GET " + client.BaseURL.String() + "repos/junk/junk/contributors: 404  []"),
 			expectedCount: 0,
 		},
 	}
@@ -104,7 +104,7 @@ func TestGetContributorCount(t *testing.T) {
 			ctx := context.Background()
 			now := pcommon.NewTimestampFromTime(time.Now())
 
-			contribs, err := ghs.getContributorCount(ctx, client, SearchNodeRepository{Name: "r"}, now)
+			contribs, err := ghs.getContributorCount(ctx, client, tc.repo, now)
 			if tc.expectedErr != nil {
 				assert.Error(t, err)
 				assert.Equal(t, tc.expectedErr.Error(), err.Error())
