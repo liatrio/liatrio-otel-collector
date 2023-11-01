@@ -23,6 +23,8 @@ import (
 )
 
 // This is from https://github.com/google/go-github/blob/master/github/repos_collaborators_test.go, creates mock http server
+// The github client this library gives us doesn't use interfaces so the current mocking setup doesn't work with it
+// and had to find a different way to create tests
 func setupMockHttpServer() (client *github.Client, mux *http.ServeMux, serverURL string, teardown func()) {
 	baseURLPath := "/api-v3"
 
