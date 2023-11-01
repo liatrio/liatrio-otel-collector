@@ -390,10 +390,19 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		ghs.logger.Sugar().Errorf("Error checking if owner type is valid", zap.Error(err))
 	}
 
+	// GitHub Free URL : https://api.github.com/octocat
+	// https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api?apiVersion=2022-11-28
+	// Already managed by Client.initialize(...) with http(s)://HOSTNAME
+	// https://github.com/google/go-github/blob/master/github/github.go#L33
+	// https://github.com/google/go-github/blob/master/github/github.go#L386
 	restClient := github.NewClient(ghs.client)
 
 	// Enable the ability to override the endpoint for self-hosted github instances
 	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
+		// GitHub Enterprise URL (ghe) : http(s)://HOSTNAME/api/v3/octocat
+		// https://docs.github.com/en/enterprise-server@3.8/rest/guides/getting-started-with-the-rest-api#making-a-request
+		// Already Managed by Client.WithEnterpriseURLs(...) with http(s)://HOSTNAME
+		// https://github.com/google/go-github/blob/master/github/github.go#L351
 		restCURL := ghs.cfg.HTTPClientSettings.Endpoint
 
 		restClient, err = github.NewEnterpriseClient(restCURL, restCURL, ghs.client)
