@@ -41,3 +41,4 @@ spec:
   # Please update to include the GitHub Team name tied to this project.
   # https://backstage.io/docs/features/software-catalog/descriptor-format/#specowner-required
   owner: o11y-owners
+  system: o11y
