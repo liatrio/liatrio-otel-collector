@@ -86,16 +86,13 @@ func (gls *gitlabScraper) getContributorCount(
 	restClient *gitlab.Client,
 	projectPath string,
 ) (int, error) {
-	contribs, _, err := restClient.Repositories.Contributors(projectPath, nil)
+	contributors, _, err := restClient.Repositories.Contributors(projectPath, nil)
 	if err != nil {
 		gls.logger.Sugar().Errorf("error getting contributors", zap.Error(err))
 		return 0, err
 	}
-	contribCount := 0
-	if len(contribs) > 0 {
-		contribCount = len(contribs)
-	}
-	return contribCount, nil
+
+	return len(contributors), nil
 }
 
 func (gls *gitlabScraper) getMergeRequests(
