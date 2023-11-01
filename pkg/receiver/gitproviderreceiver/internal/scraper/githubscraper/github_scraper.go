@@ -229,7 +229,7 @@ func (ghs *githubScraper) getCommitInfo(
 	var adds int = 0
 	var dels int = 0
 	var age int64 = 0
-  
+
 	for nPage := 1; nPage <= comPages; nPage++ {
 		if nPage == comPages {
 			comCount = branch.Compare.BehindBy % 100
