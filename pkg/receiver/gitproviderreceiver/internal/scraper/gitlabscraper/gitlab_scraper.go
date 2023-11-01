@@ -284,14 +284,14 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	for _, project := range projectList {
 		sem <- 1
 		go func(project gitlabProject) {
-			contribCount, err := gls.getContributorCount(restClient, project.Path)
+			contributorCount, err := gls.getContributorCount(restClient, project.Path)
 			if err != nil {
 				gls.logger.Sugar().Errorf("error: %v", err)
 				<-sem
 				return
 			}
-			gls.logger.Sugar().Debugf("contributor count: %v for repo %v", contribCount, project.Path)
-			gls.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contribCount), project.Path)
+			gls.logger.Sugar().Debugf("contributor count: %v for repo %v", contributorCount, project.Path)
+			gls.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contributorCount), project.Path)
 			<-sem
 		}(project)
 	}
