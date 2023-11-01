@@ -110,6 +110,25 @@ func (gls *gitlabScraper) getMergeRequests(
 	return mergeRequestData, nil
 }
 
+func (gls *gitlabScraper) getCombinedMergeRequests(
+	ctx context.Context,
+	graphClient graphql.Client,
+	projectPath string,
+) ([]MergeRequestNode, error) {
+	openMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateOpened)
+	if err != nil {
+		gls.logger.Sugar().Errorf("error getting open merge requests", zap.Error(err))
+		return nil, err
+	}
+	mergedMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateMerged)
+	if err != nil {
+		gls.logger.Sugar().Errorf("error getting merged merge requests", zap.Error(err))
+		return nil, err
+	}
+	mrs := append(openMrs, mergedMrs...)
+	return mrs, nil
+}
+
 func (gls *gitlabScraper) processMergeRequests(client *gitlab.Client, mrs []MergeRequestNode, projectPath string, now pcommon.Timestamp) {
 	for _, mr := range mrs {
 		gls.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(mr.DiffStatsSummary.Additions), projectPath, mr.SourceBranch)
@@ -228,10 +247,9 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			if err != nil {
 				gls.logger.Sugar().Errorf("error getting branches", zap.Error(err))
 				<-sem
+				return
 			}
-			if branches != nil {
-				gls.processBranches(restClient, branches, project.Path, now)
-			}
+			gls.processBranches(restClient, branches, project.Path, now)
 			<-sem
 		}(project)
 	}
@@ -239,20 +257,13 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	for _, project := range projectList {
 		sem <- 1
 		go func(project gitlabProject) {
-			openMrs, err := gls.getMergeRequests(ctx, graphClient, project.Path, MergeRequestStateOpened)
+			mrs, err := gls.getCombinedMergeRequests(ctx, graphClient, project.Path)
 			if err != nil {
-				gls.logger.Sugar().Errorf("error getting open merge requests", zap.Error(err))
+				gls.logger.Sugar().Errorf("error getting merge requests", zap.Error(err))
 				<-sem
+				return
 			}
-			mergedMrs, err := gls.getMergeRequests(ctx, graphClient, project.Path, MergeRequestStateMerged)
-			if err != nil {
-				gls.logger.Sugar().Errorf("error getting merged merge requests", zap.Error(err))
-				<-sem
-			}
-			if openMrs != nil || mergedMrs != nil {
-				mrs := append(openMrs, mergedMrs...)
-				gls.processMergeRequests(restClient, mrs, project.Path, now)
-			}
+			gls.processMergeRequests(restClient, mrs, project.Path, now)
 			<-sem
 		}(project)
 	}
