@@ -30,19 +30,41 @@ func getRepoData(
 	return data, nil
 }
 
-func (ghs *githubScraper) getPrCount(ctx context.Context, client graphql.Client, repoName string, owner string, states []PullRequestState) (int, error) {
+func (ghs *githubScraper) getCommitData(
+	ctx context.Context,
+	client graphql.Client,
+	repoName string,
+	owner string,
+	comCount int,
+	cc *string,
+	branchName string,
+) (*CommitNodeTargetCommitHistoryCommitHistoryConnection, error) {
+	data, err := getCommitData(context.Background(), client, repoName, ghs.cfg.GitHubOrg, 1, comCount, cc, branchName)
+	if err != nil {
+		return nil, err
+	}
+	if len(data.Repository.Refs.Nodes) == 0 {
+		return nil, errors.New("no commits returned")
+	}
+	tar := data.Repository.Refs.Nodes[0].GetTarget()
+	if ct, ok := tar.(*CommitNodeTargetCommit); ok {
+		return &ct.History, nil
+	} else {
+		return nil, errors.New("target is not a commit")
+	}
+}
+func (ghs *githubScraper) getPrCount(
+	ctx context.Context,
+	client graphql.Client,
+	repoName string,
+	owner string,
+	states []PullRequestState,
+) (int, error) {
 	count, err := getPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, states)
 	if err != nil {
 		return 0, err
 	}
 	return count.Repository.PullRequests.TotalCount, nil
-}
-func (ghs *githubScraper) getBranchCount(ctx context.Context, client graphql.Client, repoName string, owner string) (int, error) {
-	count, err := getBranchCount(ctx, client, repoName, ghs.cfg.GitHubOrg)
-	if err != nil {
-		return 0, err
-	}
-	return count.Repository.Refs.TotalCount, nil
 }
 
 func getNumPages(p float64, n float64) int {

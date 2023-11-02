@@ -62,54 +62,6 @@ func newGitHubScraper(
 	}
 }
 
-func getNumBranchPages(
-	ghs *githubScraper,
-	ctx context.Context,
-	client graphql.Client,
-	repoName string,
-	now pcommon.Timestamp,
-) (int, error) {
-	branchCount, err := ghs.getBranchCount(ctx, client, repoName, ghs.cfg.GitHubOrg)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("error getting branch count", zap.Error(err))
-		return 0, err
-	}
-	ghs.logger.Sugar().Debugf("%v repo has %v branches", repoName, branchCount)
-
-	ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(branchCount), repoName)
-
-	bp := getNumPages(float64(50), float64(branchCount))
-	ghs.logger.Sugar().Debugf("branch pages: %v for repo %v", bp, repoName)
-	return bp, nil
-}
-
-func getBranchInfo(
-	ghs *githubScraper,
-	ctx context.Context,
-	client graphql.Client,
-	repoName string,
-	owner string,
-	branchPages int,
-	defaultBranch string,
-) ([]BranchNode, error) {
-	var branchCursor *string
-	var branches []BranchNode
-	for i := 0; i < branchPages; i++ {
-		r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, 50, defaultBranch, branchCursor)
-		if err != nil {
-			ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
-			return nil, err
-		}
-
-		branches = append(branches, r.Repository.Refs.Nodes...)
-		branchCursor = &r.Repository.Refs.PageInfo.EndCursor
-		if !r.Repository.Refs.PageInfo.HasNextPage {
-			break
-		}
-	}
-	return branches, nil
-}
-
 func getNumPrPages(
 	ghs *githubScraper,
 	ctx context.Context,
@@ -216,18 +168,20 @@ func processPullRequests(
 
 }
 
-func (ghs *githubScraper) processCommits(
+func (ghs *githubScraper) getCommitInfo(
 	ctx context.Context,
 	client graphql.Client,
 	repoName string,
 	now pcommon.Timestamp,
 	comPages int,
 	branch BranchNode,
-) {
+) (int, int, int64, error) {
 	comCount := 100
 	var cc *string
 	var adds int = 0
 	var dels int = 0
+	var age int64 = 0
+
 	for nPage := 1; nPage <= comPages; nPage++ {
 		if nPage == comPages {
 			comCount = branch.Compare.BehindBy % 100
@@ -236,58 +190,51 @@ func (ghs *githubScraper) processCommits(
 				comCount = 100
 			}
 		}
-		c, err := getCommitData(context.Background(), client, repoName, ghs.cfg.GitHubOrg, 1, comCount, cc, branch.Name)
+		c, err := ghs.getCommitData(context.Background(), client, repoName, ghs.cfg.GitHubOrg, comCount, cc, branch.Name)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting commit data", zap.Error(err))
+			return 0, 0, 0, err
 		}
 
-		if len(c.Repository.GetRefs().Nodes) == 0 {
+		if len(c.Edges) == 0 {
 			break
 		}
-		tar := c.Repository.GetRefs().Nodes[0].GetTarget()
-		if ct, ok := tar.(*CommitNodeTargetCommit); ok {
-			cc = &ct.History.PageInfo.EndCursor
-			if nPage == comPages {
-				e := ct.History.GetEdges()
-
-				oldest := e[len(e)-1].Node.GetCommittedDate()
-				age := int64(time.Since(oldest).Hours())
-
-				ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, repoName, branch.Name)
-			}
-			for b := 0; b < len(ct.History.Edges); b++ {
-				adds = add(adds, ct.History.Edges[b].Node.Additions)
-				dels = add(dels, ct.History.Edges[b].Node.Deletions)
-			}
+		cc = &c.PageInfo.EndCursor
+		if nPage == comPages {
+			e := c.GetEdges()
+			oldest := e[len(e)-1].Node.GetCommittedDate()
+			age = int64(time.Since(oldest).Hours())
 		}
+		for b := 0; b < len(c.Edges); b++ {
+			adds = add(adds, c.Edges[b].Node.Additions)
+			dels = add(dels, c.Edges[b].Node.Deletions)
+		}
+
 	}
-	ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), repoName, branch.Name)
-	ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), repoName, branch.Name)
+	return adds, dels, age, nil
 }
 
 func (ghs *githubScraper) getBranches(
 	ctx context.Context,
 	client graphql.Client,
-	repo SearchNodeRepository,
-	now pcommon.Timestamp,
+	repoName string,
+	defaultBranch string,
 ) ([]BranchNode, error) {
 
-	var defaultBranch string = repo.DefaultBranchRef.Name
+	var branchCursor *string
+	var branches []BranchNode
+	for hasNextPage := true; hasNextPage; {
+		r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, 50, defaultBranch, branchCursor)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
+			return nil, err
+		}
 
-	bp, err := getNumBranchPages(ghs, ctx, client, repo.Name, now)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("error getting number of pages for branch data", zap.Error(err))
-		return nil, err
+		branches = append(branches, r.Repository.Refs.Nodes...)
+		branchCursor = &r.Repository.Refs.PageInfo.EndCursor
+		hasNextPage = r.Repository.Refs.PageInfo.HasNextPage
 	}
-
-	branches, err := getBranchInfo(ghs, ctx, client, repo.Name, ghs.cfg.GitHubOrg, bp, defaultBranch)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("error getting branch info", zap.Error(err))
-		return nil, err
-	}
-
 	return branches, nil
-
 }
 
 func (ghs *githubScraper) processBranches(
@@ -295,7 +242,10 @@ func (ghs *githubScraper) processBranches(
 	client graphql.Client,
 	now pcommon.Timestamp,
 	branches []BranchNode,
+	repoName string,
 ) {
+
+	ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(branches)), repoName)
 
 	for _, branch := range branches {
 		if branch.Name == branch.Repository.DefaultBranchRef.Name || branch.Compare.BehindBy == 0 {
@@ -318,41 +268,28 @@ func (ghs *githubScraper) processBranches(
 		// the default branch. Doing it this way involves less queries because
 		// we don't have to know the queried branch name ahead of time.
 		cp := getNumPages(float64(100), float64(branch.Compare.BehindBy))
-		ghs.processCommits(ctx, client, branch.Repository.Name, now, cp, branch)
+		adds, dels, age, err := ghs.getCommitInfo(ctx, client, branch.Repository.Name, now, cp, branch)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting commit info", zap.Error(err))
+			continue
+		}
+
+		ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, branch.Repository.Name, branch.Name)
+		ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), branch.Repository.Name, branch.Name)
+		ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), branch.Repository.Name, branch.Name)
 	}
 
 }
 
 func (ghs *githubScraper) getContributorCount(
 	ctx context.Context,
+	client *github.Client,
 	repo SearchNodeRepository,
 	now pcommon.Timestamp,
 ) (int, error) {
 	var err error
 
-	// GitHub Free URL : https://api.github.com/octocat
-	// https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api?apiVersion=2022-11-28
-	// Already managed by Client.initialize(...) with http(s)://HOSTNAME
-	// https://github.com/google/go-github/blob/master/github/github.go#L33
-	// https://github.com/google/go-github/blob/master/github/github.go#L386
-	gc := github.NewClient(ghs.client)
-
-	// Enable the ability to override the endpoint for self-hosted github instances
-	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
-		// GitHub Enterprise URL (ghe) : http(s)://HOSTNAME/api/v3/octocat
-		// https://docs.github.com/en/enterprise-server@3.8/rest/guides/getting-started-with-the-rest-api#making-a-request
-		// Already Managed by Client.WithEnterpriseURLs(...) with http(s)://HOSTNAME
-		// https://github.com/google/go-github/blob/master/github/github.go#L351
-		restCURL := ghs.cfg.HTTPClientSettings.Endpoint
-
-		gc, err = github.NewEnterpriseClient(restCURL, restCURL, ghs.client)
-		if err != nil {
-			ghs.logger.Sugar().Errorf("error: %v", err)
-			return 0, err
-		}
-	}
-
-	contribs, _, err := gc.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, repo.Name, nil)
+	contribs, _, err := client.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, repo.Name, nil)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
 		return 0, err
@@ -409,6 +346,27 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	typeValid, err := checkOwnerTypeValid(ownertype)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("Error checking if owner type is valid", zap.Error(err))
+	}
+
+	// GitHub Free URL : https://api.github.com/octocat
+	// https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api?apiVersion=2022-11-28
+	// Already managed by Client.initialize(...) with http(s)://HOSTNAME
+	// https://github.com/google/go-github/blob/master/github/github.go#L33
+	// https://github.com/google/go-github/blob/master/github/github.go#L386
+	restClient := github.NewClient(ghs.client)
+
+	// Enable the ability to override the endpoint for self-hosted github instances
+	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
+		// GitHub Enterprise URL (ghe) : http(s)://HOSTNAME/api/v3/octocat
+		// https://docs.github.com/en/enterprise-server@3.8/rest/guides/getting-started-with-the-rest-api#making-a-request
+		// Already Managed by Client.WithEnterpriseURLs(...) with http(s)://HOSTNAME
+		// https://github.com/google/go-github/blob/master/github/github.go#L351
+		restCURL := ghs.cfg.HTTPClientSettings.Endpoint
+
+		restClient, err = github.NewEnterpriseClient(restCURL, restCURL, ghs.client)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error: %v", err)
+		}
 	}
 
 	var data interface{}
@@ -476,10 +434,10 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				prs, err := getPullRequests(ghs, ctx, genClient, searchRepos[i], now)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting pull requests", zap.Error(err))
+					<-sem
+					return
 				}
-				if prs != nil {
-					processPullRequests(ghs, ctx, genClient, now, prs)
-				}
+				processPullRequests(ghs, ctx, genClient, now, prs)
 				<-sem
 			}()
 		}
@@ -489,13 +447,13 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			i := i
 			sem <- 1
 			go func() {
-				branches, err := ghs.getBranches(ctx, genClient, searchRepos[i], now)
+				branches, err := ghs.getBranches(ctx, genClient, searchRepos[i].Name, searchRepos[i].DefaultBranchRef.Name)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting branches", zap.Error(err))
+					<-sem
+					return
 				}
-				if branches != nil {
-					ghs.processBranches(ctx, genClient, now, branches)
-				}
+				ghs.processBranches(ctx, genClient, now, branches, searchRepos[i].Name)
 				<-sem
 			}()
 		}
@@ -505,9 +463,11 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			i := i
 			sem <- 1
 			go func() {
-				contribCount, err := ghs.getContributorCount(ctx, searchRepos[i], now)
+				contribCount, err := ghs.getContributorCount(ctx, restClient, searchRepos[i], now)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
+					<-sem
+					return
 				}
 				ghs.logger.Sugar().Debugf("contributor count: %v for repo %v", contribCount, searchRepos[i].Name)
 				ghs.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contribCount), searchRepos[i].Name)

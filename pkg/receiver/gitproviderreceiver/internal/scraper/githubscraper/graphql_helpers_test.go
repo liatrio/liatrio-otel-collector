@@ -13,12 +13,13 @@ import (
 type mockClient struct {
 	openPrCount   int
 	mergedPrCount int
-	branchCount   int
 	err           bool
 	err2          bool
 	errString     string
 	prs           getPullRequestDataRepositoryPullRequestsPullRequestConnection
-	branchData    getBranchDataRepositoryRefsRefConnection
+	branchData    []getBranchDataRepositoryRefsRefConnection
+	commitData    CommitNodeTargetCommit
+	curPage       int
 }
 
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
@@ -49,20 +50,24 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 		}
 		r := resp.Data.(*getPullRequestDataResponse)
 		r.Repository.PullRequests = m.prs
-	case "getBranchCount":
-		//for forcing arbitrary errors
+	case "getBranchData":
 		if m.err {
 			return errors.New(m.errString)
 		}
-		r := resp.Data.(*getBranchCountResponse)
-		r.Repository.Refs.TotalCount = m.branchCount
-	case "getBranchData":
-		if m.err2 {
+		r := resp.Data.(*getBranchDataResponse)
+		r.Repository.Refs = m.branchData[m.curPage]
+		m.curPage++
+
+	case "getCommitData":
+		if m.err {
 			return errors.New(m.errString)
 		}
-		r := resp.Data.(*getBranchDataResponse)
-		r.Repository.Refs = m.branchData
-		// case "getCommitData":
+		r := resp.Data.(*getCommitDataResponse)
+		commitNodes := []CommitNode{
+			{Target: &m.commitData},
+		}
+		r.Repository.Refs.Nodes = commitNodes
+
 		// case "getRepoDataBySearch":
 	}
 	return nil
@@ -106,45 +111,6 @@ func TestGetPrCount(t *testing.T) {
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 
 			count, err := ghs.getPrCount(context.Background(), tc.client, "repo", "owner", tc.state)
-
-			assert.Equal(t, tc.expectedCount, count)
-			if tc.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-			}
-		})
-	}
-}
-
-func TestGetBranchCount(t *testing.T) {
-	testCases := []struct {
-		desc          string
-		client        graphql.Client
-		expectedErr   error
-		expectedCount int
-	}{
-		{
-			desc:          "valid branch count",
-			client:        &mockClient{branchCount: 3},
-			expectedErr:   nil,
-			expectedCount: 3,
-		},
-		{
-			desc:          "error",
-			client:        &mockClient{err: true, errString: "this is an error"},
-			expectedErr:   errors.New("this is an error"),
-			expectedCount: 0,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-
-			count, err := ghs.getBranchCount(context.Background(), tc.client, "repo", "owner")
 
 			assert.Equal(t, tc.expectedCount, count)
 			if tc.expectedErr == nil {
