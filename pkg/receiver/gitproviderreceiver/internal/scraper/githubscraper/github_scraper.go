@@ -20,21 +20,6 @@ import (
 
 var errClientNotInitErr = errors.New("http client not initialized")
 
-// A struct to hold the data for a pull request
-type pullRequest struct {
-	Title       string
-	CreatedDate time.Time
-	ClosedDate  time.Time
-}
-
-// A struct to hold the data for a repository
-type repo struct {
-	Name          string
-	Owner         string
-	DefaultBranch string
-	PullRequests  []pullRequest
-}
-
 // A struct representing the GitHubScraper.
 type githubScraper struct {
 	client   *http.Client
