@@ -278,16 +278,13 @@ func TestGetPullRequests(t *testing.T) {
 						},
 						Nodes: []PullRequestNode{
 							{
-								CreatedAt: time.Now(),
-								Merged:    false,
+								Merged: false,
 							},
 							{
-								CreatedAt: time.Now().Add(24 * time.Hour), // 1 day later
-								Merged:    false,
+								Merged: false,
 							},
 							{
-								CreatedAt: time.Now().Add(48 * time.Hour), // 2 days later
-								Merged:    false,
+								Merged: false,
 							},
 						},
 					},
@@ -306,16 +303,13 @@ func TestGetPullRequests(t *testing.T) {
 						},
 						Nodes: []PullRequestNode{
 							{
-								CreatedAt: time.Now(),
-								Merged:    false,
+								Merged: false,
 							},
 							{
-								CreatedAt: time.Now().Add(24 * time.Hour), // 1 day later
-								Merged:    false,
+								Merged: false,
 							},
 							{
-								CreatedAt: time.Now().Add(48 * time.Hour), // 2 days later
-								Merged:    false,
+								Merged: false,
 							},
 						},
 					},
@@ -325,16 +319,13 @@ func TestGetPullRequests(t *testing.T) {
 						},
 						Nodes: []PullRequestNode{
 							{
-								CreatedAt: time.Now(),
-								Merged:    false,
+								Merged: false,
 							},
 							{
-								CreatedAt: time.Now().Add(24 * time.Hour), // 1 day later
-								Merged:    false,
+								Merged: false,
 							},
 							{
-								CreatedAt: time.Now().Add(48 * time.Hour), // 2 days later
-								Merged:    false,
+								Merged: false,
 							},
 						},
 					},
@@ -344,16 +335,13 @@ func TestGetPullRequests(t *testing.T) {
 						},
 						Nodes: []PullRequestNode{
 							{
-								CreatedAt: time.Now(),
-								Merged:    false,
+								Merged: false,
 							},
 							{
-								CreatedAt: time.Now().Add(24 * time.Hour), // 1 day later
-								Merged:    false,
+								Merged: false,
 							},
 							{
-								CreatedAt: time.Now().Add(48 * time.Hour), // 2 days later
-								Merged:    false,
+								Merged: false,
 							},
 						},
 					},
