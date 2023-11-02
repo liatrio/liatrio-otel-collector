@@ -110,7 +110,7 @@ query getPullRequestData(
   $prFirst: Int!
   # @genqlient(pointer: true)
   $prCursor: String
-  $prStates: [PullRequestState!]
+  $prStates: [PullRequestState!] = [OPEN, MERGED]
 ) {
   repository(name: $name, owner: $owner) {
     pullRequests(
