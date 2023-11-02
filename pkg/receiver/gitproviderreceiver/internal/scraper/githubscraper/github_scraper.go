@@ -20,13 +20,14 @@ import (
 
 var errClientNotInitErr = errors.New("http client not initialized")
 
-// Not sure if this needs to be here after the refactor
+// A struct to hold the data for a pull request
 type pullRequest struct {
 	Title       string
 	CreatedDate time.Time
 	ClosedDate  time.Time
 }
 
+// A struct to hold the data for a repository
 type repo struct {
 	Name          string
 	Owner         string
@@ -34,6 +35,7 @@ type repo struct {
 	PullRequests  []pullRequest
 }
 
+// A struct representing the GitHubScraper.
 type githubScraper struct {
 	client   *http.Client
 	cfg      *Config
@@ -121,6 +123,7 @@ func processPullRequests(
 	ghs.mb.RecordGitRepositoryPullRequestMergedCountDataPoint(now, int64(mergedCount), repoName)
 }
 
+// Retrieves the commit data for a given branch.
 func (ghs *githubScraper) getCommitInfo(
 	ctx context.Context,
 	client graphql.Client,
