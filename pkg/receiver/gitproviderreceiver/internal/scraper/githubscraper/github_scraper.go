@@ -227,17 +227,13 @@ func (ghs *githubScraper) getContributorCount(
 ) (int, error) {
 	var err error
 
-	contribs, _, err := client.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, repo.Name, nil)
+	contributors, _, err := client.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, repo.Name, nil)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
 		return 0, err
 	}
 
-	contribCount := 0
-	if len(contribs) > 0 {
-		contribCount = len(contribs)
-	}
-	return contribCount, nil
+	return len(contributors), nil
 }
 
 // scrape and return metrics
