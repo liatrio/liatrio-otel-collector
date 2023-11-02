@@ -62,16 +62,18 @@ func newGitHubScraper(
 	}
 }
 
+// Retrieves the pull request data for a given repository.
 func (ghs *githubScraper) getPullRequests(
 	ctx context.Context,
 	client graphql.Client,
 	repoName string,
+	prStates []PullRequestState,
 ) ([]PullRequestNode, error) {
 	var prCursor *string
 	var pullRequests []PullRequestNode
 
 	for hasNextPage := true; hasNextPage; {
-		prs, err := getPullRequestData(ctx, client, repoName, ghs.cfg.GitHubOrg, 100, prCursor, []PullRequestState{"OPEN", "MERGED"})
+		prData, err := getPullRequestData(ctx, client, repoName, ghs.cfg.GitHubOrg, 100, prCursor, prStates)
 		if err != nil {
 			return nil, err
 		}
