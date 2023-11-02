@@ -14,7 +14,7 @@ type mockClient struct {
 	errString  string
 	prs        []getPullRequestDataRepositoryPullRequestsPullRequestConnection
 	branchData []getBranchDataRepositoryRefsRefConnection
-  repoData   []getRepoDataBySearchSearchSearchResultItemConnection
+	repoData   []getRepoDataBySearchSearchSearchResultItemConnection
 	commitData CommitNodeTargetCommit
 	curPage    int
 }
