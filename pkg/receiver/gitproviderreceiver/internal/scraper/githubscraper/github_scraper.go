@@ -110,78 +110,24 @@ func getBranchInfo(
 	return branches, nil
 }
 
-func getNumPrPages(
-	ghs *githubScraper,
+func (ghs *githubScraper) getPullRequests(
 	ctx context.Context,
 	client graphql.Client,
 	repoName string,
-	now pcommon.Timestamp,
-) (int, error) {
-	prOpenCount, err := ghs.getPrCount(ctx, client, repoName, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateOpen})
-	if err != nil {
-		return 0, err
-	}
-	ghs.logger.Sugar().Debugf("open pull request count: %v for repo %v", prOpenCount, repoName)
-	ghs.mb.RecordGitRepositoryPullRequestOpenCountDataPoint(now, int64(prOpenCount), repoName)
-
-	prMergedCount, err := ghs.getPrCount(ctx, client, repoName, ghs.cfg.GitHubOrg, []PullRequestState{PullRequestStateMerged})
-	if err != nil {
-		return 0, err
-	}
-	ghs.logger.Sugar().Debugf("merged pull request count: %v for repo %v", prMergedCount, repoName)
-	ghs.mb.RecordGitRepositoryPullRequestMergedCountDataPoint(now, int64(prMergedCount), repoName)
-
-	totalPrCount := add(prOpenCount, prMergedCount)
-	prPages := getNumPages(float64(100), float64(totalPrCount))
-	ghs.logger.Sugar().Debugf("pull request pages: %v for repo %v", prPages, repoName)
-	return prPages, err
-}
-
-func getPrData(
-	ghs *githubScraper,
-	ctx context.Context,
-	client graphql.Client,
-	prPages int,
-	repoName string,
-	owner string,
 ) ([]PullRequestNode, error) {
+
 	var prCursor *string
 	var pullRequests []PullRequestNode
 
-	for i := 0; i < prPages; i++ {
+	for hasNextPage := true; hasNextPage; {
 		prs, err := getPullRequestData(ctx, client, repoName, ghs.cfg.GitHubOrg, 100, prCursor)
 		if err != nil {
 			return nil, err
 		}
-
 		pullRequests = append(pullRequests, prs.Repository.PullRequests.Nodes...)
 		prCursor = &prs.Repository.PullRequests.PageInfo.EndCursor
-
-		if !prs.Repository.PullRequests.PageInfo.HasNextPage {
-			break
-		}
+		hasNextPage = prs.Repository.PullRequests.PageInfo.HasNextPage
 	}
-	return pullRequests, nil
-}
-func getPullRequests(
-	ghs *githubScraper,
-	ctx context.Context,
-	client graphql.Client,
-	repo SearchNodeRepository,
-	now pcommon.Timestamp,
-) ([]PullRequestNode, error) {
-
-	prPages, err := getNumPrPages(ghs, ctx, client, repo.Name, now)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("error getting total pr pages", zap.Error(err))
-		return nil, err
-	}
-	pullRequests, err := getPrData(ghs, ctx, client, prPages, repo.Name, ghs.cfg.GitHubOrg)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("error getting pr data", zap.Error(err))
-		return nil, err
-	}
-
 	return pullRequests, nil
 }
 
@@ -191,29 +137,35 @@ func processPullRequests(
 	client graphql.Client,
 	now pcommon.Timestamp,
 	pullRequests []PullRequestNode,
+	repoName string,
 ) {
+	var mergedCount int
+	var openCount int
 	for _, pr := range pullRequests {
 		if pr.Merged {
+			mergedCount++
 			prMergedTime := pr.MergedAt
 			mergeAge := int64(prMergedTime.Sub(pr.CreatedAt).Hours())
-			ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, pr.Repository.Name, pr.HeadRefName)
+			ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, repoName, pr.HeadRefName)
 			//only exists if the pr is merged
 			if pr.MergeCommit.Deployments.TotalCount > 0 {
 				deploymentAgeUpperBound := pr.MergeCommit.Deployments.Nodes[0].CreatedAt
 				deploymentAge := int64(deploymentAgeUpperBound.Sub(pr.CreatedAt).Hours())
-				ghs.mb.RecordGitRepositoryPullRequestDeploymentTimeDataPoint(now, deploymentAge, pr.Repository.Name, pr.HeadRefName)
+				ghs.mb.RecordGitRepositoryPullRequestDeploymentTimeDataPoint(now, deploymentAge, repoName, pr.HeadRefName)
 			}
 		} else {
+			openCount++
 			prAge := int64(now.AsTime().Sub(pr.CreatedAt).Hours())
-			ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, pr.Repository.Name, pr.HeadRefName)
+			ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, repoName, pr.HeadRefName)
 		}
 		if pr.Reviews.TotalCount > 0 {
 			approvalAgeUpperBound := pr.Reviews.Nodes[0].CreatedAt
 			approvalAge := int64(approvalAgeUpperBound.Sub(pr.CreatedAt).Hours())
-			ghs.mb.RecordGitRepositoryPullRequestApprovalTimeDataPoint(now, approvalAge, pr.Repository.Name, pr.HeadRefName)
+			ghs.mb.RecordGitRepositoryPullRequestApprovalTimeDataPoint(now, approvalAge, repoName, pr.HeadRefName)
 		}
 	}
-
+	ghs.mb.RecordGitRepositoryPullRequestOpenCountDataPoint(now, int64(openCount), repoName)
+	ghs.mb.RecordGitRepositoryPullRequestMergedCountDataPoint(now, int64(mergedCount), repoName)
 }
 
 func (ghs *githubScraper) getCommitInfo(
@@ -478,13 +430,13 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			i := i
 			sem <- 1
 			go func() {
-				prs, err := getPullRequests(ghs, ctx, genClient, searchRepos[i], now)
+				prs, err := ghs.getPullRequests(ctx, genClient, searchRepos[i].Name)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting pull requests", zap.Error(err))
 					<-sem
 					return
 				}
-				processPullRequests(ghs, ctx, genClient, now, prs)
+				processPullRequests(ghs, ctx, genClient, now, prs, searchRepos[i].Name)
 				<-sem
 			}()
 		}

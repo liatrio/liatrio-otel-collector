@@ -113,14 +113,6 @@ query getBranchCount($name: String!, $owner: String!) {
   }
 }
 
-query getPullRequestCount($name: String!, $owner: String!, $states: [PullRequestState!]) {
-  repository(name: $name, owner: $owner) {
-    pullRequests(states: $states){
-      totalCount
-    }
-  }
-}
-
 query getPullRequestData(
   $name: String!
   $owner: String!
@@ -157,9 +149,6 @@ query getPullRequestData(
               createdAt
             }
           }
-        }
-        repository{
-          name
         }
       }
       pageInfo {
