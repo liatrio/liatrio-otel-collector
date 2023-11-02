@@ -21,17 +21,17 @@ import (
 var errClientNotInitErr = errors.New("http client not initialized")
 
 // Not sure if this needs to be here after the refactor
-type PullRequest struct {
+type pullRequest struct {
 	Title       string
 	CreatedDate time.Time
 	ClosedDate  time.Time
 }
 
-type Repo struct {
+type repo struct {
 	Name          string
 	Owner         string
 	DefaultBranch string
-	PullRequests  []PullRequest
+	PullRequests  []pullRequest
 }
 
 type githubScraper struct {
