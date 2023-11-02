@@ -104,9 +104,8 @@ func TestGetContributorCount(t *testing.T) {
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 			ghs.cfg.GitHubOrg = tc.org
 			ctx := context.Background()
-			now := pcommon.NewTimestampFromTime(time.Now())
 
-			contribs, err := ghs.getContributorCount(ctx, client, tc.repo, now)
+			contribs, err := ghs.getContributorCount(ctx, client, tc.repo)
 			if tc.expectedErr != nil {
 				assert.Error(t, err)
 				assert.Equal(t, tc.expectedErr.Error(), err.Error())

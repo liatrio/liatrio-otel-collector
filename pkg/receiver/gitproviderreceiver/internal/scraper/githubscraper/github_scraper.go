@@ -224,7 +224,6 @@ func (ghs *githubScraper) getContributorCount(
 	ctx context.Context,
 	client *github.Client,
 	repo SearchNodeRepository,
-	now pcommon.Timestamp,
 ) (int, error) {
 	var err error
 
@@ -402,7 +401,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			i := i
 			sem <- 1
 			go func() {
-				contribCount, err := ghs.getContributorCount(ctx, restClient, searchRepos[i], now)
+				contribCount, err := ghs.getContributorCount(ctx, restClient, searchRepos[i])
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
 					<-sem
