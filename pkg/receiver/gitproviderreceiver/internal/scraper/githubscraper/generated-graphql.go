@@ -1486,7 +1486,7 @@ func getCommitData(
 
 // The query or mutation executed by getPullRequestData.
 const getPullRequestData_Operation = `
-query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCursor: String, $prStates: [PullRequestState!] = [OPEN,MERGED]) {
+query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCursor: String, $prStates: [PullRequestState!]) {
 	repository(name: $name, owner: $owner) {
 		pullRequests(first: $prFirst, after: $prCursor, states: $prStates) {
 			nodes {
