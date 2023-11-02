@@ -364,12 +364,13 @@ func TestGetPullRequests(t *testing.T) {
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 			prs, err := ghs.getPullRequests(context.Background(), tc.client, "repo name")
+
+			assert.Equal(t, tc.expectedPrCount, len(prs))
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.EqualError(t, err, tc.expectedErr.Error())
 			}
-			assert.Equal(t, tc.expectedPrCount, len(prs))
 		})
 	}
 }
