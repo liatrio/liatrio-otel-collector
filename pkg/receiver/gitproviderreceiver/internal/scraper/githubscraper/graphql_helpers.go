@@ -53,19 +53,6 @@ func (ghs *githubScraper) getCommitData(
 		return nil, errors.New("target is not a commit")
 	}
 }
-func (ghs *githubScraper) getPrCount(
-	ctx context.Context,
-	client graphql.Client,
-	repoName string,
-	owner string,
-	states []PullRequestState,
-) (int, error) {
-	count, err := getPullRequestCount(ctx, client, repoName, ghs.cfg.GitHubOrg, states)
-	if err != nil {
-		return 0, err
-	}
-	return count.Repository.PullRequests.TotalCount, nil
-}
 
 func getNumPages(p float64, n float64) int {
 	numPages := math.Ceil(n / p)
