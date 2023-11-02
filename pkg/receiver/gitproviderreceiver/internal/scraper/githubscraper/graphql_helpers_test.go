@@ -21,31 +21,31 @@ type mockClient struct {
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
 	switch op := req.OpName; op {
 	case "getPullRequestData":
-		//for forcing arbitrary errors
+		// for forcing arbitrary errors
 		if m.err {
 			return errors.New(m.errString)
 		}
-		r := resp.Data.(*getPullRequestDataResponse)
-		r.Repository.PullRequests = m.prs[m.curPage]
+		response := resp.Data.(*getPullRequestDataResponse)
+		response.Repository.PullRequests = m.prs[m.curPage]
 		m.curPage++
 
 	case "getBranchData":
 		if m.err {
 			return errors.New(m.errString)
 		}
-		r := resp.Data.(*getBranchDataResponse)
-		r.Repository.Refs = m.branchData[m.curPage]
+		response := resp.Data.(*getBranchDataResponse)
+		response.Repository.Refs = m.branchData[m.curPage]
 		m.curPage++
 
 	case "getCommitData":
 		if m.err {
 			return errors.New(m.errString)
 		}
-		r := resp.Data.(*getCommitDataResponse)
+		response := resp.Data.(*getCommitDataResponse)
 		commitNodes := []CommitNode{
 			{Target: &m.commitData},
 		}
-		r.Repository.Refs.Nodes = commitNodes
+		response.Repository.Refs.Nodes = commitNodes
 
 		// case "getRepoDataBySearch":
 	}
@@ -53,34 +53,34 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 }
 
 func TestGetNumPages100(t *testing.T) {
-	p := float64(100)
-	n := float64(375)
+	perPage := float64(100)
+	total := float64(375)
 
 	expected := 4
 
-	num := getNumPages(p, n)
+	num := getNumPages(perPage, total)
 
 	assert.Equal(t, expected, num)
 }
 
 func TestGetNumPages10(t *testing.T) {
-	p := float64(10)
-	n := float64(375)
+	perPage := float64(10)
+	total := float64(375)
 
 	expected := 38
 
-	num := getNumPages(p, n)
+	num := getNumPages(perPage, total)
 
 	assert.Equal(t, expected, num)
 }
 
 func TestGetNumPages1(t *testing.T) {
-	p := float64(10)
-	n := float64(1)
+	perPage := float64(10)
+	total := float64(1)
 
 	expected := 1
 
-	num := getNumPages(p, n)
+	num := getNumPages(perPage, total)
 
 	assert.Equal(t, expected, num)
 }
@@ -185,23 +185,23 @@ func TestSubNegativeFloat(t *testing.T) {
 }
 
 func TestGenDefaultSearchQueryOrg(t *testing.T) {
-	st := "org"
+	ownerType := "org"
 	org := "empire"
 
 	expected := "org:empire archived:false"
 
-	actual := genDefaultSearchQuery(st, org)
+	actual := genDefaultSearchQuery(ownerType, org)
 
 	assert.Equal(t, expected, actual)
 }
 
 func TestGenDefaultSearchQueryUser(t *testing.T) {
-	st := "user"
+	ownerType := "user"
 	org := "vader"
 
 	expected := "user:vader archived:false"
 
-	actual := genDefaultSearchQuery(st, org)
+	actual := genDefaultSearchQuery(ownerType, org)
 
 	assert.Equal(t, expected, actual)
 }

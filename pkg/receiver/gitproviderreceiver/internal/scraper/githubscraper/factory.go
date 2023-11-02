@@ -39,12 +39,12 @@ func (f *Factory) CreateMetricsScraper(
 	params receiver.CreateSettings,
 	cfg internal.Config,
 ) (scraperhelper.Scraper, error) {
-	conf := cfg.(*Config)
-	s := newGitHubScraper(ctx, params, conf)
+	config := cfg.(*Config)
+	scraper := newGitHubScraper(ctx, params, config)
 
 	return scraperhelper.NewScraper(
 		TypeStr,
-		s.scrape,
-		scraperhelper.WithStart(s.start),
+		scraper.scrape,
+		scraperhelper.WithStart(scraper.start),
 	)
 }

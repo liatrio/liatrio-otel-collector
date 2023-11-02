@@ -122,10 +122,11 @@ func TestNewGitHubScraper(t *testing.T) {
 	factory := Factory{}
 	defaultConfig := factory.CreateDefaultConfig()
 
-	s := newGitHubScraper(context.Background(), receiver.CreateSettings{}, defaultConfig.(*Config))
+	scraper := newGitHubScraper(context.Background(), receiver.CreateSettings{}, defaultConfig.(*Config))
 
-	assert.NotNil(t, s)
+	assert.NotNil(t, scraper)
 }
+
 func TestGetPullRequests(t *testing.T) {
 	testCases := []struct {
 		desc            string
@@ -242,9 +243,9 @@ func TestGetPullRequests(t *testing.T) {
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			prs, err := ghs.getPullRequests(context.Background(), tc.client, "repo name")
+			pullRequests, err := ghs.getPullRequests(context.Background(), tc.client, "repo name", []PullRequestState{"OPEN", "MERGED"})
 
-			assert.Equal(t, tc.expectedPrCount, len(prs))
+			assert.Equal(t, tc.expectedPrCount, len(pullRequests))
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {
@@ -253,6 +254,7 @@ func TestGetPullRequests(t *testing.T) {
 		})
 	}
 }
+
 func TestGetBranches(t *testing.T) {
 	testCases := []struct {
 		desc                string
@@ -389,7 +391,7 @@ func TestGetCommitInfo(t *testing.T) {
 		expectedErr error
 		pages       int
 		branch      BranchNode
-		//commits      CommitNodeTargetCommit
+		// commits      CommitNodeTargetCommit
 		expectedAge       int64
 		expectedAdditions int
 		expectedDeletions int
@@ -494,11 +496,11 @@ func TestGetCommitInfo(t *testing.T) {
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 			now := pcommon.NewTimestampFromTime(time.Now())
-			adds, dels, age, err := ghs.getCommitInfo(context.Background(), tc.client, "repo1", now, tc.pages, tc.branch)
+			commitInfo, err := ghs.getCommitInfo(context.Background(), tc.client, "repo1", now, tc.pages, tc.branch)
 
-			assert.Equal(t, tc.expectedAge, age)
-			assert.Equal(t, tc.expectedDeletions, dels)
-			assert.Equal(t, tc.expectedAdditions, adds)
+			assert.Equal(t, tc.expectedAge, commitInfo.age)
+			assert.Equal(t, tc.expectedDeletions, commitInfo.deletions)
+			assert.Equal(t, tc.expectedAdditions, commitInfo.additions)
 
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)

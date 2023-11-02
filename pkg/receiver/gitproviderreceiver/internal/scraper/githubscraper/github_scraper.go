@@ -29,6 +29,13 @@ type githubScraper struct {
 	mb       *metadata.MetricsBuilder
 }
 
+// A struct to hold the data for a commit.
+type commitInfo struct {
+	additions int
+	deletions int
+	age       int64
+}
+
 func (ghs *githubScraper) start(_ context.Context, host component.Host) (err error) {
 	ghs.logger.Sugar().Info("Starting the scraper inside scraper.go")
 	// TODO: Fix the ToClient configuration
@@ -54,23 +61,26 @@ func (ghs *githubScraper) getPullRequests(
 	ctx context.Context,
 	client graphql.Client,
 	repoName string,
-	prStates []PullRequestState,
+	pullRequestStates []PullRequestState,
 ) ([]PullRequestNode, error) {
-	var prCursor *string
 	var pullRequests []PullRequestNode
+	var pullRequestCursor *string
 
 	for hasNextPage := true; hasNextPage; {
-		prData, err := getPullRequestData(ctx, client, repoName, ghs.cfg.GitHubOrg, 100, prCursor, prStates)
+		pullRequestData, err := getPullRequestData(ctx, client, repoName, ghs.cfg.GitHubOrg, 100, pullRequestCursor, pullRequestStates)
 		if err != nil {
 			return nil, err
 		}
-		pullRequests = append(pullRequests, prs.Repository.PullRequests.Nodes...)
-		prCursor = &prs.Repository.PullRequests.PageInfo.EndCursor
-		hasNextPage = prs.Repository.PullRequests.PageInfo.HasNextPage
+
+		pullRequests = append(pullRequests, pullRequestData.Repository.PullRequests.Nodes...)
+		hasNextPage = pullRequestData.Repository.PullRequests.PageInfo.HasNextPage
+		pullRequestCursor = &pullRequestData.Repository.PullRequests.PageInfo.EndCursor
 	}
+
 	return pullRequests, nil
 }
 
+// Iterates over the given pullRequests and records the relevant metrics.
 func processPullRequests(
 	ghs *githubScraper,
 	ctx context.Context,
@@ -81,103 +91,114 @@ func processPullRequests(
 ) {
 	var mergedCount int
 	var openCount int
-	for _, pr := range pullRequests {
-		if pr.Merged {
+
+	for _, pullRequest := range pullRequests {
+		if pullRequest.Merged {
 			mergedCount++
-			prMergedTime := pr.MergedAt
-			mergeAge := int64(prMergedTime.Sub(pr.CreatedAt).Hours())
-			ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, repoName, pr.HeadRefName)
-			// only exists if the pr is merged
-			if pr.MergeCommit.Deployments.TotalCount > 0 {
-				deploymentAgeUpperBound := pr.MergeCommit.Deployments.Nodes[0].CreatedAt
-				deploymentAge := int64(deploymentAgeUpperBound.Sub(pr.CreatedAt).Hours())
-				ghs.mb.RecordGitRepositoryPullRequestDeploymentTimeDataPoint(now, deploymentAge, repoName, pr.HeadRefName)
+			mergeAge := int64(pullRequest.MergedAt.Sub(pullRequest.CreatedAt).Hours())
+			ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, repoName, pullRequest.HeadRefName)
+
+			// Only exists if the pr is merged
+			if pullRequest.MergeCommit.Deployments.TotalCount > 0 {
+				deploymentAgeUpperBound := pullRequest.MergeCommit.Deployments.Nodes[0].CreatedAt
+				deploymentAge := int64(deploymentAgeUpperBound.Sub(pullRequest.CreatedAt).Hours())
+				ghs.mb.RecordGitRepositoryPullRequestDeploymentTimeDataPoint(now, deploymentAge, repoName, pullRequest.HeadRefName)
 			}
 		} else {
 			openCount++
-			prAge := int64(now.AsTime().Sub(pr.CreatedAt).Hours())
-			ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, prAge, repoName, pr.HeadRefName)
+			pullRequestAge := int64(now.AsTime().Sub(pullRequest.CreatedAt).Hours())
+			ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, pullRequestAge, repoName, pullRequest.HeadRefName)
 		}
-		if pr.Reviews.TotalCount > 0 {
-			approvalAgeUpperBound := pr.Reviews.Nodes[0].CreatedAt
-			approvalAge := int64(approvalAgeUpperBound.Sub(pr.CreatedAt).Hours())
-			ghs.mb.RecordGitRepositoryPullRequestApprovalTimeDataPoint(now, approvalAge, repoName, pr.HeadRefName)
+
+		if pullRequest.Reviews.TotalCount > 0 {
+			approvalAgeUpperBound := pullRequest.Reviews.Nodes[0].CreatedAt
+			approvalAge := int64(approvalAgeUpperBound.Sub(pullRequest.CreatedAt).Hours())
+			ghs.mb.RecordGitRepositoryPullRequestApprovalTimeDataPoint(now, approvalAge, repoName, pullRequest.HeadRefName)
 		}
 	}
+
 	ghs.mb.RecordGitRepositoryPullRequestOpenCountDataPoint(now, int64(openCount), repoName)
 	ghs.mb.RecordGitRepositoryPullRequestMergedCountDataPoint(now, int64(mergedCount), repoName)
 }
 
-// Retrieves the commit data for a given branch.
+// Retrieves the commit data for a given branch of a given repository.
 func (ghs *githubScraper) getCommitInfo(
 	ctx context.Context,
 	client graphql.Client,
 	repoName string,
 	now pcommon.Timestamp,
-	comPages int,
+	commitPages int,
 	branch BranchNode,
-) (int, int, int64, error) {
-	comCount := 100
-	var cc *string
-	var adds int = 0
-	var dels int = 0
-	var age int64 = 0
+) (*commitInfo, error) {
+	var commitCursor *string
+	var commitCount int = 100
+	commitInfo := commitInfo{
+		additions: 0,
+		deletions: 0,
+		age:       0,
+	}
 
-	for nPage := 1; nPage <= comPages; nPage++ {
-		if nPage == comPages {
-			comCount = branch.Compare.BehindBy % 100
+	for pageNum := 1; pageNum <= commitPages; pageNum++ {
+		if pageNum == commitPages {
+			commitCount = branch.Compare.BehindBy % 100
 			// When the last page is full
-			if comCount == 0 {
-				comCount = 100
+			if commitCount == 0 {
+				commitCount = 100
 			}
 		}
-		c, err := ghs.getCommitData(context.Background(), client, repoName, ghs.cfg.GitHubOrg, comCount, cc, branch.Name)
+
+		commitData, err := ghs.getCommitData(context.Background(), client, repoName, ghs.cfg.GitHubOrg, commitCount, commitCursor, branch.Name)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting commit data", zap.Error(err))
-			return 0, 0, 0, err
+			return &commitInfo, err
 		}
 
-		if len(c.Edges) == 0 {
+		if len(commitData.Edges) == 0 {
 			break
 		}
-		cc = &c.PageInfo.EndCursor
-		if nPage == comPages {
-			e := c.GetEdges()
-			oldest := e[len(e)-1].Node.GetCommittedDate()
-			age = int64(time.Since(oldest).Hours())
-		}
-		for b := 0; b < len(c.Edges); b++ {
-			adds = add(adds, c.Edges[b].Node.Additions)
-			dels = add(dels, c.Edges[b].Node.Deletions)
+
+		commitCursor = &commitData.PageInfo.EndCursor
+		if pageNum == commitPages {
+			edges := commitData.GetEdges()
+			oldest := edges[len(edges)-1].Node.GetCommittedDate()
+			commitInfo.age = int64(time.Since(oldest).Hours())
 		}
 
+		for b := 0; b < len(commitData.Edges); b++ {
+			commitInfo.additions = add(commitInfo.additions, commitData.Edges[b].Node.Additions)
+			commitInfo.deletions = add(commitInfo.deletions, commitData.Edges[b].Node.Deletions)
+		}
 	}
-	return adds, dels, age, nil
+
+	return &commitInfo, nil
 }
 
+// Retrieves data for the given branch of the given repo.
 func (ghs *githubScraper) getBranches(
 	ctx context.Context,
 	client graphql.Client,
 	repoName string,
 	defaultBranch string,
 ) ([]BranchNode, error) {
-
 	var branchCursor *string
 	var branches []BranchNode
 	for hasNextPage := true; hasNextPage; {
-		r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, 50, defaultBranch, branchCursor)
+		branchData, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, 50, defaultBranch, branchCursor)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
 			return nil, err
 		}
 
-		branches = append(branches, r.Repository.Refs.Nodes...)
-		branchCursor = &r.Repository.Refs.PageInfo.EndCursor
-		hasNextPage = r.Repository.Refs.PageInfo.HasNextPage
+		branchCursor = &branchData.Repository.Refs.PageInfo.EndCursor
+		hasNextPage = branchData.Repository.Refs.PageInfo.HasNextPage
+		branches = append(branches, branchData.Repository.Refs.Nodes...)
 	}
+
 	return branches, nil
 }
 
+// Iterates over the given branches of a given repo and records the relevant
+// metrics.
 func (ghs *githubScraper) processBranches(
 	ctx context.Context,
 	client graphql.Client,
@@ -185,8 +206,8 @@ func (ghs *githubScraper) processBranches(
 	branches []BranchNode,
 	repoName string,
 ) {
-
 	ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(branches)), repoName)
+
 	for _, branch := range branches {
 		if branch.Name == branch.Repository.DefaultBranchRef.Name || branch.Compare.BehindBy == 0 {
 			continue
@@ -207,19 +228,20 @@ func (ghs *githubScraper) processBranches(
 		// the number of commits made to the queried branch but not merged into
 		// the default branch. Doing it this way involves less queries because
 		// we don't have to know the queried branch name ahead of time.
-		cp := getNumPages(float64(100), float64(branch.Compare.BehindBy))
-		adds, dels, age, err := ghs.getCommitInfo(ctx, client, branch.Repository.Name, now, cp, branch)
+		commitPages := getNumPages(float64(100), float64(branch.Compare.BehindBy))
+		commitInfo, err := ghs.getCommitInfo(ctx, client, branch.Repository.Name, now, commitPages, branch)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting commit info", zap.Error(err))
 			continue
 		}
 
-		ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, branch.Repository.Name, branch.Name)
-		ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), branch.Repository.Name, branch.Name)
-		ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), branch.Repository.Name, branch.Name)
+		ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, commitInfo.age, branch.Repository.Name, branch.Name)
+		ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(commitInfo.additions), branch.Repository.Name, branch.Name)
+		ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(commitInfo.deletions), branch.Repository.Name, branch.Name)
 	}
 }
 
+// Retrieves the amount of contributors for a given repository.
 func (ghs *githubScraper) getContributorCount(
 	ctx context.Context,
 	client *github.Client,
@@ -236,7 +258,7 @@ func (ghs *githubScraper) getContributorCount(
 	return len(contributors), nil
 }
 
-// scrape and return metrics
+// Perform the actual scraping of GitHub data.
 func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	if ghs.client == nil {
 		return pmetric.NewMetrics(), errClientNotInitErr
@@ -257,27 +279,27 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	// Enable the ability to override the endpoint for self-hosted github instances
 	// GitHub Free URL : https://api.github.com/graphql
 	// https://docs.github.com/en/graphql/guides/forming-calls-with-graphql#the-graphql-endpoint
-	graphCURL := "https://api.github.com/graphql"
+	graphClientURL := "https://api.github.com/graphql"
 
 	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
 		var err error
 
 		// GitHub Enterprise (ghe) URL : http(s)://HOSTNAME/api/graphql
 		// https://docs.github.com/en/enterprise-server@3.8/graphql/guides/forming-calls-with-graphql#the-graphql-endpoint
-		graphCURL, err = url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "api/graphql")
+		graphClientURL, err = url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "api/graphql")
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error: %v", err)
 		}
 	}
 
-	genClient := graphql.NewClient(graphCURL, ghs.client)
+	graphClient := graphql.NewClient(graphClientURL, ghs.client)
 
-	exists, ownertype, err := ghs.checkOwnerExists(ctx, genClient, ghs.cfg.GitHubOrg)
+	exists, ownertype, err := ghs.checkOwnerExists(ctx, graphClient, ghs.cfg.GitHubOrg)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("Error checking if owner exists", zap.Error(err))
 	}
 
-	typeValid, err := checkOwnerTypeValid(ownertype)
+	validOwnerType, err := checkOwnerTypeValid(ownertype)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("Error checking if owner type is valid", zap.Error(err))
 	}
@@ -295,40 +317,38 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		// https://docs.github.com/en/enterprise-server@3.8/rest/guides/getting-started-with-the-rest-api#making-a-request
 		// Already Managed by Client.WithEnterpriseURLs(...) with http(s)://HOSTNAME
 		// https://github.com/google/go-github/blob/master/github/github.go#L351
-		restCURL := ghs.cfg.HTTPClientSettings.Endpoint
+		restClientURL := ghs.cfg.HTTPClientSettings.Endpoint
 
-		restClient, err = github.NewEnterpriseClient(restCURL, restCURL, ghs.client)
+		restClient, err = github.NewEnterpriseClient(restClientURL, restClientURL, ghs.client)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error: %v", err)
 		}
 	}
 
-	var data interface{}
+	var repoData interface{}
 	var repoCursor *string
 
-	if !exists || !typeValid {
+	if !exists || !validOwnerType {
 		ghs.logger.Sugar().Error("error logging in and getting data from github")
 		return ghs.mb.Emit(), err
 	}
 
-	sq := genDefaultSearchQuery(ownertype, ghs.cfg.GitHubOrg)
+	searchQuery := genDefaultSearchQuery(ownertype, ghs.cfg.GitHubOrg)
 
 	if ghs.cfg.SearchQuery != "" {
-		sq = ghs.cfg.SearchQuery
+		searchQuery = ghs.cfg.SearchQuery
 		ghs.logger.Sugar().Debugf("using search query where query is: %v", ghs.cfg.SearchQuery)
 	}
 
-	data, err = getRepoData(ctx, genClient, sq, ownertype, repoCursor)
+	repoData, err = getRepoData(ctx, graphClient, searchQuery, ownertype, repoCursor)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
 		return ghs.mb.Emit(), err
 	}
 
-	// TODO: setting this here for access from the proceeding for statement
-	// gathering repo data
 	var searchRepos []SearchNodeRepository
 
-	if searchData, ok := data.(*getRepoDataBySearchResponse); ok {
+	if searchData, ok := repoData.(*getRepoDataBySearchResponse); ok {
 		ghs.logger.Sugar().Debug("successful search response")
 		ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(searchData.Search.RepositoryCount))
 
@@ -344,7 +364,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 
 			repoCursor = &searchData.Search.PageInfo.EndCursor
-			searchData, err = getRepoData(ctx, genClient, sq, ownertype, repoCursor)
+			searchData, err = getRepoData(ctx, graphClient, searchQuery, ownertype, repoCursor)
 			if err != nil {
 				ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
 			}
@@ -360,56 +380,57 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		var maxProcesses int = 3
 		sem := make(chan int, maxProcesses)
 
-		// pullrequest information
+		// Gather & process PR info.
 		for i := 0; i < len(searchRepos); i++ {
 			i := i
 			sem <- 1
 			go func() {
-				prs, err := ghs.getPullRequests(ctx, genClient, searchRepos[i].Name)
+				pullRequestStates := []PullRequestState{"OPEN", "MERGED"}
+				pullRequests, err := ghs.getPullRequests(ctx, graphClient, searchRepos[i].Name, pullRequestStates)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting pull requests", zap.Error(err))
 					<-sem
 					return
 				}
-				processPullRequests(ghs, ctx, genClient, now, prs, searchRepos[i].Name)
+				processPullRequests(ghs, ctx, graphClient, now, pullRequests, searchRepos[i].Name)
 				<-sem
 			}()
 		}
 
-		// branch information
+		// Gather & process branch info.
 		for i := 0; i < len(searchRepos); i++ {
 			i := i
 			sem <- 1
 			go func() {
-				branches, err := ghs.getBranches(ctx, genClient, searchRepos[i].Name, searchRepos[i].DefaultBranchRef.Name)
+				branches, err := ghs.getBranches(ctx, graphClient, searchRepos[i].Name, searchRepos[i].DefaultBranchRef.Name)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting branches", zap.Error(err))
 					<-sem
 					return
 				}
-				ghs.processBranches(ctx, genClient, now, branches, searchRepos[i].Name)
+				ghs.processBranches(ctx, graphClient, now, branches, searchRepos[i].Name)
 				<-sem
 			}()
 		}
 
-		// contributor count
+		// Gather & process contributor info.
 		for i := 0; i < len(searchRepos); i++ {
 			i := i
 			sem <- 1
 			go func() {
-				contribCount, err := ghs.getContributorCount(ctx, restClient, searchRepos[i])
+				contributorCount, err := ghs.getContributorCount(ctx, restClient, searchRepos[i])
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
 					<-sem
 					return
 				}
-				ghs.logger.Sugar().Debugf("contributor count: %v for repo %v", contribCount, searchRepos[i].Name)
-				ghs.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contribCount), searchRepos[i].Name)
+				ghs.logger.Sugar().Debugf("contributor count: %v for repo %v", contributorCount, searchRepos[i].Name)
+				ghs.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contributorCount), searchRepos[i].Name)
 				<-sem
 			}()
 		}
 
-		// wait until all goroutines are finished
+		// Wait until all goroutines are finished.
 		for i := 0; i < maxProcesses; i++ {
 			sem <- 1
 		}

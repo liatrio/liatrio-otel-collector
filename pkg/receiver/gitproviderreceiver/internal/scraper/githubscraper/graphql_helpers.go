@@ -43,19 +43,23 @@ func (ghs *githubScraper) getCommitData(
 	if err != nil {
 		return nil, err
 	}
+
 	if len(data.Repository.Refs.Nodes) == 0 {
 		return nil, errors.New("no commits returned")
 	}
-	tar := data.Repository.Refs.Nodes[0].GetTarget()
-	if ct, ok := tar.(*CommitNodeTargetCommit); ok {
+
+	target := data.Repository.Refs.Nodes[0].GetTarget()
+	if ct, ok := target.(*CommitNodeTargetCommit); ok {
 		return &ct.History, nil
 	} else {
 		return nil, errors.New("target is not a commit")
 	}
 }
 
-func getNumPages(p float64, n float64) int {
-	numPages := math.Ceil(n / p)
+// Compute the number of pages needed to get perPage number of items
+// from total number of items
+func getNumPages(perPage float64, total float64) int {
+	numPages := math.Ceil(total / perPage)
 
 	return int(numPages)
 }
@@ -73,13 +77,13 @@ func checkOwnerTypeValid(ownertype string) (bool, error) {
 	if ownertype == "org" || ownertype == "user" {
 		return true, nil
 	}
+
 	return false, errors.New("ownertype must be either org or user")
 }
 
 // Check to ensure that the login user (org name or user id) exists or
 // can be logged into.
 func (ghs *githubScraper) checkOwnerExists(ctx context.Context, client graphql.Client, owner string) (exists bool, ownerType string, err error) {
-
 	loginResp, err := checkLogin(ctx, client, ghs.cfg.GitHubOrg)
 
 	exists = false
@@ -104,6 +108,6 @@ func (ghs *githubScraper) checkOwnerExists(ctx context.Context, client graphql.C
 
 // Returns the default search query string based on input of owner type
 // and GitHubOrg name with a default of archived:false to ignore archived repos
-func genDefaultSearchQuery(ownertype string, ghorg string) string {
-	return fmt.Sprintf("%s:%s archived:false", ownertype, ghorg)
+func genDefaultSearchQuery(ownertype string, githubOrg string) string {
+	return fmt.Sprintf("%s:%s archived:false", ownertype, githubOrg)
 }
