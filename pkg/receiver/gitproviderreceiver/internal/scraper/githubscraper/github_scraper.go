@@ -115,12 +115,11 @@ func (ghs *githubScraper) getPullRequests(
 	client graphql.Client,
 	repoName string,
 ) ([]PullRequestNode, error) {
-
 	var prCursor *string
 	var pullRequests []PullRequestNode
 
 	for hasNextPage := true; hasNextPage; {
-		prs, err := getPullRequestData(ctx, client, repoName, ghs.cfg.GitHubOrg, 100, prCursor)
+		prs, err := getPullRequestData(ctx, client, repoName, ghs.cfg.GitHubOrg, 100, prCursor, []PullRequestState{"OPEN", "MERGED"})
 		if err != nil {
 			return nil, err
 		}
@@ -147,7 +146,7 @@ func processPullRequests(
 			prMergedTime := pr.MergedAt
 			mergeAge := int64(prMergedTime.Sub(pr.CreatedAt).Hours())
 			ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeAge, repoName, pr.HeadRefName)
-			//only exists if the pr is merged
+			// only exists if the pr is merged
 			if pr.MergeCommit.Deployments.TotalCount > 0 {
 				deploymentAgeUpperBound := pr.MergeCommit.Deployments.Nodes[0].CreatedAt
 				deploymentAge := int64(deploymentAgeUpperBound.Sub(pr.CreatedAt).Hours())
@@ -220,7 +219,6 @@ func (ghs *githubScraper) getBranches(
 	repo SearchNodeRepository,
 	now pcommon.Timestamp,
 ) ([]BranchNode, error) {
-
 	var defaultBranch string = repo.DefaultBranchRef.Name
 
 	bp, err := getNumBranchPages(ghs, ctx, client, repo.Name, now)
@@ -236,7 +234,6 @@ func (ghs *githubScraper) getBranches(
 	}
 
 	return branches, nil
-
 }
 
 func (ghs *githubScraper) processBranches(
@@ -245,7 +242,6 @@ func (ghs *githubScraper) processBranches(
 	now pcommon.Timestamp,
 	branches []BranchNode,
 ) {
-
 	for _, branch := range branches {
 		if branch.Name == branch.Repository.DefaultBranchRef.Name || branch.Compare.BehindBy == 0 {
 			continue
@@ -277,7 +273,6 @@ func (ghs *githubScraper) processBranches(
 		ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), branch.Repository.Name, branch.Name)
 		ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), branch.Repository.Name, branch.Name)
 	}
-
 }
 
 func (ghs *githubScraper) getContributorCount(
@@ -425,7 +420,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		var maxProcesses int = 3
 		sem := make(chan int, maxProcesses)
 
-		//pullrequest information
+		// pullrequest information
 		for i := 0; i < len(searchRepos); i++ {
 			i := i
 			sem <- 1
@@ -441,7 +436,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}()
 		}
 
-		//branch information
+		// branch information
 		for i := 0; i < len(searchRepos); i++ {
 			i := i
 			sem <- 1
@@ -457,7 +452,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}()
 		}
 
-		//contributor count
+		// contributor count
 		for i := 0; i < len(searchRepos); i++ {
 			i := i
 			sem <- 1
@@ -474,7 +469,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}()
 		}
 
-		//wait until all goroutines are finished
+		// wait until all goroutines are finished
 		for i := 0; i < maxProcesses; i++ {
 			sem <- 1
 		}

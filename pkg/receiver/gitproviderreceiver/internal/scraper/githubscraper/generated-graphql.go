@@ -516,6 +516,18 @@ func (v *PullRequestNodeReviewsPullRequestReviewConnectionNodesPullRequestReview
 	return v.CreatedAt
 }
 
+// The possible states of a pull request.
+type PullRequestState string
+
+const (
+	// A pull request that is still open.
+	PullRequestStateOpen PullRequestState = "OPEN"
+	// A pull request that has been closed without being merged.
+	PullRequestStateClosed PullRequestState = "CLOSED"
+	// A pull request that has been closed by being merged.
+	PullRequestStateMerged PullRequestState = "MERGED"
+)
+
 // SearchNode includes the requested fields of the GraphQL interface SearchResultItem.
 //
 // SearchNode is implemented by the following types:
@@ -858,10 +870,11 @@ func (v *__getCommitDataInput) GetBranchName() string { return v.BranchName }
 
 // __getPullRequestDataInput is used internally by genqlient
 type __getPullRequestDataInput struct {
-	Name     string  `json:"name"`
-	Owner    string  `json:"owner"`
-	PrFirst  int     `json:"prFirst"`
-	PrCursor *string `json:"prCursor"`
+	Name     string             `json:"name"`
+	Owner    string             `json:"owner"`
+	PrFirst  int                `json:"prFirst"`
+	PrCursor *string            `json:"prCursor"`
+	PrStates []PullRequestState `json:"prStates"`
 }
 
 // GetName returns __getPullRequestDataInput.Name, and is useful for accessing the field via an interface.
@@ -875,6 +888,9 @@ func (v *__getPullRequestDataInput) GetPrFirst() int { return v.PrFirst }
 
 // GetPrCursor returns __getPullRequestDataInput.PrCursor, and is useful for accessing the field via an interface.
 func (v *__getPullRequestDataInput) GetPrCursor() *string { return v.PrCursor }
+
+// GetPrStates returns __getPullRequestDataInput.PrStates, and is useful for accessing the field via an interface.
+func (v *__getPullRequestDataInput) GetPrStates() []PullRequestState { return v.PrStates }
 
 // __getRepoDataBySearchInput is used internally by genqlient
 type __getRepoDataBySearchInput struct {
@@ -1470,9 +1486,9 @@ func getCommitData(
 
 // The query or mutation executed by getPullRequestData.
 const getPullRequestData_Operation = `
-query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCursor: String) {
+query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCursor: String, $prStates: [PullRequestState!] = [OPEN,MERGED]) {
 	repository(name: $name, owner: $owner) {
-		pullRequests(first: $prFirst, after: $prCursor, states: [OPEN,MERGED]) {
+		pullRequests(first: $prFirst, after: $prCursor, states: $prStates) {
 			nodes {
 				... on PullRequest {
 					createdAt
@@ -1513,6 +1529,7 @@ func getPullRequestData(
 	owner string,
 	prFirst int,
 	prCursor *string,
+	prStates []PullRequestState,
 ) (*getPullRequestDataResponse, error) {
 	req := &graphql.Request{
 		OpName: "getPullRequestData",
@@ -1522,6 +1539,7 @@ func getPullRequestData(
 			Owner:    owner,
 			PrFirst:  prFirst,
 			PrCursor: prCursor,
+			PrStates: prStates,
 		},
 	}
 	var err error
