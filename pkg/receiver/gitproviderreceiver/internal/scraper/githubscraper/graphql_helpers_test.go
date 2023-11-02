@@ -20,6 +20,8 @@ type mockClient struct {
 	prs           getPullRequestDataRepositoryPullRequestsPullRequestConnection
 	branchData    getBranchDataRepositoryRefsRefConnection
 	commitData    CommitNodeTargetCommit
+	repoData      []getRepoDataBySearchSearchSearchResultItemConnection
+	curPage       int
 }
 
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
@@ -73,7 +75,13 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 		}
 		r.Repository.Refs.Nodes = commitNodes
 
-		// case "getRepoDataBySearch":
+	case "getRepoDataBySearch":
+		if m.err {
+			return errors.New(m.errString)
+		}
+		r := resp.Data.(*getRepoDataBySearchResponse)
+		r.Search = m.repoData[m.curPage]
+		m.curPage++
 	}
 	return nil
 }
