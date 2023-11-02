@@ -66,18 +66,6 @@ func (ghs *githubScraper) getPrCount(
 	}
 	return count.Repository.PullRequests.TotalCount, nil
 }
-func (ghs *githubScraper) getBranchCount(
-	ctx context.Context,
-	client graphql.Client,
-	repoName string,
-	owner string,
-) (int, error) {
-	count, err := getBranchCount(ctx, client, repoName, ghs.cfg.GitHubOrg)
-	if err != nil {
-		return 0, err
-	}
-	return count.Repository.Refs.TotalCount, nil
-}
 
 func getNumPages(p float64, n float64) int {
 	numPages := math.Ceil(n / p)
