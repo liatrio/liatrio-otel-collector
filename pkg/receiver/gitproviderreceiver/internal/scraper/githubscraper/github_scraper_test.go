@@ -496,7 +496,7 @@ func TestGetBranches(t *testing.T) {
 		},
 		{
 			desc:                "error",
-			client:              &mockClient{err2: true, errString: "this is an error"},
+			client:              &mockClient{err: true, errString: "this is an error"},
 			expectedErr:         errors.New("this is an error"),
 			expectedBranchCount: 0,
 		},
@@ -508,12 +508,13 @@ func TestGetBranches(t *testing.T) {
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 			branches, err := ghs.getBranches(context.Background(), tc.client, "repo", "main")
+
+			assert.Equal(t, tc.expectedBranchCount, len(branches))
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.EqualError(t, err, tc.expectedErr.Error())
 			}
-			assert.Equal(t, tc.expectedBranchCount, len(branches))
 		})
 	}
 }

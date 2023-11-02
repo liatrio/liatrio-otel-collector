@@ -51,7 +51,7 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 		r := resp.Data.(*getPullRequestDataResponse)
 		r.Repository.PullRequests = m.prs
 	case "getBranchData":
-		if m.err2 {
+		if m.err {
 			return errors.New(m.errString)
 		}
 		r := resp.Data.(*getBranchDataResponse)
