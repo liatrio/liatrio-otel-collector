@@ -25,12 +25,28 @@ import (
 
 var errClientNotInitErr = errors.New("http client not initialized")
 
+// A struct representing the GitLab Scraper.
 type gitlabScraper struct {
 	client   *http.Client
 	cfg      *Config
 	settings component.TelemetrySettings
 	logger   *zap.Logger
 	mb       *metadata.MetricsBuilder
+}
+
+// A struct representing a GitLab project.
+type gitlabProject struct {
+	// The name of the project.
+	Name string
+
+	// The full path to the project.
+	Path string
+
+	// When it was created.
+	CreatedAt time.Time
+
+	// When it was last active.
+	LastActivityAt time.Time
 }
 
 func (gls *gitlabScraper) start(_ context.Context, host component.Host) (err error) {
@@ -40,6 +56,7 @@ func (gls *gitlabScraper) start(_ context.Context, host component.Host) (err err
 	return
 }
 
+// Create a new GitLab Scraper.
 func newGitLabScraper(
 	_ context.Context,
 	settings receiver.CreateSettings,
@@ -53,14 +70,13 @@ func newGitLabScraper(
 	}
 }
 
-type gitlabProject struct {
-	Name           string
-	Path           string
-	CreatedAt      time.Time
-	LastActivityAt time.Time
-}
-
-func (gls *gitlabScraper) processBranches(client *gitlab.Client, branches *getBranchNamesProjectRepository, projectPath string, now pcommon.Timestamp) {
+// Iterate through the list of branches and record the relevant metrics.
+func (gls *gitlabScraper) processBranches(
+	client *gitlab.Client,
+	branches *getBranchNamesProjectRepository,
+	projectPath string,
+	now pcommon.Timestamp,
+) {
 	gls.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(branches.BranchNames)), projectPath)
 	gls.logger.Sugar().Debugf("%s branch count: %v", projectPath, int64(len(branches.BranchNames)))
 
@@ -69,19 +85,20 @@ func (gls *gitlabScraper) processBranches(client *gitlab.Client, branches *getBr
 			continue
 		}
 
-		commit, err := gls.getInitialCommit(client, projectPath, branches.RootRef, branch)
+		initialCommit, err := gls.getInitialCommit(client, projectPath, branches.RootRef, branch)
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
 		}
 
-		if commit != nil {
-			branchAge := time.Since(*commit.CreatedAt).Hours()
-			gls.logger.Sugar().Debugf("%v age: %v hours, commit name: %s", branch, branchAge, commit.Title)
+		if initialCommit != nil {
+			branchAge := time.Since(*initialCommit.CreatedAt).Hours()
+			gls.logger.Sugar().Debugf("%v age: %v hours, commit name: %s", branch, branchAge, initialCommit.Title)
 			gls.mb.RecordGitRepositoryBranchTimeDataPoint(now, int64(branchAge), projectPath, branch)
 		}
 	}
 }
 
+// Get merge request data for a given project that are in a given state.
 func (gls *gitlabScraper) getMergeRequests(
 	ctx context.Context,
 	graphClient graphql.Client,
@@ -89,60 +106,70 @@ func (gls *gitlabScraper) getMergeRequests(
 	state MergeRequestState,
 ) ([]MergeRequestNode, error) {
 	var mergeRequestData []MergeRequestNode
-	var mrCursor *string
+	var mergeRequestCursor *string
 
 	for hasNextPage := true; hasNextPage; {
 		// Get the next page of data
-		mr, err := getMergeRequests(ctx, graphClient, projectPath, mrCursor, state)
+		mergeRequest, err := getMergeRequests(ctx, graphClient, projectPath, mergeRequestCursor, state)
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
 			return nil, err
 		}
-		if len(mr.Project.MergeRequests.Nodes) == 0 {
+
+		if len(mergeRequest.Project.MergeRequests.Nodes) == 0 {
 			break
 		}
 
-		mrCursor = &mr.Project.MergeRequests.PageInfo.EndCursor
-		hasNextPage = mr.Project.MergeRequests.PageInfo.HasNextPage
-		mergeRequestData = append(mergeRequestData, mr.Project.MergeRequests.Nodes...)
+		hasNextPage = mergeRequest.Project.MergeRequests.PageInfo.HasNextPage
+		mergeRequestCursor = &mergeRequest.Project.MergeRequests.PageInfo.EndCursor
+		mergeRequestData = append(mergeRequestData, mergeRequest.Project.MergeRequests.Nodes...)
 	}
 
 	return mergeRequestData, nil
 }
 
+// Get merge request data for a given project in the opened or merged state.
 func (gls *gitlabScraper) getCombinedMergeRequests(
 	ctx context.Context,
 	graphClient graphql.Client,
 	projectPath string,
 ) ([]MergeRequestNode, error) {
-	openMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateOpened)
+	openMergeRequests, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateOpened)
 	if err != nil {
 		gls.logger.Sugar().Errorf("error getting open merge requests", zap.Error(err))
 		return nil, err
 	}
-	mergedMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateMerged)
+
+	mergedMergeRequests, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateMerged)
 	if err != nil {
 		gls.logger.Sugar().Errorf("error getting merged merge requests", zap.Error(err))
 		return nil, err
 	}
-	mrs := append(openMrs, mergedMrs...)
-	return mrs, nil
+
+	// Combine the open and merged merge requests and return the result.
+	return append(openMergeRequests, mergedMergeRequests...), nil
 }
 
-func (gls *gitlabScraper) processMergeRequests(client *gitlab.Client, mrs []MergeRequestNode, projectPath string, now pcommon.Timestamp) {
-	for _, mr := range mrs {
-		gls.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(mr.DiffStatsSummary.Additions), projectPath, mr.SourceBranch)
-		gls.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(mr.DiffStatsSummary.Deletions), projectPath, mr.SourceBranch)
+func (gls *gitlabScraper) processMergeRequests(
+	client *gitlab.Client,
+	mergeRequests []MergeRequestNode,
+	projectPath string,
+	now pcommon.Timestamp,
+) {
+	for _, mergeRequest := range mergeRequests {
+		gls.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(mergeRequest.DiffStatsSummary.Additions), projectPath, mergeRequest.SourceBranch)
+		gls.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(mergeRequest.DiffStatsSummary.Deletions), projectPath, mergeRequest.SourceBranch)
 
-		// IsZero() tells us if the time is or isnt  January 1, year 1, 00:00:00 UTC, which is what null graphql date values get returned as in Go
-		if mr.MergedAt.IsZero() {
-			mrAge := int64(time.Since(mr.CreatedAt).Hours())
-			gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, projectPath, mr.SourceBranch)
-			gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", projectPath, mr.SourceBranch, mrAge)
+		// IsZero() tells us if the time is or isn't "January 1, year 1, 00:00:00 UTC", which is what
+		// null graphql date values get returned as in Go.
+		if mergeRequest.MergedAt.IsZero() {
+			mergeRequestAge := int64(time.Since(mergeRequest.CreatedAt).Hours())
+			gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mergeRequestAge, projectPath, mergeRequest.SourceBranch)
+			gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", projectPath, mergeRequest.SourceBranch, mergeRequestAge)
 		} else {
-			mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Hours())
-			gls.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergedAge, projectPath, mr.SourceBranch)
-			gls.logger.Sugar().Debugf("%s merge request for branch %v, merged age: %v", projectPath, mr.SourceBranch, mergedAge)
+			mergeRequestAge := int64(mergeRequest.MergedAt.Sub(mergeRequest.CreatedAt).Hours())
+			gls.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergeRequestAge, projectPath, mergeRequest.SourceBranch)
+			gls.logger.Sugar().Debugf("%s merge request for branch %v, merged age: %v", projectPath, mergeRequest.SourceBranch, mergeRequestAge)
 		}
 	}
 }
@@ -162,28 +189,28 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	gls.logger.Sugar().Debugf("current date: %v", currentDate)
 
-	gls.logger.Sugar().Debug("creating a new gitlab client")
+	gls.logger.Sugar().Debug("creating a new GitLab client")
 
-	// Enable the ability to override the endpoint for self-hosted gitlab instances
-	graphCURL := "https://gitlab.com/api/graphql"
-	restCURL := "https://gitlab.com/"
+	// Enable the ability to override the endpoint for self-hosted GitLab instances.
+	graphClientURL := "https://gitlab.com/api/graphql"
+	restClientURL := "https://gitlab.com/"
 
 	if gls.cfg.HTTPClientSettings.Endpoint != "" {
 		var err error
 
-		graphCURL, err = url.JoinPath(gls.cfg.HTTPClientSettings.Endpoint, "api/graphql")
+		graphClientURL, err = url.JoinPath(gls.cfg.HTTPClientSettings.Endpoint, "api/graphql")
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
 		}
 
-		restCURL, err = url.JoinPath(gls.cfg.HTTPClientSettings.Endpoint, "/")
+		restClientURL, err = url.JoinPath(gls.cfg.HTTPClientSettings.Endpoint, "/")
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
 		}
 	}
 
-	graphClient := graphql.NewClient(graphCURL, gls.client)
-	restClient, err := gitlab.NewClient("", gitlab.WithHTTPClient(gls.client), gitlab.WithBaseURL(restCURL))
+	graphClient := graphql.NewClient(graphClientURL, gls.client)
+	restClient, err := gitlab.NewClient("", gitlab.WithHTTPClient(gls.client), gitlab.WithBaseURL(restClientURL))
 	if err != nil {
 		gls.logger.Sugar().Errorf("error: %v", err)
 	}
@@ -191,7 +218,6 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	var projectList []gitlabProject
 
 	for nextPage := 1; nextPage > 0; {
-		// TODO: since we pass in a context already, do we need to create a new background context?
 		projects, res, err := restClient.Groups.ListGroupProjects(gls.cfg.GitLabOrg, &gitlab.ListGroupProjectsOptions{
 			IncludeSubGroups: gitlab.Bool(true),
 			Topic:            gitlab.String(gls.cfg.SearchTopic),
@@ -215,12 +241,12 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			return gls.mb.Emit(), err
 		}
 
-		for _, p := range projects {
+		for _, project := range projects {
 			projectList = append(projectList, gitlabProject{
-				Name:           p.Name,
-				Path:           p.PathWithNamespace,
-				CreatedAt:      *p.CreatedAt,
-				LastActivityAt: *p.LastActivityAt,
+				Name:           project.Name,
+				Path:           project.PathWithNamespace,
+				CreatedAt:      *project.CreatedAt,
+				LastActivityAt: *project.LastActivityAt,
 			})
 		}
 
@@ -239,6 +265,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	var maxProcesses int = 3
 	sem := make(chan int, maxProcesses)
+
 	// TODO: Must account for when there are more than 100,000 branch names in a project.
 	for _, project := range projectList {
 		sem <- 1
@@ -257,18 +284,18 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	for _, project := range projectList {
 		sem <- 1
 		go func(project gitlabProject) {
-			mrs, err := gls.getCombinedMergeRequests(ctx, graphClient, project.Path)
+			mergeRequests, err := gls.getCombinedMergeRequests(ctx, graphClient, project.Path)
 			if err != nil {
 				gls.logger.Sugar().Errorf("error getting merge requests", zap.Error(err))
 				<-sem
 				return
 			}
-			gls.processMergeRequests(restClient, mrs, project.Path, now)
+			gls.processMergeRequests(restClient, mergeRequests, project.Path, now)
 			<-sem
 		}(project)
 	}
 
-	//wait until all goroutines are finished
+	// wait until all goroutines are finished
 	for i := 0; i < maxProcesses; i++ {
 		sem <- 1
 	}

@@ -12,16 +12,16 @@ var creationSet = receivertest.NewNopCreateSettings()
 
 func TestCreateDefaultConfig(t *testing.T) {
 	factory := Factory{}
-	cfg := factory.CreateDefaultConfig()
+	defaultConfig := factory.CreateDefaultConfig()
 
-	assert.NotNil(t, cfg, "failed to create default config")
+	assert.NotNil(t, defaultConfig, "failed to create default config")
 }
 
 func TestCreateMetricsScraper(t *testing.T) {
 	factory := Factory{}
-	cfg := factory.CreateDefaultConfig()
+	defaultConfig := factory.CreateDefaultConfig()
 
-	mReceiver, err := factory.CreateMetricsScraper(context.Background(), creationSet, cfg)
+	mReceiver, err := factory.CreateMetricsScraper(context.Background(), creationSet, defaultConfig)
 	assert.NoError(t, err)
 	assert.NotNil(t, mReceiver)
 }

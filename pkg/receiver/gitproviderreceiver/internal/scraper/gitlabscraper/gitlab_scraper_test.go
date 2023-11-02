@@ -22,9 +22,9 @@ func TestNewGitLabScraper(t *testing.T) {
 	factory := Factory{}
 	defaultConfig := factory.CreateDefaultConfig()
 
-	s := newGitLabScraper(context.Background(), receiver.CreateSettings{}, defaultConfig.(*Config))
+	scraper := newGitLabScraper(context.Background(), receiver.CreateSettings{}, defaultConfig.(*Config))
 
-	assert.NotNil(t, s)
+	assert.NotNil(t, scraper)
 }
 
 /*
@@ -49,21 +49,24 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 		if m.err {
 			return errors.New(m.errString)
 		}
-		r := resp.Data.(*getBranchNamesResponse)
-		r.Project.Repository.BranchNames = m.BranchNames
-		r.Project.Repository.RootRef = m.RootRef
+
+		response := resp.Data.(*getBranchNamesResponse)
+		response.Project.Repository.BranchNames = m.BranchNames
+		response.Project.Repository.RootRef = m.RootRef
 
 	case "getMergeRequests":
-		r := resp.Data.(*getMergeRequestsResponse)
+		response := resp.Data.(*getMergeRequestsResponse)
 
 		if req.Variables.(*__getMergeRequestsInput).State == "opened" {
 			if m.openErr {
 				return errors.New(m.errString)
 			}
+
 			if len(m.openMergeRequests) == 0 {
 				return nil
 			}
-			r.Project.MergeRequests = m.openMergeRequests[m.curPage]
+
+			response.Project.MergeRequests = m.openMergeRequests[m.curPage]
 			if m.openMergeRequests[m.curPage].PageInfo.HasNextPage == false {
 				m.curPage = 0
 			} else {
@@ -74,10 +77,12 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 			if m.mergedErr {
 				return errors.New(m.errString)
 			}
+
 			if len(m.mergedMergeRequests) == 0 {
 				return nil
 			}
-			r.Project.MergeRequests = m.mergedMergeRequests[m.curPage]
+
+			response.Project.MergeRequests = m.mergedMergeRequests[m.curPage]
 			if m.mergedMergeRequests[m.curPage].PageInfo.HasNextPage == false {
 				return nil
 			} else {
@@ -205,17 +210,17 @@ func TestGetMergeRequests(t *testing.T) {
 			state:                     "merged",
 		},
 	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
+	for _, testCases := range testCases {
+		t.Run(testCases.desc, func(t *testing.T) {
 			factory := Factory{}
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopCreateSettings()
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
 
-			mergeRequestData, err := gls.getMergeRequests(context.Background(), tc.client, "projectPath", MergeRequestState(tc.state))
+			mergeRequestData, err := gls.getMergeRequests(context.Background(), testCases.client, "projectPath", MergeRequestState(testCases.state))
 
-			assert.Equal(t, tc.expectedMergeRequestCount, len(mergeRequestData))
-			assert.Equal(t, tc.expectedErr, err)
+			assert.Equal(t, testCases.expectedMergeRequestCount, len(mergeRequestData))
+			assert.Equal(t, testCases.expectedErr, err)
 		})
 	}
 }
