@@ -82,7 +82,6 @@ query getBranchData(
 ) {
   repository(name: $name, owner: $owner) {
     refs(refPrefix: "refs/heads/", first: $branchFirst, after: $branchCursor) {
-      totalCount
       # @genqlient(typename: "BranchNode")
       nodes {
         name
@@ -101,14 +100,6 @@ query getBranchData(
         endCursor
         hasNextPage
       }
-    }
-  }
-}
-
-query getBranchCount($name: String!, $owner: String!) {
-  repository(name: $name, owner: $owner) {
-    refs(refPrefix: "refs/heads/") {
-      totalCount
     }
   }
 }

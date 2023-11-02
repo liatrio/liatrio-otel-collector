@@ -821,18 +821,6 @@ type __checkLoginInput struct {
 // GetLogin returns __checkLoginInput.Login, and is useful for accessing the field via an interface.
 func (v *__checkLoginInput) GetLogin() string { return v.Login }
 
-// __getBranchCountInput is used internally by genqlient
-type __getBranchCountInput struct {
-	Name  string `json:"name"`
-	Owner string `json:"owner"`
-}
-
-// GetName returns __getBranchCountInput.Name, and is useful for accessing the field via an interface.
-func (v *__getBranchCountInput) GetName() string { return v.Name }
-
-// GetOwner returns __getBranchCountInput.Owner, and is useful for accessing the field via an interface.
-func (v *__getBranchCountInput) GetOwner() string { return v.Owner }
-
 // __getBranchDataInput is used internally by genqlient
 type __getBranchDataInput struct {
 	Name         string  `json:"name"`
@@ -971,39 +959,6 @@ type checkLoginUser struct {
 // GetLogin returns checkLoginUser.Login, and is useful for accessing the field via an interface.
 func (v *checkLoginUser) GetLogin() string { return v.Login }
 
-// getBranchCountRepository includes the requested fields of the GraphQL type Repository.
-// The GraphQL type's documentation follows.
-//
-// A repository contains the content for a project.
-type getBranchCountRepository struct {
-	// Fetch a list of refs from the repository
-	Refs getBranchCountRepositoryRefsRefConnection `json:"refs"`
-}
-
-// GetRefs returns getBranchCountRepository.Refs, and is useful for accessing the field via an interface.
-func (v *getBranchCountRepository) GetRefs() getBranchCountRepositoryRefsRefConnection { return v.Refs }
-
-// getBranchCountRepositoryRefsRefConnection includes the requested fields of the GraphQL type RefConnection.
-// The GraphQL type's documentation follows.
-//
-// The connection type for Ref.
-type getBranchCountRepositoryRefsRefConnection struct {
-	// Identifies the total count of items in the connection.
-	TotalCount int `json:"totalCount"`
-}
-
-// GetTotalCount returns getBranchCountRepositoryRefsRefConnection.TotalCount, and is useful for accessing the field via an interface.
-func (v *getBranchCountRepositoryRefsRefConnection) GetTotalCount() int { return v.TotalCount }
-
-// getBranchCountResponse is returned by getBranchCount on success.
-type getBranchCountResponse struct {
-	// Lookup a given repository by the owner and repository name.
-	Repository getBranchCountRepository `json:"repository"`
-}
-
-// GetRepository returns getBranchCountResponse.Repository, and is useful for accessing the field via an interface.
-func (v *getBranchCountResponse) GetRepository() getBranchCountRepository { return v.Repository }
-
 // getBranchDataRepository includes the requested fields of the GraphQL type Repository.
 // The GraphQL type's documentation follows.
 //
@@ -1021,16 +976,11 @@ func (v *getBranchDataRepository) GetRefs() getBranchDataRepositoryRefsRefConnec
 //
 // The connection type for Ref.
 type getBranchDataRepositoryRefsRefConnection struct {
-	// Identifies the total count of items in the connection.
-	TotalCount int `json:"totalCount"`
 	// A list of nodes.
 	Nodes []BranchNode `json:"nodes"`
 	// Information to aid in pagination.
 	PageInfo getBranchDataRepositoryRefsRefConnectionPageInfo `json:"pageInfo"`
 }
-
-// GetTotalCount returns getBranchDataRepositoryRefsRefConnection.TotalCount, and is useful for accessing the field via an interface.
-func (v *getBranchDataRepositoryRefsRefConnection) GetTotalCount() int { return v.TotalCount }
 
 // GetNodes returns getBranchDataRepositoryRefsRefConnection.Nodes, and is useful for accessing the field via an interface.
 func (v *getBranchDataRepositoryRefsRefConnection) GetNodes() []BranchNode { return v.Nodes }
@@ -1384,51 +1334,11 @@ func checkLogin(
 	return &data, err
 }
 
-// The query or mutation executed by getBranchCount.
-const getBranchCount_Operation = `
-query getBranchCount ($name: String!, $owner: String!) {
-	repository(name: $name, owner: $owner) {
-		refs(refPrefix: "refs/heads/") {
-			totalCount
-		}
-	}
-}
-`
-
-func getBranchCount(
-	ctx context.Context,
-	client graphql.Client,
-	name string,
-	owner string,
-) (*getBranchCountResponse, error) {
-	req := &graphql.Request{
-		OpName: "getBranchCount",
-		Query:  getBranchCount_Operation,
-		Variables: &__getBranchCountInput{
-			Name:  name,
-			Owner: owner,
-		},
-	}
-	var err error
-
-	var data getBranchCountResponse
-	resp := &graphql.Response{Data: &data}
-
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
-	)
-
-	return &data, err
-}
-
 // The query or mutation executed by getBranchData.
 const getBranchData_Operation = `
 query getBranchData ($name: String!, $owner: String!, $branchFirst: Int!, $targetBranch: String!, $branchCursor: String) {
 	repository(name: $name, owner: $owner) {
 		refs(refPrefix: "refs/heads/", first: $branchFirst, after: $branchCursor) {
-			totalCount
 			nodes {
 				name
 				compare(headRef: $targetBranch) {

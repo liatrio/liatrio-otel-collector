@@ -173,125 +173,6 @@ func TestGetNumPrPages(t *testing.T) {
 	}
 }
 
-func TestGetNumBranchPages(t *testing.T) {
-	testCases := []struct {
-		desc          string
-		client        graphql.Client
-		expectedErr   error
-		expectedPages int
-	}{
-		{
-			desc:          "valid",
-			client:        &mockClient{branchCount: 10},
-			expectedErr:   nil,
-			expectedPages: 1,
-		},
-		{
-			desc:          "error",
-			client:        &mockClient{branchCount: 10, err: true, errString: "this is an error"},
-			expectedErr:   errors.New("this is an error"),
-			expectedPages: 0,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			now := pcommon.NewTimestampFromTime(time.Now())
-			pages, err := getNumBranchPages(ghs, context.Background(), tc.client, "repo", now)
-
-			assert.Equal(t, tc.expectedPages, pages)
-			if tc.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-			}
-		})
-	}
-}
-
-func TestGetBranchData(t *testing.T) {
-	testCases := []struct {
-		desc                string
-		client              graphql.Client
-		expectedErr         error
-		branchPages         int
-		expectedBranchCount int
-	}{
-		{
-			desc: "valid",
-			client: &mockClient{
-				branchData: getBranchDataRepositoryRefsRefConnection{
-					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-						HasNextPage: true,
-					},
-					Nodes: []BranchNode{
-						{
-							Name: "main",
-						},
-						{
-							Name: "dev",
-						},
-						{
-							Name: "feature",
-						},
-					},
-				},
-			},
-			expectedErr:         nil,
-			branchPages:         2,
-			expectedBranchCount: 6,
-		},
-		{
-			desc: "no next page",
-			client: &mockClient{
-				branchData: getBranchDataRepositoryRefsRefConnection{
-					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-						HasNextPage: false,
-					},
-					Nodes: []BranchNode{
-						{
-							Name: "main",
-						},
-						{
-							Name: "dev",
-						},
-						{
-							Name: "feature",
-						},
-					},
-				},
-			},
-			expectedErr:         nil,
-			branchPages:         2, // 3 PRs per page but shouldnt move to next page
-			expectedBranchCount: 3,
-		},
-		{
-			desc:                "error",
-			client:              &mockClient{err2: true, errString: "this is an error"},
-			expectedErr:         errors.New("this is an error"),
-			expectedBranchCount: 0,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			branches, err := getBranchInfo(ghs, context.Background(), tc.client, "repo", "owner", 2, "main")
-			if tc.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-			}
-			assert.Equal(t, tc.expectedBranchCount, len(branches))
-		})
-	}
-}
-
 func TestGetPrData(t *testing.T) {
 	testCases := []struct {
 		desc            string
@@ -513,137 +394,109 @@ func TestGetBranches(t *testing.T) {
 	testCases := []struct {
 		desc                string
 		client              graphql.Client
-		repo                SearchNodeRepository
 		expectedErr         error
+		branchPages         int
 		expectedBranchCount int
 	}{
 		{
-			desc: "valid",
+			desc: "no pages",
 			client: &mockClient{
-				branchData: getBranchDataRepositoryRefsRefConnection{
-					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-						HasNextPage: true,
-					},
-					Nodes: []BranchNode{
-						{
-							Name: "main",
-						},
-						{
-							Name: "dev",
-						},
-						{
-							Name: "feature",
+				branchData: []getBranchDataRepositoryRefsRefConnection{
+					{
+						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+							HasNextPage: false,
 						},
 					},
-				},
-				branchCount: 3,
-			},
-			repo: SearchNodeRepository{
-				Name: "repo1",
-				DefaultBranchRef: SearchNodeDefaultBranchRef{
-					Name: "main",
-				},
-			},
-			expectedErr:         nil,
-			expectedBranchCount: 3, //1 page, 3 branches per page
-		},
-		{
-			desc: "three pages",
-			client: &mockClient{
-				branchData: getBranchDataRepositoryRefsRefConnection{
-					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-						HasNextPage: true,
-					},
-					Nodes: []BranchNode{
-						{
-							Name: "main",
-						},
-						{
-							Name: "dev",
-						},
-						{
-							Name: "feature",
-						},
-					},
-				},
-				branchCount: 110,
-			},
-			repo: SearchNodeRepository{
-				Name: "repo1",
-				DefaultBranchRef: SearchNodeDefaultBranchRef{
-					Name: "main",
-				},
-			},
-			expectedErr:         nil,
-			expectedBranchCount: 9, // 3 pages, 3 branches per page
-
-		},
-		{
-			desc: "three pages but no next page",
-			client: &mockClient{
-				branchData: getBranchDataRepositoryRefsRefConnection{
-					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-						HasNextPage: false,
-					},
-					Nodes: []BranchNode{
-						{
-							Name: "main",
-						},
-						{
-							Name: "dev",
-						},
-						{
-							Name: "feature",
-						},
-					},
-				},
-				branchCount: 110,
-			},
-			repo: SearchNodeRepository{
-				Name: "repo1",
-				DefaultBranchRef: SearchNodeDefaultBranchRef{
-					Name: "main",
-				},
-			},
-			expectedErr:         nil,
-			expectedBranchCount: 3, //1 pages, 3 branches per page
-		},
-		{
-			desc: "no branches",
-			client: &mockClient{
-				branchData: getBranchDataRepositoryRefsRefConnection{
-					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-						HasNextPage: true,
-					},
-					Nodes: []BranchNode{},
-				},
-				branchCount: 0,
-			},
-			repo: SearchNodeRepository{
-				Name: "repo1",
-				DefaultBranchRef: SearchNodeDefaultBranchRef{
-					Name: "main",
 				},
 			},
 			expectedErr:         nil,
 			expectedBranchCount: 0,
 		},
 		{
-			desc: "error in getNumBranchPages",
+			desc: "one page",
 			client: &mockClient{
-				err:       true,
-				errString: "this is an error",
+				branchData: []getBranchDataRepositoryRefsRefConnection{
+					{
+						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+							HasNextPage: false,
+						},
+						Nodes: []BranchNode{
+							{
+								Name: "main",
+							},
+							{
+								Name: "dev",
+							},
+							{
+								Name: "feature",
+							},
+						},
+					},
+				},
 			},
-			expectedErr:         errors.New("this is an error"),
-			expectedBranchCount: 0,
+			expectedErr:         nil,
+			expectedBranchCount: 3,
 		},
 		{
-			desc: "error in getBranchData",
+			desc: "multiple pages",
 			client: &mockClient{
-				branchCount: 110,
-				err2:        true,
-				errString:   "this is an error",
+				branchData: []getBranchDataRepositoryRefsRefConnection{
+					{
+						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+							HasNextPage: true,
+						},
+						Nodes: []BranchNode{
+							{
+								Name: "main",
+							},
+							{
+								Name: "dev",
+							},
+							{
+								Name: "feature",
+							},
+						},
+					},
+					{
+						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+							HasNextPage: true,
+						},
+						Nodes: []BranchNode{
+							{
+								Name: "main",
+							},
+							{
+								Name: "dev",
+							},
+							{
+								Name: "feature",
+							},
+						},
+					},
+					{
+						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+							HasNextPage: false,
+						},
+						Nodes: []BranchNode{
+							{
+								Name: "main",
+							},
+							{
+								Name: "dev",
+							},
+							{
+								Name: "feature",
+							},
+						},
+					},
+				},
 			},
+			expectedErr:         nil,
+			expectedBranchCount: 9,
+		},
+		{
+			desc:                "error",
+			client:              &mockClient{err2: true, errString: "this is an error"},
 			expectedErr:         errors.New("this is an error"),
 			expectedBranchCount: 0,
 		},
@@ -654,8 +507,7 @@ func TestGetBranches(t *testing.T) {
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			now := pcommon.NewTimestampFromTime(time.Now())
-			branches, err := ghs.getBranches(context.Background(), tc.client, tc.repo, now)
+			branches, err := ghs.getBranches(context.Background(), tc.client, "repo", "main")
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {
