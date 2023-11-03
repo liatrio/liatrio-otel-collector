@@ -6,12 +6,8 @@ schema: schema.graphql
 operations:
     - genqlient.graphql
 
-generated: generated-graphql.go
-
-  #optional: pointer
+generated: generated_graphql.go
 
 bindings:
     DateTime:
         type: time.Time
-  #    marshaler: github.com/you/yourpkg.MarshalDateTime
-  #    unmarshaler: github.com/you/yourpkg.UnmarshalDateTime

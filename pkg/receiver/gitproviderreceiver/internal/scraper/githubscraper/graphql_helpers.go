@@ -7,27 +7,53 @@ import (
 	"math"
 
 	"github.com/Khan/genqlient/graphql"
+	"go.uber.org/zap"
 )
 
-// TODO: getRepoData and getBranchData should be a singular function since we can
-// get all the data at once & pagenate through it. Doing so will reduce subsequent
-// calls to GraphQL and allow for more performant metrics building.
-func getRepoData(
+func (ghs *githubScraper) getRepoData(
 	ctx context.Context,
 	client graphql.Client,
 	searchQuery string,
 	ownertype string,
+) ([]SearchNode, int, error) {
 	// here we use a pointer to a string so that graphql will receive null if the
 	// value is not set since the after: $repoCursor is optional to graphql
-	repoCursor *string,
-	// since we're using a interface{} here we do type checking when data
-	// is returned to the calling function
-) (*getRepoDataBySearchResponse, error) {
-	data, err := getRepoDataBySearch(ctx, client, searchQuery, repoCursor)
+    var cursor *string
+    var repos []SearchNode
+    var count int
+
+    for next := true; next; {
+        r, err := getRepoDataBySearch(ctx, client, searchQuery, cursor)
+        if err != nil {
+            ghs.logger.Sugar().Errorf("error getting repo data", zap.Error(err))
+            return nil, 0, err
+        }
+        repos = append(repos, r.Search.Nodes...)
+        count = r.Search.RepositoryCount
+        cursor = &r.Search.PageInfo.EndCursor
+        next = r.Search.PageInfo.HasNextPage
+    }
+
+    return repos, count, nil
+}
+
+func (ghs *githubScraper) getBranchCount(
+    ctx context.Context, 
+    client graphql.Client, 
+    repoName string, 
+    owner string,
+    defaultBranch string,
+) (int, error) {
+    
+    var branchCursor *string
+
+	r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, 50, defaultBranch, branchCursor)
 	if err != nil {
-		return nil, err
+        ghs.logger.Sugar().Errorf("Error getting branch data", "error", err)
+		return 0, err
 	}
-	return data, nil
+
+	return r.Repository.Refs.TotalCount, nil
 }
 
 func (ghs *githubScraper) getCommitData(
@@ -54,11 +80,13 @@ func (ghs *githubScraper) getCommitData(
 	}
 }
 
+// TODO: this should be able to be removed due to the change in pagination logic
 func getNumPages(p float64, n float64) int {
 	numPages := math.Ceil(n / p)
 
 	return int(numPages)
 }
+// END TODO
 
 func add[T ~int | ~float64](a, b T) T {
 	return a + b
