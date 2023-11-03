@@ -509,3 +509,101 @@ func TestGetCommitInfo(t *testing.T) {
 		})
 	}
 }
+
+func TestGetRepoData(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		client        graphql.Client
+		expectedErr   error
+		expectedRepos int
+	}{
+		{
+			desc: "no pages",
+			client: &mockClient{repoData: []getRepoDataBySearchSearchSearchResultItemConnection{
+				{
+					Nodes: []SearchNode{},
+					PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+						HasNextPage: false,
+					},
+				},
+			}},
+			expectedErr:   nil,
+			expectedRepos: 0,
+		},
+		{
+			desc: "valid, one page",
+			client: &mockClient{repoData: []getRepoDataBySearchSearchSearchResultItemConnection{
+				{
+					Nodes: []SearchNode{
+						&SearchNodeRepository{
+							Name: "repo1",
+						},
+					},
+					PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+						HasNextPage: false,
+					},
+				},
+			}},
+			expectedErr:   nil,
+			expectedRepos: 1,
+		},
+		{
+			desc: "valid, 3 pages",
+			client: &mockClient{repoData: []getRepoDataBySearchSearchSearchResultItemConnection{
+				{
+					Nodes: []SearchNode{
+						&SearchNodeRepository{
+							Name: "repo1",
+						},
+					},
+					PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+						HasNextPage: true,
+					},
+				},
+				{
+					Nodes: []SearchNode{
+						&SearchNodeRepository{
+							Name: "repo2",
+						},
+					},
+					PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+						HasNextPage: true,
+					},
+				},
+				{
+					Nodes: []SearchNode{
+						&SearchNodeRepository{
+							Name: "repo3",
+						},
+					},
+					PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+						HasNextPage: false,
+					},
+				},
+			}},
+			expectedErr:   nil,
+			expectedRepos: 3,
+		},
+		{
+			desc:        "error",
+			client:      &mockClient{err: true, errString: "this is an error"},
+			expectedErr: errors.New("this is an error"),
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			repos, err := ghs.getRepoData(context.Background(), tc.client, "search query", "ownertype")
+
+			assert.Equal(t, tc.expectedRepos, len(repos))
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, tc.expectedErr, err.Error())
+			}
+		})
+	}
+}

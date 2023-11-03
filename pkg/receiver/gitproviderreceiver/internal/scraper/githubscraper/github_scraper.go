@@ -251,6 +251,38 @@ func (ghs *githubScraper) getContributorCount(
 	return contribCount, nil
 }
 
+func (ghs *githubScraper) getRepoData(
+	ctx context.Context,
+	client graphql.Client,
+	sq string,
+	ownertype string,
+) ([]SearchNodeRepository, error) {
+	var searchRepos []SearchNodeRepository
+	var repoCursor *string
+	for hasNextPage := true; hasNextPage; {
+		data, err := getRepoData(ctx, client, sq, ownertype, repoCursor)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
+			return nil, err
+		}
+		ghs.logger.Sugar().Debug("successful search response")
+
+		for _, repo := range data.Search.Nodes {
+			if r, ok := repo.(*SearchNodeRepository); ok {
+				searchRepos = append(searchRepos, *r)
+			}
+		}
+		repoCursor = &data.Search.PageInfo.EndCursor
+		hasNextPage = data.Search.PageInfo.HasNextPage
+	}
+
+	ghs.logger.Sugar().Debugf("repos: %v", searchRepos)
+	if len(searchRepos) == 0 {
+		return nil, nil
+	}
+	return searchRepos, nil
+}
+
 // scrape and return metrics
 func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	if ghs.client == nil {
@@ -318,9 +350,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}
 	}
 
-	var data interface{}
-	var repoCursor *string
-
 	if !exists || !typeValid {
 		ghs.logger.Sugar().Error("error logging in and getting data from github")
 		return ghs.mb.Emit(), err
@@ -333,41 +362,12 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		ghs.logger.Sugar().Debugf("using search query where query is: %v", ghs.cfg.SearchQuery)
 	}
 
-	data, err = getRepoData(ctx, genClient, sq, ownertype, repoCursor)
+	searchRepos, err := ghs.getRepoData(ctx, genClient, sq, ownertype)
 	if err != nil {
-		ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
+		ghs.logger.Sugar().Errorf("error getting repo data", zap.Error(err))
 		return ghs.mb.Emit(), err
 	}
-
-	// TODO: setting this here for access from the proceeding for statement
-	// gathering repo data
-	var searchRepos []SearchNodeRepository
-
-	if searchData, ok := data.(*getRepoDataBySearchResponse); ok {
-		ghs.logger.Sugar().Debug("successful search response")
-		ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(searchData.Search.RepositoryCount))
-
-		pages := getNumPages(float64(100), float64(searchData.Search.RepositoryCount))
-		ghs.logger.Sugar().Debugf("pages: %v", pages)
-
-		for i := 0; i < pages; i++ {
-			results := searchData.GetSearch()
-			for _, repo := range results.Nodes {
-				if r, ok := repo.(*SearchNodeRepository); ok {
-					searchRepos = append(searchRepos, *r)
-				}
-			}
-
-			repoCursor = &searchData.Search.PageInfo.EndCursor
-			searchData, err = getRepoData(ctx, genClient, sq, ownertype, repoCursor)
-			if err != nil {
-				ghs.logger.Sugar().Errorf("Error getting repo data", zap.Error(err))
-			}
-		}
-
-		ghs.logger.Sugar().Debugf("repos: %v", searchRepos)
-
-	}
+	ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(len(searchRepos)))
 
 	if searchRepos != nil {
 		ghs.logger.Sugar().Debugf("There are %v repos", len(searchRepos))
