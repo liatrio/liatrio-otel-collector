@@ -412,8 +412,6 @@ type PullRequestNode struct {
 	HeadRefName string `json:"headRefName"`
 	// A list of reviews associated with the pull request.
 	Reviews PullRequestNodeReviewsPullRequestReviewConnection `json:"reviews"`
-	// The repository associated with this node.
-	Repository PullRequestNodeRepository `json:"repository"`
 }
 
 // GetCreatedAt returns PullRequestNode.CreatedAt, and is useful for accessing the field via an interface.
@@ -435,9 +433,6 @@ func (v *PullRequestNode) GetHeadRefName() string { return v.HeadRefName }
 func (v *PullRequestNode) GetReviews() PullRequestNodeReviewsPullRequestReviewConnection {
 	return v.Reviews
 }
-
-// GetRepository returns PullRequestNode.Repository, and is useful for accessing the field via an interface.
-func (v *PullRequestNode) GetRepository() PullRequestNodeRepository { return v.Repository }
 
 // PullRequestNodeMergeCommit includes the requested fields of the GraphQL type Commit.
 // The GraphQL type's documentation follows.
@@ -487,18 +482,6 @@ type PullRequestNodeMergeCommitDeploymentsDeploymentConnectionNodesDeployment st
 func (v *PullRequestNodeMergeCommitDeploymentsDeploymentConnectionNodesDeployment) GetCreatedAt() time.Time {
 	return v.CreatedAt
 }
-
-// PullRequestNodeRepository includes the requested fields of the GraphQL type Repository.
-// The GraphQL type's documentation follows.
-//
-// A repository contains the content for a project.
-type PullRequestNodeRepository struct {
-	// The name of the repository.
-	Name string `json:"name"`
-}
-
-// GetName returns PullRequestNodeRepository.Name, and is useful for accessing the field via an interface.
-func (v *PullRequestNodeRepository) GetName() string { return v.Name }
 
 // PullRequestNodeReviewsPullRequestReviewConnection includes the requested fields of the GraphQL type PullRequestReviewConnection.
 // The GraphQL type's documentation follows.
@@ -821,18 +804,6 @@ type __checkLoginInput struct {
 // GetLogin returns __checkLoginInput.Login, and is useful for accessing the field via an interface.
 func (v *__checkLoginInput) GetLogin() string { return v.Login }
 
-// __getBranchCountInput is used internally by genqlient
-type __getBranchCountInput struct {
-	Name  string `json:"name"`
-	Owner string `json:"owner"`
-}
-
-// GetName returns __getBranchCountInput.Name, and is useful for accessing the field via an interface.
-func (v *__getBranchCountInput) GetName() string { return v.Name }
-
-// GetOwner returns __getBranchCountInput.Owner, and is useful for accessing the field via an interface.
-func (v *__getBranchCountInput) GetOwner() string { return v.Owner }
-
 // __getBranchDataInput is used internally by genqlient
 type __getBranchDataInput struct {
 	Name         string  `json:"name"`
@@ -885,28 +856,13 @@ func (v *__getCommitDataInput) GetCommitCursor() *string { return v.CommitCursor
 // GetBranchName returns __getCommitDataInput.BranchName, and is useful for accessing the field via an interface.
 func (v *__getCommitDataInput) GetBranchName() string { return v.BranchName }
 
-// __getPullRequestCountInput is used internally by genqlient
-type __getPullRequestCountInput struct {
-	Name   string             `json:"name"`
-	Owner  string             `json:"owner"`
-	States []PullRequestState `json:"states"`
-}
-
-// GetName returns __getPullRequestCountInput.Name, and is useful for accessing the field via an interface.
-func (v *__getPullRequestCountInput) GetName() string { return v.Name }
-
-// GetOwner returns __getPullRequestCountInput.Owner, and is useful for accessing the field via an interface.
-func (v *__getPullRequestCountInput) GetOwner() string { return v.Owner }
-
-// GetStates returns __getPullRequestCountInput.States, and is useful for accessing the field via an interface.
-func (v *__getPullRequestCountInput) GetStates() []PullRequestState { return v.States }
-
 // __getPullRequestDataInput is used internally by genqlient
 type __getPullRequestDataInput struct {
-	Name     string  `json:"name"`
-	Owner    string  `json:"owner"`
-	PrFirst  int     `json:"prFirst"`
-	PrCursor *string `json:"prCursor"`
+	Name     string             `json:"name"`
+	Owner    string             `json:"owner"`
+	PrFirst  int                `json:"prFirst"`
+	PrCursor *string            `json:"prCursor"`
+	PrStates []PullRequestState `json:"prStates"`
 }
 
 // GetName returns __getPullRequestDataInput.Name, and is useful for accessing the field via an interface.
@@ -920,6 +876,9 @@ func (v *__getPullRequestDataInput) GetPrFirst() int { return v.PrFirst }
 
 // GetPrCursor returns __getPullRequestDataInput.PrCursor, and is useful for accessing the field via an interface.
 func (v *__getPullRequestDataInput) GetPrCursor() *string { return v.PrCursor }
+
+// GetPrStates returns __getPullRequestDataInput.PrStates, and is useful for accessing the field via an interface.
+func (v *__getPullRequestDataInput) GetPrStates() []PullRequestState { return v.PrStates }
 
 // __getRepoDataBySearchInput is used internally by genqlient
 type __getRepoDataBySearchInput struct {
@@ -971,39 +930,6 @@ type checkLoginUser struct {
 // GetLogin returns checkLoginUser.Login, and is useful for accessing the field via an interface.
 func (v *checkLoginUser) GetLogin() string { return v.Login }
 
-// getBranchCountRepository includes the requested fields of the GraphQL type Repository.
-// The GraphQL type's documentation follows.
-//
-// A repository contains the content for a project.
-type getBranchCountRepository struct {
-	// Fetch a list of refs from the repository
-	Refs getBranchCountRepositoryRefsRefConnection `json:"refs"`
-}
-
-// GetRefs returns getBranchCountRepository.Refs, and is useful for accessing the field via an interface.
-func (v *getBranchCountRepository) GetRefs() getBranchCountRepositoryRefsRefConnection { return v.Refs }
-
-// getBranchCountRepositoryRefsRefConnection includes the requested fields of the GraphQL type RefConnection.
-// The GraphQL type's documentation follows.
-//
-// The connection type for Ref.
-type getBranchCountRepositoryRefsRefConnection struct {
-	// Identifies the total count of items in the connection.
-	TotalCount int `json:"totalCount"`
-}
-
-// GetTotalCount returns getBranchCountRepositoryRefsRefConnection.TotalCount, and is useful for accessing the field via an interface.
-func (v *getBranchCountRepositoryRefsRefConnection) GetTotalCount() int { return v.TotalCount }
-
-// getBranchCountResponse is returned by getBranchCount on success.
-type getBranchCountResponse struct {
-	// Lookup a given repository by the owner and repository name.
-	Repository getBranchCountRepository `json:"repository"`
-}
-
-// GetRepository returns getBranchCountResponse.Repository, and is useful for accessing the field via an interface.
-func (v *getBranchCountResponse) GetRepository() getBranchCountRepository { return v.Repository }
-
 // getBranchDataRepository includes the requested fields of the GraphQL type Repository.
 // The GraphQL type's documentation follows.
 //
@@ -1021,16 +947,11 @@ func (v *getBranchDataRepository) GetRefs() getBranchDataRepositoryRefsRefConnec
 //
 // The connection type for Ref.
 type getBranchDataRepositoryRefsRefConnection struct {
-	// Identifies the total count of items in the connection.
-	TotalCount int `json:"totalCount"`
 	// A list of nodes.
 	Nodes []BranchNode `json:"nodes"`
 	// Information to aid in pagination.
 	PageInfo getBranchDataRepositoryRefsRefConnectionPageInfo `json:"pageInfo"`
 }
-
-// GetTotalCount returns getBranchDataRepositoryRefsRefConnection.TotalCount, and is useful for accessing the field via an interface.
-func (v *getBranchDataRepositoryRefsRefConnection) GetTotalCount() int { return v.TotalCount }
 
 // GetNodes returns getBranchDataRepositoryRefsRefConnection.Nodes, and is useful for accessing the field via an interface.
 func (v *getBranchDataRepositoryRefsRefConnection) GetNodes() []BranchNode { return v.Nodes }
@@ -1100,45 +1021,6 @@ type getCommitDataResponse struct {
 
 // GetRepository returns getCommitDataResponse.Repository, and is useful for accessing the field via an interface.
 func (v *getCommitDataResponse) GetRepository() getCommitDataRepository { return v.Repository }
-
-// getPullRequestCountRepository includes the requested fields of the GraphQL type Repository.
-// The GraphQL type's documentation follows.
-//
-// A repository contains the content for a project.
-type getPullRequestCountRepository struct {
-	// A list of pull requests that have been opened in the repository.
-	PullRequests getPullRequestCountRepositoryPullRequestsPullRequestConnection `json:"pullRequests"`
-}
-
-// GetPullRequests returns getPullRequestCountRepository.PullRequests, and is useful for accessing the field via an interface.
-func (v *getPullRequestCountRepository) GetPullRequests() getPullRequestCountRepositoryPullRequestsPullRequestConnection {
-	return v.PullRequests
-}
-
-// getPullRequestCountRepositoryPullRequestsPullRequestConnection includes the requested fields of the GraphQL type PullRequestConnection.
-// The GraphQL type's documentation follows.
-//
-// The connection type for PullRequest.
-type getPullRequestCountRepositoryPullRequestsPullRequestConnection struct {
-	// Identifies the total count of items in the connection.
-	TotalCount int `json:"totalCount"`
-}
-
-// GetTotalCount returns getPullRequestCountRepositoryPullRequestsPullRequestConnection.TotalCount, and is useful for accessing the field via an interface.
-func (v *getPullRequestCountRepositoryPullRequestsPullRequestConnection) GetTotalCount() int {
-	return v.TotalCount
-}
-
-// getPullRequestCountResponse is returned by getPullRequestCount on success.
-type getPullRequestCountResponse struct {
-	// Lookup a given repository by the owner and repository name.
-	Repository getPullRequestCountRepository `json:"repository"`
-}
-
-// GetRepository returns getPullRequestCountResponse.Repository, and is useful for accessing the field via an interface.
-func (v *getPullRequestCountResponse) GetRepository() getPullRequestCountRepository {
-	return v.Repository
-}
 
 // getPullRequestDataRepository includes the requested fields of the GraphQL type Repository.
 // The GraphQL type's documentation follows.
@@ -1384,51 +1266,11 @@ func checkLogin(
 	return &data, err
 }
 
-// The query or mutation executed by getBranchCount.
-const getBranchCount_Operation = `
-query getBranchCount ($name: String!, $owner: String!) {
-	repository(name: $name, owner: $owner) {
-		refs(refPrefix: "refs/heads/") {
-			totalCount
-		}
-	}
-}
-`
-
-func getBranchCount(
-	ctx context.Context,
-	client graphql.Client,
-	name string,
-	owner string,
-) (*getBranchCountResponse, error) {
-	req := &graphql.Request{
-		OpName: "getBranchCount",
-		Query:  getBranchCount_Operation,
-		Variables: &__getBranchCountInput{
-			Name:  name,
-			Owner: owner,
-		},
-	}
-	var err error
-
-	var data getBranchCountResponse
-	resp := &graphql.Response{Data: &data}
-
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
-	)
-
-	return &data, err
-}
-
 // The query or mutation executed by getBranchData.
 const getBranchData_Operation = `
 query getBranchData ($name: String!, $owner: String!, $branchFirst: Int!, $targetBranch: String!, $branchCursor: String) {
 	repository(name: $name, owner: $owner) {
 		refs(refPrefix: "refs/heads/", first: $branchFirst, after: $branchCursor) {
-			totalCount
 			nodes {
 				name
 				compare(headRef: $targetBranch) {
@@ -1552,52 +1394,11 @@ func getCommitData(
 	return &data, err
 }
 
-// The query or mutation executed by getPullRequestCount.
-const getPullRequestCount_Operation = `
-query getPullRequestCount ($name: String!, $owner: String!, $states: [PullRequestState!]) {
-	repository(name: $name, owner: $owner) {
-		pullRequests(states: $states) {
-			totalCount
-		}
-	}
-}
-`
-
-func getPullRequestCount(
-	ctx context.Context,
-	client graphql.Client,
-	name string,
-	owner string,
-	states []PullRequestState,
-) (*getPullRequestCountResponse, error) {
-	req := &graphql.Request{
-		OpName: "getPullRequestCount",
-		Query:  getPullRequestCount_Operation,
-		Variables: &__getPullRequestCountInput{
-			Name:   name,
-			Owner:  owner,
-			States: states,
-		},
-	}
-	var err error
-
-	var data getPullRequestCountResponse
-	resp := &graphql.Response{Data: &data}
-
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
-	)
-
-	return &data, err
-}
-
 // The query or mutation executed by getPullRequestData.
 const getPullRequestData_Operation = `
-query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCursor: String) {
+query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCursor: String, $prStates: [PullRequestState!]) {
 	repository(name: $name, owner: $owner) {
-		pullRequests(first: $prFirst, after: $prCursor, states: [OPEN,MERGED]) {
+		pullRequests(first: $prFirst, after: $prCursor, states: $prStates) {
 			nodes {
 				... on PullRequest {
 					createdAt
@@ -1621,9 +1422,6 @@ query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCu
 						}
 					}
 				}
-				repository {
-					name
-				}
 			}
 			pageInfo {
 				hasNextPage
@@ -1641,6 +1439,7 @@ func getPullRequestData(
 	owner string,
 	prFirst int,
 	prCursor *string,
+	prStates []PullRequestState,
 ) (*getPullRequestDataResponse, error) {
 	req := &graphql.Request{
 		OpName: "getPullRequestData",
@@ -1650,6 +1449,7 @@ func getPullRequestData(
 			Owner:    owner,
 			PrFirst:  prFirst,
 			PrCursor: prCursor,
+			PrStates: prStates,
 		},
 	}
 	var err error
