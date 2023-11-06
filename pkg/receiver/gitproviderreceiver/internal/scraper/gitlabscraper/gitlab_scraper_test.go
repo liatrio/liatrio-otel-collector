@@ -16,9 +16,9 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
 	"github.com/stretchr/testify/assert"
+	"github.com/xanzy/go-gitlab"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
-	"github.com/xanzy/go-gitlab"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
