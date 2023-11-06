@@ -8,12 +8,45 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/Khan/genqlient/graphql"
+	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/receivertest"
-
-	"github.com/Khan/genqlient/graphql"
 )
+
+/*
+ * Testing the start fucntion
+ */
+func Test_gitlabScraper_start(t *testing.T) {
+	type args struct {
+		in0  context.Context
+		host component.Host
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+		config  *Config
+	}{
+		{
+			name:    "Happy Nil",
+			args:    args{context.Background(), componenttest.NewNopHost()},
+			wantErr: false,
+			config:  &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gls := newGitLabScraper(context.Background(), receivertest.NewNopCreateSettings(), tt.config)
+			if err := gls.start(tt.args.in0, tt.args.host); (err != nil) != tt.wantErr {
+				t.Errorf("gitlabScraper.start() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
 
 /*
  * Testing for newGitLabScraper
