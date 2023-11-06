@@ -158,9 +158,10 @@ func TestGetContributorCount(t *testing.T) {
 			expectedCount: 2,
 		},
 		{
-			desc:          "error",
-			projectPath:   "junk",
-			expectedErr:   errors.New("GET " + client.BaseURL().String() + "projects/junk/repository/contributors: 404 failed to parse unknown error format: 404 page not found\n"),
+			desc:        "error",
+			projectPath: "junk",
+			expectedErr: errors.New("GET " + client.BaseURL().String() +
+				"projects/junk/repository/contributors: 404 failed to parse unknown error format: 404 page not found\n"),
 			expectedCount: 0,
 		},
 	}
