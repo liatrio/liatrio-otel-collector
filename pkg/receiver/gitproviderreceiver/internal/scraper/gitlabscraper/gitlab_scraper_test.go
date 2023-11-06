@@ -34,36 +34,59 @@ func TestNewGitLabScraper(t *testing.T) {
  * Mocks
  */
 type mockClient struct {
-	BranchNames   []string
-	MergeRequests getMergeRequestsProjectMergeRequestsMergeRequestConnection
-	RootRef       string
-	err           bool
-	errString     string
-	maxPages      int
-	curPage       int
+	BranchNames         []string
+	openMergeRequests   []getMergeRequestsProjectMergeRequestsMergeRequestConnection
+	mergedMergeRequests []getMergeRequestsProjectMergeRequestsMergeRequestConnection
+	RootRef             string
+	err                 bool
+	mergedErr           bool
+	openErr             bool
+	errString           string
+	curPage             int
 }
 
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
-	if m.err {
-		return errors.New(m.errString)
-	}
-
 	switch op := req.OpName; op {
 
 	case "getBranchNames":
+		if m.err {
+			return errors.New(m.errString)
+		}
 		r := resp.Data.(*getBranchNamesResponse)
 		r.Project.Repository.BranchNames = m.BranchNames
 		r.Project.Repository.RootRef = m.RootRef
 
 	case "getMergeRequests":
-		m.curPage++
-
-		if m.curPage == m.maxPages {
-			m.MergeRequests.PageInfo.HasNextPage = false
-		}
-
 		r := resp.Data.(*getMergeRequestsResponse)
-		r.Project.MergeRequests = m.MergeRequests
+
+		if req.Variables.(*__getMergeRequestsInput).State == "opened" {
+			if m.openErr {
+				return errors.New(m.errString)
+			}
+			if len(m.openMergeRequests) == 0 {
+				return nil
+			}
+			r.Project.MergeRequests = m.openMergeRequests[m.curPage]
+			if m.openMergeRequests[m.curPage].PageInfo.HasNextPage == false {
+				m.curPage = 0
+			} else {
+				m.curPage++
+			}
+
+		} else if req.Variables.(*__getMergeRequestsInput).State == "merged" {
+			if m.mergedErr {
+				return errors.New(m.errString)
+			}
+			if len(m.mergedMergeRequests) == 0 {
+				return nil
+			}
+			r.Project.MergeRequests = m.mergedMergeRequests[m.curPage]
+			if m.mergedMergeRequests[m.curPage].PageInfo.HasNextPage == false {
+				return nil
+			} else {
+				m.curPage++
+			}
+		}
 	}
 
 	return nil
@@ -78,6 +101,7 @@ func TestGetMergeRequests(t *testing.T) {
 		client                    graphql.Client
 		expectedErr               error
 		expectedMergeRequestCount int
+		state                     string
 	}{
 		{
 			desc:                      "empty mergeRequestData",
@@ -86,58 +110,102 @@ func TestGetMergeRequests(t *testing.T) {
 			expectedMergeRequestCount: 0,
 		},
 		{
-			desc:                      "produce error in client",
-			client:                    &mockClient{err: true, errString: "An error has occurred"},
+			desc:                      "produce error for open merge requests",
+			client:                    &mockClient{openErr: true, errString: "An error has occurred"},
 			expectedErr:               errors.New("An error has occurred"),
 			expectedMergeRequestCount: 0,
+			state:                     "opened",
+		},
+		{
+			desc:                      "produce error for merged merge requests",
+			client:                    &mockClient{mergedErr: true, errString: "An error has occurred"},
+			expectedErr:               errors.New("An error has occurred"),
+			expectedMergeRequestCount: 0,
+			state:                     "merged",
 		},
 		{
 			desc: "valid mergeRequestData",
 			client: &mockClient{
-				maxPages: 1,
-				MergeRequests: getMergeRequestsProjectMergeRequestsMergeRequestConnection{
-					PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
-						HasNextPage: true,
-					},
-					Nodes: []MergeRequestNode{
-						{
-							SourceBranch: "main",
+				mergedMergeRequests: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
+					{
+						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+							HasNextPage: false,
 						},
-						{
-							SourceBranch: "dev",
-						},
-						{
-							SourceBranch: "feature",
+						Nodes: []MergeRequestNode{
+							{
+								SourceBranch: "main",
+							},
+							{
+								SourceBranch: "dev",
+							},
+							{
+								SourceBranch: "feature",
+							},
 						},
 					},
 				},
 			},
+			state:                     "merged",
 			expectedErr:               nil,
 			expectedMergeRequestCount: 3,
 		},
 		{
-			desc: "valid mergeRequestData",
+			desc: "valid mergeRequestData, multiple pages",
 			client: &mockClient{
-				maxPages: 5,
-				MergeRequests: getMergeRequestsProjectMergeRequestsMergeRequestConnection{
-					PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
-						HasNextPage: true,
+				mergedMergeRequests: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
+					{
+						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+							HasNextPage: true,
+						},
+						Nodes: []MergeRequestNode{
+							{
+								SourceBranch: "main",
+							},
+							{
+								SourceBranch: "dev",
+							},
+							{
+								SourceBranch: "feature",
+							},
+						},
 					},
-					Nodes: []MergeRequestNode{
-						{
-							SourceBranch: "main",
+					{
+						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+							HasNextPage: true,
 						},
-						{
-							SourceBranch: "dev",
+						Nodes: []MergeRequestNode{
+							{
+								SourceBranch: "main",
+							},
+							{
+								SourceBranch: "dev",
+							},
+							{
+								SourceBranch: "feature",
+							},
 						},
-						{
-							SourceBranch: "feature",
+					},
+					{
+						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+							HasNextPage: false,
+						},
+						Nodes: []MergeRequestNode{
+							{
+								SourceBranch: "main",
+							},
+							{
+								SourceBranch: "dev",
+							},
+							{
+								SourceBranch: "feature",
+							},
 						},
 					},
 				},
 			},
 			expectedErr:               nil,
-			expectedMergeRequestCount: 15, // 5 pages * 3 merge requests
+			expectedMergeRequestCount: 9,
+			state:                     "merged",
 		},
 	}
 	for _, tc := range testCases {
@@ -146,9 +214,149 @@ func TestGetMergeRequests(t *testing.T) {
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopCreateSettings()
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
-			const state MergeRequestState = "merged"
 
-			mergeRequestData, err := gls.getMergeRequests(context.Background(), tc.client, "projectPath", state)
+			mergeRequestData, err := gls.getMergeRequests(context.Background(), tc.client, "projectPath", MergeRequestState(tc.state))
+
+			assert.Equal(t, tc.expectedMergeRequestCount, len(mergeRequestData))
+			assert.Equal(t, tc.expectedErr, err)
+		})
+	}
+}
+
+func TestGetCombinedMergeRequests(t *testing.T) {
+	testCases := []struct {
+		desc                      string
+		client                    graphql.Client
+		expectedErr               error
+		expectedMergeRequestCount int
+	}{
+		{
+			desc:                      "empty mergeRequestData",
+			client:                    &mockClient{},
+			expectedErr:               nil,
+			expectedMergeRequestCount: 0,
+		},
+		{
+			desc:                      "produce error for open merge requests",
+			client:                    &mockClient{openErr: true, errString: "An error has occurred"},
+			expectedErr:               errors.New("An error has occurred"),
+			expectedMergeRequestCount: 0,
+		},
+		{
+			desc:                      "produce error for merged merge requests",
+			client:                    &mockClient{mergedErr: true, errString: "An error has occurred"},
+			expectedErr:               errors.New("An error has occurred"),
+			expectedMergeRequestCount: 0,
+		},
+		{
+			desc: "valid mergeRequestData",
+			client: &mockClient{
+				mergedMergeRequests: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
+					{
+						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+							HasNextPage: false,
+						},
+						Nodes: []MergeRequestNode{
+							{
+								SourceBranch: "main",
+							},
+							{
+								SourceBranch: "dev",
+							},
+							{
+								SourceBranch: "feature",
+							},
+						},
+					},
+				},
+			},
+			expectedErr:               nil,
+			expectedMergeRequestCount: 3,
+		},
+		{
+			desc: "valid open mergeRequestData, valid merged mergeRequestData with multiple pages",
+			client: &mockClient{
+				mergedMergeRequests: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
+					{
+						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+							HasNextPage: true,
+						},
+						Nodes: []MergeRequestNode{
+							{
+								SourceBranch: "main",
+							},
+							{
+								SourceBranch: "dev",
+							},
+							{
+								SourceBranch: "feature",
+							},
+						},
+					},
+					{
+						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+							HasNextPage: true,
+						},
+						Nodes: []MergeRequestNode{
+							{
+								SourceBranch: "main",
+							},
+							{
+								SourceBranch: "dev",
+							},
+							{
+								SourceBranch: "feature",
+							},
+						},
+					},
+					{
+						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+							HasNextPage: false,
+						},
+						Nodes: []MergeRequestNode{
+							{
+								SourceBranch: "main",
+							},
+							{
+								SourceBranch: "dev",
+							},
+							{
+								SourceBranch: "feature",
+							},
+						},
+					},
+				},
+				openMergeRequests: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
+					{
+						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+							HasNextPage: false,
+						},
+						Nodes: []MergeRequestNode{
+							{
+								SourceBranch: "main",
+							},
+							{
+								SourceBranch: "dev",
+							},
+							{
+								SourceBranch: "feature",
+							},
+						},
+					},
+				},
+			},
+			expectedErr:               nil,
+			expectedMergeRequestCount: 12,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
+
+			mergeRequestData, err := gls.getCombinedMergeRequests(context.Background(), tc.client, "projectPath")
 
 			assert.Equal(t, tc.expectedMergeRequestCount, len(mergeRequestData))
 			assert.Equal(t, tc.expectedErr, err)
