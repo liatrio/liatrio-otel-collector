@@ -206,27 +206,6 @@ func (ghs *githubScraper) processBranches(
 	}
 }
 
-func (ghs *githubScraper) getContributorCount(
-	ctx context.Context,
-	client *github.Client,
-	repo SearchNodeRepository,
-	now pcommon.Timestamp,
-) (int, error) {
-	var err error
-
-	contribs, _, err := client.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, repo.Name, nil)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
-		return 0, err
-	}
-
-	contribCount := 0
-	if len(contribs) > 0 {
-		contribCount = len(contribs)
-	}
-	return contribCount, nil
-}
-
 // scrape and return metrics
 func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	if ghs.client == nil {
@@ -241,27 +220,10 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	ghs.logger.Sugar().Debug("creating a new github client")
 
-	// TODO: Below is the beginning of the refactor to using genqlient
-	// This is a secondary instantiation of the GraphQL client for the purpose of
-	// using genqlient during the refactor.
-
-	// Enable the ability to override the endpoint for self-hosted github instances
-	// GitHub Free URL : https://api.github.com/graphql
-	// https://docs.github.com/en/graphql/guides/forming-calls-with-graphql#the-graphql-endpoint
-	graphCURL := "https://api.github.com/graphql"
-
-	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
-		var err error
-
-		// GitHub Enterprise (ghe) URL : http(s)://HOSTNAME/api/graphql
-		// https://docs.github.com/en/enterprise-server@3.8/graphql/guides/forming-calls-with-graphql#the-graphql-endpoint
-		graphCURL, err = url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "api/graphql")
-		if err != nil {
-			ghs.logger.Sugar().Errorf("error: %v", err)
-		}
-	}
-
-	genClient := graphql.NewClient(graphCURL, ghs.client)
+    genClient, restClient, err := ghs.createClients()
+    if err != nil {
+        ghs.logger.Sugar().Errorf("unable to create clients", zap.Error(err))
+    }
 
 	exists, ownertype, err := ghs.checkOwnerExists(ctx, genClient, ghs.cfg.GitHubOrg)
 	if err != nil {
@@ -271,27 +233,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	typeValid, err := checkOwnerTypeValid(ownertype)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("Error checking if owner type is valid", zap.Error(err))
-	}
-
-	// GitHub Free URL : https://api.github.com/octocat
-	// https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api?apiVersion=2022-11-28
-	// Already managed by Client.initialize(...) with http(s)://HOSTNAME
-	// https://github.com/google/go-github/blob/master/github/github.go#L33
-	// https://github.com/google/go-github/blob/master/github/github.go#L386
-	restClient := github.NewClient(ghs.client)
-
-	// Enable the ability to override the endpoint for self-hosted github instances
-	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
-		// GitHub Enterprise URL (ghe) : http(s)://HOSTNAME/api/v3/octocat
-		// https://docs.github.com/en/enterprise-server@3.8/rest/guides/getting-started-with-the-rest-api#making-a-request
-		// Already Managed by Client.WithEnterpriseURLs(...) with http(s)://HOSTNAME
-		// https://github.com/google/go-github/blob/master/github/github.go#L351
-		restCURL := ghs.cfg.HTTPClientSettings.Endpoint
-
-		restClient, err = github.NewEnterpriseClient(restCURL, restCURL, ghs.client)
-		if err != nil {
-			ghs.logger.Sugar().Errorf("error: %v", err)
-		}
 	}
 
 	if !exists || !typeValid {
@@ -358,7 +299,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			i := i
 			sem <- 1
 			go func() {
-				contribCount, err := ghs.getContributorCount(ctx, restClient, repos[i], now)
+				contribCount, err := ghs.getContributorCount(ctx, restClient, repos[i].Name)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
 					<-sem
