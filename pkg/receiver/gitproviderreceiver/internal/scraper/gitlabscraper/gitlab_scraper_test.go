@@ -18,7 +18,7 @@ import (
 )
 
 /*
- * Testing the start fucntion
+ * Testing the start function
  */
 func Test_gitlabScraper_start(t *testing.T) {
 	type args struct {
