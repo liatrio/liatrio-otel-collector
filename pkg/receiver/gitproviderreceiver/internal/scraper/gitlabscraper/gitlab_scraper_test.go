@@ -6,9 +6,15 @@ package gitlabscraper
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xanzy/go-gitlab"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 
@@ -87,6 +93,96 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 	}
 
 	return nil
+}
+
+// This is from https://github.com/google/go-github/blob/master/github/repos_collaborators_test.go, creates mock http server
+// The github client this library gives us doesn't use interfaces so the current mocking setup doesn't work with it
+// and had to find a different way to create tests
+func setupMockHttpServer() (client *gitlab.Client, mux *http.ServeMux, serverURL string, teardown func()) {
+	// mux is the HTTP request multiplexer used with the test server.
+	baseURLPath := "/api/v4"
+	mux = http.NewServeMux()
+
+	// We want to ensure that tests catch mistakes where the endpoint URL is
+	// specified as absolute rather than relative. It only makes a difference
+	// when there's a non-empty base URL path. So, use that. See issue #752.
+	apiHandler := http.NewServeMux()
+	apiHandler.Handle(baseURLPath+"/", http.StripPrefix(baseURLPath, mux))
+	apiHandler.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintln(os.Stderr, "FAIL: Client.BaseURL path prefix is not preserved in the request URL:")
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr, "\t"+req.URL.String())
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr, "\tDid you accidentally use an absolute endpoint URL rather than relative?")
+		fmt.Fprintln(os.Stderr, "\tSee https://github.com/google/go-github/issues/752 for information.")
+		http.Error(w, "Client.BaseURL path prefix is not preserved in the request URL.", http.StatusInternalServerError)
+	})
+
+	// server is a test HTTP server used to provide mock API responses.
+	server := httptest.NewServer(apiHandler)
+
+	// client is the GitHub client being tested and is
+	// configured to use test server.
+	url, err := url.Parse(server.URL + baseURLPath + "/")
+	if err != nil {
+		return nil, nil, "", nil
+	}
+	client, err = gitlab.NewClient("", gitlab.WithBaseURL(url.String()))
+	if err != nil {
+		return nil, nil, "", nil
+	}
+
+	return client, mux, server.URL, server.Close
+}
+
+func TestGetContributorCount(t *testing.T) {
+	client, mux, _, teardown := setupMockHttpServer()
+
+	defer teardown()
+	mux.HandleFunc("/projects/project/repository/contributors", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `[{"name":"john"}, {"name":"doe"}]`)
+	})
+
+	testCases := []struct {
+		desc          string
+		projectPath   string
+		resp          string
+		expectedErr   error
+		expectedCount int
+	}{
+		{
+			desc:          "valid",
+			resp:          `[{"name":"john"}, {"name":"doe"}]`,
+			projectPath:   "project",
+			expectedErr:   nil,
+			expectedCount: 2,
+		},
+		{
+			desc:        "error",
+			projectPath: "junk",
+			expectedErr: errors.New("GET " + client.BaseURL().String() +
+				"projects/junk/repository/contributors: 404 failed to parse unknown error format: 404 page not found\n"),
+			expectedCount: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
+
+			contribs, err := gls.getContributorCount(client, tc.projectPath)
+
+			assert.Equal(t, tc.expectedCount, contribs)
+			if tc.expectedErr != nil {
+				assert.Equal(t, tc.expectedErr.Error(), err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
 /*
