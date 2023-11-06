@@ -180,7 +180,6 @@ func (ghs *githubScraper) getBranches(
 			ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
 			return nil, err
 		}
-
 		branches = append(branches, r.Repository.Refs.Nodes...)
 		branchCursor = &r.Repository.Refs.PageInfo.EndCursor
 		hasNextPage = r.Repository.Refs.PageInfo.HasNextPage

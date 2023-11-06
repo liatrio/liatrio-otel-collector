@@ -82,6 +82,19 @@ func (gls *gitlabScraper) processBranches(client *gitlab.Client, branches *getBr
 	}
 }
 
+func (gls *gitlabScraper) getContributorCount(
+	restClient *gitlab.Client,
+	projectPath string,
+) (int, error) {
+	contributors, _, err := restClient.Repositories.Contributors(projectPath, nil)
+	if err != nil {
+		gls.logger.Sugar().Errorf("error getting contributors", zap.Error(err))
+		return 0, err
+	}
+
+	return len(contributors), nil
+}
+
 func (gls *gitlabScraper) getMergeRequests(
 	ctx context.Context,
 	graphClient graphql.Client,
@@ -268,7 +281,21 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}(project)
 	}
 
-	//wait until all goroutines are finished
+	for _, project := range projectList {
+		sem <- 1
+		go func(project gitlabProject) {
+			contributorCount, err := gls.getContributorCount(restClient, project.Path)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error: %v", err)
+				<-sem
+				return
+			}
+			gls.logger.Sugar().Debugf("contributor count: %v for repo %v", contributorCount, project.Path)
+			gls.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contributorCount), project.Path)
+			<-sem
+		}(project)
+	}
+	// wait until all goroutines are finished
 	for i := 0; i < maxProcesses; i++ {
 		sem <- 1
 	}
