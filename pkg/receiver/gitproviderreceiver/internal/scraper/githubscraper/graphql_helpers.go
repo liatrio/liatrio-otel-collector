@@ -10,11 +10,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func (ghs *githubScraper) getRepoData(
+func (ghs *githubScraper) getRepos(
 	ctx context.Context,
 	client graphql.Client,
 	searchQuery string,
-	ownertype string,
 ) ([]SearchNode, int, error) {
 	// here we use a pointer to a string so that graphql will receive null if the
 	// value is not set since the after: $repoCursor is optional to graphql
@@ -37,23 +36,29 @@ func (ghs *githubScraper) getRepoData(
     return repos, count, nil
 }
 
-func (ghs *githubScraper) getBranchCount(
-    ctx context.Context, 
-    client graphql.Client, 
-    repoName string, 
-    owner string,
-    defaultBranch string,
-) (int, error) {
-    
-    var branchCursor *string
+func (ghs *githubScraper) getBranches(
+	ctx context.Context,
+	client graphql.Client,
+	repoName string,
+	defaultBranch string,
+) ([]BranchNode, int, error) {
 
-	r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, 50, defaultBranch, branchCursor)
-	if err != nil {
-        ghs.logger.Sugar().Errorf("Error getting branch data", "error", err)
-		return 0, err
+	var cursor *string
+	var branches []BranchNode
+    var count int
+
+	for next := true; next; {
+		r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, 50, defaultBranch, cursor)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
+			return nil, 0, err
+		}
+		branches = append(branches, r.Repository.Refs.Nodes...)
+        count = r.Repository.Refs.TotalCount 
+		cursor = &r.Repository.Refs.PageInfo.EndCursor
+		next = r.Repository.Refs.PageInfo.HasNextPage
 	}
-
-	return r.Repository.Refs.TotalCount, nil
+	return branches, count, nil
 }
 
 func (ghs *githubScraper) getCommitData(
