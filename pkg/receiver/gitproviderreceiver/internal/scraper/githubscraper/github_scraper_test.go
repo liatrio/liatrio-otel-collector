@@ -267,6 +267,7 @@ func TestGetBranches(t *testing.T) {
 			client: &mockClient{
 				branchData: []getBranchDataRepositoryRefsRefConnection{
 					{
+						TotalCount: 0,
 						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
 							HasNextPage: false,
 						},
@@ -284,6 +285,7 @@ func TestGetBranches(t *testing.T) {
 						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
 							HasNextPage: false,
 						},
+						TotalCount: 3,
 						Nodes: []BranchNode{
 							{
 								Name: "main",
@@ -309,6 +311,7 @@ func TestGetBranches(t *testing.T) {
 						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
 							HasNextPage: true,
 						},
+						TotalCount: 9,
 						Nodes: []BranchNode{
 							{
 								Name: "main",
@@ -325,6 +328,7 @@ func TestGetBranches(t *testing.T) {
 						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
 							HasNextPage: true,
 						},
+						TotalCount: 9,
 						Nodes: []BranchNode{
 							{
 								Name: "main",
@@ -341,6 +345,7 @@ func TestGetBranches(t *testing.T) {
 						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
 							HasNextPage: false,
 						},
+						TotalCount: 9,
 						Nodes: []BranchNode{
 							{
 								Name: "main",
@@ -371,9 +376,11 @@ func TestGetBranches(t *testing.T) {
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			branches, err := ghs.getBranches(context.Background(), tc.client, "repo", "main")
+			_, count, err := ghs.getBranches(context.Background(), tc.client, "repo", "main")
 
-			assert.Equal(t, tc.expectedBranchCount, len(branches))
+			assert.Equal(t, tc.expectedBranchCount, count)
+			//for now this is just meant to use the branch variable so that
+			//assert.NotEqual(t, nil, branches)
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {
@@ -596,9 +603,10 @@ func TestGetRepoData(t *testing.T) {
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			repos, err := ghs.getRepoData(context.Background(), tc.client, "search query", "ownertype")
+			repos, count, err := ghs.getRepos(context.Background(), tc.client, "search query")
 
-			assert.Equal(t, tc.expectedRepos, len(repos))
+			assert.Equal(t, tc.expectedRepos, count)
+			assert.NotEqual(t, nil, repos)
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {

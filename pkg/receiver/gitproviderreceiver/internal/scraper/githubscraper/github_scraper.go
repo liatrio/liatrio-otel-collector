@@ -347,7 +347,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					<-sem
 					return
 				}
-                ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(count), repoName)
+				ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(count), repos[0].Name)
 				ghs.processBranches(ctx, genClient, now, branches, repos[i].Name)
 				<-sem
 			}()

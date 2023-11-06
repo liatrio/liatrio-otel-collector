@@ -14,26 +14,30 @@ func (ghs *githubScraper) getRepos(
 	ctx context.Context,
 	client graphql.Client,
 	searchQuery string,
-) ([]SearchNode, int, error) {
+) ([]SearchNodeRepository, int, error) {
 	// here we use a pointer to a string so that graphql will receive null if the
 	// value is not set since the after: $repoCursor is optional to graphql
-    var cursor *string
-    var repos []SearchNode
-    var count int
+	var cursor *string
+	var repos []SearchNodeRepository
+	var count int
 
-    for next := true; next; {
-        r, err := getRepoDataBySearch(ctx, client, searchQuery, cursor)
-        if err != nil {
-            ghs.logger.Sugar().Errorf("error getting repo data", zap.Error(err))
-            return nil, 0, err
-        }
-        repos = append(repos, r.Search.Nodes...)
-        count = r.Search.RepositoryCount
-        cursor = &r.Search.PageInfo.EndCursor
-        next = r.Search.PageInfo.HasNextPage
-    }
+	for next := true; next; {
+		r, err := getRepoDataBySearch(ctx, client, searchQuery, cursor)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting repo data", zap.Error(err))
+			return nil, 0, err
+		}
+		for _, repo := range r.Search.Nodes {
+			if r, ok := repo.(*SearchNodeRepository); ok {
+				repos = append(repos, *r)
+			}
+		}
+		count = r.Search.RepositoryCount
+		cursor = &r.Search.PageInfo.EndCursor
+		next = r.Search.PageInfo.HasNextPage
+	}
 
-    return repos, count, nil
+	return repos, count, nil
 }
 
 func (ghs *githubScraper) getBranches(
@@ -45,7 +49,7 @@ func (ghs *githubScraper) getBranches(
 
 	var cursor *string
 	var branches []BranchNode
-    var count int
+	var count int
 
 	for next := true; next; {
 		r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, 50, defaultBranch, cursor)
@@ -54,7 +58,7 @@ func (ghs *githubScraper) getBranches(
 			return nil, 0, err
 		}
 		branches = append(branches, r.Repository.Refs.Nodes...)
-        count = r.Repository.Refs.TotalCount 
+		count = r.Repository.Refs.TotalCount
 		cursor = &r.Repository.Refs.PageInfo.EndCursor
 		next = r.Repository.Refs.PageInfo.HasNextPage
 	}
@@ -91,6 +95,7 @@ func getNumPages(p float64, n float64) int {
 
 	return int(numPages)
 }
+
 // END TODO
 
 func add[T ~int | ~float64](a, b T) T {
