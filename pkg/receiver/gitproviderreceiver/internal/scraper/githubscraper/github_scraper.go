@@ -171,7 +171,7 @@ func (ghs *githubScraper) getBranches(
 	repoName string,
 	defaultBranch string,
 ) ([]BranchNode, error) {
-  
+
 	var branchCursor *string
 	var branches []BranchNode
 	for hasNextPage := true; hasNextPage; {
