@@ -72,7 +72,7 @@ func TestGetContributorCount(t *testing.T) {
 
 	testCases := []struct {
 		desc          string
-		repo          SearchNodeRepository
+		repo          string
 		org           string
 		resp          string
 		expectedErr   error
@@ -80,7 +80,7 @@ func TestGetContributorCount(t *testing.T) {
 	}{
 		{
 			desc:          "valid",
-			repo:          SearchNodeRepository{Name: "r"},
+			repo:          "r",
 			org:           "o",
 			resp:          `[{"id":1}, {"id":2}]`,
 			expectedErr:   nil,
@@ -88,7 +88,7 @@ func TestGetContributorCount(t *testing.T) {
 		},
 		{
 			desc:          "error",
-			repo:          SearchNodeRepository{Name: "junk"},
+			repo:          "junk",
 			org:           "junk",
 			resp:          `[{"id":1}, {"id":2}]`,
 			expectedErr:   errors.New("GET " + client.BaseURL.String() + "repos/junk/junk/contributors: 404  []"),
@@ -104,9 +104,8 @@ func TestGetContributorCount(t *testing.T) {
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 			ghs.cfg.GitHubOrg = tc.org
 			ctx := context.Background()
-			now := pcommon.NewTimestampFromTime(time.Now())
 
-			contribs, err := ghs.getContributorCount(ctx, client, tc.repo, now)
+			contribs, err := ghs.getContributorCount(ctx, client, tc.repo)
 			if tc.expectedErr != nil {
 				assert.Error(t, err)
 				assert.Equal(t, tc.expectedErr.Error(), err.Error())
