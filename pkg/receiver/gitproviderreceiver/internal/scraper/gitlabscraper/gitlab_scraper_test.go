@@ -6,12 +6,16 @@ package gitlabscraper
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"testing"
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/pmetrictest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/receivertest"
@@ -156,117 +160,42 @@ func TestGetMergeRequests(t *testing.T) {
 	}
 }
 
-// func TestScrape(t *testing.T) {
-
-// 	type fields struct {
-// 		client   *http.Client
-// 		cfg      *Config
-// 		settings component.TelemetrySettings
-// 		logger   *zap.Logger
-// 		mb       *metadata.MetricsBuilder
-// 	}
-// 	testCases := []struct {
-// 		desc    string
-// 		fields  fields
-// 		ctx     context.Context
-// 		want    pmetric.Metrics
-// 		wantErr bool
-// 	}{
-// 		{
-// 			desc:    "valid test",
-// 			ctx:     context.Background(),
-// 			wantErr: false,
-// 		},
-// 	}
-// 	for _, tt := range testCases {
-// 		t.Run(tt.desc, func(t *testing.T) {
-// 			gls := &gitlabScraper{
-// 				client:   tt.fields.client,
-// 				cfg:      tt.fields.cfg,
-// 				settings: tt.fields.settings,
-// 				logger:   tt.fields.logger,
-// 				mb:       tt.fields.mb,
-// 			}
-// 			got, err := gls.scrape(tt.ctx)
-// 			if (err != nil) != tt.wantErr {
-// 				// t.Errorf("gitlabScraper.scrape() error = %v, wantErr %v", err, tt.wantErr)
-// 				return
-// 			}
-// 			if !reflect.DeepEqual(got, tt.want) {
-// 				// t.Errorf("gitlabScraper.scrape() = %v, want %v", got, tt.want)
-// 				return
-// 			}
-// 		})
-// 	}
-// }
-
 func TestScrape(t *testing.T) {
 	type testCase struct {
-		name string
-		// bootTimeFunc        func(context.Context) (uint64, error)
-		// timesFunc           func(context.Context, bool) ([]cpu.TimesStat, error)
+		name                string
 		metricsConfig       metadata.MetricsBuilderConfig
 		expectedMetricCount int
-		// expectedStartTime   pcommon.Timestamp
-		expectedEndpoint  string
-		initializationErr string
-		expectedErr       string
+		expectedEndpoint    string
+		initializationErr   string
+		expectedErr         string
 	}
-
-	// disabledMetric := metadata.DefaultMetricsBuilderConfig()
-	// disabledMetric.Metrics.SystemCPUTime.Enabled = false
 
 	testCases := []testCase{
 		{
 			name:                "Standard",
 			metricsConfig:       metadata.DefaultMetricsBuilderConfig(),
-			expectedMetricCount: 7,
+			expectedMetricCount: 7, //this will change
 		},
 		{
-			name:             "non-empty endpoint", // unknown assert
-			metricsConfig:    metadata.DefaultMetricsBuilderConfig(),
-			expectedEndpoint: "endpoint",
+			name:                "non-empty endpoint", // unknown assert
+			metricsConfig:       metadata.DefaultMetricsBuilderConfig(),
+			expectedEndpoint:    "endpoint",
+			expectedMetricCount: 0, //this will not change
 		},
-		// {
-		// 	name:                "Validate Start Time",
-		// 	bootTimeFunc:        func(context.Context) (uint64, error) { return 100, nil },
-		// 	metricsConfig:       metadata.DefaultMetricsBuilderConfig(),
-		// 	expectedMetricCount: 1,
-		// 	expectedStartTime:   100 * 1e9,
-		// },
-		// {
-		// 	name:                "Boot Time Error",
-		// 	bootTimeFunc:        func(context.Context) (uint64, error) { return 0, errors.New("err1") },
-		// 	metricsConfig:       metadata.DefaultMetricsBuilderConfig(),
-		// 	expectedMetricCount: 1,
-		// 	initializationErr:   "err1",
-		// },
-		// {
-		// 	name:                "Times Error",
-		// 	timesFunc:           func(context.Context, bool) ([]cpu.TimesStat, error) { return nil, errors.New("err2") },
-		// 	metricsConfig:       metadata.DefaultMetricsBuilderConfig(),
-		// 	expectedMetricCount: 1,
-		// 	expectedErr:         "err2",
-		// },
-		// {
-		// 	name:                "SystemCPUTime metric is disabled ",
-		// 	metricsConfig:       disabledMetric,
-		// 	expectedMetricCount: 0,
-		// },
+		{
+			name:                "invalid client",
+			metricsConfig:       metadata.DefaultMetricsBuilderConfig(),
+			expectedMetricCount: 7, //this will change if new repo is added
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			gls := newGitLabScraper(context.Background(), receivertest.NewNopCreateSettings(), &Config{MetricsBuilderConfig: tc.metricsConfig})
 			gls.cfg.HTTPClientSettings.Endpoint = tc.expectedEndpoint
-			gls.cfg.GitLabOrg = "liatrioinc"
 
-			// if tc.bootTimeFunc != nil {
-			// 	scraper.bootTime = tc.bootTimeFunc
-			// }
-			// if tc.timesFunc != nil {
-			// 	scraper.times = tc.timesFunc
-			// }
+			//This line hit's alot of code
+			gls.cfg.GitLabOrg = "liatrioinc"
 
 			err := gls.start(context.Background(), componenttest.NewNopHost())
 			if tc.initializationErr != "" {
@@ -293,16 +222,61 @@ func TestScrape(t *testing.T) {
 
 			assert.Equal(t, tc.expectedMetricCount, md.MetricCount())
 
-			// if tc.expectedMetricCount > 0 {
-			// 	metrics := md.ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics()
-			// 	assertCPUMetricValid(t, metrics.At(0), tc.expectedStartTime)
-
-			// 	if runtime.GOOS == "linux" {
-			// 		assertCPUMetricHasLinuxSpecificStateLabels(t, metrics.At(0))
-			// 	}
-
-			// 	internal.AssertSameTimeStampForAllMetrics(t, metrics)
-			// }
 		})
 	}
 }
+
+// testing golden to get "expected.yam" which contains metric from a actual scrape
+func TestScraper2(t *testing.T) {
+	cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+	require.NoError(t, component.ValidateConfig(cfg))
+
+	gls := newGitLabScraper(context.Background(), receivertest.NewNopCreateSettings(), cfg)
+	gls.cfg.GitLabOrg = "liatrioinc"
+
+	err := gls.start(context.Background(), componenttest.NewNopHost())
+	require.NoError(t, err)
+
+	actualMetrics, err := gls.scrape(context.Background())
+	require.NoError(t, err)
+
+	expectedFile := filepath.Join("testdata", "scraper", "expected.yaml")
+
+	// golden.WriteMetrics(t, expectedFile, actualMetrics) // This line is temporary! TODO remove this!!
+
+	expectedMetrics, err := golden.ReadMetrics(expectedFile)
+	require.NoError(t, err)
+
+	//Timestamps are not accurate. Not sure why
+	require.NoError(t, pmetrictest.CompareMetrics(expectedMetrics, actualMetrics))
+}
+
+// func Test_gitlabScraper_processBranches(t *testing.T) {
+// 	type args struct {
+// 		client      *gitlab.Client
+// 		branches    *getBranchNamesProjectRepository
+// 		projectPath string
+// 		now         pcommon.Timestamp
+// 	}
+// 	tests := []struct {
+// 		name   string
+// 		config *Config
+// 		args   args
+
+// 	}{
+// 		{
+// 			name: "happy test",
+// 			config: &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()},
+// 			args: args{
+
+// 			},
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			gls := newGitLabScraper(context.Background(), receivertest.NewNopCreateSettings(), tt.config)
+
+// 			gls.processBranches(tt.args.client, tt.args.branches, tt.args.projectPath, tt.args.now)
+// 		})
+// 	}
+// }
