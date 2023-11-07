@@ -91,7 +91,7 @@ func TestGetContributorCount(t *testing.T) {
 			repo:          "junk",
 			org:           "junk",
 			resp:          `[{"id":1}, {"id":2}]`,
-			expectedErr:   errors.New("GET " + client.BaseURL.String() + "repos/junk/junk/contributors: 404  []"),
+			expectedErr:   errors.New("GET " + client.BaseURL.String() + "repos/junk/junk/contributors?per_page=100: 404  []"),
 			expectedCount: 0,
 		},
 	}
@@ -129,27 +129,13 @@ func TestNewGitHubScraper(t *testing.T) {
 func TestGetPullRequests(t *testing.T) {
 	testCases := []struct {
 		desc            string
-		client          graphql.Client
+		server          *http.ServeMux
 		expectedErr     error
 		expectedPrCount int
 	}{
 		{
-			desc: "no page",
-			client: &mockClient{
-				prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
-					{
-						PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
-							HasNextPage: false,
-						},
-					},
-				},
-			},
-			expectedErr:     nil,
-			expectedPrCount: 0,
-		},
-		{
 			desc: "one page",
-			client: &mockClient{
+			server: createServer("/", &responses{
 				prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
 					{
 						PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
@@ -168,30 +154,15 @@ func TestGetPullRequests(t *testing.T) {
 						},
 					},
 				},
-			},
+				responseCode: http.StatusOK,
+			}),
 			expectedErr:     nil,
 			expectedPrCount: 3, // 3 PRs per page, 1 pages
 		},
 		{
 			desc: "multiple pages",
-			client: &mockClient{
+			server: createServer("/", &responses{
 				prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
-					{
-						PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
-							HasNextPage: true,
-						},
-						Nodes: []PullRequestNode{
-							{
-								Merged: false,
-							},
-							{
-								Merged: false,
-							},
-							{
-								Merged: false,
-							},
-						},
-					},
 					{
 						PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
 							HasNextPage: true,
@@ -225,14 +196,17 @@ func TestGetPullRequests(t *testing.T) {
 						},
 					},
 				},
-			},
+				responseCode: http.StatusOK,
+			}),
 			expectedErr:     nil,
-			expectedPrCount: 9, // 3 PRs per page, 3 pages
+			expectedPrCount: 6, // 3 PRs per page, 2 pages
 		},
 		{
-			desc:            "error",
-			client:          &mockClient{err: true, errString: "this is an error"},
-			expectedErr:     errors.New("this is an error"),
+			desc: "404 not found",
+			server: createServer("/", &responses{
+				responseCode: http.StatusNotFound,
+			}),
+			expectedErr:     errors.New("returned error 404 Not Found: "),
 			expectedPrCount: 0,
 		},
 	}
@@ -242,7 +216,11 @@ func TestGetPullRequests(t *testing.T) {
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			prs, err := ghs.getPullRequests(context.Background(), tc.client, "repo name")
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
+			client := graphql.NewClient(server.URL, ghs.client)
+
+			prs, err := ghs.getPullRequests(context.Background(), client, "repo name")
 
 			assert.Equal(t, tc.expectedPrCount, len(prs))
 			if tc.expectedErr == nil {

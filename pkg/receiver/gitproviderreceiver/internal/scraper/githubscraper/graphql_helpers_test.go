@@ -24,8 +24,10 @@ type mockClient struct {
 }
 
 type responses struct {
-	checkLogin        checkLoginResponse
-	loginResponseCode int
+	responseCode int
+	checkLogin   checkLoginResponse
+	prs          []getPullRequestDataRepositoryPullRequestsPullRequestConnection
+	curPage      int
 }
 
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
@@ -77,11 +79,27 @@ func createServer(endpoint string, responses *responses) *http.ServeMux {
 		}
 		switch {
 		case reqBody.OpName == "checkLogin":
-			w.WriteHeader(responses.loginResponseCode)
-			login := responses.checkLogin
-			loginResponse := graphql.Response{Data: &login}
-			if err := json.NewEncoder(w).Encode(loginResponse); err != nil {
-				return
+			w.WriteHeader(responses.responseCode)
+			if responses.responseCode == http.StatusOK {
+				login := responses.checkLogin
+				graphqlResponse := graphql.Response{Data: &login}
+				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
+					return
+				}
+			}
+		case reqBody.OpName == "getPullRequestData":
+			w.WriteHeader(responses.responseCode)
+			if responses.responseCode == http.StatusOK {
+				prs := getPullRequestDataResponse{
+					Repository: getPullRequestDataRepository{
+						PullRequests: responses.prs[responses.curPage],
+					},
+				}
+				graphqlResponse := graphql.Response{Data: &prs}
+				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
+					return
+				}
+				responses.curPage++
 			}
 		}
 	})
@@ -282,7 +300,7 @@ func TestCheckOwnerExists(t *testing.T) {
 						Login: "liatrio",
 					},
 				},
-				loginResponseCode: http.StatusOK,
+				responseCode: http.StatusOK,
 			}),
 			expectedOwnerType:   "org",
 			expectedOwnerExists: true,
@@ -296,7 +314,7 @@ func TestCheckOwnerExists(t *testing.T) {
 						Login: "liatrio",
 					},
 				},
-				loginResponseCode: http.StatusOK,
+				responseCode: http.StatusOK,
 			}),
 			expectedOwnerType:   "user",
 			expectedOwnerExists: true,
@@ -310,7 +328,7 @@ func TestCheckOwnerExists(t *testing.T) {
 						Login: "liatrio",
 					},
 				},
-				loginResponseCode: http.StatusNotFound,
+				responseCode: http.StatusNotFound,
 			}),
 			expectedOwnerExists: false,
 			expectedOwnerType:   "",
