@@ -28,3 +28,6 @@ dist/
 
 # JetBrains IDEs
 .idea/
+
+# Environment variable files
+*.env
