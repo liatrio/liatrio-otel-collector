@@ -2,11 +2,15 @@ package githubscraper
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
 type mockClient struct {
@@ -17,6 +21,11 @@ type mockClient struct {
 	repoData   []getRepoDataBySearchSearchSearchResultItemConnection
 	commitData CommitNodeTargetCommit
 	curPage    int
+}
+
+type responses struct {
+	checkLogin        checkLoginResponse
+	loginResponseCode int
 }
 
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
@@ -57,6 +66,26 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 		m.curPage++
 	}
 	return nil
+}
+
+func createServer(endpoint string, responses *responses) *http.ServeMux {
+	var mux http.ServeMux
+	mux.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
+		var reqBody graphql.Request
+		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+			return
+		}
+		switch {
+		case reqBody.OpName == "checkLogin":
+			w.WriteHeader(responses.loginResponseCode)
+			login := responses.checkLogin
+			loginResponse := graphql.Response{Data: &login}
+			if err := json.NewEncoder(w).Encode(loginResponse); err != nil {
+				return
+			}
+		}
+	})
+	return &mux
 }
 
 func TestGetNumPages100(t *testing.T) {
@@ -232,5 +261,80 @@ func TestCheckOwnerTypeValidRandom(t *testing.T) {
 
 		assert.False(t, valid)
 		assert.NotNil(t, err)
+	}
+}
+
+func TestCheckOwnerExists(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		login               string
+		expectedError       bool
+		expectedOwnerType   string
+		expectedOwnerExists bool
+		server              *http.ServeMux
+	}{
+		{
+			desc:  "check org owner exists",
+			login: "liatrio",
+			server: createServer("/", &responses{
+				checkLogin: checkLoginResponse{
+					Organization: checkLoginOrganization{
+						Login: "liatrio",
+					},
+				},
+				loginResponseCode: http.StatusOK,
+			}),
+			expectedOwnerType:   "org",
+			expectedOwnerExists: true,
+		},
+		{
+			desc:  "check user owner exists",
+			login: "liatrio",
+			server: createServer("/", &responses{
+				checkLogin: checkLoginResponse{
+					User: checkLoginUser{
+						Login: "liatrio",
+					},
+				},
+				loginResponseCode: http.StatusOK,
+			}),
+			expectedOwnerType:   "user",
+			expectedOwnerExists: true,
+		},
+		{
+			desc:  "error",
+			login: "liatrio",
+			server: createServer("/", &responses{
+				checkLogin: checkLoginResponse{
+					User: checkLoginUser{
+						Login: "liatrio",
+					},
+				},
+				loginResponseCode: http.StatusNotFound,
+			}),
+			expectedOwnerExists: false,
+			expectedOwnerType:   "",
+			expectedError:       true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
+
+			client := graphql.NewClient(server.URL, ghs.client)
+			ownerExists, ownerType, err := ghs.checkOwnerExists(context.Background(), client, tc.login)
+
+			assert.Equal(t, tc.expectedOwnerExists, ownerExists)
+			assert.Equal(t, tc.expectedOwnerType, ownerType)
+			if !tc.expectedError {
+				assert.NoError(t, err)
+			}
+		})
 	}
 }

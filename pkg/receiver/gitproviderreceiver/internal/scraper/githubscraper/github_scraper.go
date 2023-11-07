@@ -4,11 +4,9 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/google/go-github/v53/github"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -220,10 +218,10 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	ghs.logger.Sugar().Debug("creating a new github client")
 
-    genClient, restClient, err := ghs.createClients()
-    if err != nil {
-        ghs.logger.Sugar().Errorf("unable to create clients", zap.Error(err))
-    }
+	genClient, restClient, err := ghs.createClients()
+	if err != nil {
+		ghs.logger.Sugar().Errorf("unable to create clients", zap.Error(err))
+	}
 
 	exists, ownertype, err := ghs.checkOwnerExists(ctx, genClient, ghs.cfg.GitHubOrg)
 	if err != nil {
