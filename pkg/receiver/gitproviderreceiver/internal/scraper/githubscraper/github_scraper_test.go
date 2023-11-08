@@ -7,16 +7,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/go-github/v53/github"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/receiver"
 )
-
-type restResponse struct {
-	responseCode int
-	response     []*github.Contributor
-	page         int
-}
 
 func TestNewGitHubScraper(t *testing.T) {
 	factory := Factory{}

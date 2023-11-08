@@ -174,6 +174,10 @@ func (ghs *githubScraper) createClients() (gClient graphql.Client, rClient *gith
 		// The rest client needs the endpoint to be the root of the server
 		rURL := ghs.cfg.HTTPClientSettings.Endpoint
 		rClient, err = github.NewEnterpriseClient(rURL, rURL, ghs.client)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error: %v", err)
+			return nil, nil, err
+		}
 	}
 
 	gClient = graphql.NewClient(gURL, ghs.client)

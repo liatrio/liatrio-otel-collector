@@ -146,9 +146,12 @@ func restMockServer(resp responses) *http.ServeMux {
 	mux.HandleFunc("/api-v3/repos/o/r/contributors", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(resp.responseCode)
 		if resp.responseCode == http.StatusOK {
-			contribs, _ := json.Marshal(resp.contribs)
+			contribs, err := json.Marshal(resp.contribs)
+			if err != nil {
+				fmt.Printf("error marshalling response: %v", err)
+			}
 			// Attempt to write data to the response writer.
-			_, err := w.Write(contribs)
+			_, err = w.Write(contribs)
 			if err != nil {
 				fmt.Printf("error writing response: %v", err)
 			}
@@ -642,7 +645,8 @@ func TestGetContributors(t *testing.T) {
 			server := httptest.NewServer(tc.server)
 
 			client := github.NewClient(nil)
-			url, _ := url.Parse(server.URL + "/api-v3" + "/")
+			url, err := url.Parse(server.URL + "/api-v3" + "/")
+			assert.NoError(t, err)
 			client.BaseURL = url
 			client.UploadURL = url
 

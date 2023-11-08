@@ -210,9 +210,9 @@ func (ghs *githubScraper) processBranches(
 
 // scrape and return metrics
 func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
-    ghs.rb.SetGitVendorName("github")
-    ghs.rb.SetOrganizationName(ghs.cfg.GitHubOrg)
-    res := ghs.rb.Emit()
+	ghs.rb.SetGitVendorName("github")
+	ghs.rb.SetOrganizationName(ghs.cfg.GitHubOrg)
+	res := ghs.rb.Emit()
 
 	if ghs.client == nil {
 		return pmetric.NewMetrics(), errClientNotInitErr
