@@ -8,8 +8,8 @@ import (
 	"net/url"
 
 	"github.com/Khan/genqlient/graphql"
-	"go.uber.org/zap"
 	"github.com/google/go-github/v53/github"
+	"go.uber.org/zap"
 )
 
 func (ghs *githubScraper) getRepos(
@@ -147,7 +147,7 @@ func genDefaultSearchQuery(ownertype string, ghorg string) string {
 	return fmt.Sprintf("%s:%s archived:false", ownertype, ghorg)
 }
 
-// Returns the graphql and rest clients for GitHub. 
+// Returns the graphql and rest clients for GitHub.
 // By default, the graphql client will use the public GitHub API URL as will
 // the rest client. If the user has specified an endpoint in the config via the
 // inherited HTTPClientSettings, then the both clients will use that endpoint.
@@ -163,15 +163,15 @@ func (ghs *githubScraper) createClients() (gClient graphql.Client, rClient *gith
 
 	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
 
-        // Given endpoint set as `https://myGHEserver.com` we need to join the path
-        // with `api/graphql`
+		// Given endpoint set as `https://myGHEserver.com` we need to join the path
+		// with `api/graphql`
 		gURL, err = url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "api/graphql")
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error: %v", err)
 			return nil, nil, err
 		}
 
-        // The rest client needs the endpoint to be the root of the server
+		// The rest client needs the endpoint to be the root of the server
 		rURL := ghs.cfg.HTTPClientSettings.Endpoint
 		rClient, err = github.NewEnterpriseClient(rURL, rURL, ghs.client)
 	}
@@ -181,34 +181,34 @@ func (ghs *githubScraper) createClients() (gClient graphql.Client, rClient *gith
 	return gClient, rClient, nil
 }
 
-// Get the contributor count for a repository via the REST API 
+// Get the contributor count for a repository via the REST API
 func (ghs *githubScraper) getContributorCount(
 	ctx context.Context,
 	client *github.Client,
 	repoName string,
 ) (int, error) {
-    var all []*github.Contributor
- 
-    // Options for Pagination support, default from GitHub was 30 
-    // https://docs.github.com/en/rest/repos/repos#list-repository-contributors
-    opt := &github.ListContributorsOptions{
-        ListOptions: github.ListOptions{PerPage: 100},
-    }
+	var all []*github.Contributor
 
-    for {
-        contribs, resp, err := client.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, repoName, opt)
-        if err != nil {
-            ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
-            return 0, err
-        }
+	// Options for Pagination support, default from GitHub was 30
+	// https://docs.github.com/en/rest/repos/repos#list-repository-contributors
+	opt := &github.ListContributorsOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
 
-        all = append(all, contribs...)
-        if resp.NextPage == 0 {
-            break
-        }
+	for {
+		contribs, resp, err := client.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, repoName, opt)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
+			return 0, err
+		}
 
-        opt.Page = resp.NextPage
-    }
+		all = append(all, contribs...)
+		if resp.NextPage == 0 {
+			break
+		}
+
+		opt.Page = resp.NextPage
+	}
 
 	return len(all), nil
 }

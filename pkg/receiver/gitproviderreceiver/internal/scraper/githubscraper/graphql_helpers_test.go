@@ -4,18 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-    "net/url"
+	"net/url"
 	"testing"
-    "fmt"
-    "time"
+	"time"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/receiver/receivertest"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"github.com/google/go-github/v53/github"
+	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
 type mockClient struct {
@@ -34,7 +34,7 @@ type responses struct {
 	repos        []getRepoDataBySearchSearchSearchResultItemConnection
 	branches     []getBranchDataRepositoryRefsRefConnection
 	prs          []getPullRequestDataRepositoryPullRequestsPullRequestConnection
-	page      int
+	page         int
 	contribs     []*github.Contributor
 }
 
@@ -122,7 +122,7 @@ func graphqlMockServer(responses *responses) *http.ServeMux {
 				}
 				responses.page++
 			}
-        case reqBody.OpName == "getPullRequestData":
+		case reqBody.OpName == "getPullRequestData":
 			w.WriteHeader(responses.responseCode)
 			if responses.responseCode == http.StatusOK {
 				repos := getPullRequestDataResponse{
@@ -135,8 +135,8 @@ func graphqlMockServer(responses *responses) *http.ServeMux {
 					return
 				}
 				responses.page++
-		    }
-        }
+			}
+		}
 	})
 	return &mux
 }
@@ -883,5 +883,5 @@ func TestGetCommitInfo(t *testing.T) {
 				assert.EqualError(t, err, tc.expectedErr.Error())
 			}
 		})
-    }
+	}
 }

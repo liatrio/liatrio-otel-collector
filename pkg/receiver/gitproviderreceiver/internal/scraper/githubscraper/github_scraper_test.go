@@ -26,4 +26,3 @@ func TestNewGitHubScraper(t *testing.T) {
 
 	assert.NotNil(t, s)
 }
-
