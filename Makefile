@@ -2,7 +2,7 @@ include ./Makefile.Common
 
 CUSTOM_COL_DIR ?= $(CURDIR)/build
 OCB_PATH ?= $(CURDIR)/tmp
-OCB_VERSION ?= 0.85.0
+OCB_VERSION ?= 0.88.0
 OCB_URL = https://github.com/open-telemetry/opentelemetry-collector/releases/download/cmd%2Fbuilder%2F
 OTEL_CONTRIB_REPO = https://github.com/open-telemetry/opentelemetry-collector-contrib.git
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
