@@ -9,10 +9,6 @@ else
 	.SHELLFLAGS = -o pipefail -c
 endif
 
-#GENQLIENT_DIRS = $(shell find . -type f -name 'genqlient.yaml' -exec dirname {} \;)
-GENQLIENT_DIRS = $(shell find . -type f -name 'genqlient.yaml' -exec dirname {} \;)
-METAGEN_DIRS = $(shell find . -type f -name 'documentation.md' -exec dirname {} \;)
-
 # SRC_ROOT is the top of the source tree.
 SRC_ROOT := $(shell git rev-parse --show-toplevel)
 
@@ -25,8 +21,8 @@ tidy:
 	rm go.sum 
 	go mod tidy -compat=1.20
 
-.PHONY: metagen
-metagen:
+.PHONY: gen
+gen:
 	go generate ./...
 
 .PHONY: test
@@ -36,12 +32,3 @@ test:
 .PHONY: fmt
 fmt:
 	go fmt ./...
-
-.PHONY: genqlient
-genqlient:
-	for dir in $(GENQLIENT_DIRS); do \
-		pushd $$dir && \
-		[[ -f genqlient.yaml && -f genqlient.graphql && -f schema.graphql ]] && \
-		go run github.com/Khan/genqlient@latest && \
-		popd; \
-	done

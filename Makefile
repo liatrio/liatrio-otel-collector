@@ -71,10 +71,10 @@ lint-all: $(PKG_RECEIVER_DIRS)
 $(PKG_RECEIVER_DIRS):
 	$(MAKE) -j 4 -C $@ lint
 
-.PHONY: metagen-all
-metagen-all: check-prep
+.PHONY: generate
+generate: check-prep install-tools
 	cd tmp/opentelemetry-collector-contrib/cmd/mdatagen && go install .
-	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) metagen
+	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) gen
 
 .PHONY: test-all
 test-all: 
@@ -88,10 +88,6 @@ cibuild: check-prep
 dockerbuild:
 	$(MAKE) build OS=linux ARCH=amd64
 	docker build . -t liatrio/liatrio-otel-collector:localdev --build-arg BIN_PATH="./build/otelcol-custom"
-
-.PHONY: genqlient-all
-genqlient-all: install-tools
-	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) genqlient
 
 .PHONY: tidy-all
 tidy-all:

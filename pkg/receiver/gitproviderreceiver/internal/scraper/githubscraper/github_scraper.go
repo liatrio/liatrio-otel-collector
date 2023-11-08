@@ -1,3 +1,5 @@
+//go:generate genqlient
+
 package githubscraper
 
 import (
