@@ -5,12 +5,12 @@ package githubscraper
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"testing"
 	"time"
 
@@ -22,80 +22,76 @@ import (
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
-// This is from https://github.com/google/go-github/blob/master/github/repos_collaborators_test.go, creates mock http server
-// The github client this library gives us doesn't use interfaces so the current mocking setup doesn't work with it
-// and had to find a different way to create tests
-func setupMockHttpServer() (client *github.Client, mux *http.ServeMux, serverURL string, teardown func()) {
-	baseURLPath := "/api-v3"
-
-	// mux is the HTTP request multiplexer used with the test server.
-	mux = http.NewServeMux()
-
-	// We want to ensure that tests catch mistakes where the endpoint URL is
-	// specified as absolute rather than relative. It only makes a difference
-	// when there's a non-empty base URL path. So, use that. See issue #752.
-	apiHandler := http.NewServeMux()
-	apiHandler.Handle(baseURLPath+"/", http.StripPrefix(baseURLPath, mux))
-	apiHandler.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprintln(os.Stderr, "FAIL: Client.BaseURL path prefix is not preserved in the request URL:")
-		fmt.Fprintln(os.Stderr)
-		fmt.Fprintln(os.Stderr, "\t"+req.URL.String())
-		fmt.Fprintln(os.Stderr)
-		fmt.Fprintln(os.Stderr, "\tDid you accidentally use an absolute endpoint URL rather than relative?")
-		fmt.Fprintln(os.Stderr, "\tSee https://github.com/google/go-github/issues/752 for information.")
-		http.Error(w, "Client.BaseURL path prefix is not preserved in the request URL.", http.StatusInternalServerError)
-	})
-
-	// server is a test HTTP server used to provide mock API responses.
-	server := httptest.NewServer(apiHandler)
-
-	// client is the GitHub client being tested and is
-	// configured to use test server.
-	client = github.NewClient(nil)
-	url, err := url.Parse(server.URL + baseURLPath + "/")
-	if err != nil {
-		return nil, nil, "", nil
-	}
-	client.BaseURL = url
-	client.UploadURL = url
-
-	return client, mux, server.URL, server.Close
+type restResponse struct {
+	responseCode int
+	response     []*github.Contributor
+	page         int
 }
 
-func TestGetContributorCount(t *testing.T) {
-	client, mux, _, teardown := setupMockHttpServer()
-
-	defer teardown()
-	mux.HandleFunc("/repos/o/r/contributors", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, `[{"id":1}, {"id":2}]`)
+func createRestServer(response restResponse) *http.ServeMux {
+	var mux http.ServeMux
+	mux.HandleFunc("/api-v3/repos/o/r/contributors", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(response.responseCode)
+		if response.responseCode == http.StatusOK {
+			//need to write to specific headers to be able to paginate correctly, for now only does 1 page
+			contributors, _ := json.Marshal(response.response)
+			w.Write(contributors)
+			//response.page++
+		}
 	})
+	return &mux
+}
 
+func TestGetContributors(t *testing.T) {
 	testCases := []struct {
 		desc          string
+		server        *http.ServeMux
 		repo          string
 		org           string
-		resp          string
 		expectedErr   error
 		expectedCount int
 	}{
 		{
-			desc:          "valid",
+			//currently the mock http server can only return one page for this function
+			desc: "one page",
+			server: createRestServer(restResponse{
+				response: []*github.Contributor{
+
+					{
+						ID: github.Int64(1),
+					},
+					{
+						ID: github.Int64(2),
+					},
+				},
+				responseCode: http.StatusOK,
+			}),
 			repo:          "r",
 			org:           "o",
-			resp:          `[{"id":1}, {"id":2}]`,
 			expectedErr:   nil,
 			expectedCount: 2,
 		},
 		{
-			desc:          "error",
-			repo:          "junk",
-			org:           "junk",
-			resp:          `[{"id":1}, {"id":2}]`,
-			expectedErr:   errors.New("GET " + client.BaseURL.String() + "repos/junk/junk/contributors?per_page=100: 404  []"),
+			//currently the mock http server can only return one page for this function
+			desc: "404 error",
+			server: createRestServer(restResponse{
+				response: []*github.Contributor{
+
+					{
+						ID: github.Int64(1),
+					},
+					{
+						ID: github.Int64(2),
+					},
+				},
+				responseCode: http.StatusNotFound,
+			}),
+			repo:          "r",
+			org:           "o",
+			expectedErr:   errors.New("GET http://127.0.0.1:52832/api-v3/repos/o/r/contributors?per_page=100: 404  []"),
 			expectedCount: 0,
 		},
 	}
-
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			factory := Factory{}
@@ -103,11 +99,28 @@ func TestGetContributorCount(t *testing.T) {
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 			ghs.cfg.GitHubOrg = tc.org
-			ctx := context.Background()
 
-			contribs, err := ghs.getContributorCount(ctx, client, tc.repo)
+			//This part lets us have the same port and can test the 404 error
+			//Not sure if this is the best way to do this or worth it
+			l, err := net.Listen("tcp", "127.0.0.1:52832")
+			if err != nil {
+				t.Fatal(err)
+			}
+			server := httptest.NewUnstartedServer(tc.server)
+			server.Listener.Close()
+			server.Listener = l
+			server.Start()
+			defer server.Close()
+
+			client := github.NewClient(nil)
+			url, _ := url.Parse(server.URL + "/api-v3" + "/")
+			client.BaseURL = url
+			client.UploadURL = url
+
+			contribs, err := ghs.getContributorCount(context.Background(), client, tc.repo)
 			if tc.expectedErr != nil {
 				assert.Error(t, err)
+				//server url changes every time, need to handle somehow
 				assert.Equal(t, tc.expectedErr.Error(), err.Error())
 				assert.Equal(t, tc.expectedCount, contribs)
 			} else {
