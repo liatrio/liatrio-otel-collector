@@ -35,7 +35,7 @@ type responses struct {
 	branches     []getBranchDataRepositoryRefsRefConnection
 	prs          []getPullRequestDataRepositoryPullRequestsPullRequestConnection
 	page         int
-	contribs     []*github.Contributor
+	contribs     [][]*github.Contributor
 }
 
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
@@ -144,17 +144,20 @@ func graphqlMockServer(responses *responses) *http.ServeMux {
 func restMockServer(resp responses) *http.ServeMux {
 	var mux http.ServeMux
 	mux.HandleFunc("/api-v3/repos/o/r/contributors", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(resp.responseCode)
 		if resp.responseCode == http.StatusOK {
-			contribs, err := json.Marshal(resp.contribs)
+			contribs, err := json.Marshal(resp.contribs[resp.page])
 			if err != nil {
 				fmt.Printf("error marshalling response: %v", err)
 			}
-			// Attempt to write data to the response writer.
+			//The link header is used to paginate through the results and the page refers to pages left, so we need to decrement.
+			//An example is with 2 expected responses, the first page will have a value of 1 (2-0-1), then on the second it will be 0 (2-1-1)
+			link := fmt.Sprintf("<https://api.github.com/repositories/39840932/contributors?per_page=100&page=%d>; rel=\"next\"", len(resp.contribs)-resp.page-1)
+			w.Header().Set("Link", link)
 			_, err = w.Write(contribs)
 			if err != nil {
 				fmt.Printf("error writing response: %v", err)
 			}
+			resp.page++
 		}
 	})
 	return &mux
@@ -615,15 +618,16 @@ func TestGetContributors(t *testing.T) {
 		expectedCount int
 	}{
 		{
-			desc: "TestListContributorsResponse",
+			desc: "TestSingleListContributorsResponse",
 			server: restMockServer(responses{
-				contribs: []*github.Contributor{
-
+				contribs: [][]*github.Contributor{
 					{
-						ID: github.Int64(1),
-					},
-					{
-						ID: github.Int64(2),
+						{
+							ID: github.Int64(1),
+						},
+						{
+							ID: github.Int64(2),
+						},
 					},
 				},
 				responseCode: http.StatusOK,
@@ -632,6 +636,34 @@ func TestGetContributors(t *testing.T) {
 			org:           "o",
 			expectedErr:   nil,
 			expectedCount: 2,
+		},
+		{
+			desc: "TestMultipleListContributorsResponse",
+			server: restMockServer(responses{
+				contribs: [][]*github.Contributor{
+					{
+						{
+							ID: github.Int64(1),
+						},
+						{
+							ID: github.Int64(2),
+						},
+					},
+					{
+						{
+							ID: github.Int64(3),
+						},
+						{
+							ID: github.Int64(4),
+						},
+					},
+				},
+				responseCode: http.StatusOK,
+			}),
+			repo:          "r",
+			org:           "o",
+			expectedErr:   nil,
+			expectedCount: 4,
 		},
 	}
 	for _, tc := range testCases {
