@@ -203,7 +203,7 @@ resourceMetrics:
                 - description: Time the branch has existed
                   gauge:
                       dataPoints:
-                          - asInt: '437'
+                          - asInt: '582'
                             attributes:
                                 - key: branch.name
                                   value:
@@ -301,7 +301,7 @@ resourceMetrics:
                 - description: Time the PR has been open
                   gauge:
                       dataPoints:
-                          - asInt: '437'
+                          - asInt: '582'
                             attributes:
                                 - key: branch.name
                                   value:

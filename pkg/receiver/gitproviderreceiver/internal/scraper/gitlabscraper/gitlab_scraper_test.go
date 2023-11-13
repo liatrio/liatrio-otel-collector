@@ -240,9 +240,9 @@ func TestScraper2(t *testing.T) {
 	actualMetrics, err := gls.scrape(context.Background())
 	require.NoError(t, err)
 
-	expectedFile := filepath.Join("testdata", "scraper", "expected.yaml")
+	expectedFile := filepath.Join("testdata", "scraper", "expected2.yaml")
 
-	// golden.WriteMetrics(t, expectedFile, actualMetrics) // This line is temporary! TODO remove this!!
+	golden.WriteMetrics(t, expectedFile, actualMetrics) // This line is temporary! TODO remove this!!
 
 	expectedMetrics, err := golden.ReadMetrics(expectedFile)
 	require.NoError(t, err)
