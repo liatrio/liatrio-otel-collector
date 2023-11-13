@@ -42,7 +42,7 @@ receivers:
         scrapers:
             github:
                 github_org: ${env:GITHUB_ORG}
-                search_query: org:${env.GITHUB_ORG}
+                search_query: org:${env:GITHUB_ORG}
                 ## You can specify a custom endpoint URL full list of client settings: https://github.com/open-telemetry/opentelemetry-collector/tree/main/config/confighttp#client-configuration
                 #endpoint: "https://mygithubenterprise.com"
 

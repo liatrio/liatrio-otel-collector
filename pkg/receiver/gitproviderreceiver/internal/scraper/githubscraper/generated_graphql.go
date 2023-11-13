@@ -947,11 +947,16 @@ func (v *getBranchDataRepository) GetRefs() getBranchDataRepositoryRefsRefConnec
 //
 // The connection type for Ref.
 type getBranchDataRepositoryRefsRefConnection struct {
+	// Identifies the total count of items in the connection.
+	TotalCount int `json:"totalCount"`
 	// A list of nodes.
 	Nodes []BranchNode `json:"nodes"`
 	// Information to aid in pagination.
 	PageInfo getBranchDataRepositoryRefsRefConnectionPageInfo `json:"pageInfo"`
 }
+
+// GetTotalCount returns getBranchDataRepositoryRefsRefConnection.TotalCount, and is useful for accessing the field via an interface.
+func (v *getBranchDataRepositoryRefsRefConnection) GetTotalCount() int { return v.TotalCount }
 
 // GetNodes returns getBranchDataRepositoryRefsRefConnection.Nodes, and is useful for accessing the field via an interface.
 func (v *getBranchDataRepositoryRefsRefConnection) GetNodes() []BranchNode { return v.Nodes }
@@ -1271,6 +1276,7 @@ const getBranchData_Operation = `
 query getBranchData ($name: String!, $owner: String!, $branchFirst: Int!, $targetBranch: String!, $branchCursor: String) {
 	repository(name: $name, owner: $owner) {
 		refs(refPrefix: "refs/heads/", first: $branchFirst, after: $branchCursor) {
+			totalCount
 			nodes {
 				name
 				compare(headRef: $targetBranch) {

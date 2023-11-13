@@ -10,7 +10,8 @@
       "args": [
         "--config",
         "../config/config.yaml"
-      ]
+      ],
+      "envFile": "${workspaceFolder}/../.debug.env"
     }
   ]
 }
