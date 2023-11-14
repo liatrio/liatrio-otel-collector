@@ -29,7 +29,7 @@ type responses struct {
 	prResponse         prResponse
 	branchResponse     branchResponse
 	commitResponse     commitResponse
-	checkLoginResponse LoginResponse
+	checkLoginResponse loginResponse
 	contribResponse    contribResponse
 	scrape             bool
 }
@@ -58,7 +58,7 @@ type commitResponse struct {
 	page         int
 }
 
-type LoginResponse struct {
+type loginResponse struct {
 	checkLogin   checkLoginResponse
 	responseCode int
 }
@@ -182,7 +182,10 @@ func MockServer(responses *responses) *http.ServeMux {
 			if err != nil {
 				fmt.Printf("error marshalling response: %v", err)
 			}
-			link := fmt.Sprintf("<https://api.github.com/repositories/39840932/contributors?per_page=100&page=%d>; rel=\"next\"", len(contribResp.contribs)-contribResp.page-1)
+			link := fmt.Sprintf(
+				"<https://api.github.com/repositories/placeholder/contributors?per_page=100&page=%d>; rel=\"next\"",
+				len(contribResp.contribs)-contribResp.page-1,
+			)
 			w.Header().Set("Link", link)
 			// Attempt to write data to the response writer.
 			_, err = w.Write(contribs)
@@ -385,7 +388,7 @@ func TestCheckOwnerExists(t *testing.T) {
 			login: "liatrio",
 			server: MockServer(&responses{
 				scrape: false,
-				checkLoginResponse: LoginResponse{
+				checkLoginResponse: loginResponse{
 					checkLogin: checkLoginResponse{
 						Organization: checkLoginOrganization{
 							Login: "liatrio",
@@ -402,7 +405,7 @@ func TestCheckOwnerExists(t *testing.T) {
 			login: "liatrio",
 			server: MockServer(&responses{
 				scrape: false,
-				checkLoginResponse: LoginResponse{
+				checkLoginResponse: loginResponse{
 					checkLogin: checkLoginResponse{
 						User: checkLoginUser{
 							Login: "liatrio",
@@ -419,7 +422,7 @@ func TestCheckOwnerExists(t *testing.T) {
 			login: "liatrio",
 			server: MockServer(&responses{
 				scrape: false,
-				checkLoginResponse: LoginResponse{
+				checkLoginResponse: loginResponse{
 					checkLogin: checkLoginResponse{
 						User: checkLoginUser{
 							Login: "liatrio",

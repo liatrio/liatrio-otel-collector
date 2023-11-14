@@ -41,7 +41,7 @@ func TestScrape(t *testing.T) {
 			desc: "TestNoRepos",
 			server: MockServer(&responses{
 				scrape: true,
-				checkLoginResponse: LoginResponse{
+				checkLoginResponse: loginResponse{
 					checkLogin: checkLoginResponse{
 						Organization: checkLoginOrganization{
 							Login: "liatrio",
@@ -65,7 +65,7 @@ func TestScrape(t *testing.T) {
 			desc: "TestHappyPath",
 			server: MockServer(&responses{
 				scrape: true,
-				checkLoginResponse: LoginResponse{
+				checkLoginResponse: loginResponse{
 					checkLogin: checkLoginResponse{
 						Organization: checkLoginOrganization{
 							Login: "liatrio",
@@ -180,7 +180,13 @@ func TestScrape(t *testing.T) {
 			//golden.WriteMetrics(t, expectedFile, actualMetrics) // This line is temporary! TODO remove this!!
 			expectedMetrics, err := golden.ReadMetrics(expectedFile)
 			require.NoError(t, err)
-			require.NoError(t, pmetrictest.CompareMetrics(expectedMetrics, actualMetrics, pmetrictest.IgnoreMetricDataPointsOrder(), pmetrictest.IgnoreTimestamp(), pmetrictest.IgnoreStartTimestamp()))
+			require.NoError(t, pmetrictest.CompareMetrics(
+				expectedMetrics,
+				actualMetrics,
+				pmetrictest.IgnoreMetricDataPointsOrder(),
+				pmetrictest.IgnoreTimestamp(),
+				pmetrictest.IgnoreStartTimestamp(),
+			))
 
 		})
 	}
