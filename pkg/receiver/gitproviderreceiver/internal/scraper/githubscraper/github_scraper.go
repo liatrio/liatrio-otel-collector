@@ -5,7 +5,6 @@ package githubscraper
 import (
 	"context"
 	"errors"
-	"net/http"
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
@@ -15,6 +14,7 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	"go.uber.org/zap"
 
+	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/common"
 	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
 )
 
@@ -35,7 +35,7 @@ type Repo struct {
 }
 
 type githubScraper struct {
-	client   *http.Client
+	client   *common.WrapperClient
 	cfg      *Config
 	settings component.TelemetrySettings
 	logger   *zap.Logger
@@ -46,7 +46,10 @@ type githubScraper struct {
 func (ghs *githubScraper) start(_ context.Context, host component.Host) (err error) {
 	ghs.logger.Sugar().Info("Starting the scraper inside scraper.go")
 	// TODO: Fix the ToClient configuration
-	ghs.client, err = ghs.cfg.ToClient(host, ghs.settings)
+	// ghs.client, err = ghs.cfg.ToClient(host, ghs.settings)
+	client, err := ghs.cfg.ToClient(host, ghs.settings)
+	ghs.client = common.NewWrapperClient(client)
+	// ghs.client = &common.CustomClient{UnderlyingClient: internalCLient}
 	return
 }
 

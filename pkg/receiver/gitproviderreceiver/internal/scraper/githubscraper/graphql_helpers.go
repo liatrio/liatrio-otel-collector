@@ -159,7 +159,7 @@ func genDefaultSearchQuery(ownertype string, ghorg string) string {
 func (ghs *githubScraper) createClients() (gClient graphql.Client, rClient *github.Client, err error) {
 
 	gURL := "https://api.github.com/graphql"
-	rClient = github.NewClient(ghs.client)
+	rClient = github.NewClient(ghs.client.Client)
 
 	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
 
@@ -173,7 +173,7 @@ func (ghs *githubScraper) createClients() (gClient graphql.Client, rClient *gith
 
 		// The rest client needs the endpoint to be the root of the server
 		rURL := ghs.cfg.HTTPClientSettings.Endpoint
-		rClient, err = github.NewEnterpriseClient(rURL, rURL, ghs.client)
+		rClient, err = github.NewEnterpriseClient(rURL, rURL, ghs.client.Client)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error: %v", err)
 			return nil, nil, err
