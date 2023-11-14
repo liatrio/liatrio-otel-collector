@@ -68,9 +68,9 @@ type LoginResponse struct {
 }
 
 type contribResponse struct {
-	contribs     []*github.Contributor
+	contribs     [][]*github.Contributor
 	responseCode int
-	//page         int
+	page         int
 }
 
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
@@ -113,7 +113,7 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 	return nil
 }
 
-func graphqlMockServer(responses *responses) *http.ServeMux {
+func MockServer(responses *responses) *http.ServeMux {
 	var mux http.ServeMux
 	restEndpoint := "/api-v3/repos/o/r/contributors"
 	graphEndpoint := "/"
@@ -206,41 +206,46 @@ func graphqlMockServer(responses *responses) *http.ServeMux {
 	})
 	mux.HandleFunc(restEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		contribResp := &responses.contribResponse
-		w.WriteHeader(contribResp.responseCode)
 		if contribResp.responseCode == http.StatusOK {
-			contribs, err := json.Marshal(contribResp.contribs)
+			contribs, err := json.Marshal(contribResp.contribs[contribResp.page])
 			if err != nil {
 				fmt.Printf("error marshalling response: %v", err)
 			}
+			link := fmt.Sprintf("<https://api.github.com/repositories/39840932/contributors?per_page=100&page=%d>; rel=\"next\"", len(contribResp.contribs)-contribResp.page-1)
+			w.Header().Set("Link", link)
 			// Attempt to write data to the response writer.
 			_, err = w.Write(contribs)
 			if err != nil {
 				fmt.Printf("error writing response: %v", err)
 			}
+			contribResp.page++
 		}
 	})
 	return &mux
 }
 
-func restMockServer(resp responses) *http.ServeMux {
-	var mux http.ServeMux
-	mux.HandleFunc("/api-v3/repos/o/r/contributors", func(w http.ResponseWriter, r *http.Request) {
-		contribResp := &resp.contribResponse
-		w.WriteHeader(contribResp.responseCode)
-		if contribResp.responseCode == http.StatusOK {
-			contribs, err := json.Marshal(contribResp.contribs)
-			if err != nil {
-				fmt.Printf("error marshalling response: %v", err)
-			}
-			// Attempt to write data to the response writer.
-			_, err = w.Write(contribs)
-			if err != nil {
-				fmt.Printf("error writing response: %v", err)
-			}
-		}
-	})
-	return &mux
-}
+// func restMockServer(resp responses) *http.ServeMux {
+// 	var mux http.ServeMux
+// 	mux.HandleFunc("/api-v3/repos/o/r/contributors", func(w http.ResponseWriter, r *http.Request) {
+// 		contribResp := &resp.contribResponse
+// 		if contribResp.responseCode == http.StatusOK {
+// 			contribs, err := json.Marshal(contribResp.contribs[contribResp.page])
+// 			if err != nil {
+// 				fmt.Printf("error marshalling response: %v", err)
+// 			}
+// 			//The link header is used to paginate through the results and the page refers to pages left, so we need to decrement.
+// 			//An example is with 2 expected responses, the first page will have a value of 1 (2-0-1), then on the second it will be 0 (2-1-1)
+// 			link := fmt.Sprintf("<https://api.github.com/repositories/39840932/contributors?per_page=100&page=%d>; rel=\"next\"", len(resp.contribs)-resp.page-1)
+// 			w.Header().Set("Link", link)
+// 			_, err = w.Write(contribs)
+// 			if err != nil {
+// 				fmt.Printf("error writing response: %v", err)
+// 			}
+// 			resp.page++
+// 		}
+// 	})
+// 	return &mux
+// }
 
 func TestGetNumPages100(t *testing.T) {
 	p := float64(100)
@@ -430,7 +435,7 @@ func TestCheckOwnerExists(t *testing.T) {
 		{
 			desc:  "TestOrgOwnerExists",
 			login: "liatrio",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: false,
 				checkLoginResponse: LoginResponse{
 					checkLogin: checkLoginResponse{
@@ -447,7 +452,7 @@ func TestCheckOwnerExists(t *testing.T) {
 		{
 			desc:  "TestUserOwnerExists",
 			login: "liatrio",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: false,
 				checkLoginResponse: LoginResponse{
 					checkLogin: checkLoginResponse{
@@ -464,7 +469,7 @@ func TestCheckOwnerExists(t *testing.T) {
 		{
 			desc:  "TestLoginError",
 			login: "liatrio",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: false,
 				checkLoginResponse: LoginResponse{
 					checkLogin: checkLoginResponse{
@@ -511,7 +516,7 @@ func TestGetRepos(t *testing.T) {
 	}{
 		{
 			desc: "TestSinglePageResponse",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: false,
 				repoResponse: repoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
@@ -535,7 +540,7 @@ func TestGetRepos(t *testing.T) {
 		},
 		{
 			desc: "TestMultiPageResponse",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: false,
 				repoResponse: repoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
@@ -576,7 +581,7 @@ func TestGetRepos(t *testing.T) {
 		},
 		{
 			desc: "Test404Response",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: false,
 				repoResponse: repoResponse{
 					responseCode: http.StatusNotFound,
@@ -617,7 +622,7 @@ func TestGetBranches(t *testing.T) {
 	}{
 		{
 			desc: "TestSinglePageResponse",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: false,
 				branchResponse: branchResponse{
 					branches: []getBranchDataRepositoryRefsRefConnection{
@@ -641,7 +646,7 @@ func TestGetBranches(t *testing.T) {
 		},
 		{
 			desc: "TestMultiPageResponse",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: false,
 				branchResponse: branchResponse{
 					branches: []getBranchDataRepositoryRefsRefConnection{
@@ -682,7 +687,7 @@ func TestGetBranches(t *testing.T) {
 		},
 		{
 			desc: "Test404Response",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: false,
 				branchResponse: branchResponse{
 					responseCode: http.StatusNotFound,
@@ -724,17 +729,18 @@ func TestGetContributors(t *testing.T) {
 		expectedCount int
 	}{
 		{
-			desc: "TestListContributorsResponse",
-			server: restMockServer(responses{
+			desc: "TestSingleListContributorsResponse",
+			server: MockServer(&responses{
 				scrape: false,
 				contribResponse: contribResponse{
-					contribs: []*github.Contributor{
-
+					contribs: [][]*github.Contributor{
 						{
-							ID: github.Int64(1),
-						},
-						{
-							ID: github.Int64(2),
+							{
+								ID: github.Int64(1),
+							},
+							{
+								ID: github.Int64(2),
+							},
 						},
 					},
 					responseCode: http.StatusOK,
@@ -744,6 +750,36 @@ func TestGetContributors(t *testing.T) {
 			org:           "o",
 			expectedErr:   nil,
 			expectedCount: 2,
+		},
+		{
+			desc: "TestMultipleListContributorsResponse",
+			server: MockServer(&responses{
+				contribResponse: contribResponse{
+					contribs: [][]*github.Contributor{
+						{
+							{
+								ID: github.Int64(1),
+							},
+							{
+								ID: github.Int64(2),
+							},
+						},
+						{
+							{
+								ID: github.Int64(3),
+							},
+							{
+								ID: github.Int64(4),
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			repo:          "r",
+			org:           "o",
+			expectedErr:   nil,
+			expectedCount: 4,
 		},
 	}
 	for _, tc := range testCases {
@@ -778,7 +814,7 @@ func TestGetPullRequests(t *testing.T) {
 	}{
 		{
 			desc: "TestSinglePageResponse",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: false,
 				prResponse: prResponse{
 					prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
@@ -807,7 +843,7 @@ func TestGetPullRequests(t *testing.T) {
 		},
 		{
 			desc: "TestMultiPageResponse",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: false,
 				prResponse: prResponse{
 					prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
@@ -852,7 +888,7 @@ func TestGetPullRequests(t *testing.T) {
 		},
 		{
 			desc: "Test404Response",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: false,
 				prResponse: prResponse{
 					responseCode: http.StatusNotFound,
