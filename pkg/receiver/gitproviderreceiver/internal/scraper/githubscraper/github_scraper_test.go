@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/google/go-github/v53/github"
 	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
@@ -32,24 +33,46 @@ func TestNewGitHubScraper(t *testing.T) {
 
 func TestScrape(t *testing.T) {
 	testCases := []struct {
-		desc   string
-		server *http.ServeMux
+		desc     string
+		server   *http.ServeMux
+		testFile string
 	}{
-		// {
-		// 	desc: "TestNoRepos",
-		// 	server: graphqlMockServer(&responses{
-		// 		repos: []getRepoDataBySearchSearchSearchResultItemConnection{
-		// 			{
-		// 				RepositoryCount: 0,
-		// 				Nodes:           []SearchNode{},
-		// 			},
-		// 		},
-		// 		responseCode: http.StatusOK,
-		// 	}),
-		// },
+		{
+			desc: "TestNoRepos",
+			server: graphqlMockServer(&responses{
+				scrape: true,
+				checkLoginResponse: LoginResponse{
+					checkLogin: checkLoginResponse{
+						Organization: checkLoginOrganization{
+							Login: "liatrio",
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				repoResponse: repoResponse{
+					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
+						{
+							RepositoryCount: 0,
+							Nodes:           []SearchNode{},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			testFile: "expected_no_repos.yaml",
+		},
 		{
 			desc: "TestHappyPath",
 			server: graphqlMockServer(&responses{
+				scrape: true,
+				checkLoginResponse: LoginResponse{
+					checkLogin: checkLoginResponse{
+						Organization: checkLoginOrganization{
+							Login: "liatrio",
+						},
+					},
+					responseCode: http.StatusOK,
+				},
 				repoResponse: repoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
@@ -60,22 +83,6 @@ func TestScrape(t *testing.T) {
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
-								HasNextPage: false,
-							},
-						},
-					},
-					responseCode: http.StatusOK,
-				},
-				branchResponse: branchResponse{
-					branches: []getBranchDataRepositoryRefsRefConnection{
-						{
-							TotalCount: 1,
-							Nodes: []BranchNode{
-								{
-									Name: "main",
-								},
-							},
-							PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
 								HasNextPage: false,
 							},
 						},
@@ -97,6 +104,44 @@ func TestScrape(t *testing.T) {
 					},
 					responseCode: http.StatusOK,
 				},
+				branchResponse: branchResponse{
+					branches: []getBranchDataRepositoryRefsRefConnection{
+						{
+							TotalCount: 1,
+							Nodes: []BranchNode{
+								{
+									Name: "main",
+									Compare: BranchNodeCompareComparison{
+										AheadBy:  0,
+										BehindBy: 1,
+									},
+								},
+							},
+							PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				commitResponse: commitResponse{
+					commits: []CommitNodeTargetCommit{
+						{
+							History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
+								Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+									{
+										Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
+											CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+											Additions:     10,
+											Deletions:     9,
+										},
+									},
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
 				contribResponse: contribResponse{
 					contribs: []*github.Contributor{
 						{
@@ -105,15 +150,8 @@ func TestScrape(t *testing.T) {
 					},
 					responseCode: http.StatusOK,
 				},
-				checkLoginResponse: LoginResponse{
-					checkLogin: checkLoginResponse{
-						Organization: checkLoginOrganization{
-							Login: "liatrio",
-						},
-					},
-					responseCode: http.StatusOK,
-				},
 			}),
+			testFile: "expected_happy_path.yaml",
 		},
 	}
 	for _, tc := range testCases {
@@ -133,7 +171,7 @@ func TestScrape(t *testing.T) {
 			actualMetrics, err := ghs.scrape(context.Background())
 			require.NoError(t, err)
 
-			expectedFile := filepath.Join("testdata", "scraper", "expected_happy_path.yaml")
+			expectedFile := filepath.Join("testdata", "scraper", tc.testFile)
 
 			//golden.WriteMetrics(t, expectedFile, actualMetrics) // This line is temporary! TODO remove this!!
 			expectedMetrics, err := golden.ReadMetrics(expectedFile)

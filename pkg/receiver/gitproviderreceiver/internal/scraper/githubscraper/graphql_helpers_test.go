@@ -29,11 +29,13 @@ type mockClient struct {
 }
 
 type responses struct {
-	checkLoginResponse LoginResponse
 	repoResponse       repoResponse
-	branchResponse     branchResponse
 	prResponse         prResponse
+	branchResponse     branchResponse
+	commitResponse     commitResponse
+	checkLoginResponse LoginResponse
 	contribResponse    contribResponse
+	scrape             bool
 }
 
 type repoResponse struct {
@@ -50,6 +52,12 @@ type prResponse struct {
 
 type branchResponse struct {
 	branches     []getBranchDataRepositoryRefsRefConnection
+	responseCode int
+	page         int
+}
+
+type commitResponse struct {
+	commits      []CommitNodeTargetCommit
 	responseCode int
 	page         int
 }
@@ -107,7 +115,13 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 
 func graphqlMockServer(responses *responses) *http.ServeMux {
 	var mux http.ServeMux
-	mux.HandleFunc("/api/graphql", func(w http.ResponseWriter, r *http.Request) {
+	restEndpoint := "/api-v3/repos/o/r/contributors"
+	graphEndpoint := "/"
+	if responses.scrape {
+		graphEndpoint = "/api/graphql"
+		restEndpoint = "/api/v3/repos/liatrio/repo1/contributors"
+	}
+	mux.HandleFunc(graphEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		var reqBody graphql.Request
 		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 			return
@@ -115,7 +129,7 @@ func graphqlMockServer(responses *responses) *http.ServeMux {
 		switch {
 		// These OpNames need to be name of the GraphQL query as defined in genqlient.graphql
 		case reqBody.OpName == "checkLogin":
-			loginResp := responses.checkLoginResponse
+			loginResp := &responses.checkLoginResponse
 			w.WriteHeader(loginResp.responseCode)
 			if loginResp.responseCode == http.StatusOK {
 				login := loginResp.checkLogin
@@ -125,40 +139,35 @@ func graphqlMockServer(responses *responses) *http.ServeMux {
 				}
 			}
 		case reqBody.OpName == "getRepoDataBySearch":
-			repoResp := responses.repoResponse
-			//w.WriteHeader(repoResp.responseCode)
+			repoResp := &responses.repoResponse
+			w.WriteHeader(repoResp.responseCode)
 			if repoResp.responseCode == http.StatusOK {
 				repos := getRepoDataBySearchResponse{
 					Search: repoResp.repos[repoResp.page],
 				}
 				graphqlResponse := graphql.Response{Data: &repos}
-				resp, err := json.Marshal(graphqlResponse)
-				if err != nil {
+				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
 					return
 				}
-				w.Write(resp)
-				// if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
-				// 	return
-				// }
 				repoResp.page++
 			}
 		case reqBody.OpName == "getBranchData":
-			branchResp := responses.branchResponse
+			branchResp := &responses.branchResponse
 			w.WriteHeader(branchResp.responseCode)
 			if branchResp.responseCode == http.StatusOK {
-				repos := getBranchDataResponse{
+				branches := getBranchDataResponse{
 					Repository: getBranchDataRepository{
 						Refs: branchResp.branches[branchResp.page],
 					},
 				}
-				graphqlResponse := graphql.Response{Data: &repos}
+				graphqlResponse := graphql.Response{Data: &branches}
 				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
 					return
 				}
 				branchResp.page++
 			}
 		case reqBody.OpName == "getPullRequestData":
-			prResp := responses.prResponse
+			prResp := &responses.prResponse
 			w.WriteHeader(prResp.responseCode)
 			if prResp.responseCode == http.StatusOK {
 				repos := getPullRequestDataResponse{
@@ -172,10 +181,31 @@ func graphqlMockServer(responses *responses) *http.ServeMux {
 				}
 				prResp.page++
 			}
+
+		case reqBody.OpName == "getCommitData":
+			commitResp := &responses.commitResponse
+			w.WriteHeader(commitResp.responseCode)
+			if commitResp.responseCode == http.StatusOK {
+				commitNodes := []CommitNode{
+					{Target: &commitResp.commits[commitResp.page]},
+				}
+				commits := getCommitDataResponse{
+					Repository: getCommitDataRepository{
+						Refs: getCommitDataRepositoryRefsRefConnection{
+							Nodes: commitNodes,
+						},
+					},
+				}
+				graphqlResponse := graphql.Response{Data: &commits}
+				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
+					return
+				}
+				commitResp.page++
+			}
 		}
 	})
-	mux.HandleFunc("/api/v3/repos/liatrio/repo1/contributors", func(w http.ResponseWriter, r *http.Request) {
-		contribResp := responses.contribResponse
+	mux.HandleFunc(restEndpoint, func(w http.ResponseWriter, r *http.Request) {
+		contribResp := &responses.contribResponse
 		w.WriteHeader(contribResp.responseCode)
 		if contribResp.responseCode == http.StatusOK {
 			contribs, err := json.Marshal(contribResp.contribs)
@@ -195,7 +225,7 @@ func graphqlMockServer(responses *responses) *http.ServeMux {
 func restMockServer(resp responses) *http.ServeMux {
 	var mux http.ServeMux
 	mux.HandleFunc("/api-v3/repos/o/r/contributors", func(w http.ResponseWriter, r *http.Request) {
-		contribResp := resp.contribResponse
+		contribResp := &resp.contribResponse
 		w.WriteHeader(contribResp.responseCode)
 		if contribResp.responseCode == http.StatusOK {
 			contribs, err := json.Marshal(contribResp.contribs)
@@ -401,6 +431,7 @@ func TestCheckOwnerExists(t *testing.T) {
 			desc:  "TestOrgOwnerExists",
 			login: "liatrio",
 			server: graphqlMockServer(&responses{
+				scrape: false,
 				checkLoginResponse: LoginResponse{
 					checkLogin: checkLoginResponse{
 						Organization: checkLoginOrganization{
@@ -417,6 +448,7 @@ func TestCheckOwnerExists(t *testing.T) {
 			desc:  "TestUserOwnerExists",
 			login: "liatrio",
 			server: graphqlMockServer(&responses{
+				scrape: false,
 				checkLoginResponse: LoginResponse{
 					checkLogin: checkLoginResponse{
 						User: checkLoginUser{
@@ -433,6 +465,7 @@ func TestCheckOwnerExists(t *testing.T) {
 			desc:  "TestLoginError",
 			login: "liatrio",
 			server: graphqlMockServer(&responses{
+				scrape: false,
 				checkLoginResponse: LoginResponse{
 					checkLogin: checkLoginResponse{
 						User: checkLoginUser{
@@ -479,6 +512,7 @@ func TestGetRepos(t *testing.T) {
 		{
 			desc: "TestSinglePageResponse",
 			server: graphqlMockServer(&responses{
+				scrape: false,
 				repoResponse: repoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
@@ -502,6 +536,7 @@ func TestGetRepos(t *testing.T) {
 		{
 			desc: "TestMultiPageResponse",
 			server: graphqlMockServer(&responses{
+				scrape: false,
 				repoResponse: repoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
@@ -542,6 +577,7 @@ func TestGetRepos(t *testing.T) {
 		{
 			desc: "Test404Response",
 			server: graphqlMockServer(&responses{
+				scrape: false,
 				repoResponse: repoResponse{
 					responseCode: http.StatusNotFound,
 				},
@@ -582,6 +618,7 @@ func TestGetBranches(t *testing.T) {
 		{
 			desc: "TestSinglePageResponse",
 			server: graphqlMockServer(&responses{
+				scrape: false,
 				branchResponse: branchResponse{
 					branches: []getBranchDataRepositoryRefsRefConnection{
 						{
@@ -605,6 +642,7 @@ func TestGetBranches(t *testing.T) {
 		{
 			desc: "TestMultiPageResponse",
 			server: graphqlMockServer(&responses{
+				scrape: false,
 				branchResponse: branchResponse{
 					branches: []getBranchDataRepositoryRefsRefConnection{
 						{
@@ -645,6 +683,7 @@ func TestGetBranches(t *testing.T) {
 		{
 			desc: "Test404Response",
 			server: graphqlMockServer(&responses{
+				scrape: false,
 				branchResponse: branchResponse{
 					responseCode: http.StatusNotFound,
 				},
@@ -687,6 +726,7 @@ func TestGetContributors(t *testing.T) {
 		{
 			desc: "TestListContributorsResponse",
 			server: restMockServer(responses{
+				scrape: false,
 				contribResponse: contribResponse{
 					contribs: []*github.Contributor{
 
@@ -739,6 +779,7 @@ func TestGetPullRequests(t *testing.T) {
 		{
 			desc: "TestSinglePageResponse",
 			server: graphqlMockServer(&responses{
+				scrape: false,
 				prResponse: prResponse{
 					prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
 						{
@@ -767,6 +808,7 @@ func TestGetPullRequests(t *testing.T) {
 		{
 			desc: "TestMultiPageResponse",
 			server: graphqlMockServer(&responses{
+				scrape: false,
 				prResponse: prResponse{
 					prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
 						{
@@ -811,6 +853,7 @@ func TestGetPullRequests(t *testing.T) {
 		{
 			desc: "Test404Response",
 			server: graphqlMockServer(&responses{
+				scrape: false,
 				prResponse: prResponse{
 					responseCode: http.StatusNotFound,
 				},

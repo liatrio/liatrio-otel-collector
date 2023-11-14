@@ -6,7 +6,7 @@ resourceMetrics:
             stringValue: github
         - key: organization.name
           value:
-            stringValue: ""
+            stringValue: liatrio
     schemaUrl: https://opentelemetry.io/schemas/1.9.0
     scopeMetrics:
       - metrics:
