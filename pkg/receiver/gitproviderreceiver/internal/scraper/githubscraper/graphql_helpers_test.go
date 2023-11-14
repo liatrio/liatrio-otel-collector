@@ -21,11 +21,7 @@ import (
 type mockClient struct {
 	err        bool
 	errString  string
-	prs        []getPullRequestDataRepositoryPullRequestsPullRequestConnection
-	branchData []getBranchDataRepositoryRefsRefConnection
-	repoData   []getRepoDataBySearchSearchSearchResultItemConnection
 	commitData CommitNodeTargetCommit
-	curPage    int
 }
 
 type responses struct {
