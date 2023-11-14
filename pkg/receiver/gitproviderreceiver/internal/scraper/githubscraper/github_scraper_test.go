@@ -39,7 +39,7 @@ func TestScrape(t *testing.T) {
 	}{
 		{
 			desc: "TestNoRepos",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: true,
 				checkLoginResponse: LoginResponse{
 					checkLogin: checkLoginResponse{
@@ -63,7 +63,7 @@ func TestScrape(t *testing.T) {
 		},
 		{
 			desc: "TestHappyPath",
-			server: graphqlMockServer(&responses{
+			server: MockServer(&responses{
 				scrape: true,
 				checkLoginResponse: LoginResponse{
 					checkLogin: checkLoginResponse{
@@ -131,7 +131,9 @@ func TestScrape(t *testing.T) {
 								Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
 									{
 										Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
-											CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+											//Because the date was static, the test would fail as the branch age would change as time passed
+											//Made it dynamically generated for yesterdays date, keeping the age at 24 hours
+											CommittedDate: time.Now().AddDate(0, 0, -1),
 											Additions:     10,
 											Deletions:     9,
 										},
@@ -143,9 +145,11 @@ func TestScrape(t *testing.T) {
 					responseCode: http.StatusOK,
 				},
 				contribResponse: contribResponse{
-					contribs: []*github.Contributor{
+					contribs: [][]*github.Contributor{
 						{
-							ID: github.Int64(1),
+							{
+								ID: github.Int64(1),
+							},
 						},
 					},
 					responseCode: http.StatusOK,

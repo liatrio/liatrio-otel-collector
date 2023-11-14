@@ -85,7 +85,7 @@ resourceMetrics:
           - description: Time the branch has existed
             gauge:
               dataPoints:
-                - asInt: "7611"
+                - asInt: "24"
                   attributes:
                     - key: branch.name
                       value:
