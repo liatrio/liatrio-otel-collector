@@ -75,23 +75,6 @@ type contribResponse struct {
 
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
 	switch op := req.OpName; op {
-	// case "getPullRequestData":
-	// 	//for forcing arbitrary errors
-	// 	if m.err {
-	// 		return errors.New(m.errString)
-	// 	}
-	// 	r := resp.Data.(*getPullRequestDataResponse)
-	// 	r.Repository.PullRequests = m.prs[m.curPage]
-	// 	m.curPage++
-
-	// case "getBranchData":
-	// 	if m.err {
-	// 		return errors.New(m.errString)
-	// 	}
-	// 	r := resp.Data.(*getBranchDataResponse)
-	// 	r.Repository.Refs = m.branchData[m.curPage]
-	// 	m.curPage++
-
 	case "getCommitData":
 		if m.err {
 			return errors.New(m.errString)
@@ -101,14 +84,6 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 			{Target: &m.commitData},
 		}
 		r.Repository.Refs.Nodes = commitNodes
-
-		// case "getRepoDataBySearch":
-		// 	if m.err {
-		// 		return errors.New(m.errString)
-		// 	}
-		// 	r := resp.Data.(*getRepoDataBySearchResponse)
-		// 	r.Search = m.repoData[m.curPage]
-		// 	m.curPage++
 	}
 	return nil
 }
@@ -223,29 +198,6 @@ func MockServer(responses *responses) *http.ServeMux {
 	})
 	return &mux
 }
-
-// func restMockServer(resp responses) *http.ServeMux {
-// 	var mux http.ServeMux
-// 	mux.HandleFunc("/api-v3/repos/o/r/contributors", func(w http.ResponseWriter, r *http.Request) {
-// 		contribResp := &resp.contribResponse
-// 		if contribResp.responseCode == http.StatusOK {
-// 			contribs, err := json.Marshal(contribResp.contribs[contribResp.page])
-// 			if err != nil {
-// 				fmt.Printf("error marshalling response: %v", err)
-// 			}
-// 			//The link header is used to paginate through the results and the page refers to pages left, so we need to decrement.
-// 			//An example is with 2 expected responses, the first page will have a value of 1 (2-0-1), then on the second it will be 0 (2-1-1)
-// 			link := fmt.Sprintf("<https://api.github.com/repositories/39840932/contributors?per_page=100&page=%d>; rel=\"next\"", len(resp.contribs)-resp.page-1)
-// 			w.Header().Set("Link", link)
-// 			_, err = w.Write(contribs)
-// 			if err != nil {
-// 				fmt.Printf("error writing response: %v", err)
-// 			}
-// 			resp.page++
-// 		}
-// 	})
-// 	return &mux
-// }
 
 func TestGetNumPages100(t *testing.T) {
 	p := float64(100)
