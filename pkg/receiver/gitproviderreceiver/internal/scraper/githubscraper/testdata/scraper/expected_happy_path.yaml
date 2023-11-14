@@ -1,0 +1,74 @@
+resourceMetrics:
+  - resource:
+      attributes:
+        - key: git.vendor.name
+          value:
+            stringValue: github
+        - key: organization.name
+          value:
+            stringValue: liatrio
+    schemaUrl: https://opentelemetry.io/schemas/1.9.0
+    scopeMetrics:
+      - metrics:
+          - description: Number of branches that exist in the repository
+            gauge:
+              dataPoints:
+                - asInt: "1"
+                  attributes:
+                    - key: repository.name
+                      value:
+                        stringValue: repo1
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: git.repository.branch.count
+            unit: "1"
+          - description: Number of repositories that exist in an organization
+            gauge:
+              dataPoints:
+                - asInt: "1"
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: git.repository.count
+            unit: "1"
+          - description: The amount of merged pull requests
+            gauge:
+              dataPoints:
+                - asInt: "0"
+                  attributes:
+                    - key: repository.name
+                      value:
+                        stringValue: repo1
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: git.repository.pull_request.merged.count
+            unit: "1"
+          - description: The amount of open pull requests
+            gauge:
+              dataPoints:
+                - asInt: "1"
+                  attributes:
+                    - key: repository.name
+                      value:
+                        stringValue: repo1
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: git.repository.pull_request.open.count
+            unit: "1"
+          - description: Time the PR has been open
+            gauge:
+              dataPoints:
+                - asInt: "2562047"
+                  attributes:
+                    - key: branch.name
+                      value:
+                        stringValue: ""
+                    - key: repository.name
+                      value:
+                        stringValue: repo1
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: git.repository.pull_request.time
+            unit: "1"
+        scope:
+          name: otelcol/gitproviderreceiver
+          version: latest
