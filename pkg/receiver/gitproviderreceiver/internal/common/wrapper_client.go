@@ -1,13 +1,18 @@
 package common
 
-import "net/http"
+import (
+	"net/http"
+
+	"go.uber.org/zap"
+)
 
 type WrapperClient struct {
 	*http.Client
+	logger *zap.Logger
 }
 
-func NewWrapperClient(client *http.Client) *WrapperClient {
-	return &WrapperClient{client}
+func NewWrapperClient(client *http.Client, logger *zap.Logger) *WrapperClient {
+	return &WrapperClient{client, logger}
 }
 
 func (c *WrapperClient) Do(req *http.Request) (*http.Response, error) {
@@ -17,8 +22,8 @@ func (c *WrapperClient) Do(req *http.Request) (*http.Response, error) {
 	}
 
 	for name, values := range resp.Header {
-		if name == "X-RateLimit-Remaining" {
-			resp.Header.Set(name, values[0])
+		if name == "X-Ratelimit-Remaining" {
+			c.logger.Sugar().Infof("Rate limit remaining: %s", values)
 		}
 	}
 	return resp, nil

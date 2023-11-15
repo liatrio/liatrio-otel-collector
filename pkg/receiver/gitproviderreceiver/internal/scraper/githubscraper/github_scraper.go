@@ -48,7 +48,7 @@ func (ghs *githubScraper) start(_ context.Context, host component.Host) (err err
 	// TODO: Fix the ToClient configuration
 	// ghs.client, err = ghs.cfg.ToClient(host, ghs.settings)
 	client, err := ghs.cfg.ToClient(host, ghs.settings)
-	ghs.client = common.NewWrapperClient(client)
+	ghs.client = common.NewWrapperClient(client, ghs.logger)
 	// ghs.client = &common.CustomClient{UnderlyingClient: internalCLient}
 	return
 }
