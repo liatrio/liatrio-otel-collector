@@ -18,12 +18,6 @@ import (
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
-type mockClient struct {
-	err        bool
-	errString  string
-	commitData CommitNodeTargetCommit
-}
-
 type responses struct {
 	repoResponse       repoResponse
 	prResponse         prResponse
@@ -67,21 +61,6 @@ type contribResponse struct {
 	contribs     [][]*github.Contributor
 	responseCode int
 	page         int
-}
-
-func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
-	switch op := req.OpName; op {
-	case "getCommitData":
-		if m.err {
-			return errors.New(m.errString)
-		}
-		r := resp.Data.(*getCommitDataResponse)
-		commitNodes := []CommitNode{
-			{Target: &m.commitData},
-		}
-		r.Repository.Refs.Nodes = commitNodes
-	}
-	return nil
 }
 
 func MockServer(responses *responses) *http.ServeMux {
@@ -873,31 +852,37 @@ func TestGetPullRequests(t *testing.T) {
 
 func TestGetCommitInfo(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		client      graphql.Client
-		expectedErr error
-		pages       int
-		branch      BranchNode
-		//commits      CommitNodeTargetCommit
+		desc              string
+		server            *http.ServeMux
+		expectedErr       error
+		branch            BranchNode
 		expectedAge       int64
 		expectedAdditions int
 		expectedDeletions int
 	}{
 		{
-			desc: "valid",
-			client: &mockClient{commitData: CommitNodeTargetCommit{
-				History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
-					Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+			desc: "TestSinglePageResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				commitResponse: commitResponse{
+					commits: []CommitNodeTargetCommit{
 						{
-							Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
-								CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
-								Additions:     10,
-								Deletions:     9,
+							History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
+								Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+									{
+										Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
+											CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+											Additions:     10,
+											Deletions:     9,
+										},
+									},
+								},
 							},
 						},
 					},
+					responseCode: http.StatusOK,
 				},
-			}},
+			}),
 			branch: BranchNode{
 				Name: "branch1",
 				Compare: BranchNodeCompareComparison{
@@ -909,23 +894,63 @@ func TestGetCommitInfo(t *testing.T) {
 			expectedAdditions: 10,
 			expectedDeletions: 9,
 			expectedErr:       nil,
-			pages:             1,
 		},
 		{
-			desc: "valid with multiple pages",
-			client: &mockClient{commitData: CommitNodeTargetCommit{
-				History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
-					Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+			desc: "TestMultiplePageResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				commitResponse: commitResponse{
+					commits: []CommitNodeTargetCommit{
 						{
-							Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
-								CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
-								Additions:     10,
-								Deletions:     9,
+							History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
+								Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+									{
+										Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
+											CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+											Additions:     10,
+											Deletions:     9,
+										},
+									},
+								},
+							},
+						},
+						{
+							History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
+								Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+									{
+										Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
+											CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+											Additions:     1,
+											Deletions:     1,
+										},
+									},
+								},
 							},
 						},
 					},
+					responseCode: http.StatusOK,
 				},
-			}},
+			}),
+			branch: BranchNode{
+				Name: "branch1",
+				Compare: BranchNodeCompareComparison{
+					AheadBy:  0,
+					BehindBy: 101, //100 per page, so this is 2 pages
+				},
+			},
+			expectedAge:       int64(time.Since(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)).Hours()),
+			expectedAdditions: 11,
+			expectedDeletions: 10,
+			expectedErr:       nil,
+		},
+		{
+			desc: "Test404ErrorResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				commitResponse: commitResponse{
+					responseCode: http.StatusNotFound,
+				},
+			}),
 			branch: BranchNode{
 				Name: "branch1",
 				Compare: BranchNodeCompareComparison{
@@ -933,47 +958,10 @@ func TestGetCommitInfo(t *testing.T) {
 					BehindBy: 1,
 				},
 			},
-			expectedAge:       int64(time.Since(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)).Hours()),
-			expectedAdditions: 20,
-			expectedDeletions: 18,
-			expectedErr:       nil,
-			pages:             2,
-		},
-		{
-			desc: "no commits",
-			client: &mockClient{commitData: CommitNodeTargetCommit{
-				History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
-					Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{},
-				},
-			}},
-			branch: BranchNode{
-				Name: "branch1",
-				Compare: BranchNodeCompareComparison{
-					AheadBy:  0,
-					BehindBy: 0,
-				},
-			},
 			expectedAge:       0,
 			expectedAdditions: 0,
 			expectedDeletions: 0,
-			expectedErr:       nil,
-			pages:             1,
-		},
-		{
-			desc:              "no pages to iterate over",
-			pages:             0,
-			expectedAge:       0,
-			expectedAdditions: 0,
-			expectedDeletions: 0,
-		},
-		{
-			desc:              "error",
-			client:            &mockClient{err: true, errString: "this is an error"},
-			expectedErr:       errors.New("this is an error"),
-			pages:             1,
-			expectedAge:       0,
-			expectedAdditions: 0,
-			expectedDeletions: 0,
+			expectedErr:       errors.New("returned error 404 Not Found: "),
 		},
 	}
 	for _, tc := range testCases {
@@ -983,7 +971,10 @@ func TestGetCommitInfo(t *testing.T) {
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 			now := pcommon.NewTimestampFromTime(time.Now())
-			adds, dels, age, err := ghs.getCommitInfo(context.Background(), tc.client, "repo1", now, tc.pages, tc.branch)
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
+			client := graphql.NewClient(server.URL, ghs.client)
+			adds, dels, age, err := ghs.getCommitInfo(context.Background(), client, "repo1", now, tc.branch)
 
 			assert.Equal(t, tc.expectedAge, age)
 			assert.Equal(t, tc.expectedDeletions, dels)

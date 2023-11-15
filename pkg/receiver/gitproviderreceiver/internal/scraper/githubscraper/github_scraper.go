@@ -126,7 +126,6 @@ func (ghs *githubScraper) getCommitInfo(
 	client graphql.Client,
 	repoName string,
 	now pcommon.Timestamp,
-	comPages int,
 	branch BranchNode,
 ) (int, int, int64, error) {
 	comCount := 100
@@ -134,6 +133,14 @@ func (ghs *githubScraper) getCommitInfo(
 	var adds int = 0
 	var dels int = 0
 	var age int64 = 0
+
+	// We're using BehindBy here because we're comparing against the target
+	// branch, which is the default branch. In essence the response is saying
+	// the default branch is behind the queried branch by X commits which is
+	// the number of commits made to the queried branch but not merged into
+	// the default branch. Doing it this way involves less queries because
+	// we don't have to know the queried branch name ahead of time.
+	comPages := getNumPages(float64(100), float64(branch.Compare.BehindBy))
 
 	for nPage := 1; nPage <= comPages; nPage++ {
 		if nPage == comPages {
@@ -189,14 +196,7 @@ func (ghs *githubScraper) processBranches(
 		ghs.mb.RecordGitRepositoryBranchCommitAheadbyCountDataPoint(now, int64(branch.Compare.BehindBy), branch.Repository.Name, branch.Name)
 		ghs.mb.RecordGitRepositoryBranchCommitBehindbyCountDataPoint(now, int64(branch.Compare.AheadBy), branch.Repository.Name, branch.Name)
 
-		// We're using BehindBy here because we're comparing against the target
-		// branch, which is the default branch. In essence the response is saying
-		// the default branch is behind the queried branch by X commits which is
-		// the number of commits made to the queried branch but not merged into
-		// the default branch. Doing it this way involves less queries because
-		// we don't have to know the queried branch name ahead of time.
-		cp := getNumPages(float64(100), float64(branch.Compare.BehindBy))
-		adds, dels, age, err := ghs.getCommitInfo(ctx, client, branch.Repository.Name, now, cp, branch)
+		adds, dels, age, err := ghs.getCommitInfo(ctx, client, branch.Repository.Name, now, branch)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting commit info", zap.Error(err))
 			continue
