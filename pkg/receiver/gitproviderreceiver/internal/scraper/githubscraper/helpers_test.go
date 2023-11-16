@@ -21,42 +21,56 @@ import (
 type mockClient struct {
 	err        bool
 	errString  string
-	prs        []getPullRequestDataRepositoryPullRequestsPullRequestConnection
-	branchData []getBranchDataRepositoryRefsRefConnection
-	repoData   []getRepoDataBySearchSearchSearchResultItemConnection
 	commitData CommitNodeTargetCommit
-	curPage    int
 }
 
 type responses struct {
-	responseCode int
-	checkLogin   checkLoginResponse
+	repoResponse       repoResponse
+	prResponse         prResponse
+	branchResponse     branchResponse
+	commitResponse     commitResponse
+	checkLoginResponse loginResponse
+	contribResponse    contribResponse
+	scrape             bool
+}
+
+type repoResponse struct {
 	repos        []getRepoDataBySearchSearchSearchResultItemConnection
-	branches     []getBranchDataRepositoryRefsRefConnection
-	prs          []getPullRequestDataRepositoryPullRequestsPullRequestConnection
+	responseCode int
 	page         int
+}
+
+type prResponse struct {
+	prs          []getPullRequestDataRepositoryPullRequestsPullRequestConnection
+	responseCode int
+	page         int
+}
+
+type branchResponse struct {
+	branches     []getBranchDataRepositoryRefsRefConnection
+	responseCode int
+	page         int
+}
+
+type commitResponse struct {
+	commits      []CommitNodeTargetCommit
+	responseCode int
+	page         int
+}
+
+type loginResponse struct {
+	checkLogin   checkLoginResponse
+	responseCode int
+}
+
+type contribResponse struct {
 	contribs     [][]*github.Contributor
+	responseCode int
+	page         int
 }
 
 func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
 	switch op := req.OpName; op {
-	case "getPullRequestData":
-		//for forcing arbitrary errors
-		if m.err {
-			return errors.New(m.errString)
-		}
-		r := resp.Data.(*getPullRequestDataResponse)
-		r.Repository.PullRequests = m.prs[m.curPage]
-		m.curPage++
-
-	case "getBranchData":
-		if m.err {
-			return errors.New(m.errString)
-		}
-		r := resp.Data.(*getBranchDataResponse)
-		r.Repository.Refs = m.branchData[m.curPage]
-		m.curPage++
-
 	case "getCommitData":
 		if m.err {
 			return errors.New(m.errString)
@@ -66,21 +80,19 @@ func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp
 			{Target: &m.commitData},
 		}
 		r.Repository.Refs.Nodes = commitNodes
-
-	case "getRepoDataBySearch":
-		if m.err {
-			return errors.New(m.errString)
-		}
-		r := resp.Data.(*getRepoDataBySearchResponse)
-		r.Search = m.repoData[m.curPage]
-		m.curPage++
 	}
 	return nil
 }
 
-func graphqlMockServer(responses *responses) *http.ServeMux {
+func MockServer(responses *responses) *http.ServeMux {
 	var mux http.ServeMux
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	restEndpoint := "/api-v3/repos/o/r/contributors"
+	graphEndpoint := "/"
+	if responses.scrape {
+		graphEndpoint = "/api/graphql"
+		restEndpoint = "/api/v3/repos/liatrio/repo1/contributors"
+	}
+	mux.HandleFunc(graphEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		var reqBody graphql.Request
 		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 			return
@@ -88,76 +100,99 @@ func graphqlMockServer(responses *responses) *http.ServeMux {
 		switch {
 		// These OpNames need to be name of the GraphQL query as defined in genqlient.graphql
 		case reqBody.OpName == "checkLogin":
-			w.WriteHeader(responses.responseCode)
-			if responses.responseCode == http.StatusOK {
-				login := responses.checkLogin
+			loginResp := &responses.checkLoginResponse
+			w.WriteHeader(loginResp.responseCode)
+			if loginResp.responseCode == http.StatusOK {
+				login := loginResp.checkLogin
 				graphqlResponse := graphql.Response{Data: &login}
 				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
 					return
 				}
 			}
 		case reqBody.OpName == "getRepoDataBySearch":
-			w.WriteHeader(responses.responseCode)
-			if responses.responseCode == http.StatusOK {
+			repoResp := &responses.repoResponse
+			w.WriteHeader(repoResp.responseCode)
+			if repoResp.responseCode == http.StatusOK {
 				repos := getRepoDataBySearchResponse{
-					Search: responses.repos[responses.page],
+					Search: repoResp.repos[repoResp.page],
 				}
 				graphqlResponse := graphql.Response{Data: &repos}
 				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
 					return
 				}
-				responses.page++
+				repoResp.page++
 			}
 		case reqBody.OpName == "getBranchData":
-			w.WriteHeader(responses.responseCode)
-			if responses.responseCode == http.StatusOK {
-				repos := getBranchDataResponse{
+			branchResp := &responses.branchResponse
+			w.WriteHeader(branchResp.responseCode)
+			if branchResp.responseCode == http.StatusOK {
+				branches := getBranchDataResponse{
 					Repository: getBranchDataRepository{
-						Refs: responses.branches[responses.page],
+						Refs: branchResp.branches[branchResp.page],
 					},
 				}
-				graphqlResponse := graphql.Response{Data: &repos}
+				graphqlResponse := graphql.Response{Data: &branches}
 				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
 					return
 				}
-				responses.page++
+				branchResp.page++
 			}
 		case reqBody.OpName == "getPullRequestData":
-			w.WriteHeader(responses.responseCode)
-			if responses.responseCode == http.StatusOK {
+			prResp := &responses.prResponse
+			w.WriteHeader(prResp.responseCode)
+			if prResp.responseCode == http.StatusOK {
 				repos := getPullRequestDataResponse{
 					Repository: getPullRequestDataRepository{
-						PullRequests: responses.prs[responses.page],
+						PullRequests: prResp.prs[prResp.page],
 					},
 				}
 				graphqlResponse := graphql.Response{Data: &repos}
 				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
 					return
 				}
-				responses.page++
+				prResp.page++
+			}
+
+		case reqBody.OpName == "getCommitData":
+			commitResp := &responses.commitResponse
+			w.WriteHeader(commitResp.responseCode)
+			if commitResp.responseCode == http.StatusOK {
+				commitNodes := []CommitNode{
+					{Target: &commitResp.commits[commitResp.page]},
+				}
+				commits := getCommitDataResponse{
+					Repository: getCommitDataRepository{
+						Refs: getCommitDataRepositoryRefsRefConnection{
+							Nodes: commitNodes,
+						},
+					},
+				}
+				graphqlResponse := graphql.Response{Data: &commits}
+				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
+					return
+				}
+				commitResp.page++
 			}
 		}
 	})
-	return &mux
-}
-
-func restMockServer(resp responses) *http.ServeMux {
-	var mux http.ServeMux
-	mux.HandleFunc("/api-v3/repos/o/r/contributors", func(w http.ResponseWriter, r *http.Request) {
-		if resp.responseCode == http.StatusOK {
-			contribs, err := json.Marshal(resp.contribs[resp.page])
+	mux.HandleFunc(restEndpoint, func(w http.ResponseWriter, r *http.Request) {
+		contribResp := &responses.contribResponse
+		if contribResp.responseCode == http.StatusOK {
+			contribs, err := json.Marshal(contribResp.contribs[contribResp.page])
 			if err != nil {
 				fmt.Printf("error marshalling response: %v", err)
 			}
-			//The link header is used to paginate through the results and the page refers to pages left, so we need to decrement.
-			//An example is with 2 expected responses, the first page will have a value of 1 (2-0-1), then on the second it will be 0 (2-1-1)
-			link := fmt.Sprintf("<https://api.github.com/repositories/39840932/contributors?per_page=100&page=%d>; rel=\"next\"", len(resp.contribs)-resp.page-1)
+			link := fmt.Sprintf(
+				"<https://api.github.com/repositories/placeholder/contributors?per_page=100&page=%d>; rel=\"next\"",
+				len(contribResp.contribs)-contribResp.page-1,
+			)
 			w.Header().Set("Link", link)
+			// Attempt to write data to the response writer.
 			_, err = w.Write(contribs)
 			if err != nil {
 				fmt.Printf("error writing response: %v", err)
 			}
-			resp.page++
+			contribResp.page++
 		}
 	})
 	return &mux
@@ -351,13 +386,16 @@ func TestCheckOwnerExists(t *testing.T) {
 		{
 			desc:  "TestOrgOwnerExists",
 			login: "liatrio",
-			server: graphqlMockServer(&responses{
-				checkLogin: checkLoginResponse{
-					Organization: checkLoginOrganization{
-						Login: "liatrio",
+			server: MockServer(&responses{
+				scrape: false,
+				checkLoginResponse: loginResponse{
+					checkLogin: checkLoginResponse{
+						Organization: checkLoginOrganization{
+							Login: "liatrio",
+						},
 					},
+					responseCode: http.StatusOK,
 				},
-				responseCode: http.StatusOK,
 			}),
 			expectedOwnerType:   "org",
 			expectedOwnerExists: true,
@@ -365,13 +403,16 @@ func TestCheckOwnerExists(t *testing.T) {
 		{
 			desc:  "TestUserOwnerExists",
 			login: "liatrio",
-			server: graphqlMockServer(&responses{
-				checkLogin: checkLoginResponse{
-					User: checkLoginUser{
-						Login: "liatrio",
+			server: MockServer(&responses{
+				scrape: false,
+				checkLoginResponse: loginResponse{
+					checkLogin: checkLoginResponse{
+						User: checkLoginUser{
+							Login: "liatrio",
+						},
 					},
+					responseCode: http.StatusOK,
 				},
-				responseCode: http.StatusOK,
 			}),
 			expectedOwnerType:   "user",
 			expectedOwnerExists: true,
@@ -379,13 +420,16 @@ func TestCheckOwnerExists(t *testing.T) {
 		{
 			desc:  "TestLoginError",
 			login: "liatrio",
-			server: graphqlMockServer(&responses{
-				checkLogin: checkLoginResponse{
-					User: checkLoginUser{
-						Login: "liatrio",
+			server: MockServer(&responses{
+				scrape: false,
+				checkLoginResponse: loginResponse{
+					checkLogin: checkLoginResponse{
+						User: checkLoginUser{
+							Login: "liatrio",
+						},
 					},
+					responseCode: http.StatusNotFound,
 				},
-				responseCode: http.StatusNotFound,
 			}),
 			expectedOwnerExists: false,
 			expectedOwnerType:   "",
@@ -423,67 +467,76 @@ func TestGetRepos(t *testing.T) {
 	}{
 		{
 			desc: "TestSinglePageResponse",
-			server: graphqlMockServer(&responses{
-				repos: []getRepoDataBySearchSearchSearchResultItemConnection{
-					{
-						RepositoryCount: 1,
-						Nodes: []SearchNode{
-							&SearchNodeRepository{
-								Name: "repo1",
+			server: MockServer(&responses{
+				scrape: false,
+				repoResponse: repoResponse{
+					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
+						{
+							RepositoryCount: 1,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Name: "repo1",
+								},
+							},
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: false,
 							},
 						},
-						PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
-							HasNextPage: false,
-						},
 					},
+					responseCode: http.StatusOK,
 				},
-				responseCode: http.StatusOK,
 			}),
 			expectedErr: nil,
 			expected:    1,
 		},
 		{
 			desc: "TestMultiPageResponse",
-			server: graphqlMockServer(&responses{
-				repos: []getRepoDataBySearchSearchSearchResultItemConnection{
-					{
-						RepositoryCount: 4,
-						Nodes: []SearchNode{
-							&SearchNodeRepository{
-								Name: "repo1",
+			server: MockServer(&responses{
+				scrape: false,
+				repoResponse: repoResponse{
+					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
+						{
+							RepositoryCount: 4,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Name: "repo1",
+								},
+								&SearchNodeRepository{
+									Name: "repo2",
+								},
 							},
-							&SearchNodeRepository{
-								Name: "repo2",
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: true,
 							},
 						},
-						PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
-							HasNextPage: true,
+						{
+							RepositoryCount: 4,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Name: "repo3",
+								},
+								&SearchNodeRepository{
+									Name: "repo4",
+								},
+							},
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: false,
+							},
 						},
 					},
-					{
-						RepositoryCount: 4,
-						Nodes: []SearchNode{
-							&SearchNodeRepository{
-								Name: "repo3",
-							},
-							&SearchNodeRepository{
-								Name: "repo4",
-							},
-						},
-						PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
-							HasNextPage: false,
-						},
-					},
+					responseCode: http.StatusOK,
 				},
-				responseCode: http.StatusOK,
 			}),
 			expectedErr: nil,
 			expected:    4,
 		},
 		{
 			desc: "Test404Response",
-			server: graphqlMockServer(&responses{
-				responseCode: http.StatusNotFound,
+			server: MockServer(&responses{
+				scrape: false,
+				repoResponse: repoResponse{
+					responseCode: http.StatusNotFound,
+				},
 			}),
 			expectedErr: errors.New("returned error 404 Not Found: "),
 			expected:    0,
@@ -520,67 +573,76 @@ func TestGetBranches(t *testing.T) {
 	}{
 		{
 			desc: "TestSinglePageResponse",
-			server: graphqlMockServer(&responses{
-				branches: []getBranchDataRepositoryRefsRefConnection{
-					{
-						TotalCount: 1,
-						Nodes: []BranchNode{
-							{
-								Name: "main",
+			server: MockServer(&responses{
+				scrape: false,
+				branchResponse: branchResponse{
+					branches: []getBranchDataRepositoryRefsRefConnection{
+						{
+							TotalCount: 1,
+							Nodes: []BranchNode{
+								{
+									Name: "main",
+								},
+							},
+							PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+								HasNextPage: false,
 							},
 						},
-						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-							HasNextPage: false,
-						},
 					},
+					responseCode: http.StatusOK,
 				},
-				responseCode: http.StatusOK,
 			}),
 			expectedErr: nil,
 			expected:    1,
 		},
 		{
 			desc: "TestMultiPageResponse",
-			server: graphqlMockServer(&responses{
-				branches: []getBranchDataRepositoryRefsRefConnection{
-					{
-						TotalCount: 4,
-						Nodes: []BranchNode{
-							{
-								Name: "main",
+			server: MockServer(&responses{
+				scrape: false,
+				branchResponse: branchResponse{
+					branches: []getBranchDataRepositoryRefsRefConnection{
+						{
+							TotalCount: 4,
+							Nodes: []BranchNode{
+								{
+									Name: "main",
+								},
+								{
+									Name: "vader",
+								},
 							},
-							{
-								Name: "vader",
+							PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+								HasNextPage: true,
 							},
 						},
-						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-							HasNextPage: true,
+						{
+							TotalCount: 4,
+							Nodes: []BranchNode{
+								{
+									Name: "skywalker",
+								},
+								{
+									Name: "rebelalliance",
+								},
+							},
+							PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+								HasNextPage: false,
+							},
 						},
 					},
-					{
-						TotalCount: 4,
-						Nodes: []BranchNode{
-							{
-								Name: "skywalker",
-							},
-							{
-								Name: "rebelalliance",
-							},
-						},
-						PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-							HasNextPage: false,
-						},
-					},
+					responseCode: http.StatusOK,
 				},
-				responseCode: http.StatusOK,
 			}),
 			expectedErr: nil,
 			expected:    4,
 		},
 		{
 			desc: "Test404Response",
-			server: graphqlMockServer(&responses{
-				responseCode: http.StatusNotFound,
+			server: MockServer(&responses{
+				scrape: false,
+				branchResponse: branchResponse{
+					responseCode: http.StatusNotFound,
+				},
 			}),
 			expectedErr: errors.New("returned error 404 Not Found: "),
 			expected:    0,
@@ -619,18 +681,21 @@ func TestGetContributors(t *testing.T) {
 	}{
 		{
 			desc: "TestSingleListContributorsResponse",
-			server: restMockServer(responses{
-				contribs: [][]*github.Contributor{
-					{
+			server: MockServer(&responses{
+				scrape: false,
+				contribResponse: contribResponse{
+					contribs: [][]*github.Contributor{
 						{
-							ID: github.Int64(1),
-						},
-						{
-							ID: github.Int64(2),
+							{
+								ID: github.Int64(1),
+							},
+							{
+								ID: github.Int64(2),
+							},
 						},
 					},
+					responseCode: http.StatusOK,
 				},
-				responseCode: http.StatusOK,
 			}),
 			repo:          "r",
 			org:           "o",
@@ -639,26 +704,28 @@ func TestGetContributors(t *testing.T) {
 		},
 		{
 			desc: "TestMultipleListContributorsResponse",
-			server: restMockServer(responses{
-				contribs: [][]*github.Contributor{
-					{
+			server: MockServer(&responses{
+				contribResponse: contribResponse{
+					contribs: [][]*github.Contributor{
 						{
-							ID: github.Int64(1),
+							{
+								ID: github.Int64(1),
+							},
+							{
+								ID: github.Int64(2),
+							},
 						},
 						{
-							ID: github.Int64(2),
+							{
+								ID: github.Int64(3),
+							},
+							{
+								ID: github.Int64(4),
+							},
 						},
 					},
-					{
-						{
-							ID: github.Int64(3),
-						},
-						{
-							ID: github.Int64(4),
-						},
-					},
+					responseCode: http.StatusOK,
 				},
-				responseCode: http.StatusOK,
 			}),
 			repo:          "r",
 			org:           "o",
@@ -698,76 +765,85 @@ func TestGetPullRequests(t *testing.T) {
 	}{
 		{
 			desc: "TestSinglePageResponse",
-			server: graphqlMockServer(&responses{
-				prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
-					{
-						PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
-							HasNextPage: false,
-						},
-						Nodes: []PullRequestNode{
-							{
-								Merged: false,
+			server: MockServer(&responses{
+				scrape: false,
+				prResponse: prResponse{
+					prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
+						{
+							PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
+								HasNextPage: false,
 							},
-							{
-								Merged: false,
-							},
-							{
-								Merged: false,
+							Nodes: []PullRequestNode{
+								{
+									Merged: false,
+								},
+								{
+									Merged: false,
+								},
+								{
+									Merged: false,
+								},
 							},
 						},
 					},
+					responseCode: http.StatusOK,
 				},
-				responseCode: http.StatusOK,
 			}),
 			expectedErr:     nil,
 			expectedPrCount: 3, // 3 PRs per page, 1 pages
 		},
 		{
 			desc: "TestMultiPageResponse",
-			server: graphqlMockServer(&responses{
-				prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
-					{
-						PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
-							HasNextPage: true,
+			server: MockServer(&responses{
+				scrape: false,
+				prResponse: prResponse{
+					prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
+						{
+							PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
+								HasNextPage: true,
+							},
+							Nodes: []PullRequestNode{
+								{
+									Merged: false,
+								},
+								{
+									Merged: false,
+								},
+								{
+									Merged: false,
+								},
+							},
 						},
-						Nodes: []PullRequestNode{
-							{
-								Merged: false,
+						{
+							PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
+								HasNextPage: false,
 							},
-							{
-								Merged: false,
-							},
-							{
-								Merged: false,
+							Nodes: []PullRequestNode{
+								{
+									Merged: false,
+								},
+								{
+									Merged: false,
+								},
+								{
+									Merged: false,
+								},
 							},
 						},
 					},
-					{
-						PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
-							HasNextPage: false,
-						},
-						Nodes: []PullRequestNode{
-							{
-								Merged: false,
-							},
-							{
-								Merged: false,
-							},
-							{
-								Merged: false,
-							},
-						},
-					},
+					responseCode: http.StatusOK,
 				},
-				responseCode: http.StatusOK,
 			}),
 			expectedErr:     nil,
 			expectedPrCount: 6, // 3 PRs per page, 2 pages
 		},
 		{
 			desc: "Test404Response",
-			server: graphqlMockServer(&responses{
-				responseCode: http.StatusNotFound,
+			server: MockServer(&responses{
+				scrape: false,
+				prResponse: prResponse{
+					responseCode: http.StatusNotFound,
+				},
 			}),
 			expectedErr:     errors.New("returned error 404 Not Found: "),
 			expectedPrCount: 0,
