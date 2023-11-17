@@ -225,7 +225,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	sem := make(chan int, maxProcesses)
 	wg := &sync.WaitGroup{}
 
-	// pullrequest information
 	for i := 0; i < 200; i++ {
 		sem <- 1
 		wg.Add(1)
