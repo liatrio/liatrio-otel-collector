@@ -220,50 +220,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	}
 
 	now := pcommon.NewTimestampFromTime(time.Now())
-	// ghs.logger.Sugar().Debugf("current time: %v", now)
-
-	// currentDate := time.Now().Day()
-	// ghs.logger.Sugar().Debugf("current date: %v", currentDate)
-
-	// ghs.logger.Sugar().Debug("creating a new github client")
-
-	// genClient, _, err := ghs.createClients()
-	// if err != nil {
-	// 	ghs.logger.Sugar().Errorf("unable to create clients", zap.Error(err))
-	// }
-
-	// exists, ownertype, err := ghs.checkOwnerExists(ctx, genClient, ghs.cfg.GitHubOrg)
-	// if err != nil {
-	// 	ghs.logger.Sugar().Errorf("Error checking if owner exists", zap.Error(err))
-	// }
-
-	// typeValid, err := checkOwnerTypeValid(ownertype)
-	// if err != nil {
-	// 	ghs.logger.Sugar().Errorf("Error checking if owner type is valid", zap.Error(err))
-	// }
-
-	// if !exists || !typeValid {
-	// 	ghs.logger.Sugar().Error("error logging in and getting data from github")
-	// 	return ghs.mb.Emit(), err
-	// }
-
-	// sq := genDefaultSearchQuery(ownertype, ghs.cfg.GitHubOrg)
-
-	// if ghs.cfg.SearchQuery != "" {
-	// 	sq = ghs.cfg.SearchQuery
-	// 	ghs.logger.Sugar().Debugf("using search query where query is: %v", ghs.cfg.SearchQuery)
-	// }
-
-	// repos, count, err := ghs.getRepos(ctx, genClient, sq)
-	// if err != nil {
-	// 	ghs.logger.Sugar().Errorf("error getting repo data", zap.Error(err))
-	// 	return ghs.mb.Emit(), err
-	// }
-
-	// ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(count))
-
-	// if repos != nil {
-	// 	ghs.logger.Sugar().Debugf("There are %v repos", len(repos))
 
 	var maxProcesses int = 10
 	sem := make(chan int, maxProcesses)
