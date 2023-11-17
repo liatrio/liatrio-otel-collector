@@ -49,8 +49,8 @@ func (ghs *githubScraper) getBranches(
 	defaultBranch string,
 ) ([]BranchNode, int, error) {
 	var cursor *string
-	var branches []BranchNode
 	var count int
+	var branches []BranchNode
 
 	for next := true; next; {
 		r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, 50, defaultBranch, cursor)
@@ -58,10 +58,10 @@ func (ghs *githubScraper) getBranches(
 			ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
 			return nil, 0, err
 		}
-		branches = append(branches, r.Repository.Refs.Nodes...)
 		count = r.Repository.Refs.TotalCount
 		cursor = &r.Repository.Refs.PageInfo.EndCursor
 		next = r.Repository.Refs.PageInfo.HasNextPage
+		branches = append(branches, r.Repository.Refs.Nodes...)
 	}
 	return branches, count, nil
 }
