@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
@@ -219,109 +220,73 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	}
 
 	now := pcommon.NewTimestampFromTime(time.Now())
-	ghs.logger.Sugar().Debugf("current time: %v", now)
+	// ghs.logger.Sugar().Debugf("current time: %v", now)
 
-	currentDate := time.Now().Day()
-	ghs.logger.Sugar().Debugf("current date: %v", currentDate)
+	// currentDate := time.Now().Day()
+	// ghs.logger.Sugar().Debugf("current date: %v", currentDate)
 
-	ghs.logger.Sugar().Debug("creating a new github client")
+	// ghs.logger.Sugar().Debug("creating a new github client")
 
-	genClient, restClient, err := ghs.createClients()
-	if err != nil {
-		ghs.logger.Sugar().Errorf("unable to create clients", zap.Error(err))
+	// genClient, _, err := ghs.createClients()
+	// if err != nil {
+	// 	ghs.logger.Sugar().Errorf("unable to create clients", zap.Error(err))
+	// }
+
+	// exists, ownertype, err := ghs.checkOwnerExists(ctx, genClient, ghs.cfg.GitHubOrg)
+	// if err != nil {
+	// 	ghs.logger.Sugar().Errorf("Error checking if owner exists", zap.Error(err))
+	// }
+
+	// typeValid, err := checkOwnerTypeValid(ownertype)
+	// if err != nil {
+	// 	ghs.logger.Sugar().Errorf("Error checking if owner type is valid", zap.Error(err))
+	// }
+
+	// if !exists || !typeValid {
+	// 	ghs.logger.Sugar().Error("error logging in and getting data from github")
+	// 	return ghs.mb.Emit(), err
+	// }
+
+	// sq := genDefaultSearchQuery(ownertype, ghs.cfg.GitHubOrg)
+
+	// if ghs.cfg.SearchQuery != "" {
+	// 	sq = ghs.cfg.SearchQuery
+	// 	ghs.logger.Sugar().Debugf("using search query where query is: %v", ghs.cfg.SearchQuery)
+	// }
+
+	// repos, count, err := ghs.getRepos(ctx, genClient, sq)
+	// if err != nil {
+	// 	ghs.logger.Sugar().Errorf("error getting repo data", zap.Error(err))
+	// 	return ghs.mb.Emit(), err
+	// }
+
+	// ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(count))
+
+	// if repos != nil {
+	// 	ghs.logger.Sugar().Debugf("There are %v repos", len(repos))
+
+	var maxProcesses int = 10
+	sem := make(chan int, maxProcesses)
+	wg := &sync.WaitGroup{}
+
+	// pullrequest information
+	for i := 0; i < 200; i++ {
+		sem <- 1
+		wg.Add(1)
+		go func(wg *sync.WaitGroup) {
+			defer wg.Done()
+			ghs.mb.RecordGitRepositoryPullRequestOpenCountDataPoint(now, int64(0), "open")
+			ghs.mb.RecordGitRepositoryPullRequestMergedCountDataPoint(now, int64(0), "merged")
+			ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(0), "repo")
+			ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(0))
+			ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, int64(0), "repo", "branch")
+			<-sem
+		}(wg)
 	}
 
-	exists, ownertype, err := ghs.checkOwnerExists(ctx, genClient, ghs.cfg.GitHubOrg)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("Error checking if owner exists", zap.Error(err))
-	}
-
-	typeValid, err := checkOwnerTypeValid(ownertype)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("Error checking if owner type is valid", zap.Error(err))
-	}
-
-	if !exists || !typeValid {
-		ghs.logger.Sugar().Error("error logging in and getting data from github")
-		return ghs.mb.Emit(), err
-	}
-
-	sq := genDefaultSearchQuery(ownertype, ghs.cfg.GitHubOrg)
-
-	if ghs.cfg.SearchQuery != "" {
-		sq = ghs.cfg.SearchQuery
-		ghs.logger.Sugar().Debugf("using search query where query is: %v", ghs.cfg.SearchQuery)
-	}
-
-	repos, count, err := ghs.getRepos(ctx, genClient, sq)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("error getting repo data", zap.Error(err))
-		return ghs.mb.Emit(), err
-	}
-
-	ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(count))
-
-	if repos != nil {
-		ghs.logger.Sugar().Debugf("There are %v repos", len(repos))
-
-		var maxProcesses int = 3
-		sem := make(chan int, maxProcesses)
-
-		// pullrequest information
-		for i := 0; i < len(repos); i++ {
-			i := i
-			sem <- 1
-			go func() {
-				prs, err := ghs.getPullRequests(ctx, genClient, repos[i].Name)
-				if err != nil {
-					ghs.logger.Sugar().Errorf("error getting pull requests", zap.Error(err))
-					<-sem
-					return
-				}
-				processPullRequests(ghs, ctx, genClient, now, prs, repos[i].Name)
-				<-sem
-			}()
-		}
-
-		// branch information
-		for i := 0; i < len(repos); i++ {
-			i := i
-			sem <- 1
-			go func() {
-				branches, count, err := ghs.getBranches(ctx, genClient, repos[i].Name, repos[i].DefaultBranchRef.Name)
-				if err != nil {
-					ghs.logger.Sugar().Errorf("error getting branches", zap.Error(err))
-					<-sem
-					return
-				}
-				ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(count), repos[0].Name)
-				ghs.processBranches(ctx, genClient, now, branches, repos[i].Name)
-				<-sem
-			}()
-		}
-
-		// contributor count
-		for i := 0; i < len(repos); i++ {
-			i := i
-			sem <- 1
-			go func() {
-				contribCount, err := ghs.getContributorCount(ctx, restClient, repos[i].Name)
-				if err != nil {
-					ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
-					<-sem
-					return
-				}
-				ghs.logger.Sugar().Debugf("contributor count: %v for repo %v", contribCount, repos[i].Name)
-				ghs.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contribCount), repos[i].Name)
-				<-sem
-			}()
-		}
-
-		// wait until all goroutines are finished
-		for i := 0; i < maxProcesses; i++ {
-			sem <- 1
-		}
-	}
+	// wait until all goroutines are finished
+	wg.Wait()
+	//}
 
 	return ghs.mb.Emit(metadata.WithResource(res)), nil
 }
