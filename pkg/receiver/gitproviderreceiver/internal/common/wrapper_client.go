@@ -2,29 +2,28 @@ package common
 
 import (
 	"net/http"
-
-	"go.uber.org/zap"
 )
 
 type WrapperClient struct {
 	*http.Client
-	logger *zap.Logger
+	RateLimiter RateLimiter
 }
 
-func NewWrapperClient(client *http.Client, logger *zap.Logger) *WrapperClient {
-	return &WrapperClient{client, logger}
+func NewWrapperClient(client *http.Client, rl RateLimiter) *WrapperClient {
+	return &WrapperClient{client, rl}
 }
 
 func (c *WrapperClient) Do(req *http.Request) (*http.Response, error) {
+	// Wait for rate limit
+	c.RateLimiter.WaitForAvailable()
+
 	resp, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	for name, values := range resp.Header {
-		if name == "X-Ratelimit-Remaining" {
-			c.logger.Sugar().Infof("Rate limit remaining: %s", values)
-		}
-	}
+	// Update rate limit
+	c.RateLimiter.UpdateFromHeaders(resp.Header)
+
 	return resp, nil
 }

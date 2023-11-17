@@ -48,7 +48,8 @@ func (ghs *githubScraper) start(_ context.Context, host component.Host) (err err
 	// TODO: Fix the ToClient configuration
 	// ghs.client, err = ghs.cfg.ToClient(host, ghs.settings)
 	client, err := ghs.cfg.ToClient(host, ghs.settings)
-	ghs.client = common.NewWrapperClient(client, ghs.logger)
+	ghrl := NewGitHubRateLimiter(5000, ghs.logger)
+	ghs.client = common.NewWrapperClient(client, ghrl)
 	// ghs.client = &common.CustomClient{UnderlyingClient: internalCLient}
 	return
 }
@@ -235,6 +236,11 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	}
 
 	exists, ownertype, err := ghs.checkOwnerExists(ctx, genClient, ghs.cfg.GitHubOrg)
+	// This is a hack to get around the fact that if the scraper is started
+	// when we are already rate limited the rate limiter will never realize that
+	// until after the first request is made.
+	// Duplicating this will ensure that the rate limit is detected and handled
+	exists, ownertype, err = ghs.checkOwnerExists(ctx, genClient, ghs.cfg.GitHubOrg)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("Error checking if owner exists", zap.Error(err))
 	}
