@@ -154,21 +154,16 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		ghs.logger.Sugar().Errorf("unable to create clients", zap.Error(err))
 	}
 
-	exists, ownertype, err := ghs.checkOwnerExists(ctx, genClient, ghs.cfg.GitHubOrg)
+	// Do some basic validation to ensure the values provided actually exist in github
+	// prior to making queries against that org or user value
+	loginType, err := ghs.login(ctx, genClient, ghs.cfg.GitHubOrg)
 	if err != nil {
-		ghs.logger.Sugar().Errorf("Error checking if owner exists", zap.Error(err))
-	}
-
-	typeValid, err := checkOwnerTypeValid(ownertype)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("Error checking if owner type is valid", zap.Error(err))
-	}
-
-	if !exists || !typeValid {
-		ghs.logger.Sugar().Error("error logging in and getting data from github")
+		ghs.logger.Sugar().Errorf("error logging into GitHub via GraphQL", zap.Error(err))
 		return ghs.mb.Emit(), err
 	}
 
+	// Generate the search query based on the type, org/user name, and the search_query
+	// value if provided
 	sq := genDefaultSearchQuery(ownertype, ghs.cfg.GitHubOrg)
 
 	if ghs.cfg.SearchQuery != "" {
