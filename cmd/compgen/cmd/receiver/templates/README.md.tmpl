@@ -1,0 +1,30 @@
+# {{ .PackageName }}
+
+What does your receiver do?
+
+## Features
+
+- [x] Write a feature description here
+
+## Getting Started
+
+```yaml
+{{ .Name }}]:
+    sample:
+        config: data
+```
+
+Here is a more complete example:
+
+```yaml
+receivers:
+    {{ .Name }}:
+        sample:
+            config: data
+service:
+    pipelines:
+        metrics:
+            receivers: [..., {{ .Name }}]
+            processors: []
+            exporters: [...]
+```

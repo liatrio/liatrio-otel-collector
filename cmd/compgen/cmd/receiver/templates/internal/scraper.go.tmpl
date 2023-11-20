@@ -1,0 +1,62 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+package internal // import "{{ .PackageName }}/internal"
+
+import (
+	"context"
+
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/receiver"
+	"go.opentelemetry.io/collector/receiver/scraperhelper"
+	"go.uber.org/zap"
+)
+
+type ScraperFactory interface {
+	// Create the default configuration for the sub sccraper.
+	CreateDefaultConfig() Config
+	// Create a scraper based on the configuration passed or return an error if not valid.
+	CreateMetricsScraper(ctx context.Context, params receiver.CreateSettings, cfg Config) (scraperhelper.Scraper, error)
+}
+
+type Config interface {
+}
+
+type ScraperConfig struct {
+}
+
+type scraper struct {
+	cfg      *Config
+	logger   *zap.Logger
+	settings component.TelemetrySettings
+}
+
+func (s *scraper) start(_ context.Context, host component.Host) error {
+	s.logger.Sugar().Info("starting the MyAwesomeReceiver scraper")
+	return nil
+}
+
+func (s *scraper) scrape(_ context.Context) (pmetric.Metrics, error) {
+	s.logger.Sugar().Info("running the MyAwesomeReceiver scrape function")
+	return pmetric.NewMetrics(), nil
+}
+
+func CreateMetricsScraper(
+	ctx context.Context,
+	params receiver.CreateSettings,
+	cfg Config,
+) (scraperhelper.Scraper, error) {
+	// s := newScraper(ctx, params, conf)
+	s := &scraper{
+		cfg:      cfg.(*Config),
+		logger:   params.Logger,
+		settings: params.TelemetrySettings,
+	}
+
+	return scraperhelper.NewScraper(
+		"MyAwesomeReceiverScraper",
+		s.scrape,
+		scraperhelper.WithStart(s.start),
+	)
+}

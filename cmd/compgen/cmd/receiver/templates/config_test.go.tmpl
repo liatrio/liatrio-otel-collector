@@ -1,0 +1,34 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+package {{ .Name }}
+
+import (
+	"path/filepath"
+	"testing"
+
+	"{{ .PackageName }}/internal/metadata"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/otelcol/otelcoltest"
+)
+
+func TestLoadConfig(t *testing.T) {
+	factories, err := otelcoltest.NopFactories()
+	require.NoError(t, err)
+
+	factory := NewFactory()
+	factories.Receivers[metadata.Type] = factory
+	cfg, err := otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config.yaml"), factories)
+
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	assert.Equal(t, len(cfg.Receivers), 1)
+
+	r0 := cfg.Receivers[component.NewID(metadata.Type)]
+	defaultConfig := factory.CreateDefaultConfig()
+
+	assert.Equal(t, defaultConfig, r0)
+}
