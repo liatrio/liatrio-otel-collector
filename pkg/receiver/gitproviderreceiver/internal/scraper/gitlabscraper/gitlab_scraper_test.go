@@ -70,12 +70,12 @@ func MockServer(responses *responses) *http.ServeMux {
 		switch {
 		// These OpNames need to be name of the GraphQL query as defined in genqlient.graphql
 		case reqBody.OpName == "getBranchNames":
-			responses := &responses.branchResponse
-			w.WriteHeader(responses.responseCode)
-			if responses.responseCode == http.StatusOK {
+			branchResp := &responses.branchResponse
+			w.WriteHeader(branchResp.responseCode)
+			if branchResp.responseCode == http.StatusOK {
 				branches := getBranchNamesResponse{
 					Project: getBranchNamesProject{
-						Repository: responses.branches,
+						Repository: branchResp.branches,
 					},
 				}
 				graphqlResponse := graphql.Response{Data: &branches}
@@ -84,32 +84,32 @@ func MockServer(responses *responses) *http.ServeMux {
 				}
 			}
 		case reqBody.OpName == "getMergeRequests":
-			responses := &responses.mrResponse
-			w.WriteHeader(responses.responseCode)
-			if responses.responseCode == http.StatusOK {
+			mrResp := &responses.mrResponse
+			w.WriteHeader(mrResp.responseCode)
+			if mrResp.responseCode == http.StatusOK {
 				mrs := getMergeRequestsResponse{
 					Project: getMergeRequestsProject{
-						MergeRequests: responses.mrs[responses.page],
+						MergeRequests: mrResp.mrs[mrResp.page],
 					},
 				}
 				graphqlResponse := graphql.Response{Data: &mrs}
 				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
 					return
 				}
-				responses.page++
+				mrResp.page++
 
 				//For getCombinedMergeRequests when the first call to getMergeRequests is finished
 				//and the page count needs to be reset for the second or else you get index out of range
-				if len(responses.mrs) == responses.page {
-					responses.page = 0
+				if len(mrResp.mrs) == mrResp.page {
+					mrResp.page = 0
 				}
 			}
 		}
 	})
 	mux.HandleFunc("/api/v4/projects/project/repository/contributors", func(w http.ResponseWriter, r *http.Request) {
-		responses := &responses.contribResponse
-		if responses.responseCode == http.StatusOK {
-			contribs, err := json.Marshal(responses.contribs)
+		contribResp := &responses.contribResponse
+		if contribResp.responseCode == http.StatusOK {
+			contribs, err := json.Marshal(contribResp.contribs)
 			if err != nil {
 				fmt.Printf("error marshalling response: %v", err)
 			}
@@ -121,9 +121,9 @@ func MockServer(responses *responses) *http.ServeMux {
 	})
 
 	mux.HandleFunc("/api/v4/projects/project/repository/compare", func(w http.ResponseWriter, r *http.Request) {
-		responses := &responses.compareResponse
-		if responses.responseCode == http.StatusOK {
-			compare, err := json.Marshal(responses.compare)
+		compareResp := &responses.compareResponse
+		if compareResp.responseCode == http.StatusOK {
+			compare, err := json.Marshal(compareResp.compare)
 			if err != nil {
 				fmt.Printf("error marshalling response: %v", err)
 			}
