@@ -164,7 +164,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	// Generate the search query based on the type, org/user name, and the search_query
 	// value if provided
-	sq := genDefaultSearchQuery(ownertype, ghs.cfg.GitHubOrg)
+	sq := genDefaultSearchQuery(loginType, ghs.cfg.GitHubOrg)
 
 	if ghs.cfg.SearchQuery != "" {
 		sq = ghs.cfg.SearchQuery

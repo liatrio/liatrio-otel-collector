@@ -103,42 +103,32 @@ func add[T ~int | ~float64](a, b T) T {
 	return a + b
 }
 
-func sub[T ~int | ~float64](a, b T) T {
-	return a - b
-}
+// Login via the GraphQL checkLogin query in order to ensure that the user
+// and it's credentials are valid and return the type of user being authenticated.
+func (ghs *githubScraper) login(
+	ctx context.Context,
+	client graphql.Client,
+	owner string,
+) (string, error) {
+	var loginType string
 
-// Ensure that the type of owner is user or organization
-func checkOwnerTypeValid(ownertype string) (bool, error) {
-	if ownertype == "org" || ownertype == "user" {
-		return true, nil
-	}
-	return false, errors.New("ownertype must be either org or user")
-}
-
-// Check to ensure that the login user (org name or user id) exists or
-// can be logged into.
-func (ghs *githubScraper) checkOwnerExists(ctx context.Context, client graphql.Client, owner string) (exists bool, ownerType string, err error) {
-
-	loginResp, err := checkLogin(ctx, client, ghs.cfg.GitHubOrg)
-
-	exists = false
-	ownerType = ""
+	// The checkLogin GraphQL query will always return an error. We only return
+	// the error if the login response for User and Organization are both nil.
+	// This is represented by checking to see if each resp.*.Login resolves to equal the owner.
+	resp, err := checkLogin(ctx, client, ghs.cfg.GitHubOrg)
 
 	// These types are used later to generate the default string for the search query
 	// and thus must match the convention for user: and org: searches in GitHub
-	if loginResp.User.Login == owner {
-		exists = true
-		ownerType = "user"
-	} else if loginResp.Organization.Login == owner {
-		exists = true
-		ownerType = "org"
+	switch {
+	case resp.User.Login == owner:
+		loginType = "user"
+	case resp.Organization.Login == owner:
+		loginType = "org"
+	default:
+		return "", err
 	}
 
-	if exists {
-		err = nil
-	}
-
-	return
+	return loginType, nil
 }
 
 // Returns the default search query string based on input of owner type
