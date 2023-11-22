@@ -10,10 +10,17 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/pmetrictest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/xanzy/go-gitlab"
+	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 
@@ -33,6 +40,7 @@ func TestNewGitLabScraper(t *testing.T) {
 }
 
 type responses struct {
+	projectResponse projectResponse
 	branchResponse  branchResponse
 	mrResponse      mrResponse
 	contribResponse contribResponse
@@ -57,6 +65,11 @@ type contribResponse struct {
 
 type compareResponse struct {
 	compare      *gitlab.Compare
+	responseCode int
+}
+
+type projectResponse struct {
+	projects     []*gitlab.Project
 	responseCode int
 }
 
@@ -124,6 +137,19 @@ func MockServer(responses *responses) *http.ServeMux {
 		compareResp := &responses.compareResponse
 		if compareResp.responseCode == http.StatusOK {
 			compare, err := json.Marshal(compareResp.compare)
+			if err != nil {
+				fmt.Printf("error marshalling response: %v", err)
+			}
+			_, err = w.Write(compare)
+			if err != nil {
+				fmt.Printf("error writing response: %v", err)
+			}
+		}
+	})
+	mux.HandleFunc("/api/v4/groups/project/projects", func(w http.ResponseWriter, r *http.Request) {
+		projectResp := &responses.projectResponse
+		if projectResp.responseCode == http.StatusOK {
+			compare, err := json.Marshal(projectResp.projects)
 			if err != nil {
 				fmt.Printf("error marshalling response: %v", err)
 			}
@@ -419,6 +445,125 @@ func TestGetCombinedMergeRequests(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestScrape(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		resp          string
+		expectedErr   error
+		server        *http.ServeMux
+		expectedCount int
+		testFile      string
+	}{
+		{
+			desc: "No Projects",
+			server: MockServer(&responses{
+				projectResponse: projectResponse{
+					projects:     []*gitlab.Project{},
+					responseCode: http.StatusOK,
+				},
+			}),
+			testFile:    "expected_no_projects.yaml",
+			expectedErr: errors.New("no GitLab projects found for the given group/org: project"),
+		},
+		{
+			desc: "Happy Path",
+			server: MockServer(&responses{
+				projectResponse: projectResponse{
+					projects: []*gitlab.Project{
+						{
+							Name:              "project",
+							PathWithNamespace: "project",
+							CreatedAt:         gitlab.Time(time.Now().AddDate(0, 0, -1)),
+							LastActivityAt:    gitlab.Time(time.Now().AddDate(0, 0, -1)),
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				branchResponse: branchResponse{
+					branches: getBranchNamesProjectRepository{
+						BranchNames: []string{"branch1"},
+					},
+					responseCode: http.StatusOK,
+				},
+				mrResponse: mrResponse{
+					mrs: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
+						{
+							Nodes: []MergeRequestNode{
+								{
+									Title:     "mr1",
+									CreatedAt: time.Now().AddDate(0, 0, -1),
+								},
+								{
+									Title:    "mr1",
+									MergedAt: time.Now().AddDate(0, 0, -1),
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				contribResponse: contribResponse{
+					contribs: []*gitlab.Contributor{
+						{
+							Name:      "contrib1",
+							Additions: 1,
+							Deletions: 1,
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				compareResponse: compareResponse{
+					compare: &gitlab.Compare{
+						Commits: []*gitlab.Commit{
+							{
+								Title:     "commit1",
+								CreatedAt: gitlab.Time(time.Now().AddDate(0, 0, -1)),
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			testFile: "expected_happy_path.yaml",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
+
+			cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+
+			gls := newGitLabScraper(context.Background(), receivertest.NewNopCreateSettings(), cfg)
+			gls.cfg.GitLabOrg = "project"
+			gls.cfg.HTTPClientSettings.Endpoint = server.URL
+
+			err := gls.start(context.Background(), componenttest.NewNopHost())
+			require.NoError(t, err)
+
+			actualMetrics, err := gls.scrape(context.Background())
+			if tc.expectedErr != nil {
+				require.Equal(t, tc.expectedErr, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			expectedFile := filepath.Join("testdata", "scraper", tc.testFile)
+			expectedMetrics, err := golden.ReadMetrics(expectedFile)
+			require.NoError(t, err)
+
+			require.NoError(t, pmetrictest.CompareMetrics(
+				expectedMetrics,
+				actualMetrics,
+				pmetrictest.IgnoreMetricDataPointsOrder(),
+				pmetrictest.IgnoreTimestamp(),
+				pmetrictest.IgnoreStartTimestamp(),
+			))
 		})
 	}
 }
