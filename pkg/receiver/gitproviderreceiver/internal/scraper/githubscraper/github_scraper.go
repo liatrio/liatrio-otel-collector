@@ -217,14 +217,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				ghs.mb.RecordGitRepositoryBranchCommitAheadbyCountDataPoint(now, int64(branch.Compare.BehindBy), branch.Repository.Name, branch.Name)
 				ghs.mb.RecordGitRepositoryBranchCommitBehindbyCountDataPoint(now, int64(branch.Compare.AheadBy), branch.Repository.Name, branch.Name)
 
-				// We're using BehindBy here because we're comparing against the target
-				// branch, which is the default branch. In essence the response is saying
-				// the default branch is behind the queried branch by X commits which is
-				// the number of commits made to the queried branch but not merged into
-				// the default branch. Doing it this way involves less queries because
-				// we don't have to know the queried branch name ahead of time.
-				cp := getNumPages(float64(100), float64(branch.Compare.BehindBy))
-				adds, dels, age, err := ghs.getCommitInfo(ctx, genClient, branch.Repository.Name, now, cp, branch)
+				adds, dels, age, err := ghs.getCommitInfo(ctx, genClient, branch.Repository.Name, now, branch)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting commit info", zap.Error(err))
 					continue
