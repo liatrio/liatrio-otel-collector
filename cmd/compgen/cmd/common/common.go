@@ -52,7 +52,7 @@ func InitNewModule(path string, name string) {
 		log.Fatal(err)
 	}
 
-	executeCommandWithExitOnError(path, "go mod init "+name)
+	// executeCommandWithExitOnError(path, "go mod init "+name)
 }
 
 func PostProcessing(path string) {

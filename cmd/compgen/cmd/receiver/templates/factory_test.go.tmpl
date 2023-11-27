@@ -20,8 +20,6 @@ import (
 
 var creationSet = receivertest.NewNopCreateSettings()
 
-type mockConfig struct{}
-
 func TestCreateDefaultConfig(t *testing.T) {
 	factory := NewFactory()
 	cfg := factory.CreateDefaultConfig()

@@ -11,14 +11,14 @@ import (
 	"go.uber.org/multierr"
 )
 
-// Config that is exposed to this github receiver through the OTEL config.yaml
+// Config that is exposed to this receiver through the OTEL config.yaml
 type Config struct {
 	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
 	sample                                  Sample `mapstructure:",squash"`
 }
 
 type Sample struct {
-	config string `mapstructure:",squash"`
+	config string
 }
 
 // Validate the configuration passed through the OTEL config.yaml
