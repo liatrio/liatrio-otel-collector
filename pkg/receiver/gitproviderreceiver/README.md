@@ -23,14 +23,14 @@ These default metrics can be used as leading indicators to the DORA metrics; hel
 
 The current metrics available via scraping from GitHub are:
 
-- Repository count
-- Repository branch time
-- Repository branch count
-- Repository contributor count
-- Repository pull request time
-- Repository pull request merge time
-- Repository pull request approval time
-- Repository pull request deployment time
+- [x] Repository count
+- [x] Repository branch time
+- [x] Repository branch count
+- [x] Repository contributor count
+- [x] Repository pull request time
+- [x] Repository pull request merge time
+- [x] Repository pull request approval time
+- [x] Repository pull request deployment time
 
 > Note: Some metrics may be disabled by default and have to be explicitly enabled.
 > For example, the repository contributor count metric is one such metric. This is
@@ -40,14 +40,14 @@ The current metrics available via scraping from GitHub are:
 
 The current metrics available via scraping from GitLab are:
 
-- [ ] Repository count
-- [ ] Repository branch time
-- [ ] Repository branch count
+- [x] Repository count
+- [x] Repository branch time
+- [x] Repository branch count
 - [ ] Repository contributor count
 - [ ] Repository pull request time
-- [ ] Repository pull request merge time
-- [ ] Repository pull request approval time
-- [ ] Repository pull request deployment time
+- [x] Repository pull request merge time
+- [x] Repository pull request approval time
+- [x] Repository pull request deployment time
 
 ## Getting Started
 

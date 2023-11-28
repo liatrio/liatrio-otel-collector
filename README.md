@@ -7,8 +7,8 @@
   <a href="https://goreportcard.com/report/github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver">
     <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver?style=for-the-badge">
   </a>
-  <a href="https://codecov.io/gh/liatrio/liatrio-otel-collector/branch/main" > 
-    <img alt="Codecov Status" src="https://img.shields.io/codecov/c/github/liatrio/liatrio-otel-collector?style=for-the-badge"/> 
+  <a href="https://codecov.io/gh/liatrio/liatrio-otel-collector/branch/main" >
+    <img alt="Codecov Status" src="https://img.shields.io/codecov/c/github/liatrio/liatrio-otel-collector?style=for-the-badge"/>
   </a>
   <a href="https://github.com/liatrio/liatrio-otel-collector/releases">
     <img alt="GitHub release" src="https://img.shields.io/github/v/release/liatrio/liatrio-otel-collector?include_prereleases&style=for-the-badge">
@@ -22,11 +22,15 @@
 
 # liatrio-otel-collector
 
-The Liatrio OTEL Collector is an upstream distribution of the Open Telemetry collector, rebuilt with custom packages hosted within this repository.  These custom packages are by default targeted for downstream contribution to Open Telemetry; pursuant acceptance by the community.
+The Liatrio OTEL Collector is an upstream distribution of the Open Telemetry
+collector, rebuilt with custom packages hosted within this repository.  These
+custom packages are by default targeted for downstream contribution to Open
+Telemetry; pursuant acceptance by the community.
 
 ## Quick Start Guide
 
-Before diving into the codebase, you'll need to set up a few things. This guide is designed to help you get up and running in no time!
+Before diving into the codebase, you'll need to set up a few things. This guide
+is designed to help you get up and running in no time!
 
 Here are the steps to quickly get started with this project:
 
@@ -36,7 +40,8 @@ Here are the steps to quickly get started with this project:
     brew install go
     ```
 
-2. **Install pre-commit:** With the help of Homebrew, install the pre-commit as follows:
+2. **Install pre-commit:** With the help of Homebrew, install the pre-commit as
+follows:
 
     ```bash
     brew install pre-commit
@@ -58,29 +63,67 @@ Here are the steps to quickly get started with this project:
 
 ### Configure GitHub Scraper
 
-To configure the GitHub Scraper you'll need to make changes near the top of the [config/config.yaml][2] file, lines 10 - 13:
+To configure the GitHub Scraper you will need to make the following changes to
+[config/config.yaml][2]:
 
-```yaml
-basicauth/github:
-    client_auth:
-        username: ${env:GITHUB_USER}
-        password: ${env:GITHUB_PAT}
-```
+1) Uncomment/add `extensions.basicauth/github` section
+
+    ```yaml
+    basicauth/github:
+        client_auth:
+            username: ${env:GITHUB_USER}
+            password: ${env:GITHUB_PAT}
+    ```
+
+2) Uncomment/add `receivers.gitprovider.scrapers.github.auth` section
+
+    ```yaml
+    auth:
+        authenticator: basicauth/github
+    ```
+
+3) Add `basicauth/github` to the `service.extensions` list
+
+    ```yaml
+    extensions: [health_check, pprof, zpages, basicauth/github]
+    ```
+
+4) Set environment variables: `GITHUB_ORG`, `GITHUB_USER`, and `GITHUB_PAT`
 
 ### Configure GitLab Scraper
 
-To configure the GitLab Scraper you'll need to make changes near the top of the [config/config.yaml][2] file, lines 20 & 21:
+To configure the GitLab Scraper you will need to make the following changes to
+[config/config.yaml][2]
 
-```yaml
-bearertokenauth/gitlab:
-    token: ${env:GITLAB_PAT}
-```
+1) Uncomment/add `extensions.bearertokenauth/gitlab` section
+
+    ```yaml
+    bearertokenauth/gitlab:
+        token: ${env:GITLAB_PAT}
+    ```
+
+2) Uncomment/add `receivers.gitprovider.scrapers.gitlab.auth` section
+
+    ```yaml
+    auth:
+        authenticator: bearertokenauth/gitlab
+    ```
+
+3) Add `bearertokenauth/gitlab` to the `service.extensions` list
+
+    ```yaml
+    extensions: [health_check, pprof, zpages, bearertokenauth/gitlab]
+    ```
+
+4) Set environment variables: `GL_ORG` and `GITLAB_PAT`
 
 ### Exporting to Grafana Cloud
 
-If you want to export your data to Grafana Cloud through their OTLP endpoint, there's a couple of extra things you'll need to do.
+If you want to export your data to Grafana Cloud through their OTLP endpoint,
+there's a couple of extra things you'll need to do.
 
-1. Run `export GRAF_USER` and `export GRAF_PAT` with your instance id and cloud api key
+1. Run `export GRAF_USER` and `export GRAF_PAT` with your instance id and cloud
+api key
 2. Update the [config/config.yaml][2] file with the following:
 
 ```yaml
@@ -116,9 +159,15 @@ service:
 
 To debug through `vscode`:
 
-* run `make build-debug`
-* run `cd build && code .`
-* run vscode debugger for go
+1) Create a `.debug.env` file in the root of the repo, make a copy of the
+[example](.debug.env.example)
+
+2) run `make build-debug`
+
+3) run `cd build && code .`
+
+4) With your cursor focused in `main.go` within the `build` directory. Launch
+the `Launch Otel Collector in debug"` debug configuration.
 
 ## OTEL Intro
 
@@ -145,7 +194,8 @@ receiver example attempts to simplify that to an extent.
 
 There are a few main concepts that should help you get started:
 
-1. Get familiar with the `ocb` tool. It is used to build custom collectors using a `build-config.yaml` file.
+1. Get familiar with the `ocb` tool. It is used to build custom collectors using
+a `build-config.yaml` file.
 2. Get familiar with `Go` & the `Factory` design pattern.
 3. Clearly define what outcome you want before building a customization.
 4. Get familiar with `Go interfaces`.

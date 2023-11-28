@@ -5,13 +5,19 @@ package githubscraper
 
 import (
 	"context"
-	"errors"
+	"net/http"
+	"net/http/httptest"
+	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/Khan/genqlient/graphql"
+	"github.com/google/go-github/v53/github"
+	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/pmetrictest"
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/pdata/pcommon"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
@@ -25,495 +31,163 @@ func TestNewGitHubScraper(t *testing.T) {
 	assert.NotNil(t, s)
 }
 
-func TestGetNumPrPages(t *testing.T) {
+func TestScrape(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		client        graphql.Client
-		expectedErr   error
-		expectedPages int
+		desc     string
+		server   *http.ServeMux
+		testFile string
 	}{
 		{
-			desc:          "valid",
-			client:        &mockClient{openPrCount: 110, mergedPrCount: 20},
-			expectedErr:   nil,
-			expectedPages: 2,
+			desc: "TestNoRepos",
+			server: MockServer(&responses{
+				scrape: true,
+				checkLoginResponse: loginResponse{
+					checkLogin: checkLoginResponse{
+						Organization: checkLoginOrganization{
+							Login: "liatrio",
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				repoResponse: repoResponse{
+					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
+						{
+							RepositoryCount: 0,
+							Nodes:           []SearchNode{},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			testFile: "expected_no_repos.yaml",
 		},
 		{
-			desc:          "error on open pr count",
-			client:        &mockClient{openPrCount: 10, err: true, errString: "this is an error"},
-			expectedErr:   errors.New("this is an error"),
-			expectedPages: 0,
-		},
-		{
-			desc:          "error on merged pr count",
-			client:        &mockClient{mergedPrCount: 10, err: true, errString: "this is an error"},
-			expectedErr:   errors.New("this is an error"),
-			expectedPages: 0,
+			desc: "TestHappyPath",
+			server: MockServer(&responses{
+				scrape: true,
+				checkLoginResponse: loginResponse{
+					checkLogin: checkLoginResponse{
+						Organization: checkLoginOrganization{
+							Login: "liatrio",
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				repoResponse: repoResponse{
+					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
+						{
+							RepositoryCount: 1,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Name: "repo1",
+								},
+							},
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				prResponse: prResponse{
+					prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
+						{
+							PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
+								HasNextPage: false,
+							},
+							Nodes: []PullRequestNode{
+								{
+									Merged: false,
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				branchResponse: branchResponse{
+					branches: []getBranchDataRepositoryRefsRefConnection{
+						{
+							TotalCount: 1,
+							Nodes: []BranchNode{
+								{
+									Name: "main",
+									Compare: BranchNodeCompareComparison{
+										AheadBy:  0,
+										BehindBy: 1,
+									},
+								},
+							},
+							PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				commitResponse: commitResponse{
+					commits: []CommitNodeTargetCommit{
+						{
+							History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
+								Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+									{
+										Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
+											//Because the date was static, the test would fail as the branch age would change as time passed
+											//Made it dynamically generated for yesterdays date, keeping the age at 24 hours
+											CommittedDate: time.Now().AddDate(0, 0, -1),
+											Additions:     10,
+											Deletions:     9,
+										},
+									},
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				contribResponse: contribResponse{
+					contribs: [][]*github.Contributor{
+						{
+							{
+								ID: github.Int64(1),
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			testFile: "expected_happy_path.yaml",
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			now := pcommon.NewTimestampFromTime(time.Now())
-			pages, err := getNumPrPages(ghs, context.Background(), tc.client, "repo", now)
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
 
-			assert.Equal(t, tc.expectedPages, pages)
-			if tc.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-			}
-		})
-	}
-}
+			cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
 
-func TestGetNumBranchPages(t *testing.T) {
-	testCases := []struct {
-		desc          string
-		client        graphql.Client
-		expectedErr   error
-		expectedPages int
-	}{
-		{
-			desc:          "valid",
-			client:        &mockClient{branchCount: 10},
-			expectedErr:   nil,
-			expectedPages: 1,
-		},
-		{
-			desc:          "error",
-			client:        &mockClient{branchCount: 10, err: true, errString: "this is an error"},
-			expectedErr:   errors.New("this is an error"),
-			expectedPages: 0,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			now := pcommon.NewTimestampFromTime(time.Now())
-			pages, err := getNumBranchPages(ghs, context.Background(), tc.client, "repo", now)
+			ghs := newGitHubScraper(context.Background(), receivertest.NewNopCreateSettings(), cfg)
+			ghs.cfg.GitHubOrg = "liatrio"
+			ghs.cfg.HTTPClientSettings.Endpoint = server.URL
 
-			assert.Equal(t, tc.expectedPages, pages)
-			if tc.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-			}
-		})
-	}
-}
+			err := ghs.start(context.Background(), componenttest.NewNopHost())
+			require.NoError(t, err)
 
-func TestGetBranchData(t *testing.T) {
-	testCases := []struct {
-		desc                string
-		client              graphql.Client
-		expectedErr         error
-		branchPages         int
-		expectedBranchCount int
-	}{
-		{
-			desc: "valid",
-			client: &mockClient{
-				branchData: getBranchDataRepositoryRefsRefConnection{
-					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-						HasNextPage: true,
-					},
-					Nodes: []BranchNode{
-						{
-							Name: "main",
-						},
-						{
-							Name: "dev",
-						},
-						{
-							Name: "feature",
-						},
-					},
-				},
-			},
-			expectedErr:         nil,
-			branchPages:         2,
-			expectedBranchCount: 6,
-		},
-		{
-			desc: "no next page",
-			client: &mockClient{
-				branchData: getBranchDataRepositoryRefsRefConnection{
-					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-						HasNextPage: false,
-					},
-					Nodes: []BranchNode{
-						{
-							Name: "main",
-						},
-						{
-							Name: "dev",
-						},
-						{
-							Name: "feature",
-						},
-					},
-				},
-			},
-			expectedErr:         nil,
-			branchPages:         2, // 3 PRs per page but shouldnt move to next page
-			expectedBranchCount: 3,
-		},
-		{
-			desc:                "error",
-			client:              &mockClient{err: true, errString: "this is an error"},
-			expectedErr:         errors.New("this is an error"),
-			expectedBranchCount: 0,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			branches, err := getBranchInfo(ghs, context.Background(), tc.client, "repo", "owner", 2, "main")
-			if tc.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-			}
-			assert.Equal(t, tc.expectedBranchCount, len(branches))
-		})
-	}
-}
+			actualMetrics, err := ghs.scrape(context.Background())
+			require.NoError(t, err)
 
-func TestGetPrData(t *testing.T) {
-	testCases := []struct {
-		desc            string
-		client          graphql.Client
-		expectedErr     error
-		prPages         int
-		expectedPrCount int
-	}{
-		{
-			desc: "valid",
-			client: &mockClient{
-				prs: getPullRequestDataRepositoryPullRequestsPullRequestConnection{
-					PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
-						HasNextPage: true,
-					},
-					Nodes: []PullRequestNode{
-						{
-							CreatedAt: time.Now(),
-							Merged:    false,
-						},
-						{
-							CreatedAt: time.Now().Add(24 * time.Hour), // 1 day later
-							Merged:    false,
-						},
-						{
-							CreatedAt: time.Now().Add(48 * time.Hour), // 2 days later
-							Merged:    false,
-						},
-					},
-				},
-			},
-			expectedErr:     nil,
-			prPages:         2, // 3 PRs per page
-			expectedPrCount: 6,
-		},
-		{
-			desc: "no next page",
-			client: &mockClient{
-				prs: getPullRequestDataRepositoryPullRequestsPullRequestConnection{
-					PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
-						HasNextPage: false,
-					},
-					Nodes: []PullRequestNode{
-						{
-							CreatedAt: time.Now(),
-							Merged:    false,
-						},
-						{
-							CreatedAt: time.Now().Add(24 * time.Hour), // 1 day later
-							Merged:    false,
-						},
-						{
-							CreatedAt: time.Now().Add(48 * time.Hour), // 2 days later
-							Merged:    false,
-						},
-					},
-				},
-			},
-			expectedErr:     nil,
-			prPages:         2, // 3 PRs per page but shouldnt move to next page
-			expectedPrCount: 3,
-		},
-		{
-			desc:            "error",
-			client:          &mockClient{err: true, errString: "this is an error"},
-			expectedErr:     errors.New("this is an error"),
-			expectedPrCount: 0,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			pullRequests, err := getPrData(ghs, context.Background(), tc.client, 2, "repo", "owner")
-			if tc.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-			}
-			assert.Equal(t, tc.expectedPrCount, len(pullRequests))
-		})
-	}
-}
+			expectedFile := filepath.Join("testdata", "scraper", tc.testFile)
 
-func TestGetPullRequests(t *testing.T) {
-	testCases := []struct {
-		desc            string
-		client          graphql.Client
-		repo            SearchNodeRepository
-		expectedErr     error
-		expectedPrCount int
-	}{
-		{
-			desc: "valid",
-			client: &mockClient{
-				prs: getPullRequestDataRepositoryPullRequestsPullRequestConnection{
-					PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
-						HasNextPage: true,
-					},
-					Nodes: []PullRequestNode{
-						{
-							CreatedAt: time.Now(),
-							Merged:    false,
-						},
-						{
-							CreatedAt: time.Now().Add(24 * time.Hour), // 1 day later
-							Merged:    false,
-						},
-						{
-							CreatedAt: time.Now().Add(48 * time.Hour), // 2 days later
-							Merged:    false,
-						},
-					},
-				},
-				openPrCount:   110,
-				mergedPrCount: 50,
-			},
-			repo: SearchNodeRepository{
-				Name: "repo1",
-				DefaultBranchRef: SearchNodeDefaultBranchRef{
-					Name: "main",
-				},
-			},
-			expectedErr:     nil,
-			expectedPrCount: 6, // 3 PRs per page, 2 pages
-		},
-		{
-			desc: "no next page",
-			client: &mockClient{
-				prs: getPullRequestDataRepositoryPullRequestsPullRequestConnection{
-					PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
-						HasNextPage: false,
-					},
-					Nodes: []PullRequestNode{
-						{
-							CreatedAt: time.Now(),
-							Merged:    false,
-						},
-						{
-							CreatedAt: time.Now().Add(24 * time.Hour), // 1 day later
-							Merged:    false,
-						},
-						{
-							CreatedAt: time.Now().Add(48 * time.Hour), // 2 days later
-							Merged:    false,
-						},
-					},
-				},
-				openPrCount:   110,
-				mergedPrCount: 50,
-			},
-			repo: SearchNodeRepository{
-				Name: "repo1",
-				DefaultBranchRef: SearchNodeDefaultBranchRef{
-					Name: "main",
-				},
-			},
-			expectedErr:     nil,
-			expectedPrCount: 3, // 3 PRs per page, 1 page
-		},
-		// {
-		// 	desc:        "error",
-		// 	client:      &mockClient{err: true, errString: "this is an error"},
-		// 	expectedErr: errors.New("this is an error"),
-		// },
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			now := pcommon.NewTimestampFromTime(time.Now())
-			prs, err := getPullRequests(ghs, context.Background(), tc.client, tc.repo, now)
-			if tc.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-			}
-			assert.Equal(t, tc.expectedPrCount, len(prs))
-		})
-	}
-}
-func TestGetBranches(t *testing.T) {
-	testCases := []struct {
-		desc                string
-		client              graphql.Client
-		repo                SearchNodeRepository
-		expectedErr         error
-		expectedBranchCount int
-	}{
-		{
-			desc: "valid",
-			client: &mockClient{
-				branchData: getBranchDataRepositoryRefsRefConnection{
-					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-						HasNextPage: true,
-					},
-					Nodes: []BranchNode{
-						{
-							Name: "main",
-						},
-						{
-							Name: "dev",
-						},
-						{
-							Name: "feature",
-						},
-					},
-				},
-				branchCount: 3,
-			},
-			repo: SearchNodeRepository{
-				Name: "repo1",
-				DefaultBranchRef: SearchNodeDefaultBranchRef{
-					Name: "main",
-				},
-			},
-			expectedErr:         nil,
-			expectedBranchCount: 3, //1 page, 3 branches per page
-		},
-		{
-			desc: "three pages",
-			client: &mockClient{
-				branchData: getBranchDataRepositoryRefsRefConnection{
-					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-						HasNextPage: true,
-					},
-					Nodes: []BranchNode{
-						{
-							Name: "main",
-						},
-						{
-							Name: "dev",
-						},
-						{
-							Name: "feature",
-						},
-					},
-				},
-				branchCount: 110,
-			},
-			repo: SearchNodeRepository{
-				Name: "repo1",
-				DefaultBranchRef: SearchNodeDefaultBranchRef{
-					Name: "main",
-				},
-			},
-			expectedErr:         nil,
-			expectedBranchCount: 9, // 3 pages, 3 branches per page
+			//golden.WriteMetrics(t, expectedFile, actualMetrics) // This line is temporary! TODO remove this!!
+			expectedMetrics, err := golden.ReadMetrics(expectedFile)
+			require.NoError(t, err)
+			require.NoError(t, pmetrictest.CompareMetrics(
+				expectedMetrics,
+				actualMetrics,
+				pmetrictest.IgnoreMetricDataPointsOrder(),
+				pmetrictest.IgnoreTimestamp(),
+				pmetrictest.IgnoreStartTimestamp(),
+			))
 
-		},
-		{
-			desc: "three pages but no next page",
-			client: &mockClient{
-				branchData: getBranchDataRepositoryRefsRefConnection{
-					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-						HasNextPage: false,
-					},
-					Nodes: []BranchNode{
-						{
-							Name: "main",
-						},
-						{
-							Name: "dev",
-						},
-						{
-							Name: "feature",
-						},
-					},
-				},
-				branchCount: 110,
-			},
-			repo: SearchNodeRepository{
-				Name: "repo1",
-				DefaultBranchRef: SearchNodeDefaultBranchRef{
-					Name: "main",
-				},
-			},
-			expectedErr:         nil,
-			expectedBranchCount: 3, //1 pages, 3 branches per page
-		},
-		{
-			desc: "no branches",
-			client: &mockClient{
-				branchData: getBranchDataRepositoryRefsRefConnection{
-					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-						HasNextPage: true,
-					},
-					Nodes: []BranchNode{},
-				},
-				branchCount: 0,
-			},
-			repo: SearchNodeRepository{
-				Name: "repo1",
-				DefaultBranchRef: SearchNodeDefaultBranchRef{
-					Name: "main",
-				},
-			},
-			expectedErr:         nil,
-			expectedBranchCount: 0,
-		},
-		{
-			desc:                "error",
-			client:              &mockClient{err: true, errString: "this is an error"},
-			expectedErr:         errors.New("this is an error"),
-			expectedBranchCount: 0,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			now := pcommon.NewTimestampFromTime(time.Now())
-			branches, err := ghs.getBranches(context.Background(), tc.client, tc.repo, now)
-			if tc.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-			}
-			assert.Equal(t, tc.expectedBranchCount, len(branches))
 		})
 	}
 }

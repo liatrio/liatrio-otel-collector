@@ -1,5 +1,4 @@
-// Copyright The OpenTelemetry Authors
-// SPDX-License-Identifier: Apache-2.0
+//go:generate genqlient
 
 package gitlabscraper
 
@@ -82,6 +81,19 @@ func (gls *gitlabScraper) processBranches(client *gitlab.Client, branches *getBr
 	}
 }
 
+func (gls *gitlabScraper) getContributorCount(
+	restClient *gitlab.Client,
+	projectPath string,
+) (int, error) {
+	contributors, _, err := restClient.Repositories.Contributors(projectPath, nil)
+	if err != nil {
+		gls.logger.Sugar().Errorf("error getting contributors", zap.Error(err))
+		return 0, err
+	}
+
+	return len(contributors), nil
+}
+
 func (gls *gitlabScraper) getMergeRequests(
 	ctx context.Context,
 	graphClient graphql.Client,
@@ -108,6 +120,25 @@ func (gls *gitlabScraper) getMergeRequests(
 	}
 
 	return mergeRequestData, nil
+}
+
+func (gls *gitlabScraper) getCombinedMergeRequests(
+	ctx context.Context,
+	graphClient graphql.Client,
+	projectPath string,
+) ([]MergeRequestNode, error) {
+	openMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateOpened)
+	if err != nil {
+		gls.logger.Sugar().Errorf("error getting open merge requests", zap.Error(err))
+		return nil, err
+	}
+	mergedMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateMerged)
+	if err != nil {
+		gls.logger.Sugar().Errorf("error getting merged merge requests", zap.Error(err))
+		return nil, err
+	}
+	mrs := append(openMrs, mergedMrs...)
+	return mrs, nil
 }
 
 func (gls *gitlabScraper) processMergeRequests(client *gitlab.Client, mrs []MergeRequestNode, projectPath string, now pcommon.Timestamp) {
@@ -228,10 +259,9 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			if err != nil {
 				gls.logger.Sugar().Errorf("error getting branches", zap.Error(err))
 				<-sem
+				return
 			}
-			if branches != nil {
-				gls.processBranches(restClient, branches, project.Path, now)
-			}
+			gls.processBranches(restClient, branches, project.Path, now)
 			<-sem
 		}(project)
 	}
@@ -239,25 +269,32 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	for _, project := range projectList {
 		sem <- 1
 		go func(project gitlabProject) {
-			openMrs, err := gls.getMergeRequests(ctx, graphClient, project.Path, MergeRequestStateOpened)
+			mrs, err := gls.getCombinedMergeRequests(ctx, graphClient, project.Path)
 			if err != nil {
-				gls.logger.Sugar().Errorf("error getting open merge requests", zap.Error(err))
+				gls.logger.Sugar().Errorf("error getting merge requests", zap.Error(err))
 				<-sem
+				return
 			}
-			mergedMrs, err := gls.getMergeRequests(ctx, graphClient, project.Path, MergeRequestStateMerged)
-			if err != nil {
-				gls.logger.Sugar().Errorf("error getting merged merge requests", zap.Error(err))
-				<-sem
-			}
-			if openMrs != nil || mergedMrs != nil {
-				mrs := append(openMrs, mergedMrs...)
-				gls.processMergeRequests(restClient, mrs, project.Path, now)
-			}
+			gls.processMergeRequests(restClient, mrs, project.Path, now)
 			<-sem
 		}(project)
 	}
 
-	//wait until all goroutines are finished
+	for _, project := range projectList {
+		sem <- 1
+		go func(project gitlabProject) {
+			contributorCount, err := gls.getContributorCount(restClient, project.Path)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error: %v", err)
+				<-sem
+				return
+			}
+			gls.logger.Sugar().Debugf("contributor count: %v for repo %v", contributorCount, project.Path)
+			gls.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contributorCount), project.Path)
+			<-sem
+		}(project)
+	}
+	// wait until all goroutines are finished
 	for i := 0; i < maxProcesses; i++ {
 		sem <- 1
 	}
