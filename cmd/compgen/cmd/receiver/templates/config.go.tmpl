@@ -4,34 +4,34 @@
 package {{ .Name }} // import "{{ .PackageName }}"
 
 import (
-	"errors"
-	"strings"
+	// "errors"
+	// "strings"
 
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
-	"go.uber.org/multierr"
+	// "go.uber.org/multierr"
 )
 
 // Config that is exposed to this receiver through the OTEL config.yaml
 type Config struct {
 	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
-	sample                                  Sample `mapstructure:",squash"`
+	// sample                                  Sample `mapstructure:",squash"`
 }
 
-type Sample struct {
-	config string
-}
+// type Sample struct {
+// 	config string
+// }
 
 // Validate the configuration passed through the OTEL config.yaml
 func (cfg *Config) Validate() error {
 	var err error
 
-	if cfg.sample.config == "" {
-		err = multierr.Append(err, errors.New("sample config data is required"))
-	} else {
-		if cfg.sample.config != strings.ToLower(cfg.sample.config) {
-			err = multierr.Append(err, errors.New("sample config data must be lowercase"))
-		}
-	}
+	// if cfg.sample.config == "" {
+	// 	err = multierr.Append(err, errors.New("sample config data is required"))
+	// } else {
+	// 	if cfg.sample.config != strings.ToLower(cfg.sample.config) {
+	// 		err = multierr.Append(err, errors.New("sample config data must be lowercase"))
+	// 	}
+	// }
 
 	return err
 }

@@ -1,12 +1,15 @@
 ---
+exporters:
+    logging:
+
 receivers:
     {{ .Name }}:
-        sample:
-            config: data
+        # sample:
+        #     config: data
 
 service:
     pipelines:
         metrics:
             receivers: [{{ .Name }}]
             processors: []
-            exporters: []
+            exporters: [logging]
