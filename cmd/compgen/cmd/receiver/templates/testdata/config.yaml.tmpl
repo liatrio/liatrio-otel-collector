@@ -3,9 +3,10 @@ exporters:
     logging:
 
 receivers:
-    {{ .Name }}:
-        # sample:
-        #     config: data
+    MyAwesomeReceiver:
+        collection_interval: 10s
+        initial_delay: 1s
+        sample: data
 
 service:
     pipelines:

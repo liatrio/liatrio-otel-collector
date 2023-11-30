@@ -13,12 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type ScraperFactory struct {
-	// Create the default configuration for the sccraper.
-	// CreateDefaultConfig() ScraperConfig
-	// Create a scraper based on the configuration passed or return an error if not valid.
-	// CreateMetricsScraper(ctx context.Context, params receiver.CreateSettings, cfg ScraperConfig) (scraperhelper.Scraper, error)
-}
+type ScraperFactory struct{}
 
 func (f *ScraperFactory) CreateMetricsScraper(
 	ctx context.Context,
