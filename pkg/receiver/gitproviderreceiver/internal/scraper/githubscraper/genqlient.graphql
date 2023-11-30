@@ -1,3 +1,7 @@
+# This query currently costs 1 point per repo. REEVALUATE THIS ESTIMATE if you
+# change this query. And please update our docs if you do!
+# docs: pkg/receiver/gitproviderreceiver/README.md#rate-limiting
+# https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#predicting-the-point-value-of-a-query
 query getRepoDataBySearch(
   $searchQuery: String!
   # @genqlient(pointer: true)
@@ -36,6 +40,10 @@ query checkLogin($login: String!) {
   }
 }
 
+# This query currently costs 1 point per repo. REEVALUATE THIS ESTIMATE if you
+# change this query. And please update our docs if you do!
+# docs: pkg/receiver/gitproviderreceiver/README.md#rate-limiting
+# https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#predicting-the-point-value-of-a-query
 query getCommitData(
   $name: String!
   $owner: String!
@@ -72,6 +80,10 @@ query getCommitData(
   }
 }
 
+# This query currently costs 1 point per repo. REEVALUATE THIS ESTIMATE if you
+# change this query. And please update our docs if you do!
+# docs: pkg/receiver/gitproviderreceiver/README.md#rate-limiting
+# https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#predicting-the-point-value-of-a-query
 query getBranchData(
   $name: String!
   $owner: String!
@@ -105,6 +117,10 @@ query getBranchData(
   }
 }
 
+# This query currently costs 2 point per repo. REEVALUATE THIS ESTIMATE if you
+# change this query. And please update our docs if you do!
+# docs: pkg/receiver/gitproviderreceiver/README.md#rate-limiting
+# https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#predicting-the-point-value-of-a-query
 query getPullRequestData(
   $name: String!
   $owner: String!
