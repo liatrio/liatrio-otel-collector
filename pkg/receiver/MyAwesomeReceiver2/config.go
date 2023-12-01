@@ -1,9 +1,7 @@
-/////////// Updated December 1, 2023 ///////////
-
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package {{ .Name }} // import "github.com/liatrio/liatrio-otel-collector/pkg/receiver/{{ .Name }}"
+package MyAwesomeReceiver // import "github.com/liatrio/liatrio-otel-collector/pkg/receiver/MyAwesomeReceiver"
 
 import (
 	"errors"
@@ -14,7 +12,10 @@ import (
 	"go.uber.org/multierr"
 )
 
-const configKey = "sample"
+// ConfigKey List
+const (
+	ConfigKeySample = "receivers::MyAwesomeReceiver::sample"
+)
 
 // WantErr List
 var (
@@ -26,11 +27,18 @@ var (
 // Config that is exposed to this receiver through the OTEL config.yaml
 type Config struct {
 	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
-	sample                                  string
+	sample                                  Sample `mapstructure:",squash"`
 }
+
+type Sample struct {
+	configuration string
+}
+
+// setConfigKey
 
 // Unmarshal a config.Parser into the config struct.
 func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
+
 	if componentParser == nil {
 		return nil
 	}
@@ -42,16 +50,16 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 	}
 
 	// dynamically load the individual collector configs based on the key name
-	if componentParser.IsSet(configKey) {
+	if componentParser.IsSet(ConfigKeySample) {
 		// use the value provided in the otel config.yaml
-		value, ok := componentParser.Get(configKey).(string)
+		value, ok := componentParser.Get(ConfigKeySample).(string)
 		if !ok {
-			return errors.New("sample.configuration must be a string")
+			return ErrMustString
 		}
-		cfg.sample = value
+		cfg.sample.configuration = value
 	} else {
 		// default value
-		cfg.sample = "data"
+		cfg.sample.configuration = "data"
 	}
 
 	return nil
@@ -61,11 +69,11 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 func (cfg *Config) Validate() error {
 	var err error
 
-	if cfg.sample == "" {
-		err = multierr.Append(err, errors.New("sample config data is required"))
+	if cfg.sample.configuration == "" {
+		err = multierr.Append(err, ErrSampleConfig)
 	} else {
-		if cfg.sample != strings.ToLower(cfg.sample) {
-			err = multierr.Append(err, errors.New("sample config data must be lowercase"))
+		if cfg.sample.configuration != strings.ToLower(cfg.sample.configuration) {
+			err = multierr.Append(err, ErrMustLowercase)
 		}
 	}
 

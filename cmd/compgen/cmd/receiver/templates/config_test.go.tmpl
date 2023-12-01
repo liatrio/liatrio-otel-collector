@@ -1,34 +1,99 @@
+/////////// Updated December 1, 2023 ///////////
+
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
 package {{ .Name }}
 
 import (
+	"errors"
 	"path/filepath"
 	"testing"
 
-	"{{ .PackageName }}/internal/metadata"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/otelcol/otelcoltest"
+	"go.opentelemetry.io/collector/confmap"
+	"go.opentelemetry.io/collector/confmap/confmaptest"
+	"go.opentelemetry.io/collector/receiver/scraperhelper"
 )
 
-func TestLoadConfig(t *testing.T) {
-	factories, err := otelcoltest.NopFactories()
-	require.NoError(t, err)
+////////////////// Testing Begins ///////////
 
-	factory := NewFactory()
-	factories.Receivers[metadata.Type] = factory
-	cfg, err := otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config.yaml"), factories)
-
-	require.NoError(t, err)
-	require.NotNil(t, cfg)
-
-	assert.Equal(t, len(cfg.Receivers), 1)
-
-	r0 := cfg.Receivers[component.NewID(metadata.Type)]
-	defaultConfig := factory.CreateDefaultConfig()
-
-	assert.Equal(t, defaultConfig, r0)
+func TestConfig_Unmarshal(t *testing.T) {
+	type fields struct {
+		ScraperControllerSettings scraperhelper.ScraperControllerSettings
+		sample                    string
+	}
+	type args struct {
+		componentParser *confmap.Conf
+	}
+	// TODO import different config files for each test instead of 1 global file
+	confMap, errCM := confmaptest.LoadConf(filepath.Join("testdata", "cfg-no-string.yaml"))
+	if errCM != nil {
+		return
+	}
+	tests := []struct {
+		name    string
+		confMap *confmap.Conf
+		fields  fields
+		args    args
+		wantErr error
+	}{ // Test Cases for Unmarshal() Function
+		{ // Test to see if the config file reads properly
+			name:    "default config pass",
+			confMap: confMap,
+			fields:  fields{},
+			args:    args{componentParser: confMap},
+			wantErr: nil,
+		},
+		{ // Test to see if there is no value in the sample field of config
+			name:    "no value pass",
+			confMap: confMap,
+			fields:  fields{},
+			args:    args{componentParser: confMap},
+			wantErr: nil,
+		},
+		{ // Test to see if the sample field doesn't exist in the config
+			name:    "no sample",
+			confMap: confMap,
+			fields:  fields{},
+			args:    args{componentParser: confMap},
+			wantErr: ErrSampleConfig,
+		},
+		{ // Test to see if the sample field contains a string
+			name:    "not a string",
+			confMap: confMap,
+			fields:  fields{},
+			args:    args{componentParser: confMap},
+			wantErr: ErrMustString,
+		},
+		{ // Test to see if the sample field has only lowercase letters
+			name:    "no lowercase",
+			confMap: confMap,
+			fields:  fields{},
+			args:    args{componentParser: confMap},
+			wantErr: ErrMustLowercase,
+		},
+		// { // TODO Test to see if a config file exist
+		// 	name:    "no config pass",
+		// 	confMap: confMap,
+		// 	fields:  fields{},
+		// 	args:    args{componentParser: confMap},
+		// 	wantErr: ErrMustString,
+		// },
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &Config{
+				ScraperControllerSettings: tt.fields.ScraperControllerSettings,
+				sample:                    tt.fields.sample,
+			}
+			err := cfg.Unmarshal(tt.args.componentParser)
+			if err == nil {
+				t.Errorf("Config.Unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if errors.Is(err, tt.wantErr) {
+				t.Errorf("Config.Unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			// TODO check config to see if that was updated properly (cfg)
+		})
+	}
 }

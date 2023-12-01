@@ -1,0 +1,13 @@
+---
+type: MyAwesomeReceiver
+
+sem_conv_version: 1.18.0
+
+status:
+    class: receiver
+    stability:
+        development: [metrics]
+    distributions: [liatrio]
+
+# See the [mdatagen documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/cmd/mdatagen) for building this file
+# Also see [metadata-sample.yaml](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/cmd/mdatagen/metadata-sample.yaml)
