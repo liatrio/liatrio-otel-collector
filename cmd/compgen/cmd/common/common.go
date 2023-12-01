@@ -11,7 +11,7 @@ import (
 
 var commandPaths = make(map[string]string)
 
-var PackageDir = "../../pkg"
+const PackageDir = "../../pkg"
 
 type TemplateData struct {
 	Name        string
@@ -55,9 +55,9 @@ func InitNewModule(path string, name string) {
 	// executeCommandWithExitOnError(path, "go mod init "+name)
 }
 
-func PostProcessing(path string) {
-	executeCommandWithExitOnError(path, "go mod tidy -e")
-	executeCommandWithExitOnError(path, "make gen")
+func CompleteModule(modulePath string) {
+	executeCommandWithExitOnError(modulePath, "go mod tidy -e")
+	executeCommandWithExitOnError(modulePath, "make gen")
 }
 
 func RenderTemplates(templateDir string, destinationDir string, templateData TemplateData) {

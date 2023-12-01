@@ -40,5 +40,5 @@ func run(cmd *cobra.Command, args []string) {
 	common.InitNewModule(modulePath, name)
 	data := common.TemplateData{Name: shortName, PackageName: name}
 	common.RenderTemplates("cmd/receiver/templates", modulePath, data)
-	common.PostProcessing(modulePath)
+	common.CompleteModule(modulePath)
 }
