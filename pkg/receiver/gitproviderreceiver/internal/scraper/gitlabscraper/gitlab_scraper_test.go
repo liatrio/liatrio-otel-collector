@@ -5,16 +5,22 @@ package gitlabscraper
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
-	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/pmetrictest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/xanzy/go-gitlab"
+	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 
@@ -33,136 +39,176 @@ func TestNewGitLabScraper(t *testing.T) {
 	assert.NotNil(t, s)
 }
 
-/*
- * Mocks
- */
-type mockClient struct {
-	BranchNames         []string
-	openMergeRequests   []getMergeRequestsProjectMergeRequestsMergeRequestConnection
-	mergedMergeRequests []getMergeRequestsProjectMergeRequestsMergeRequestConnection
-	RootRef             string
-	err                 bool
-	mergedErr           bool
-	openErr             bool
-	errString           string
-	curPage             int
+type responses struct {
+	projectResponse projectResponse
+	branchResponse  branchResponse
+	mrResponse      mrResponse
+	contribResponse contribResponse
+	compareResponse compareResponse
 }
 
-func (m *mockClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
-	switch op := req.OpName; op {
-
-	case "getBranchNames":
-		if m.err {
-			return errors.New(m.errString)
-		}
-		r := resp.Data.(*getBranchNamesResponse)
-		r.Project.Repository.BranchNames = m.BranchNames
-		r.Project.Repository.RootRef = m.RootRef
-
-	case "getMergeRequests":
-		r := resp.Data.(*getMergeRequestsResponse)
-
-		if req.Variables.(*__getMergeRequestsInput).State == "opened" {
-			if m.openErr {
-				return errors.New(m.errString)
-			}
-			if len(m.openMergeRequests) == 0 {
-				return nil
-			}
-			r.Project.MergeRequests = m.openMergeRequests[m.curPage]
-			if m.openMergeRequests[m.curPage].PageInfo.HasNextPage == false {
-				m.curPage = 0
-			} else {
-				m.curPage++
-			}
-
-		} else if req.Variables.(*__getMergeRequestsInput).State == "merged" {
-			if m.mergedErr {
-				return errors.New(m.errString)
-			}
-			if len(m.mergedMergeRequests) == 0 {
-				return nil
-			}
-			r.Project.MergeRequests = m.mergedMergeRequests[m.curPage]
-			if m.mergedMergeRequests[m.curPage].PageInfo.HasNextPage == false {
-				return nil
-			} else {
-				m.curPage++
-			}
-		}
-	}
-
-	return nil
+type branchResponse struct {
+	branches     getBranchNamesProjectRepository
+	responseCode int
 }
 
-// This is from https://github.com/google/go-github/blob/master/github/repos_collaborators_test.go, creates mock http server
-// The github client this library gives us doesn't use interfaces so the current mocking setup doesn't work with it
-// and had to find a different way to create tests
-func setupMockHttpServer() (client *gitlab.Client, mux *http.ServeMux, serverURL string, teardown func()) {
-	// mux is the HTTP request multiplexer used with the test server.
-	baseURLPath := "/api/v4"
-	mux = http.NewServeMux()
+type mrResponse struct {
+	mrs          []getMergeRequestsProjectMergeRequestsMergeRequestConnection
+	page         int
+	responseCode int
+}
 
-	// We want to ensure that tests catch mistakes where the endpoint URL is
-	// specified as absolute rather than relative. It only makes a difference
-	// when there's a non-empty base URL path. So, use that. See issue #752.
-	apiHandler := http.NewServeMux()
-	apiHandler.Handle(baseURLPath+"/", http.StripPrefix(baseURLPath, mux))
-	apiHandler.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprintln(os.Stderr, "FAIL: Client.BaseURL path prefix is not preserved in the request URL:")
-		fmt.Fprintln(os.Stderr)
-		fmt.Fprintln(os.Stderr, "\t"+req.URL.String())
-		fmt.Fprintln(os.Stderr)
-		fmt.Fprintln(os.Stderr, "\tDid you accidentally use an absolute endpoint URL rather than relative?")
-		fmt.Fprintln(os.Stderr, "\tSee https://github.com/google/go-github/issues/752 for information.")
-		http.Error(w, "Client.BaseURL path prefix is not preserved in the request URL.", http.StatusInternalServerError)
+type contribResponse struct {
+	contribs     []*gitlab.Contributor
+	responseCode int
+}
+
+type compareResponse struct {
+	compare      *gitlab.Compare
+	responseCode int
+}
+
+type projectResponse struct {
+	projects     []*gitlab.Project
+	responseCode int
+}
+
+func MockServer(responses *responses) *http.ServeMux {
+	var mux http.ServeMux
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		var reqBody graphql.Request
+		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+			return
+		}
+		switch {
+		// These OpNames need to be name of the GraphQL query as defined in genqlient.graphql
+		case reqBody.OpName == "getBranchNames":
+			branchResp := &responses.branchResponse
+			w.WriteHeader(branchResp.responseCode)
+			if branchResp.responseCode == http.StatusOK {
+				branches := getBranchNamesResponse{
+					Project: getBranchNamesProject{
+						Repository: branchResp.branches,
+					},
+				}
+				graphqlResponse := graphql.Response{Data: &branches}
+				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
+					return
+				}
+			}
+		case reqBody.OpName == "getMergeRequests":
+			mrResp := &responses.mrResponse
+			w.WriteHeader(mrResp.responseCode)
+			if mrResp.responseCode == http.StatusOK {
+				mrs := getMergeRequestsResponse{
+					Project: getMergeRequestsProject{
+						MergeRequests: mrResp.mrs[mrResp.page],
+					},
+				}
+				graphqlResponse := graphql.Response{Data: &mrs}
+				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
+					return
+				}
+				mrResp.page++
+
+				//For getCombinedMergeRequests when the first call to getMergeRequests is finished
+				//and the page count needs to be reset for the second or else you get index out of range
+				if len(mrResp.mrs) == mrResp.page {
+					mrResp.page = 0
+				}
+			}
+		}
+	})
+	mux.HandleFunc("/api/v4/projects/project/repository/contributors", func(w http.ResponseWriter, r *http.Request) {
+		contribResp := &responses.contribResponse
+		if contribResp.responseCode == http.StatusOK {
+			contribs, err := json.Marshal(contribResp.contribs)
+			if err != nil {
+				fmt.Printf("error marshalling response: %v", err)
+			}
+			_, err = w.Write(contribs)
+			if err != nil {
+				fmt.Printf("error writing response: %v", err)
+			}
+		}
 	})
 
-	// server is a test HTTP server used to provide mock API responses.
-	server := httptest.NewServer(apiHandler)
-
-	// client is the GitHub client being tested and is
-	// configured to use test server.
-	url, err := url.Parse(server.URL + baseURLPath + "/")
-	if err != nil {
-		return nil, nil, "", nil
-	}
-	client, err = gitlab.NewClient("", gitlab.WithBaseURL(url.String()))
-	if err != nil {
-		return nil, nil, "", nil
-	}
-
-	return client, mux, server.URL, server.Close
+	mux.HandleFunc("/api/v4/projects/project/repository/compare", func(w http.ResponseWriter, r *http.Request) {
+		compareResp := &responses.compareResponse
+		if compareResp.responseCode == http.StatusOK {
+			compare, err := json.Marshal(compareResp.compare)
+			if err != nil {
+				fmt.Printf("error marshalling response: %v", err)
+			}
+			_, err = w.Write(compare)
+			if err != nil {
+				fmt.Printf("error writing response: %v", err)
+			}
+		}
+	})
+	mux.HandleFunc("/api/v4/groups/project/projects", func(w http.ResponseWriter, r *http.Request) {
+		projectResp := &responses.projectResponse
+		if projectResp.responseCode == http.StatusOK {
+			compare, err := json.Marshal(projectResp.projects)
+			if err != nil {
+				fmt.Printf("error marshalling response: %v", err)
+			}
+			_, err = w.Write(compare)
+			if err != nil {
+				fmt.Printf("error writing response: %v", err)
+			}
+		}
+	})
+	return &mux
 }
 
 func TestGetContributorCount(t *testing.T) {
-	client, mux, _, teardown := setupMockHttpServer()
-
-	defer teardown()
-	mux.HandleFunc("/projects/project/repository/contributors", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, `[{"name":"john"}, {"name":"doe"}]`)
-	})
-
 	testCases := []struct {
 		desc          string
-		projectPath   string
 		resp          string
 		expectedErr   error
+		server        *http.ServeMux
 		expectedCount int
 	}{
 		{
-			desc:          "valid",
-			resp:          `[{"name":"john"}, {"name":"doe"}]`,
-			projectPath:   "project",
+			desc: "TestSingleContributor",
+			server: MockServer(&responses{
+				contribResponse: contribResponse{
+					contribs: []*gitlab.Contributor{
+						{
+							Name:    "contrib1",
+							Commits: 1,
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedCount: 1,
 			expectedErr:   nil,
-			expectedCount: 2,
 		},
 		{
-			desc:        "error",
-			projectPath: "junk",
-			expectedErr: errors.New("GET " + client.BaseURL().String() +
-				"projects/junk/repository/contributors: 404 failed to parse unknown error format: 404 page not found\n"),
-			expectedCount: 0,
+			desc: "TestMultipleContributors",
+			server: MockServer(&responses{
+				contribResponse: contribResponse{
+					contribs: []*gitlab.Contributor{
+						{
+							Name:    "contrib1",
+							Commits: 1,
+						},
+						{
+							Name:    "contrib2",
+							Commits: 1,
+						},
+						{
+							Name:    "contrib3",
+							Commits: 1,
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedCount: 3,
+			expectedErr:   nil,
 		},
 	}
 
@@ -172,8 +218,11 @@ func TestGetContributorCount(t *testing.T) {
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopCreateSettings()
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
-
-			contribs, err := gls.getContributorCount(client, tc.projectPath)
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
+			client, err := gitlab.NewClient("", gitlab.WithBaseURL(server.URL))
+			assert.NoError(t, err)
+			contribs, err := gls.getContributorCount(client, "project")
 
 			assert.Equal(t, tc.expectedCount, contribs)
 			if tc.expectedErr != nil {
@@ -190,115 +239,85 @@ func TestGetContributorCount(t *testing.T) {
  */
 func TestGetMergeRequests(t *testing.T) {
 	testCases := []struct {
-		desc                      string
-		client                    graphql.Client
-		expectedErr               error
-		expectedMergeRequestCount int
-		state                     string
+		desc          string
+		server        *http.ServeMux
+		state         string
+		expectedErr   error
+		expectedCount int
 	}{
 		{
-			desc:                      "empty mergeRequestData",
-			client:                    &mockClient{},
-			expectedErr:               nil,
-			expectedMergeRequestCount: 0,
-		},
-		{
-			desc:                      "produce error for open merge requests",
-			client:                    &mockClient{openErr: true, errString: "An error has occurred"},
-			expectedErr:               errors.New("An error has occurred"),
-			expectedMergeRequestCount: 0,
-			state:                     "opened",
-		},
-		{
-			desc:                      "produce error for merged merge requests",
-			client:                    &mockClient{mergedErr: true, errString: "An error has occurred"},
-			expectedErr:               errors.New("An error has occurred"),
-			expectedMergeRequestCount: 0,
-			state:                     "merged",
-		},
-		{
-			desc: "valid mergeRequestData",
-			client: &mockClient{
-				mergedMergeRequests: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
-					{
-						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
-							HasNextPage: false,
-						},
-						Nodes: []MergeRequestNode{
-							{
-								SourceBranch: "main",
+			desc: "TestSinglePage",
+			server: MockServer(&responses{
+				mrResponse: mrResponse{
+					mrs: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
+						{
+							Nodes: []MergeRequestNode{
+								{
+									Title: "mr1",
+								},
 							},
-							{
-								SourceBranch: "dev",
-							},
-							{
-								SourceBranch: "feature",
+							PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+								HasNextPage: false,
 							},
 						},
 					},
+					responseCode: http.StatusOK,
 				},
-			},
-			state:                     "merged",
-			expectedErr:               nil,
-			expectedMergeRequestCount: 3,
+			}),
+			expectedCount: 1,
+			expectedErr:   nil,
 		},
 		{
-			desc: "valid mergeRequestData, multiple pages",
-			client: &mockClient{
-				mergedMergeRequests: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
-					{
-						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
-							HasNextPage: true,
-						},
-						Nodes: []MergeRequestNode{
-							{
-								SourceBranch: "main",
+			desc: "TestMultiplePages",
+			server: MockServer(&responses{
+				mrResponse: mrResponse{
+					mrs: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
+						{
+							Nodes: []MergeRequestNode{
+								{
+									Title: "mr1",
+								},
 							},
-							{
-								SourceBranch: "dev",
-							},
-							{
-								SourceBranch: "feature",
+							PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+								HasNextPage: true,
 							},
 						},
-					},
-					{
-						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
-							HasNextPage: true,
-						},
-						Nodes: []MergeRequestNode{
-							{
-								SourceBranch: "main",
+						{
+							Nodes: []MergeRequestNode{
+								{
+									Title: "mr2",
+								},
 							},
-							{
-								SourceBranch: "dev",
-							},
-							{
-								SourceBranch: "feature",
+							PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+								HasNextPage: true,
 							},
 						},
-					},
-					{
-						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
-							HasNextPage: false,
-						},
-						Nodes: []MergeRequestNode{
-							{
-								SourceBranch: "main",
+						{
+							Nodes: []MergeRequestNode{
+								{
+									Title: "mr3",
+								},
 							},
-							{
-								SourceBranch: "dev",
-							},
-							{
-								SourceBranch: "feature",
+							PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+								HasNextPage: false,
 							},
 						},
 					},
+					responseCode: http.StatusOK,
 				},
-			},
-			expectedErr:               nil,
-			expectedMergeRequestCount: 9,
-			state:                     "merged",
+			}),
+			expectedCount: 3,
+			expectedErr:   nil,
+		},
+		{
+			desc: "Test404Error",
+			server: MockServer(&responses{
+				mrResponse: mrResponse{
+					responseCode: http.StatusNotFound,
+				},
+			}),
+			expectedCount: 0,
+			expectedErr:   errors.New("returned error 404 Not Found: "),
 		},
 	}
 	for _, tc := range testCases {
@@ -307,139 +326,104 @@ func TestGetMergeRequests(t *testing.T) {
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopCreateSettings()
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
 
-			mergeRequestData, err := gls.getMergeRequests(context.Background(), tc.client, "projectPath", MergeRequestState(tc.state))
+			client := graphql.NewClient(server.URL, gls.client)
 
-			assert.Equal(t, tc.expectedMergeRequestCount, len(mergeRequestData))
-			assert.Equal(t, tc.expectedErr, err)
+			mergeRequestData, err := gls.getMergeRequests(context.Background(), client, "projectPath", MergeRequestState("opened"))
+
+			assert.Equal(t, tc.expectedCount, len(mergeRequestData))
+			if tc.expectedErr != nil {
+				assert.Equal(t, tc.expectedErr, err)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
 
 func TestGetCombinedMergeRequests(t *testing.T) {
 	testCases := []struct {
-		desc                      string
-		client                    graphql.Client
-		expectedErr               error
-		expectedMergeRequestCount int
+		desc          string
+		server        *http.ServeMux
+		state         string
+		expectedErr   error
+		expectedCount int
 	}{
 		{
-			desc:                      "empty mergeRequestData",
-			client:                    &mockClient{},
-			expectedErr:               nil,
-			expectedMergeRequestCount: 0,
-		},
-		{
-			desc:                      "produce error for open merge requests",
-			client:                    &mockClient{openErr: true, errString: "An error has occurred"},
-			expectedErr:               errors.New("An error has occurred"),
-			expectedMergeRequestCount: 0,
-		},
-		{
-			desc:                      "produce error for merged merge requests",
-			client:                    &mockClient{mergedErr: true, errString: "An error has occurred"},
-			expectedErr:               errors.New("An error has occurred"),
-			expectedMergeRequestCount: 0,
-		},
-		{
-			desc: "valid mergeRequestData",
-			client: &mockClient{
-				mergedMergeRequests: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
-					{
-						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
-							HasNextPage: false,
-						},
-						Nodes: []MergeRequestNode{
-							{
-								SourceBranch: "main",
+			desc: "TestSinglePage",
+			server: MockServer(&responses{
+				mrResponse: mrResponse{
+					mrs: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
+						{
+							Nodes: []MergeRequestNode{
+								{
+									Title: "mr1",
+								},
 							},
-							{
-								SourceBranch: "dev",
-							},
-							{
-								SourceBranch: "feature",
+							PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+								HasNextPage: false,
 							},
 						},
 					},
+					responseCode: http.StatusOK,
 				},
-			},
-			expectedErr:               nil,
-			expectedMergeRequestCount: 3,
+			}),
+			expectedCount: 2, //because theres two calls to getMergeRequests using this same data
+			expectedErr:   nil,
 		},
 		{
-			desc: "valid open mergeRequestData, valid merged mergeRequestData with multiple pages",
-			client: &mockClient{
-				mergedMergeRequests: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
-					{
-						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
-							HasNextPage: true,
-						},
-						Nodes: []MergeRequestNode{
-							{
-								SourceBranch: "main",
+			desc: "TestMultiplePages",
+			server: MockServer(&responses{
+				mrResponse: mrResponse{
+					mrs: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
+						{
+							Nodes: []MergeRequestNode{
+								{
+									Title: "mr1",
+								},
 							},
-							{
-								SourceBranch: "dev",
-							},
-							{
-								SourceBranch: "feature",
+							PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+								HasNextPage: true,
 							},
 						},
-					},
-					{
-						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
-							HasNextPage: true,
-						},
-						Nodes: []MergeRequestNode{
-							{
-								SourceBranch: "main",
+						{
+							Nodes: []MergeRequestNode{
+								{
+									Title: "mr2",
+								},
 							},
-							{
-								SourceBranch: "dev",
-							},
-							{
-								SourceBranch: "feature",
+							PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+								HasNextPage: true,
 							},
 						},
-					},
-					{
-						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
-							HasNextPage: false,
-						},
-						Nodes: []MergeRequestNode{
-							{
-								SourceBranch: "main",
+						{
+							Nodes: []MergeRequestNode{
+								{
+									Title: "mr3",
+								},
 							},
-							{
-								SourceBranch: "dev",
-							},
-							{
-								SourceBranch: "feature",
+							PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
+								HasNextPage: false,
 							},
 						},
 					},
+					responseCode: http.StatusOK,
 				},
-				openMergeRequests: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
-					{
-						PageInfo: getMergeRequestsProjectMergeRequestsMergeRequestConnectionPageInfo{
-							HasNextPage: false,
-						},
-						Nodes: []MergeRequestNode{
-							{
-								SourceBranch: "main",
-							},
-							{
-								SourceBranch: "dev",
-							},
-							{
-								SourceBranch: "feature",
-							},
-						},
-					},
+			}),
+			expectedCount: 6,
+			expectedErr:   nil,
+		},
+		{
+			desc: "Test404Error",
+			server: MockServer(&responses{
+				mrResponse: mrResponse{
+					responseCode: http.StatusNotFound,
 				},
-			},
-			expectedErr:               nil,
-			expectedMergeRequestCount: 12,
+			}),
+			expectedCount: 0,
+			expectedErr:   errors.New("returned error 404 Not Found: "),
 		},
 	}
 	for _, tc := range testCases {
@@ -448,11 +432,138 @@ func TestGetCombinedMergeRequests(t *testing.T) {
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopCreateSettings()
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
 
-			mergeRequestData, err := gls.getCombinedMergeRequests(context.Background(), tc.client, "projectPath")
+			client := graphql.NewClient(server.URL, gls.client)
 
-			assert.Equal(t, tc.expectedMergeRequestCount, len(mergeRequestData))
-			assert.Equal(t, tc.expectedErr, err)
+			mergeRequestData, err := gls.getCombinedMergeRequests(context.Background(), client, "projectPath")
+
+			assert.Equal(t, tc.expectedCount, len(mergeRequestData))
+			if tc.expectedErr != nil {
+				assert.Equal(t, tc.expectedErr, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestScrape(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		resp          string
+		expectedErr   error
+		server        *http.ServeMux
+		expectedCount int
+		testFile      string
+	}{
+		{
+			desc: "No Projects",
+			server: MockServer(&responses{
+				projectResponse: projectResponse{
+					projects:     []*gitlab.Project{},
+					responseCode: http.StatusOK,
+				},
+			}),
+			testFile:    "expected_no_projects.yaml",
+			expectedErr: errors.New("no GitLab projects found for the given group/org: project"),
+		},
+		{
+			desc: "Happy Path",
+			server: MockServer(&responses{
+				projectResponse: projectResponse{
+					projects: []*gitlab.Project{
+						{
+							Name:              "project",
+							PathWithNamespace: "project",
+							CreatedAt:         gitlab.Time(time.Now().AddDate(0, 0, -1)),
+							LastActivityAt:    gitlab.Time(time.Now().AddDate(0, 0, -1)),
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				branchResponse: branchResponse{
+					branches: getBranchNamesProjectRepository{
+						BranchNames: []string{"branch1"},
+					},
+					responseCode: http.StatusOK,
+				},
+				mrResponse: mrResponse{
+					mrs: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
+						{
+							Nodes: []MergeRequestNode{
+								{
+									Title:     "mr1",
+									CreatedAt: time.Now().AddDate(0, 0, -1),
+								},
+								{
+									Title:    "mr1",
+									MergedAt: time.Now().AddDate(0, 0, -1),
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				contribResponse: contribResponse{
+					contribs: []*gitlab.Contributor{
+						{
+							Name:      "contrib1",
+							Additions: 1,
+							Deletions: 1,
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				compareResponse: compareResponse{
+					compare: &gitlab.Compare{
+						Commits: []*gitlab.Commit{
+							{
+								Title:     "commit1",
+								CreatedAt: gitlab.Time(time.Now().AddDate(0, 0, -1)),
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			testFile: "expected_happy_path.yaml",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
+
+			cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+
+			gls := newGitLabScraper(context.Background(), receivertest.NewNopCreateSettings(), cfg)
+			gls.cfg.GitLabOrg = "project"
+			gls.cfg.HTTPClientSettings.Endpoint = server.URL
+
+			err := gls.start(context.Background(), componenttest.NewNopHost())
+			require.NoError(t, err)
+
+			actualMetrics, err := gls.scrape(context.Background())
+			if tc.expectedErr != nil {
+				require.Equal(t, tc.expectedErr, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			expectedFile := filepath.Join("testdata", "scraper", tc.testFile)
+			expectedMetrics, err := golden.ReadMetrics(expectedFile)
+			require.NoError(t, err)
+
+			require.NoError(t, pmetrictest.CompareMetrics(
+				expectedMetrics,
+				actualMetrics,
+				pmetrictest.IgnoreMetricDataPointsOrder(),
+				pmetrictest.IgnoreTimestamp(),
+				pmetrictest.IgnoreStartTimestamp(),
+			))
 		})
 	}
 }
