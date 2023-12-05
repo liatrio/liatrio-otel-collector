@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	errConfigNotValid = errors.New("configuration is not valid")
+	ErrConfigNotValid = errors.New("configuration is not valid")
 )
 
 // NewFactory creates a factory for the new receiver
@@ -46,7 +46,7 @@ func createMetricsReceiver(
 	// check that the configuration is valid
 	conf, ok := cfg.(*Config)
 	if !ok {
-		return nil, errConfigNotValid
+		return nil, ErrConfigNotValid
 	}
 
 	scraperConfig := internal.ScraperConfig{ScraperControllerSettings: conf.ScraperControllerSettings}

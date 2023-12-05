@@ -5,7 +5,6 @@ package {{ .Name }}
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,9 +12,6 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/receiver/receivertest"
-	"go.opentelemetry.io/collector/receiver/scraperhelper"
-
-	"{{ .PackageName }}/internal/metadata"
 )
 
 var creationSet = receivertest.NewNopCreateSettings()
@@ -45,14 +41,8 @@ func TestCreateReceiver(t *testing.T) {
 }
 
 func TestCreateReceiver_ScraperConfigError(t *testing.T) {
-	const errorKey string = "error"
-
 	factory := NewFactory()
-	cfg := &Config{
-		ScraperControllerSettings: scraperhelper.NewDefaultScraperControllerSettings(metadata.Type),
-		sample:                    Sample{"data"},
-	}
 
-	_, err := factory.CreateMetricsReceiver(context.Background(), creationSet, cfg, consumertest.NewNop())
-	assert.EqualError(t, err, fmt.Sprintf("failed to create scraper %q: factory not found for scraper %q", errorKey, errorKey))
+	_, err := factory.CreateMetricsReceiver(context.Background(), creationSet, "dummy", consumertest.NewNop())
+	assert.EqualError(t, err, ErrConfigNotValid.Error())
 }
