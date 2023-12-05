@@ -9,9 +9,7 @@ What does your receiver do?
 ## Getting Started
 
 ```yaml
-{{ .Name }}]:
-    sample:
-        config: data
+sample: data
 ```
 
 Here is a more complete example:
@@ -19,12 +17,27 @@ Here is a more complete example:
 ```yaml
 receivers:
     {{ .Name }}:
-        sample:
-            config: data
+        sample: data
 service:
     pipelines:
         metrics:
             receivers: [..., {{ .Name }}]
             processors: []
             exporters: [...]
+```
+
+## Building Into The OTEL Binary
+
+When ready, you can compile this component into Open Telemetry using OCB. Update config/manifest.yaml in this repo with the following configuration:
+
+```yaml
+receivers:
+    - gomod: {{ .PackageName }} v0.1.0
+```
+
+This will instruct OCB to include {{ .Name }} when compiling Open Telemetry. Include the following configuration to instruct OCB to use the local code:
+
+```yaml
+replaces:
+    - {{ .PackageName }} => ../pkg/receiver/{{ .Name }}/
 ```
