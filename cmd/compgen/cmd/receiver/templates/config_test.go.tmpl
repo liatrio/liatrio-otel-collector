@@ -1,5 +1,3 @@
-/////////// Updated December 1, 2023 ///////////
-
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
@@ -10,90 +8,129 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
 )
 
-////////////////// Testing Begins ///////////
+////////////////// Testing Begins //////////////////
 
 func TestConfig_Unmarshal(t *testing.T) {
 	type fields struct {
 		ScraperControllerSettings scraperhelper.ScraperControllerSettings
 		sample                    string
 	}
-	type args struct {
-		componentParser *confmap.Conf
-	}
-	// TODO import different config files for each test instead of 1 global file
-	confMap, errCM := confmaptest.LoadConf(filepath.Join("testdata", "cfg-no-string.yaml"))
-	if errCM != nil {
-		return
-	}
 	tests := []struct {
-		name    string
-		confMap *confmap.Conf
-		fields  fields
-		args    args
-		wantErr error
+		name       string // Name of the test
+		confMapKey string // confMapKey for filename
+		fields     fields // config to be passed into Unmarshal()
+		wantErr    error  // error expected from function
+		wantConfig Config // config output from function
+		wantErrCM  error  // errorCM expected from reading file
 	}{ // Test Cases for Unmarshal() Function
 		{ // Test to see if the config file reads properly
-			name:    "default config pass",
-			confMap: confMap,
-			fields:  fields{},
-			args:    args{componentParser: confMap},
-			wantErr: nil,
+			name:       "default config happy",
+			confMapKey: "cfg-happy.yaml",
+			fields:     fields{},
+			wantErr:    nil,
+			wantConfig: Config{
+				sample: "stoof",
+			},
+			wantErrCM: nil,
 		},
 		{ // Test to see if there is no value in the sample field of config
-			name:    "no value pass",
-			confMap: confMap,
-			fields:  fields{},
-			args:    args{componentParser: confMap},
-			wantErr: nil,
+			name:       "no sample value",
+			confMapKey: "cfg-no-sample-data.yaml",
+			fields:     fields{},
+			wantErr:    ErrMustNotNil,
+			wantConfig: Config{},
+			wantErrCM:  nil,
 		},
 		{ // Test to see if the sample field doesn't exist in the config
-			name:    "no sample",
-			confMap: confMap,
-			fields:  fields{},
-			args:    args{componentParser: confMap},
-			wantErr: ErrSampleConfig,
+			name:       "no sample field",
+			confMapKey: "cfg-no-sample.yaml",
+			fields:     fields{},
+			wantErr:    nil,
+			wantConfig: Config{
+				sample: "data",
+			},
+			wantErrCM: nil,
 		},
 		{ // Test to see if the sample field contains a string
-			name:    "not a string",
-			confMap: confMap,
-			fields:  fields{},
-			args:    args{componentParser: confMap},
-			wantErr: ErrMustString,
+			name:       "not a string",
+			confMapKey: "cfg-no-string.yaml",
+			fields:     fields{},
+			wantErr:    ErrMustString,
+			wantConfig: Config{},
+			wantErrCM:  nil,
 		},
-		{ // Test to see if the sample field has only lowercase letters
-			name:    "no lowercase",
-			confMap: confMap,
-			fields:  fields{},
-			args:    args{componentParser: confMap},
-			wantErr: ErrMustLowercase,
+		{ // Test to see if a config file exist
+			name:       "no data in file",
+			confMapKey: "stoof.yaml",
+			fields:     fields{},
+			wantErr:    nil,
+			wantConfig: Config{
+				sample: "data",
+			},
+			wantErrCM: nil,
 		},
-		// { // TODO Test to see if a config file exist
-		// 	name:    "no config pass",
-		// 	confMap: confMap,
-		// 	fields:  fields{},
-		// 	args:    args{componentParser: confMap},
-		// 	wantErr: ErrMustString,
-		// },
 	}
-	for _, tt := range tests {
+	for _, tt := range tests { // loop through test struct objects
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &Config{
+			cfg := &Config{ // config to pass into Unmarshal() function
 				ScraperControllerSettings: tt.fields.ScraperControllerSettings,
 				sample:                    tt.fields.sample,
 			}
-			err := cfg.Unmarshal(tt.args.componentParser)
-			if err == nil {
-				t.Errorf("Config.Unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+			confMap, errCM := confmaptest.LoadConf(filepath.Join("testdata", tt.confMapKey))
+			if !errors.Is(errCM, tt.wantErrCM) { // Chec if file is supposed to exist or not
+				t.Errorf("Could not read config.yaml file: %v", tt.confMapKey)
 			}
-			if errors.Is(err, tt.wantErr) {
-				t.Errorf("Config.Unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+			err := cfg.Unmarshal(confMap)    // confMap is dynamic instead of static now
+			if !errors.Is(err, tt.wantErr) { // check if the error message returned was correct
+				t.Errorf("Config.Unmarshal() error: %v, wantErr is: %v", err, tt.wantErr)
 			}
 			// TODO check config to see if that was updated properly (cfg)
+			if tt.wantConfig.sample != cfg.sample {
+				t.Errorf("cfg.sample value is: %v, wantConfig is: %v", cfg.sample, tt.wantConfig.sample)
+			}
+		})
+	}
+}
+
+func TestConfig_Validate(t *testing.T) {
+	tests := []struct {
+		name    string // Name of the test
+		wantErr error  // error expected from function
+		config  Config // config output from function
+	}{ // Test Cases for Validate() Function
+		{ // happy test to see if the function returns nil error
+			name:    "happy config no error",
+			wantErr: nil,
+			config: Config{
+				sample: "stoof",
+			},
+		},
+		{ // no sample config, so the function should return error
+			name:    "no sample config",
+			wantErr: ErrSampleConfig,
+			config: Config{
+				sample: "",
+			},
+		},
+		{ // no sample data, so function should return error
+			name:    "sample data must be lowercase",
+			wantErr: ErrMustLowercase,
+			config: Config{
+				sample: "StOof",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := tt.config // Set config to variable provided in test cases
+			err := cfg.Validate()
+			if !errors.Is(err, tt.wantErr) { // check if the error message returned was correct
+				t.Errorf("Config.Validate() error: %v, wantErr is: %v", err, tt.wantErr)
+			}
 		})
 	}
 }
