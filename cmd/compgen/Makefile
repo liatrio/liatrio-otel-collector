@@ -1,7 +1,5 @@
 include ../../Makefile.Common
 
-.PHONY: compgen
+.PHONY: install
 compgen:
 	go install .
-	rm -fr ../../pkg/receiver/MyAwesomeReceiver/
-	compgen receiver github.com/liatrio/liatrio-otel-collector/pkg/receiver/MyAwesomeReceiver

@@ -111,7 +111,3 @@ checks:
 	else \
 		echo "completed successfully."; \
 	fi
-
-.PHONY: new-component
-new-component:
-	$(MAKE) -C cmd/compgen compgen
