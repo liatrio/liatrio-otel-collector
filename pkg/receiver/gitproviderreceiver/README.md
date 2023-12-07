@@ -117,8 +117,8 @@ The available scrapers are:
 
 ## Rate Limiting
 
-Given this receiver scrapes data from Git providers it is subject to rate
-limiting. The following sections will give some sensible defaults for each
+Given this receiver scrapes data from Git providers, it is subject to rate
+limiting. The following section will give some sensible defaults for each
 git provider.
 
 ### GitHub
