@@ -9,8 +9,6 @@ import (
 	"text/template"
 )
 
-var commandPaths = make(map[string]string)
-
 const PackageDir = "../../pkg"
 
 type TemplateData struct {
@@ -18,46 +16,20 @@ type TemplateData struct {
 	PackageName string
 }
 
-func executeCommandWithExitOnError(workingDirectory string, command string) {
-	var err error
-
-	commandSlice := strings.Split(command, " ")
-	if commandSlice[0] == "" {
-		log.Fatal("missing command")
-	}
-
-	execPath := commandPaths[commandSlice[0]]
-
-	if execPath == "" {
-		execPath, err = exec.LookPath(commandSlice[0])
-		if err != nil {
-			log.Fatal(err)
-		}
-		commandPaths[commandSlice[0]] = execPath
-	}
-
-	cmd := exec.Command(execPath, commandSlice[1:]...)
-	cmd.Dir = workingDirectory
+func CompleteModule(modulePath string) {
+	cmd := exec.Command("go", "mod", "tidy", "-e")
+	cmd.Dir = modulePath
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Fatal(string(output))
 	}
-}
 
-func InitNewModule(path string, name string) {
-
-	// create module directory
-	err := os.MkdirAll(path, os.ModePerm)
+	cmd = exec.Command("make", "gen")
+	cmd.Dir = modulePath
+	output, err = cmd.CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(string(output))
 	}
-
-	// executeCommandWithExitOnError(path, "go mod init "+name)
-}
-
-func CompleteModule(modulePath string) {
-	executeCommandWithExitOnError(modulePath, "go mod tidy -e")
-	executeCommandWithExitOnError(modulePath, "make gen")
 }
 
 func RenderTemplates(templateDir string, destinationDir string, templateData TemplateData) {
