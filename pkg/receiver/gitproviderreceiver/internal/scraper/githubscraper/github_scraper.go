@@ -65,6 +65,8 @@ func newGitHubScraper(
 	}
 }
 
+// Current GraphQL cost 2
+// See genqlient.graphql getPullRequestData for more information
 func (ghs *githubScraper) getPullRequests(
 	ctx context.Context,
 	client graphql.Client,

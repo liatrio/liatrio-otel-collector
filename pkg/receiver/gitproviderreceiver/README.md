@@ -131,13 +131,13 @@ receiver can at most scrape 1250 repositories per hour.
 
 Given this average cost a good collection interval in seconds is
 
-```go
-(repository_count * 4 / hourly_graphql_rate / 3600) + 300
-```
+$(n4/r/3600) + 300$
 
-`hourly_graphql_rate` is likely 5000 but there are factors that can change this,
+where $n$ is the number of repositories and $r$ is the rate limit.
+
+$r$ is likely 5000 but there are factors that can change this,
 for more information see [GitHub's docs](https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#primary-rate-limit).
-The `300` is a buffer to account for this being a rough estimate and to account
+The $300$ is a buffer to account for this being a rough estimate and to account
 for the initial query to grab repositories.
 
 It is recommended to use the `search_query` config option to limit the number of
