@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Otel Collector in debug",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${fileDirname}",
+      "args": [
+        "--config",
+        "../config/config.yaml"
+      ],
+      "envFile": "${workspaceFolder}/../.debug.env"
+    }
+  ]
+}

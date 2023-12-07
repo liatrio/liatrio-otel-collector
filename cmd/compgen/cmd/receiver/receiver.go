@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	common "github.com/liatrio/compgen/cmd/common"
@@ -44,7 +45,11 @@ func run(cmd *cobra.Command, args []string) {
 	shortName := name[strings.LastIndex(name, "/")+1:]
 	modulePath := common.PackageDir + "/receiver/" + shortName
 
-	common.InitNewModule(modulePath, name)
+	err := os.MkdirAll(modulePath, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	data := common.TemplateData{Name: shortName, PackageName: name}
 	common.RenderTemplates("cmd/receiver/templates", modulePath, data)
 	common.CompleteModule(modulePath)
