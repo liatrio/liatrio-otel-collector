@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -8,11 +9,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var shortDescription = "Build a new Open Telemetry receiver component"
+var longDescription = `
+receiverName: A full module path (https://go.dev/ref/mod#glos-module-path)
+  E.g. 'github.com/liatrio/liatrio-otel-collector/pkg/receiver/myreceiver'`
+
 // ReceiverCmd represents the receiver command
 var ReceiverCmd = &cobra.Command{
-	Use:   "receiver",
-	Short: "Build a new Open Telemetry receiver component",
-	Long:  `Build a new Open Telemetry receiver component`,
+	Use:   "receiver [flags] receiverName",
+	Short: shortDescription,
+	Long:  fmt.Sprint(shortDescription, "\n", longDescription),
+	Args:  cobra.MinimumNArgs(1),
 	Run:   run,
 }
 

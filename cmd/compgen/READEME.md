@@ -1,12 +1,36 @@
 # Compgen
 
-Compgen is a tool for building new otel components.
+Compgen is a tool for building new otel components. The following component types are currently supported:
+
+- [Receivers](https://opentelemetry.io/docs/collector/configuration/#receivers)
+  - Pull (Scraper)
+    - [ ] Logs
+    - [x] Metrics
+    - [ ] Traces
+  - Push
+    - [ ] Logs
+    - [ ] Metrics
+    - [ ] Traces
+- [ ] [Processors](https://opentelemetry.io/docs/collector/configuration/#processors)
+- [ ] [Exporters](https://opentelemetry.io/docs/collector/configuration/#exporters)
 
 ## Usage
 
-    compgen receiver [receiver-name]
+    Compgen is a tool for building new receivers, processors, and 
+        exporters for Open Telemetry.
 
-The `receiver-name` should be a full [module path](https://go.dev/ref/mod#glos-module-path). For example, if you wish to build a new receiver with a short name of `SomeNewReceiver`, then pass this string to the receiver-name argument: `github.com/liatrio/liatrio-otel-collector/pkg/receiver/SomeNewReceiver`
+    Usage:
+      compgen [command]
+
+    Available Commands:
+      completion  Generate the autocompletion script for the specified shell
+      help        Help about any command
+      receiver    Build a new Open Telemetry receiver component
+
+    Flags:
+      -h, --help   help for compgen
+
+    Use "compgen [command] --help" for more information about a command.
 
 ## Adding Commands
 
