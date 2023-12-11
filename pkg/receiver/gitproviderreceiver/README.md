@@ -123,7 +123,7 @@ git provider.
 
 ### GitHub
 
-This receiver primarily interacts with GitHub's GraphQL API. The default rate
+The GitHub scraper within this receiver primarily interacts with GitHub's GraphQL API. The default rate
 limit for GraphQL API is 5,000 points per hour (unless your PAT is associated
 to a GitHub Enterprise Cloud organization then your limit is 10,000).
 The receiver on average costs 4 points per repository. This means that the
@@ -141,9 +141,9 @@ The $300$ is a buffer to account for this being a rough estimate and to account
 for the initial query to grab repositories.
 
 It is recommended to use the `search_query` config option to limit the number of
-repositories that are scraped. We recommend one receiver per team (note: `team`
+repositories that are scraped. We recommend one instance of the receiver per team (note: `team`
 is not a valid quantifier when searching repositories `topic` is). Reminder that
-each receiver should have its own `GITHUB_PAT` as this is what rate limits are
+each instance of the receiver should have its own corresponding token for authentication as this is what rate limits are
 tied to.
 
 **Additional Resources:**
