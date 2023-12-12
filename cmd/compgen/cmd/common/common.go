@@ -24,16 +24,6 @@ func Tidy(path string) {
 	}
 }
 
-// Executes `make gen`
-func Gen(path string) {
-	cmd := exec.Command("make", "gen")
-	cmd.Dir = path
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		panic(string(output))
-	}
-}
-
 func Render(source fs.FS, destination string, data TemplateData) error {
 	// Iterate over all files/folders in 'source' and execute func() for entry found
 	return fs.WalkDir(source, "templates", func(path string, entry fs.DirEntry, err error) error {

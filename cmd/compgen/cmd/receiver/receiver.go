@@ -56,5 +56,4 @@ func run(cmd *cobra.Command, args []string) {
 	data := common.TemplateData{Name: name, PackageName: packageName}
 	common.Render(templates, modulePath, data)
 	common.Tidy(modulePath)
-	common.Gen(modulePath)
 }
