@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"log"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,84 +9,77 @@ import (
 	"text/template"
 )
 
-const PackageDir = "../../pkg"
-
 type TemplateData struct {
 	Name        string
 	PackageName string
 }
 
-func CompleteModule(modulePath string) {
+// Executes `go mod tidy`
+func Tidy(path string) {
 	cmd := exec.Command("go", "mod", "tidy", "-e")
-	cmd.Dir = modulePath
+	cmd.Dir = path
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatal(string(output))
-	}
-
-	cmd = exec.Command("make", "gen")
-	cmd.Dir = modulePath
-	output, err = cmd.CombinedOutput()
-	if err != nil {
-		log.Fatal(string(output))
+		panic(string(output))
 	}
 }
 
-func RenderTemplates(templateDir string, destinationDir string, templateData TemplateData) {
-	if len(templateDir) == 0 {
-		log.Fatal("the template directory cannot be an empty string")
+// Executes `make gen`
+func Gen(path string) {
+	cmd := exec.Command("make", "gen")
+	cmd.Dir = path
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		panic(string(output))
 	}
+}
 
-	if len(destinationDir) == 0 {
-		log.Fatal("the destination directory cannot be an empty string")
-	}
-
-	templateDir = filepath.Clean(templateDir)
-	destinationDir = filepath.Clean(destinationDir)
-
-	// Iterate over all files/folders in templateDir and execute func() for entry found
-	err := filepath.WalkDir(templateDir, func(path string, entry os.DirEntry, err error) error {
-		// There was an error reading the directory. So we return the error to stop execution
+func Render(source fs.FS, destination string, data TemplateData) error {
+	// Iterate over all files/folders in 'source' and execute func() for entry found
+	return fs.WalkDir(source, "templates", func(path string, entry fs.DirEntry, err error) error {
+		// There was an error reading the fs. So we return the error to stop execution
 		if err != nil {
 			return err
 		}
 
-		// filepath.WalkDir starts with the root directory passed. So we skip the first iteration
-		if path == templateDir {
+		// WalkDir starts with the root directory passed. So we skip the first iteration
+		if path == "templates" {
 			return nil
 		}
+
+		// We remove the top-level 'templates' directory
+		// E.g. "templates/main.go.tmpl" becomes "main.go.tmpl"
+		newFilename, err := filepath.Rel("templates", path)
+		if err != nil {
+			return err
+		}
+
+		newFilename = filepath.Join(destination, strings.TrimSuffix(newFilename, ".tmpl"))
 
 		// Copy directories
 		if entry.IsDir() {
-			return os.Mkdir(strings.Replace(path, templateDir, destinationDir, 1), os.ModePerm)
+			return os.MkdirAll(newFilename, os.ModePerm)
 		}
 
-		// Ignore non-template files
-		if !strings.HasSuffix(entry.Name(), ".tmpl") {
-			return nil
+		// Note that 'path' is not unmodified
+		if strings.HasSuffix(path, ".tmpl") {
+			content, err := fs.ReadFile(source, path)
+			if err != nil {
+				return err
+			}
+
+			file, err := os.Create(newFilename)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			// The template is finally rendered and immediately written to file
+			tmpl := template.Must(template.New(newFilename).Parse(string(content)))
+			return tmpl.Execute(file, data)
 		}
 
-		content, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		tmpl := template.Must(template.New(path).Parse(string(content)))
-
-		path = strings.TrimSuffix(path, ".tmpl")
-		path = strings.Replace(path, templateDir, destinationDir, 1)
-		file, err := os.Create(path)
-		if err != nil {
-			return err
-		}
-
-		defer file.Close()
-
-		// The template is finally rendered and immediately written to file
-		return tmpl.Execute(file, templateData)
+		// A non-directory, non-template file. Ignore it
+		return nil
 	})
-
-	if err != nil {
-		log.Fatal(err)
-	}
 }

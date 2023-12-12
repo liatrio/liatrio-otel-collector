@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"embed"
 	"fmt"
-	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	common "github.com/liatrio/compgen/cmd/common"
@@ -13,16 +14,22 @@ import (
 var shortDescription = "Build a new Open Telemetry receiver component"
 var longDescription = `
 receiverName: A full module path (https://go.dev/ref/mod#glos-module-path)
-  E.g. 'github.com/liatrio/liatrio-otel-collector/pkg/receiver/myreceiver'`
+  E.g. 'github.com/liatrio/liatrio-otel-collector/pkg/receiver/myreceiver'
+
+outputDir: A full or relative path to a directory that contains receivers
+	E.g. receiver/`
 
 // ReceiverCmd represents the receiver command
 var ReceiverCmd = &cobra.Command{
 	Use:   "receiver [flags] receiverName",
 	Short: shortDescription,
 	Long:  fmt.Sprint(shortDescription, "\n", longDescription),
-	Args:  cobra.MinimumNArgs(1),
+	Args:  cobra.MinimumNArgs(2),
 	Run:   run,
 }
+
+//go:embed templates/*
+var templates embed.FS
 
 func init() {
 	// Here you will define your flags and configuration settings.
@@ -37,20 +44,17 @@ func init() {
 }
 
 func run(cmd *cobra.Command, args []string) {
-	if len(args) == 0 {
-		log.Fatal("A receiver name is required but was not supplied.")
-	}
-	name := args[0]
-
-	shortName := name[strings.LastIndex(name, "/")+1:]
-	modulePath := common.PackageDir + "/receiver/" + shortName
+	packageName := args[0]
+	name := packageName[strings.LastIndex(packageName, "/")+1:]
+	modulePath := filepath.Join(args[1], name)
 
 	err := os.MkdirAll(modulePath, os.ModePerm)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	data := common.TemplateData{Name: shortName, PackageName: name}
-	common.RenderTemplates("cmd/receiver/templates", modulePath, data)
-	common.CompleteModule(modulePath)
+	data := common.TemplateData{Name: name, PackageName: packageName}
+	common.Render(templates, modulePath, data)
+	common.Tidy(modulePath)
+	common.Gen(modulePath)
 }
