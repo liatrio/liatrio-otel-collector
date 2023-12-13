@@ -8,10 +8,12 @@ import (
 	"net/url"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/google/go-github/v53/github"
+	"github.com/google/go-github/v57/github"
 	"go.uber.org/zap"
 )
 
+// Current GraphQL cost 1
+// See genqlient.graphql getRepoDataBySearch for more information
 func (ghs *githubScraper) getRepos(
 	ctx context.Context,
 	client graphql.Client,
@@ -42,6 +44,8 @@ func (ghs *githubScraper) getRepos(
 	return repos, count, nil
 }
 
+// Current GraphQL cost 1
+// See genqlient.graphql getBranchData for more information
 func (ghs *githubScraper) getBranches(
 	ctx context.Context,
 	client graphql.Client,
@@ -53,6 +57,8 @@ func (ghs *githubScraper) getBranches(
 	var branches []BranchNode
 
 	for next := true; next; {
+		// The branchFirst parameter (currently 50) effects query cost and
+		// was a safe threshold to avoid timeouts
 		r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, 50, defaultBranch, cursor)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
@@ -66,6 +72,8 @@ func (ghs *githubScraper) getBranches(
 	return branches, count, nil
 }
 
+// Current GraphQL cost 1
+// See genqlient.graphql getCommitData for more information
 func (ghs *githubScraper) getCommitData(
 	ctx context.Context,
 	client graphql.Client,
@@ -163,7 +171,7 @@ func (ghs *githubScraper) createClients() (gClient graphql.Client, rClient *gith
 
 		// The rest client needs the endpoint to be the root of the server
 		rURL := ghs.cfg.HTTPClientSettings.Endpoint
-		rClient, err = github.NewEnterpriseClient(rURL, rURL, ghs.client)
+		rClient, err = github.NewClient(ghs.client).WithEnterpriseURLs(rURL, rURL)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error: %v", err)
 			return nil, nil, err

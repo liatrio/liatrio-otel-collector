@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	"go.uber.org/zap"
 
-	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
 )
 
 var errClientNotInitErr = errors.New("http client not initialized")
@@ -65,6 +65,8 @@ func newGitHubScraper(
 	}
 }
 
+// Current GraphQL cost 2
+// See genqlient.graphql getPullRequestData for more information
 func (ghs *githubScraper) getPullRequests(
 	ctx context.Context,
 	client graphql.Client,

@@ -1299,6 +1299,18 @@ query getBranchData ($name: String!, $owner: String!, $branchFirst: Int!, $targe
 }
 `
 
+// Query cost breakdown (highlights are the only things that cost points)
+// repository: 1
+// refs: 1 (even though we fetch $branchFrist branches it is a single request)
+// nodes:
+// compare: 1 * $branchFirst (this has to be done for each branch)
+//
+// Cost = math.Floor((1 + 1 + $branchFirst) / 100)
+// Normalized Cost: 1 point per repo per 50 branches
+//
+// REEVALUATE THIS ESTIMATE query is updated. Please update our docs if you do!
+// docs: https://github.com/liatrio/liatrio-otel-collector/blob/9bb60b22b88f52f6d51a83b96e7c398d6b450dfc/pkg/receiver/gitproviderreceiver/README.md#rate-limiting
+// https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#predicting-the-point-value-of-a-query
 func getBranchData(
 	ctx context.Context,
 	client graphql.Client,
@@ -1364,6 +1376,19 @@ query getCommitData ($name: String!, $owner: String!, $branchFirst: Int!, $commi
 }
 `
 
+// Query cost breakdown (highlights are the only things that cost points)
+// repository: 1
+// refs: 1 (even though we fetch $branchFrist branches it is a single request)
+// nodes:
+// target:
+// history: 1 * $commitFirst (this has to be done for each branch)
+//
+// Cost = math.Floor((1 + 1 + $commitFirst) / 100)
+// Normalized Cost: 1 point per repo per branch per page of commits (at most 100 commits).
+//
+// REEVALUATE THIS ESTIMATE query is updated. Please update our docs if you do!
+// docs: https://github.com/liatrio/liatrio-otel-collector/blob/9bb60b22b88f52f6d51a83b96e7c398d6b450dfc/pkg/receiver/gitproviderreceiver/README.md#rate-limiting
+// https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#predicting-the-point-value-of-a-query
 func getCommitData(
 	ctx context.Context,
 	client graphql.Client,
@@ -1438,6 +1463,20 @@ query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCu
 }
 `
 
+// Query cost breakdown (highlights are the only things that cost points)
+// repository: 1
+// pullRequests: 1 (even though we fetch $prFirst pull requests it is a single request)
+// nodes:
+// mergeCommit:
+// deployments: 1 * $prFirst (this has to be done for each pull request)
+// reviews: 1 * $prFirst (this has to be done for each pull request)
+//
+// Cost = math.Floor((1 + 1 + $prFirst + $prFirst) / 100)
+// Normalized Cost: 1 point per repo per 50 pull requests
+//
+// REEVALUATE THIS ESTIMATE query is updated. Please update our docs if you do!
+// docs: https://github.com/liatrio/liatrio-otel-collector/blob/9bb60b22b88f52f6d51a83b96e7c398d6b450dfc/pkg/receiver/gitproviderreceiver/README.md#rate-limiting
+// https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#predicting-the-point-value-of-a-query
 func getPullRequestData(
 	ctx context.Context,
 	client graphql.Client,
@@ -1495,6 +1534,15 @@ query getRepoDataBySearch ($searchQuery: String!, $repoCursor: String) {
 }
 `
 
+// Query cost breakdown (highlights are the only things that cost points)
+// search: 1 (even though we fetch 100 repos it is a single request)
+//
+// Cost = math.Floor(1 / 100) -- min 1 point
+// Normalized Cost: 1 point per 100 repos
+//
+// REEVALUATE THIS ESTIMATE query is updated. Please update our docs if you do!
+// docs: https://github.com/liatrio/liatrio-otel-collector/blob/9bb60b22b88f52f6d51a83b96e7c398d6b450dfc/pkg/receiver/gitproviderreceiver/README.md#rate-limiting
+// https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#predicting-the-point-value-of-a-query
 func getRepoDataBySearch(
 	ctx context.Context,
 	client graphql.Client,

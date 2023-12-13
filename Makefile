@@ -2,7 +2,7 @@ include ./Makefile.Common
 
 CUSTOM_COL_DIR ?= $(CURDIR)/build
 OCB_PATH ?= $(CURDIR)/tmp
-OCB_VERSION ?= 0.89.0
+OCB_VERSION ?= 0.91.0
 OCB_URL = https://github.com/open-telemetry/opentelemetry-collector/releases/download/cmd%2Fbuilder%2F
 OTEL_CONTRIB_REPO = https://github.com/open-telemetry/opentelemetry-collector-contrib.git
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
@@ -11,7 +11,7 @@ GORELEASER_VERSION = 1.20.0
 GOLANGCI_LINT_VERSION ?= v1.53.2
 
 # Arguments for getting directories & executing commands against them
-PKG_DIRS = $(shell find ./pkg/* -type f -name "go.mod" -exec dirname {} \; | sort | grep -E '^./')
+PKG_DIRS = $(shell find ./* -not -path "./build/*" -not -path "./tmp/*" -type f -name "go.mod" -exec dirname {} \; | sort | grep -E '^./')
 CHECKS = prep lint-all genqlient-all metagen-all test-all tidy-all fmt-all
 
 # set ARCH var based on output
@@ -55,7 +55,7 @@ prep:
 .PHONY: run
 run: build
 	$(CUSTOM_COL_DIR)/otelcol-custom --config config/config.yaml
-	
+
 .PHONY: install-tools
 install-tools:
 	go install honnef.co/go/tools/cmd/staticcheck@latest
@@ -110,4 +110,5 @@ checks:
 		exit 1; \
 	else \
 		echo "completed successfully."; \
+	fi
 	fi
