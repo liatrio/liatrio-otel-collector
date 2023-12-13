@@ -3,4 +3,4 @@
 
 //go:generate mdatagen metadata.yaml
 
-package gitproviderreceiver // import "github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver"
+package gitproviderreceiver // import "github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver"

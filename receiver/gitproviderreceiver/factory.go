@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package gitproviderreceiver // import "github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver"
+package gitproviderreceiver // import "github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver"
 
 import (
 	"context"
@@ -13,10 +13,10 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
 
-	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal"
-	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
-	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/scraper/githubscraper"
-	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/scraper/gitlabscraper"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/scraper/githubscraper"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/scraper/gitlabscraper"
 )
 
 // This file implements a factory for the git provider receiver

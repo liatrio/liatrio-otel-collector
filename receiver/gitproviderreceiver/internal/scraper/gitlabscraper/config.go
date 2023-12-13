@@ -6,8 +6,8 @@ package gitlabscraper
 import (
 	"go.opentelemetry.io/collector/config/confighttp"
 
-	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal"
-	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
 )
 
 // Config relating to GitLab Metric Scraper.

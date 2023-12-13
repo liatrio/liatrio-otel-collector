@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package gitlabscraper
+package githubscraper
 
 import (
 	"context"
@@ -11,15 +11,15 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
 
-	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal"
-	"github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver/internal/metadata"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
 )
 
-// This file implements factory for the GitLab Scraper as part of the  Git Provider Receiver
+// This file implements factory for the GitHub Scraper as part of the  Git Provider Receiver
 
 const (
 	// TypeStr is the value of "type" key in configuration.
-	TypeStr            = "gitlab"
+	TypeStr            = "github"
 	defaultHTTPTimeout = 15 * time.Second
 )
 
@@ -40,7 +40,7 @@ func (f *Factory) CreateMetricsScraper(
 	cfg internal.Config,
 ) (scraperhelper.Scraper, error) {
 	conf := cfg.(*Config)
-	s := newGitLabScraper(ctx, params, conf)
+	s := newGitHubScraper(ctx, params, conf)
 
 	return scraperhelper.NewScraper(
 		TypeStr,

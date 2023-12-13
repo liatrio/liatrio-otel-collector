@@ -1,4 +1,4 @@
-module github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver
+module github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver
 
 go 1.20
 
@@ -123,6 +123,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-//replace go.opentelemetry.io/collector/confmap => go.opentelemetry.io/collector/confmap v0.81.0
-//replace go.opentelemetry.io/collector/component => go.opentelemetry.io/collector/component v0.81.0
