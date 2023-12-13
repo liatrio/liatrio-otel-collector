@@ -11,8 +11,8 @@ GORELEASER_VERSION = 1.20.0
 GOLANGCI_LINT_VERSION ?= v1.53.2
 
 # Arguments for getting directories & executing commands against them
-# PKG_RECEIVER_DIRS = $(shell find ./pkg/receiver/* -type f -name "go.mod" -print -exec dirname {} \; | sort | uniq)
-PKG_RECEIVER_DIRS = $(shell find ./pkg/receiver/* -type f -name '*go.mod*' | sed -r 's|/[^/]+$$||' |sort | uniq )
+# PKG_RECEIVER_DIRS = $(shell find ./receiver/* -type f -name "go.mod" -print -exec dirname {} \; | sort | uniq)
+PKG_RECEIVER_DIRS = $(shell find ./receiver/* -type f -name '*go.mod*' | sed -r 's|/[^/]+$$||' |sort | uniq )
 CHECKS = prep lint-all genqlient-all metagen-all test-all tidy-all fmt-all
 
 # set ARCH var based on output
