@@ -1,6 +1,6 @@
 module github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver
 
-go 1.20
+go 1.21
 
 require (
 	github.com/Khan/genqlient v0.6.0
