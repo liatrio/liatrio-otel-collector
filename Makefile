@@ -2,7 +2,7 @@ include ./Makefile.Common
 
 CUSTOM_COL_DIR ?= $(CURDIR)/build
 OCB_PATH ?= $(CURDIR)/tmp
-OCB_VERSION ?= 0.89.0
+OCB_VERSION ?= 0.91.0
 OCB_URL = https://github.com/open-telemetry/opentelemetry-collector/releases/download/cmd%2Fbuilder%2F
 OTEL_CONTRIB_REPO = https://github.com/open-telemetry/opentelemetry-collector-contrib.git
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
@@ -56,7 +56,7 @@ prep:
 .PHONY: run
 run: build
 	$(CUSTOM_COL_DIR)/otelcol-custom --config config/config.yaml
-	
+
 .PHONY: install-tools
 install-tools:
 	go install honnef.co/go/tools/cmd/staticcheck@latest
@@ -64,10 +64,10 @@ install-tools:
 	go install golang.org/x/tools/cmd/goimports@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 	go install github.com/Khan/genqlient@latest
-	
+
 .PHONY: lint-all $(PKG_RECEIVER_DIRS)
 lint-all: $(PKG_RECEIVER_DIRS)
-	
+
 $(PKG_RECEIVER_DIRS):
 	$(MAKE) -j 4 -C $@ lint
 
@@ -77,7 +77,7 @@ generate: check-prep install-tools
 	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) gen
 
 .PHONY: test-all
-test-all: 
+test-all:
 	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) test
 
 .PHONY: cibuild
@@ -105,4 +105,4 @@ checks:
 		exit 1; \
 	else \
 		echo "completed successfully."; \
-	fi	
+	fi
