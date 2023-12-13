@@ -21,7 +21,7 @@ outputDir: A full or relative path to a directory that contains receivers
 
 // ReceiverCmd represents the receiver command
 var ReceiverCmd = &cobra.Command{
-	Use:   "receiver [flags] receiverName",
+	Use:   "receiver [flags] receiverName outputDir",
 	Short: shortDescription,
 	Long:  fmt.Sprint(shortDescription, "\n", longDescription),
 	Args:  cobra.MinimumNArgs(2),
@@ -29,7 +29,7 @@ var ReceiverCmd = &cobra.Command{
 }
 
 //go:embed templates/*
-var templates embed.FS
+var Templates embed.FS
 
 func init() {
 	// Here you will define your flags and configuration settings.
@@ -54,6 +54,6 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	data := common.TemplateData{Name: name, PackageName: packageName}
-	common.Render(templates, modulePath, data)
+	common.Render(Templates, modulePath, data)
 	common.Tidy(modulePath)
 }
