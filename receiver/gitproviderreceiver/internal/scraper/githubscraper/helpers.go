@@ -8,7 +8,7 @@ import (
 	"net/url"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/google/go-github/v53/github"
+	"github.com/google/go-github/v57/github"
 	"go.uber.org/zap"
 )
 
@@ -171,7 +171,7 @@ func (ghs *githubScraper) createClients() (gClient graphql.Client, rClient *gith
 
 		// The rest client needs the endpoint to be the root of the server
 		rURL := ghs.cfg.HTTPClientSettings.Endpoint
-		rClient, err = github.NewEnterpriseClient(rURL, rURL, ghs.client)
+		rClient, err = github.NewClient(ghs.client).WithEnterpriseURLs(rURL, rURL)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error: %v", err)
 			return nil, nil, err

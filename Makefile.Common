@@ -13,13 +13,13 @@ endif
 SRC_ROOT := $(shell git rev-parse --show-toplevel)
 
 .PHONY: lint
-lint: 
+lint:
 	golangci-lint run
-	
+
 .PHONY: tidy
-tidy: 
-	rm go.sum 
-	go mod tidy -compat=1.20
+tidy:
+	rm go.sum
+	go mod tidy -compat=1.21
 
 .PHONY: gen
 gen:

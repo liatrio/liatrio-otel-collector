@@ -1,11 +1,11 @@
 module github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver
 
-go 1.20
+go 1.21
 
 require (
 	github.com/Khan/genqlient v0.6.0
-	github.com/google/go-cmp v0.5.9
-	github.com/google/go-github/v53 v53.2.0
+	github.com/google/go-cmp v0.6.0
+	github.com/google/go-github/v57 v57.0.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.0.0-20231113184956-78da59a4f6f4
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.88.0
 	github.com/stretchr/testify v1.8.4
@@ -24,11 +24,9 @@ require github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil 
 
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -108,7 +106,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.18.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.12.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect
