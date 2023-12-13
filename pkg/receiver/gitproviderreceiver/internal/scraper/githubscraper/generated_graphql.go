@@ -1305,7 +1305,7 @@ query getBranchData ($name: String!, $owner: String!, $branchFirst: Int!, $targe
 // nodes:
 // compare: 1 * $branchFirst (this has to be done for each branch)
 //
-// Cost = Math.floor((1 + 1 + $branchFirst) / 100)
+// Cost = math.Floor((1 + 1 + $branchFirst) / 100)
 // Normalized Cost: 1 point per repo per 50 branches
 //
 // REEVALUATE THIS ESTIMATE query is updated. Please update our docs if you do!
@@ -1383,7 +1383,7 @@ query getCommitData ($name: String!, $owner: String!, $branchFirst: Int!, $commi
 // target:
 // history: 1 * $commitFirst (this has to be done for each branch)
 //
-// Cost = Math.floor((1 + 1 + $commitFirst) / 100)
+// Cost = math.Floor((1 + 1 + $commitFirst) / 100)
 // Normalized Cost: 1 point per repo per branch per page of commits (at most 100 commits).
 //
 // REEVALUATE THIS ESTIMATE query is updated. Please update our docs if you do!
@@ -1471,7 +1471,7 @@ query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCu
 // deployments: 1 * $prFirst (this has to be done for each pull request)
 // reviews: 1 * $prFirst (this has to be done for each pull request)
 //
-// Cost = Math.floor((1 + 1 + $prFirst + $prFirst) / 100)
+// Cost = math.Floor((1 + 1 + $prFirst + $prFirst) / 100)
 // Normalized Cost: 1 point per repo per 50 pull requests
 //
 // REEVALUATE THIS ESTIMATE query is updated. Please update our docs if you do!
@@ -1537,7 +1537,7 @@ query getRepoDataBySearch ($searchQuery: String!, $repoCursor: String) {
 // Query cost breakdown (highlights are the only things that cost points)
 // search: 1 (even though we fetch 100 repos it is a single request)
 //
-// Cost = Math.floor(1 / 100) -- min 1 point
+// Cost = math.Floor(1 / 100) -- min 1 point
 // Normalized Cost: 1 point per 100 repos
 //
 // REEVALUATE THIS ESTIMATE query is updated. Please update our docs if you do!
