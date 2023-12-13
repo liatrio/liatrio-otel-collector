@@ -15,7 +15,8 @@ func TestTidy(t *testing.T) {
 
 	cmd := exec.Command("go", "mod", "init", "dummy")
 	cmd.Dir = dir
-	cmd.Output()
+	_, err := cmd.Output()
+	assert.NoError(t, err)
 
 	assert.NotPanics(t, func() { Tidy(dir) })
 	assert.FileExists(t, filepath.Join(dir, "go.mod"))
@@ -31,33 +32,40 @@ func TestRender(t *testing.T) {
 	assert.Error(t, err)
 
 	// Nothing to do
-	os.Mkdir(filepath.Join(source, "templates"), os.ModePerm)
+	err = os.Mkdir(filepath.Join(source, "templates"), os.ModePerm)
+	assert.NoError(t, err)
 	err = Render(os.DirFS(source), destination, data)
 	assert.NoError(t, err)
 
 	// Ignore  non-template files
-	os.Create(filepath.Join(source, "templates", "main.go"))
+	_, err = os.Create(filepath.Join(source, "templates", "main.go"))
+	assert.NoError(t, err)
 	err = Render(os.DirFS(source), destination, data)
 	assert.NoError(t, err)
 	assert.NoFileExists(t, filepath.Join(destination, "main.go"))
 
 	// Empty tmpl file
-	file, _ := os.Create(filepath.Join(source, "templates", "main.go.tmpl"))
+	file, err := os.Create(filepath.Join(source, "templates", "main.go.tmpl"))
+	assert.NoError(t, err)
 	err = Render(os.DirFS(source), destination, data)
 	assert.NoError(t, err)
 	assert.FileExists(t, filepath.Join(destination, "main.go"))
 
 	// Normal tmpl file
-	file.WriteString("pkg {{ .PackageName }}")
+	_, err = file.WriteString("pkg {{ .PackageName }}")
+	assert.NoError(t, err)
 	err = Render(os.DirFS(source), destination, data)
 	assert.NoError(t, err)
 	assert.FileExists(t, filepath.Join(destination, "main.go"))
-	content, _ := os.ReadFile(filepath.Join(destination, "main.go"))
+	content, err := os.ReadFile(filepath.Join(destination, "main.go"))
+	assert.NoError(t, err)
 	assert.Equal(t, "pkg github.com/dummy", string(content))
 
 	// Empty tmpl file
-	os.Mkdir(filepath.Join(source, "templates", "more"), os.ModePerm)
-	os.Create(filepath.Join(source, "templates", "more", "test.go.tmpl"))
+	err = os.Mkdir(filepath.Join(source, "templates", "more"), os.ModePerm)
+	assert.NoError(t, err)
+	_, err = os.Create(filepath.Join(source, "templates", "more", "test.go.tmpl"))
+	assert.NoError(t, err)
 	err = Render(os.DirFS(source), destination, data)
 	assert.NoError(t, err)
 	assert.FileExists(t, filepath.Join(destination, "more", "test.go"))

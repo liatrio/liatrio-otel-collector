@@ -24,7 +24,9 @@ func TestRun(t *testing.T) {
 
 	// Validate file count
 	// Note that the +1 is the result of generating go.sum without a .tmpl file
-	entries, _ := os.ReadDir(filepath.Join(dir, "dummy"))
-	sources, _ := Templates.ReadDir("templates")
+	entries, err := os.ReadDir(filepath.Join(dir, "dummy"))
+	assert.NoError(t, err)
+	sources, err := Templates.ReadDir("templates")
+	assert.NoError(t, err)
 	assert.Equal(t, len(sources)+1, len(entries))
 }

@@ -54,6 +54,9 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	data := common.TemplateData{Name: name, PackageName: packageName}
-	common.Render(Templates, modulePath, data)
+	err = common.Render(Templates, modulePath, data)
+	if err != nil {
+		panic(err)
+	}
 	common.Tidy(modulePath)
 }
