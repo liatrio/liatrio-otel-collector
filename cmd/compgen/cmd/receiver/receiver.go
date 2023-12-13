@@ -14,7 +14,7 @@ import (
 var shortDescription = "Build a new Open Telemetry receiver component"
 var longDescription = `
 receiverName: A full module path (https://go.dev/ref/mod#glos-module-path)
-  E.g. 'github.com/liatrio/liatrio-otel-collector/pkg/receiver/myreceiver'
+  E.g. 'github.com/liatrio/liatrio-otel-collector/receiver/myreceiver'
 
 outputDir: A full or relative path to a directory that contains receivers
 	E.g. receiver/`

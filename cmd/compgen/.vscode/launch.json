@@ -13,7 +13,7 @@
       "args": [
         "receiver",
         "github.com/myreceiver",
-        "../../pkg/receiver/"
+        "../../receiver/"
       ]
     },
     {
