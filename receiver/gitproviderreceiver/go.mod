@@ -4,8 +4,9 @@ go 1.20
 
 require (
 	github.com/Khan/genqlient v0.6.0
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/google/go-github/v53 v53.2.0
+	github.com/google/go-github/v57 v57.0.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.0.0-20231113184956-78da59a4f6f4
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.88.0
 	github.com/stretchr/testify v1.8.4
