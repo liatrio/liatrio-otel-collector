@@ -14,7 +14,6 @@ type TemplateData struct {
 	PackageName string
 }
 
-// Executes `go mod tidy`
 func Tidy(path string) {
 	cmd := exec.Command("go", "mod", "tidy", "-e")
 	cmd.Dir = path
