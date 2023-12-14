@@ -29,7 +29,7 @@ var ReceiverCmd = &cobra.Command{
 }
 
 //go:embed templates/*
-var Templates embed.FS
+var templates embed.FS
 
 // func init() {
 // 	// Here you will define your flags and configuration settings.
@@ -54,7 +54,7 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	data := common.TemplateData{Name: name, PackageName: packageName}
-	err = common.Render(Templates, modulePath, data)
+	err = common.Render(templates, modulePath, data)
 	if err != nil {
 		panic(err)
 	}
