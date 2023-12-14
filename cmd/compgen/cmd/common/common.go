@@ -68,7 +68,8 @@ func Render(source fs.FS, destination string, data TemplateData) error {
 			return tmpl.Execute(file, data)
 		}
 
-		// A non-directory, non-template file. Ignore it
+		// The entry is not a directory and its name does not match *.tmpl
+		// Do nothing with these entries and continue iterating.
 		return nil
 	})
 }

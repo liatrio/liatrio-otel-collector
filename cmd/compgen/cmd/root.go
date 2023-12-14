@@ -12,8 +12,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "compgen",
 	Short: "A tool for building new otel components.",
-	Long: `Compgen is a tool for building new receivers, processors, and 
-	exporters for Open Telemetry.`,
+	Long:  `Compgen is a tool for building new receivers, processors, and exporters for Open Telemetry.`,
 	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
