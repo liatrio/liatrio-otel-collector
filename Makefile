@@ -82,7 +82,7 @@ generate: check-prep install-tools
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) gen"
 
 .PHONY: test-all
-test-all: 
+test-all:
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) test"
 
 .PHONY: cibuild
