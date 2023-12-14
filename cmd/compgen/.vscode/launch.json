@@ -13,8 +13,10 @@
       "args": [
         "receiver",
         "github.com/myreceiver",
-        "../../receiver/"
-      ]
+        "${workspaceFolder}/.debug/"
+      ],
+      "preLaunchTask": "createDebugDir",
+      "postDebugTask": "deleteDebugDir"
     },
     {
       "name": "Debug Current Test File",
