@@ -41,6 +41,10 @@ For example, if you wish to build a new receiver with a short name of `myreceive
 
 ## After Running Compgen
 
+### Makefile
+
+Components are expected to pass a series of tests defined by Makefile.Common. Your component's Makefile must import Makefile.common. An example is provided as a commment.
+
 ### Metadata.yaml
 
 Compgen's includes templates for metadata.yaml. This file is used by [mdatagen](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/cmd/mdatagen) to generate aditional code for the component. See the [README](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/cmd/mdatagen/README.md) for details on how to use mdatagen.
