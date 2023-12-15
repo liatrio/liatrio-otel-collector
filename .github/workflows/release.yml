@@ -30,11 +30,11 @@ jobs:
                   password: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Set up Go
-              uses: actions/setup-go@v4
+              uses: actions/setup-go@v5
               with:
-                  # go version must be quoted on version  1.20+ or else setup action 
-                  # will pull down version 1.2 instead of 1.20
-                  go-version: '1.20'
+                  # go version must be quoted on version  1.21+ or else setup action
+                  # will pull down version 1.2 instead of 1.21
+                  go-version: '1.21'
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v3

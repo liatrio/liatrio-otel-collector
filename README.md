@@ -4,8 +4,8 @@
   <a href="https://github.com/liatrio/liatrio-otel-collector/actions/workflows/build.yml?query=branch%3Amain">
     <img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/liatrio/liatrio-otel-collector/build.yml?branch=main&style=for-the-badge">
   </a>
-  <a href="https://goreportcard.com/report/github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver">
-    <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/liatrio/liatrio-otel-collector/pkg/receiver/gitproviderreceiver?style=for-the-badge">
+  <a href="https://goreportcard.com/report/github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver">
+    <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver?style=for-the-badge">
   </a>
   <a href="https://codecov.io/gh/liatrio/liatrio-otel-collector/branch/main" >
     <img alt="Codecov Status" src="https://img.shields.io/codecov/c/github/liatrio/liatrio-otel-collector?style=for-the-badge"/>
