@@ -6,6 +6,9 @@
 *.dylib
 __debug_bin*
 
+# Temp directory for debugging compgen
+.debug
+
 # Test binary, built with `go test -c`
 *.test
 
