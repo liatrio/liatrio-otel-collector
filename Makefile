@@ -11,8 +11,7 @@ GORELEASER_VERSION = 1.20.0
 GOLANGCI_LINT_VERSION ?= v1.53.2
 
 # Arguments for getting directories & executing commands against them
-# PKG_RECEIVER_DIRS = $(shell find ./receiver/* -type f -name "go.mod" -print -exec dirname {} \; | sort | uniq)
-PKG_RECEIVER_DIRS = $(shell find ./receiver/* -type f -name '*go.mod*' | sed -r 's|/[^/]+$$||' |sort | uniq )
+PKG_DIRS = $(shell find ./* -not -path "./build/*" -not -path "./tmp/*" -type f -name "go.mod" -exec dirname {} \; | sort | grep -E '^./')
 CHECKS = prep lint-all genqlient-all metagen-all test-all tidy-all fmt-all
 
 # set ARCH var based on output
@@ -65,20 +64,26 @@ install-tools:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 	go install github.com/Khan/genqlient@latest
 
-.PHONY: lint-all $(PKG_RECEIVER_DIRS)
-lint-all: $(PKG_RECEIVER_DIRS)
-
-$(PKG_RECEIVER_DIRS):
-	$(MAKE) -j 4 -C $@ lint
+.PHONY: for-all
+for-all:
+	@set -e; for dir in $(DIRS); do \
+	  (cd "$${dir}" && \
+	  	echo "running $${CMD} in $${dir}" && \
+	 	$${CMD} ); \
+	done
+	
+.PHONY: lint-all
+lint-all:
+	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) lint"
 
 .PHONY: generate
 generate: check-prep install-tools
-	cd tmp/opentelemetry-collector-contrib/cmd/mdatagen && go install .
-	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) gen
+	cd $(OCB_PATH)/opentelemetry-collector-contrib/cmd/mdatagen && go install .
+	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) gen"
 
 .PHONY: test-all
 test-all:
-	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) test
+	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) test"
 
 .PHONY: cibuild
 cibuild: check-prep
@@ -91,11 +96,11 @@ dockerbuild:
 
 .PHONY: tidy-all
 tidy-all:
-	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) tidy
+	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) tidy"
 
 .PHONY: fmt-all
 fmt-all:
-	$(MAKE) -j 4 -C $(PKG_RECEIVER_DIRS) fmt
+	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) fmt"
 
 .PHONY: checks
 checks:
@@ -105,4 +110,5 @@ checks:
 		exit 1; \
 	else \
 		echo "completed successfully."; \
+	fi
 	fi
