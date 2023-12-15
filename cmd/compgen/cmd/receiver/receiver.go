@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"embed"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -25,7 +26,7 @@ var ReceiverCmd = &cobra.Command{
 	Short: shortDescription,
 	Long:  fmt.Sprint(shortDescription, "\n", longDescription),
 	Args:  cobra.MinimumNArgs(2),
-	Run:   run,
+	RunE:  run,
 }
 
 //go:embed templates/*
@@ -43,20 +44,30 @@ var templates embed.FS
 // 	// receiverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 // }
 
-func run(cmd *cobra.Command, args []string) {
+func run(cmd *cobra.Command, args []string) error {
+	if len(args) < 2 {
+		return errors.New("not enough arguments")
+	}
+
 	packageName := args[0]
 	name := packageName[strings.LastIndex(packageName, "/")+1:]
 	modulePath := filepath.Join(args[1], name)
 
 	err := os.MkdirAll(modulePath, os.ModePerm)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	data := common.TemplateData{Name: name, PackageName: packageName}
 	err = common.Render(templates, modulePath, data)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	common.Tidy(modulePath)
+
+	err = common.Tidy(modulePath)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

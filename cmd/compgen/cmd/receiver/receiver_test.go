@@ -15,16 +15,16 @@ func TestRun(t *testing.T) {
 	// are passed in at runtime. This is enforced outside of run() so we still want
 	// to test the scenario.
 	args := []string{}
-	assert.Panics(t, func() { run(ReceiverCmd, args) })
+	assert.Error(t, run(ReceiverCmd, args))
 
 	// Missing outputDir argument
 	args = []string{"github.com/dummy"}
-	assert.Panics(t, func() { run(ReceiverCmd, args) })
+	assert.Error(t, run(ReceiverCmd, args))
 
 	// Healthy run
 	dir := t.TempDir()
 	args = []string{"github.com/dummy", dir}
-	assert.NotPanics(t, func() { run(ReceiverCmd, args) })
+	assert.NoError(t, run(ReceiverCmd, args))
 
 	// Validate file count
 	// Note that the +1 is the result of generating go.sum without a go.sum.tmpl file
