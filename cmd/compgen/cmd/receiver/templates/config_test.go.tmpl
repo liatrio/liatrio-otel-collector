@@ -21,7 +21,7 @@ were expecting from the Custom Config is read correctly. The Go extension in
 VSCode uses this default testing method where test are read in as structs and
 then a loop goes through each struct and runs a test case. Go officially adopted
 this approach, while this may not be the best way, it is a method that Go recommends.
-Below you will see some test cases ran againts a custom sample field added to a
+Below you will see some test cases ran against a custom sample field added to a
 custom config for our custom receiver.
 */
 
@@ -39,18 +39,18 @@ func TestConfig_Unmarshal(t *testing.T) {
 		wantErrCM  error  // errorCM expected from reading file
 	}{ // Test Cases for Unmarshal() Function
 		{ // Test to see if the config file reads properly
-			name:       "default config happy",
-			confMapKey: "cfg-happy.yaml",
+			name:       "default healthy config",
+			confMapKey: "golden.yaml",
 			fields:     fields{},
 			wantErr:    nil,
 			wantConfig: Config{
-				sample: "dummy",
+				sample: "data",
 			},
 			wantErrCM: nil,
 		},
 		{ // Test to see if there is no value in the sample field of config
 			name:       "no sample value",
-			confMapKey: "cfg-no-sample-data.yaml",
+			confMapKey: "missing-data.yaml",
 			fields:     fields{},
 			wantErr:    ErrMustNotNil,
 			wantConfig: Config{},
@@ -58,7 +58,7 @@ func TestConfig_Unmarshal(t *testing.T) {
 		},
 		{ // Test to see if the sample field doesn't exist in the config
 			name:       "no sample field",
-			confMapKey: "cfg-no-sample.yaml",
+			confMapKey: "partial.yaml",
 			fields:     fields{},
 			wantErr:    nil,
 			wantConfig: Config{
@@ -68,7 +68,7 @@ func TestConfig_Unmarshal(t *testing.T) {
 		},
 		{ // Test to see if the sample field contains a string
 			name:       "not a string",
-			confMapKey: "cfg-no-string.yaml",
+			confMapKey: "invalid-data-type.yaml",
 			fields:     fields{},
 			wantErr:    ErrMustString,
 			wantConfig: Config{},
@@ -114,8 +114,8 @@ func TestConfig_Validate(t *testing.T) {
 		wantErr error  // error expected from function
 		config  Config // Config to validate if correct
 	}{ // Test Cases for Validate() Function
-		{ // happy test to see if the function returns nil error
-			name:    "happy config no error",
+		{ // healthy test to see if the function returns nil error
+			name:    "healthy",
 			wantErr: nil,
 			config: Config{
 				sample: "dummy",
