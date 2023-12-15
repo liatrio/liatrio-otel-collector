@@ -44,7 +44,7 @@ func TestConfig_Unmarshal(t *testing.T) {
 			fields:     fields{},
 			wantErr:    nil,
 			wantConfig: Config{
-				sample: "stoof",
+				sample: "dummy",
 			},
 			wantErrCM: nil,
 		},
@@ -76,7 +76,7 @@ func TestConfig_Unmarshal(t *testing.T) {
 		},
 		{ // Test to see if a config file exist
 			name:       "no data in file",
-			confMapKey: "stoof.yaml",
+			confMapKey: "empty.yaml",
 			fields:     fields{},
 			wantErr:    nil,
 			wantConfig: Config{
@@ -118,7 +118,7 @@ func TestConfig_Validate(t *testing.T) {
 			name:    "happy config no error",
 			wantErr: nil,
 			config: Config{
-				sample: "stoof",
+				sample: "dummy",
 			},
 		},
 		{ // no sample config, so the function should return error
@@ -132,7 +132,7 @@ func TestConfig_Validate(t *testing.T) {
 			name:    "sample data must be lowercase",
 			wantErr: ErrMustLowercase,
 			config: Config{
-				sample: "StOof",
+				sample: "DuMmy",
 			},
 		},
 	}
