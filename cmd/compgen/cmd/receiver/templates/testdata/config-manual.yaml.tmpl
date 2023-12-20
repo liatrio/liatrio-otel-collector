@@ -1,0 +1,16 @@
+---
+exporters:
+    logging:
+
+receivers:
+    {{ .Name }}:
+        collection_interval: 10s
+        initial_delay: 1s
+        sample: data
+
+service:
+    pipelines:
+        metrics:
+            receivers: [{{ .Name }}]
+            processors: []
+            exporters: [logging]

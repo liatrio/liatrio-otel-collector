@@ -11,7 +11,7 @@ We love your input! We want to make contributing to this project as easy and tra
 
 We use GitHub to host code, to track issues and feature requests, as well as accept pull requests.
 
-## We Use [Coding Conventions, e.g., PEP8], So Pull Requests Need To Pass This.
+## We Use [Coding Conventions, e.g., PEP8], So Pull Requests Need To Pass This
 
 TODO: Include information about the coding style guide or conventions that you use. If there are any tools that they should use or any checks that their code needs to pass, detail them here.
 
@@ -49,6 +49,22 @@ Great Bug Reports tend to have:
 ## Use a Consistent Coding Style
 
 TODO: Detail the style guide and coding conventions further, if needed.
+
+## Running Checks
+
+After making a code change, run the following commands and validate that each runs successfully:
+
+```sh
+make generate
+make tidy-all
+make lint-all
+make test-all
+make fmt-all
+```
+
+## Adding New Components
+
+New compponents can be created by running compgen. See compgen's [README](./cmd/compgen/READEME.md) for instructions and guidance.
 
 ## License
 
