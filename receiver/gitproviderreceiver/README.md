@@ -132,12 +132,17 @@ scrape up to 1250 repositories per hour under normal conditions.
 
 Given this average cost a good collection interval in seconds is:
 
-$$\text{collection\_interval (seconds)} = \frac{4n}{r/3600} + 300  \\
+```math
+\text{collection\_interval (seconds)} = \frac{4n}{r/3600} + 300
+```
+
+```math
 \begin{aligned}
     \text{where:} \\
     n &= \text{number of repositories} \\
     r &= \text{hourly rate limit} \\
-\end{aligned}$$
+\end{aligned}
+```
 
 $r$ is likely 5000 but there are factors that can change this,
 for more information see [GitHub's docs](https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#primary-rate-limit).
