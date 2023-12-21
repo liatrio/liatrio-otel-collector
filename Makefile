@@ -12,7 +12,7 @@ GOLANGCI_LINT_VERSION ?= v1.53.2
 
 # Arguments for getting directories & executing commands against them
 PKG_DIRS = $(shell find ./* -not -path "./build/*" -not -path "./tmp/*" -type f -name "go.mod" -exec dirname {} \; | sort | grep -E '^./')
-CHECKS = prep lint-all genqlient-all metagen-all test-all tidy-all fmt-all
+CHECKS = gen-all lint-all test-all tidy-all fmt-all
 
 # set ARCH var based on output
 ifeq ($(ARCH),x86_64)
@@ -76,9 +76,8 @@ for-all:
 lint-all:
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) lint"
 
-.PHONY: generate
-generate: check-prep install-tools
-	cd $(OCB_PATH)/opentelemetry-collector-contrib/cmd/mdatagen && go install .
+.PHONY: gen-all
+gen-all:
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) gen"
 
 .PHONY: test-all
@@ -104,11 +103,10 @@ fmt-all:
 
 .PHONY: checks
 checks:
-	$(MAKE) -j 4 $(CHECKS)
-	@if [ -n "$$(git diff --name-only -- $(GENQLIENT_DIRS))" ] || [ -n "$$(git diff --name-only -- $(METAGEN_DIRS))"] || [ -n "$$(git diff --name-only -- go.mod go.sum)"]; then \
+	$(MAKE) -j 1 $(CHECKS)
+	if [ -n "$$(git diff --name-only)" ]; then \
 		echo "Some files have changed. Please commit them."; \
 		exit 1; \
 	else \
 		echo "completed successfully."; \
-	fi
 	fi

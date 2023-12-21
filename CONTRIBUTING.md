@@ -52,15 +52,7 @@ TODO: Detail the style guide and coding conventions further, if needed.
 
 ## Running Checks
 
-After making a code change, run the following commands and validate that each runs successfully:
-
-```sh
-make generate
-make tidy-all
-make lint-all
-make test-all
-make fmt-all
-```
+After making a code change, run the `make checks` command to validate that all code is formatted, tested, etc. succesfully:
 
 ## Adding New Components
 
