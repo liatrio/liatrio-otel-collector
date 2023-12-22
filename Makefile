@@ -76,6 +76,12 @@ for-all:
 lint-all:
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) lint"
 
+# Needeed temporarily in order to run ci jobs successfully
+# Remove this in a followup PR when the ci jobs don't run `make generate`
+.PHONY: generate
+generate: 
+	$(MAKE) gen-all
+
 .PHONY: gen-all
 gen-all:
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) gen"
@@ -104,7 +110,7 @@ fmt-all:
 .PHONY: checks
 checks:
 	$(MAKE) -j 1 $(CHECKS)
-	if [ -n "$$(git diff --name-only)" ]; then \
+	@if [ -n "$$(git diff --name-only)" ]; then \
 		echo "Some files have changed. Please commit them."; \
 		exit 1; \
 	else \
