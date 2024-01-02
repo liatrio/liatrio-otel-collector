@@ -12,7 +12,7 @@ GOLANGCI_LINT_VERSION ?= v1.53.2
 
 # Arguments for getting directories & executing commands against them
 PKG_DIRS = $(shell find ./* -not -path "./build/*" -not -path "./tmp/*" -type f -name "go.mod" -exec dirname {} \; | sort | grep -E '^./')
-CHECKS = gen-all lint-all test-all tidy-all fmt-all
+CHECKS = generate lint-all test-all tidy-all fmt-all
 
 # set ARCH var based on output
 ifeq ($(ARCH),x86_64)
@@ -76,14 +76,8 @@ for-all:
 lint-all:
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) lint"
 
-# Needeed temporarily in order to run ci jobs successfully
-# Remove this in a followup PR when the ci jobs don't run `make generate`
 .PHONY: generate
-generate: 
-	$(MAKE) gen-all
-
-.PHONY: gen-all
-gen-all:
+generate:
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) gen"
 
 .PHONY: test-all
@@ -107,6 +101,7 @@ tidy-all:
 fmt-all:
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) fmt"
 
+# Setting the paralellism to 1 to improve output readability. Reevaluate later as needed for performance
 .PHONY: checks
 checks:
 	$(MAKE) -j 1 $(CHECKS)
