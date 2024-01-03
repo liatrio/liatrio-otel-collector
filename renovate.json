@@ -13,7 +13,9 @@
     "every weekend"
   ],
   "schedule": [
-    "every tuesday"
+    "after 10pm every weekday",
+    "before 5am every weekday",
+    "every weekend"
   ],
   "extends": [
     "config:recommended"
