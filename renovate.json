@@ -1,0 +1,143 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "labels": [
+    "dependencies",
+    "renovatebot"
+  ],
+  "constraints": {
+    "go": "1.20"
+  },
+  "automergeSchedule": [
+    "after 10pm every weekday",
+    "before 5am every weekday",
+    "every weekend"
+  ],
+  "schedule": [
+    "after 10pm every weekday",
+    "before 5am every weekday",
+    "every weekend"
+  ],
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "groupName": "dockerfile deps"
+    },
+    {
+      "matchManagers": [
+        "docker-compose"
+      ],
+      "groupName": "docker-compose deps"
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github-actions deps"
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchSourceUrlPrefixes": [
+        "https://go.opentelemetry.io/collector"
+      ],
+      "groupName": "All OpenTelemetry Collector dev packages",
+      "matchUpdateTypes": [
+        "digest"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchSourceUrlPrefixes": [
+        "https://go.opentelemetry.io/collector"
+      ],
+      "groupName": "All OpenTelemetry Collector packages",
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchSourceUrlPrefixes": [
+        "https://github.com/aws"
+      ],
+      "groupName": "All github.com/aws packages",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchSourceUrlPrefixes": [
+        "https://github.com/azure"
+      ],
+      "groupName": "All github.com/azure packages",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchSourceUrlPrefixes": [
+        "https://github.com/datadog"
+      ],
+      "groupName": "All github.com/datadog packages",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchSourceUrlPrefixes": [
+        "https://github.com/googlecloudplatform"
+      ],
+      "groupName": "All github.com/googlecloudplatform packages",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "automerge": true
+    }
+  ],
+  "prConcurrentLimit": 10,
+  "suppressNotifications": [
+    "prEditedNotification"
+  ]
+}
