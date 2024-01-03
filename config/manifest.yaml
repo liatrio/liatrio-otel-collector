@@ -37,7 +37,6 @@ processors:
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.91.0
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.91.0
 
-
 receivers:
     - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.91.0
     - gomod: github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver v0.1.0
@@ -47,8 +46,6 @@ receivers:
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.91.0
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.91.0
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/webhookeventreceiver v0.91.0
-    - gomod: github.com/liatrio/liatrio-otel-collector/receiver/myreceiver v0.1.0
-
 
 connectors:
     - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/spanmetricsconnector v0.91.0
