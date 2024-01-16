@@ -73,7 +73,7 @@ jobs:
               with:
                   distribution: goreleaser-pro
                   version: latest
-                  args: release --clean --snapshot --split
+                  args: release --clean --snapshot --split --debug
               env:
                   GOOS: ${{ matrix.GOOS }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
