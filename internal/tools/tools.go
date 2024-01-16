@@ -16,5 +16,6 @@ import (
     _ "github.com/open-telemetry/opentelemetry-collector-contrib/cmd/mdatagen"
     _ "golang.org/x/vuln/cmd/govulncheck"
     _ "go.opentelemetry.io/collector/cmd/builder"
+    _ "github.com/goreleaser/goreleaser"
 )
 

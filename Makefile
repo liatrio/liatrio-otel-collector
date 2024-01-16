@@ -4,7 +4,6 @@ CUSTOM_COL_DIR ?= $(SRC_ROOT)/build
 TMP_DIR ?= $(SRC_ROOT)/tmp
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 ARCH := $(shell uname -m)
-GORELEASER_VERSION = 1.20.0
 
 # Arguments for getting directories & executing commands against them
 PKG_DIRS = $(shell find ./* -not -path "./build/*" -not -path "./tmp/*" -type f -name "go.mod" -exec dirname {} \; | sort | grep -E '^./')
@@ -30,8 +29,7 @@ build-debug: $(TMP_DIR) install-tools
 .PHONY: release
 release:
 	$(OCB) --config config/manifest.yaml --skip-compilation
-	curl -sfL https://goreleaser.com/static/run | VERSION=v$(GORELEASER_VERSION) DISTRIBUTION=oss bash \
-		-s -- --clean --skip-validate --skip-publish --snapshot
+	$(GORELEASER) --clean --skip-validate --skip-publish --snapshot
 
 $(TMP_DIR):
 	mkdir -p $@

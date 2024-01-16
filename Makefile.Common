@@ -37,6 +37,7 @@ SEC := $(TOOLS_BIN_DIR)/gosec
 STATICCHECK := $(TOOLS_BIN_DIR)/staticcheck
 MDATAGEN := $(TOOLS_BIN_DIR)/mdatagen
 OCB := $(TOOLS_BIN_DIR)/builder
+GORELEASER := $(TOOLS_BIN_DIR)/goreleaser
 
 .PHONY: lint
 lint:
