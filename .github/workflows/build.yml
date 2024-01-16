@@ -83,7 +83,7 @@ jobs:
               with:
                   distribution: goreleaser-pro
                   version: latest
-                  args: release --clean --snapshot --split --debug
+                  args: release --clean --snapshot --split
               env:
                   GGOOS: ${{ matrix.GOOS }}
                   GGOARCH: ${{ matrix.GOARCH }}
