@@ -6,6 +6,7 @@ before:
     # You may remove this if you don't use go modules.
     # - go mod tidy
     # you may remove this if you don't need go generate
+        - make install-tools
         - go generate ./...
         - make cibuild
 builds:
