@@ -25,9 +25,6 @@ jobs:
                   go-version: ${{ matrix.go }}
                   cache: false
 
-            - name: Make prep
-              run: make prep
-
             - name: Make install-tools
               run: make install-tools
 
@@ -49,7 +46,17 @@ jobs:
         strategy:
             matrix:
                 GOOS: [darwin, linux, windows]
+                GOARCH: [arm64, amd64, '386']
                 go: ['1.21']
+                exclude:
+                    - GOOS: darwin
+                      GOARCH: '386'
+                    - GOOS: darwin
+                      GOARCH: arm
+                    - GOOS: windows
+                      GOARCH: arm
+                    - GOOS: windows
+                      GOARCH: arm64
         runs-on:
             group: bigger
         steps:
@@ -78,7 +85,8 @@ jobs:
                   version: latest
                   args: release --clean --snapshot --split
               env:
-                  GOOS: ${{ matrix.GOOS }}
+                  GGOOS: ${{ matrix.GOOS }}
+                  GGOARCH: ${{ matrix.GOARCH }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
 
