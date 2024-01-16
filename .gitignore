@@ -35,3 +35,6 @@ dist/
 
 # Environment variable files
 *.env
+
+# Tools directory where local binaries are installed
+.tools

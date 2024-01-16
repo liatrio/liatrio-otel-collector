@@ -25,9 +25,6 @@ jobs:
                   go-version: ${{ matrix.go }}
                   cache: false
 
-            - name: Make prep
-              run: make prep
-
             - name: Make install-tools
               run: make install-tools
 

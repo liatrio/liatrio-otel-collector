@@ -1,4 +1,4 @@
-//go:generate genqlient
+//go:generate ../../../../../.tools/genqlient
 
 package githubscraper
 
