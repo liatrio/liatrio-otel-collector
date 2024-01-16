@@ -38,3 +38,6 @@ dist/
 
 # Tools directory where local binaries are installed
 .tools
+
+# Debug manifest
+config/manifest-debug.yaml

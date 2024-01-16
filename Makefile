@@ -1,7 +1,6 @@
 include ./Makefile.Common
 
 CUSTOM_COL_DIR ?= $(SRC_ROOT)/build
-TMP_DIR ?= $(SRC_ROOT)/tmp
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 ARCH := $(shell uname -m)
 
@@ -22,17 +21,14 @@ build: install-tools
 	GOOS=$(OS) GOARCH=$(ARCH) $(OCB) --config config/manifest.yaml
 
 .PHONY: build-debug
-build-debug: $(TMP_DIR) install-tools
-	sed 's/debug_compilation: false/debug_compilation: true/g' config/manifest.yaml > $(TMP_DIR)/manifest-debug.yaml
-	$(OCB) --config $(TMP_DIR)/manifest-debug.yaml
+build-debug: install-tools
+	sed 's/debug_compilation: false/debug_compilation: true/g' config/manifest.yaml > config/manifest-debug.yaml
+	$(OCB) --config config/manifest-debug.yaml
 
 .PHONY: release
 release:
 	$(OCB) --config config/manifest.yaml --skip-compilation
 	$(GORELEASER) --clean --skip-validate --skip-publish --snapshot
-
-$(TMP_DIR):
-	mkdir -p $@
 
 .PHONY: run
 run: build
