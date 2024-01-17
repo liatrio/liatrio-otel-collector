@@ -146,14 +146,16 @@ func (gls *gitlabScraper) processMergeRequests(client *gitlab.Client, mrs []Merg
 		gls.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(mr.DiffStatsSummary.Additions), projectPath, mr.SourceBranch)
 		gls.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(mr.DiffStatsSummary.Deletions), projectPath, mr.SourceBranch)
 
-		// IsZero() tells us if the time is or isnt  January 1, year 1, 00:00:00 UTC, which is what null graphql date values get returned as in Go
+		// Checks if the merge request has been merged. This is done with IsZero() which tells us if the
+		// time is or isn't  January 1, year 1, 00:00:00 UTC, which is what null in graphql date values
+		// get returned as in Go.
 		if mr.MergedAt.IsZero() {
 			mrAge := int64(time.Since(mr.CreatedAt).Hours())
-			gls.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, mrAge, projectPath, mr.SourceBranch)
+			gls.mb.RecordGitRepositoryPullRequestOpenTimeDataPoint(now, mrAge, projectPath, mr.SourceBranch)
 			gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", projectPath, mr.SourceBranch, mrAge)
 		} else {
 			mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Hours())
-			gls.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, mergedAge, projectPath, mr.SourceBranch)
+			gls.mb.RecordGitRepositoryPullRequestMergedTimeDataPoint(now, mergedAge, projectPath, mr.SourceBranch)
 			gls.logger.Sugar().Debugf("%s merge request for branch %v, merged age: %v", projectPath, mr.SourceBranch, mergedAge)
 		}
 	}
