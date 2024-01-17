@@ -1,25 +1,26 @@
+---
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "daily"
+      interval: daily
 
     labels:
       - skip-changelog
 
-  - package-ecosystem: "gomod"
-    directory: "/pkg"
+  - package-ecosystem: gomod
+    directory: /pkg
     schedule:
-      interval: "daily"
+      interval: daily
 
     labels:
       - skip-changelog
 
-  - package-ecosystem: "docker"
-    directory: "/"
+  - package-ecosystem: docker
+    directory: /
     schedule:
-      interval: "daily"
+      interval: daily
 
     labels:
       - skip-changelog

@@ -1,3 +1,4 @@
+---
 resourceMetrics:
   - resource:
       attributes:
@@ -13,11 +14,11 @@ resourceMetrics:
           - description: Number of repositories that exist in an organization
             gauge:
               dataPoints:
-                - asInt: "0"
-                  startTimeUnixNano: "1000000"
-                  timeUnixNano: "2000000"
+                - asInt: '0'
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
             name: git.repository.count
-            unit: "1"
+            unit: '1'
         scope:
           name: otelcol/gitproviderreceiver
           version: latest
