@@ -6,7 +6,7 @@ ARCH := $(shell uname -m)
 
 # Arguments for getting directories & executing commands against them
 PKG_DIRS = $(shell find ./* -not -path "./build/*" -not -path "./tmp/*" -type f -name "go.mod" -exec dirname {} \; | sort | grep -E '^./')
-CHECKS = generate lint-all test-all tidy-all fmt-all
+CHECKS = install-tools generate lint-all test-all tidy-all fmt-all multimod-verify crosslink
 
 # set ARCH var based on output
 ifeq ($(ARCH),x86_64)
