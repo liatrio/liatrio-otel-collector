@@ -95,7 +95,7 @@ documentation for additional guidance.
 
 ### Merging into main
 
-If your component is ready with base functionality, then you can create a component
+If your component is ready with base functionality, then you can create a pull request
 to the main branch. It's recommended to follow the "small batch delivery" paradigm.
 Thus, please submit small changes. That may mean that you commit a skeleton component
 with bare minimum functionality as a starting point.
