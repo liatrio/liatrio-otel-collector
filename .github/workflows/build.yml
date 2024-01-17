@@ -41,6 +41,11 @@ jobs:
                   make tidy-all
                   git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
 
+            - name: Check crosslink run
+              run: |
+                  make crosslink
+                  git diff -s --exit-code || (echo 'Replace statements not updated. Run make crosslink and commit the changes' && exit 1)
+
     build:
         name: build
         strategy:
