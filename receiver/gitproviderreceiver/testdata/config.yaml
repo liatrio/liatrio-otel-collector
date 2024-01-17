@@ -1,27 +1,27 @@
 ---
 receivers:
-    gitprovider:
-        initial_delay: 1s
-        collection_interval: 60s
-        scrapers:
-            github:
+  gitprovider:
+    initial_delay: 1s
+    collection_interval: 60s
+    scrapers:
+      github:
 
-    gitprovider/customname:
-        initial_delay: 1s
-        collection_interval: 30s
-        scrapers:
-            github:
+  gitprovider/customname:
+    initial_delay: 1s
+    collection_interval: 30s
+    scrapers:
+      github:
 
 processors:
-    nop:
+  nop:
 
 exporters:
-    nop:
+  nop:
 
 service:
-    pipelines:
-        metrics:
-            receivers: [gitprovider, gitprovider/customname]
-            processors: [nop]
-            exporters: [nop]
+  pipelines:
+    metrics:
+      receivers: [gitprovider, gitprovider/customname]
+      processors: [nop]
+      exporters: [nop]
 
