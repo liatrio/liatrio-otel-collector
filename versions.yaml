@@ -1,0 +1,14 @@
+---
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+module-sets:
+    liatrio-otel:
+        version: v0.38.1
+        modules:
+            - github.com/liatrio/liatrio-otel-collector
+            - github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver
+
+excluded-modules:
+    - github.com/liatrio/liatrio-otel-collector/internal/tools
+    - github.com/liatrio/compgen

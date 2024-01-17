@@ -81,3 +81,16 @@ checks:
 	else \
 		echo "completed successfully."; \
 	fi
+
+.PHONY: multimod-verify
+multimod-verify:
+	$(MULTIMOD) verify
+
+.PHONY: multimod-prerelease
+multimod-prerelease:
+	$(MULTIMOD) prerelease -s=true -b=false -v ./versions.yaml -m contrib-base
+	$(MAKE) tidy-all
+
+.PHONY: crosslink
+crosslink:
+	$(CROSSLINK) --root=$(shell pwd) --prune

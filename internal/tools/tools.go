@@ -17,5 +17,7 @@ import (
     _ "golang.org/x/vuln/cmd/govulncheck"
     _ "go.opentelemetry.io/collector/cmd/builder"
     _ "github.com/goreleaser/goreleaser"
+    _ "go.opentelemetry.io/build-tools/multimod"
+    _ "go.opentelemetry.io/build-tools/crosslink"
 )
 
