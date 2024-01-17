@@ -25,8 +25,8 @@ TOOLS_BIN_NAMES  := $(addprefix $(TOOLS_BIN_DIR)/, $(notdir $(TOOLS_PKG_NAMES)))
 .PHONY: install-tools
 install-tools: $(TOOLS_BIN_NAMES)
 
-.PHONY: clean-tools
-clean-tools:
+.PHONY: clean
+clean:
 	rm -rf $(TOOLS_BIN_DIR)
 
 $(TOOLS_BIN_DIR):
