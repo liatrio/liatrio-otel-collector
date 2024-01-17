@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Khan/genqlient/graphql"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -20,20 +19,6 @@ import (
 )
 
 var errClientNotInitErr = errors.New("http client not initialized")
-
-// Not sure if this needs to be here after the refactor
-type PullRequest struct {
-	Title       string
-	CreatedDate time.Time
-	ClosedDate  time.Time
-}
-
-type Repo struct {
-	Name          string
-	Owner         string
-	DefaultBranch string
-	PullRequests  []PullRequest
-}
 
 type githubScraper struct {
 	client   *http.Client
@@ -142,10 +127,6 @@ func (ghs *githubScraper) getCommitInfo(
 
 // scrape and return metrics
 func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
-	ghs.rb.SetGitVendorName("github")
-	ghs.rb.SetOrganizationName(ghs.cfg.GitHubOrg)
-	res := ghs.rb.Emit()
-
 	if ghs.client == nil {
 		return pmetric.NewMetrics(), errClientNotInitErr
 	}
@@ -228,7 +209,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, branch.Repository.Name, branch.Name)
 				ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), branch.Repository.Name, branch.Name)
 				ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), branch.Repository.Name, branch.Name)
-
 			}
 
 			// Get the contributor count for each of the repositories
@@ -278,5 +258,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	}
 	wg.Wait()
 
+	ghs.rb.SetGitVendorName("github")
+	ghs.rb.SetOrganizationName(ghs.cfg.GitHubOrg)
+	res := ghs.rb.Emit()
 	return ghs.mb.Emit(metadata.WithResource(res)), nil
 }
