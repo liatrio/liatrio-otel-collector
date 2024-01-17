@@ -6,7 +6,7 @@ ARCH := $(shell uname -m)
 
 # Arguments for getting directories & executing commands against them
 PKG_DIRS = $(shell find ./* -not -path "./build/*" -not -path "./tmp/*" -type f -name "go.mod" -exec dirname {} \; | sort | grep -E '^./')
-CHECKS = generate lint-all test-all tidy-all fmt-all
+CHECKS = generate lint-all test-all tidy-all fmt-all multimod-verify crosslink
 
 # set ARCH var based on output
 ifeq ($(ARCH),x86_64)
@@ -73,7 +73,7 @@ fmt-all:
 
 # Setting the paralellism to 1 to improve output readability. Reevaluate later as needed for performance
 .PHONY: checks
-checks:
+checks: install-tools 
 	$(MAKE) -j 1 $(CHECKS)
 	@if [ -n "$$(git diff --name-only)" ]; then \
 		echo "Some files have changed. Please commit them."; \
@@ -81,3 +81,16 @@ checks:
 	else \
 		echo "completed successfully."; \
 	fi
+
+.PHONY: multimod-verify
+multimod-verify:
+	$(MULTIMOD) verify
+
+.PHONY: multimod-prerelease
+multimod-prerelease:
+	$(MULTIMOD) prerelease -s=true -b=false -v ./versions.yaml -m liatrio-otel
+	$(MAKE) tidy-all
+
+.PHONY: crosslink
+crosslink:
+	$(CROSSLINK) --root=$(shell pwd) --prune
