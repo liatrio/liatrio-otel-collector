@@ -33,12 +33,11 @@ type MetricsConfig struct {
 	GitRepositoryBranchTime                MetricConfig `mapstructure:"git.repository.branch.time"`
 	GitRepositoryContributorCount          MetricConfig `mapstructure:"git.repository.contributor.count"`
 	GitRepositoryCount                     MetricConfig `mapstructure:"git.repository.count"`
-	GitRepositoryPullRequestApprovalTime   MetricConfig `mapstructure:"git.repository.pull_request.approval.time"`
-	GitRepositoryPullRequestDeploymentTime MetricConfig `mapstructure:"git.repository.pull_request.deployment.time"`
-	GitRepositoryPullRequestMergeTime      MetricConfig `mapstructure:"git.repository.pull_request.merge.time"`
+	GitRepositoryPullRequestApprovedTime   MetricConfig `mapstructure:"git.repository.pull_request.approved.time"`
 	GitRepositoryPullRequestMergedCount    MetricConfig `mapstructure:"git.repository.pull_request.merged.count"`
+	GitRepositoryPullRequestMergedTime     MetricConfig `mapstructure:"git.repository.pull_request.merged.time"`
 	GitRepositoryPullRequestOpenCount      MetricConfig `mapstructure:"git.repository.pull_request.open.count"`
-	GitRepositoryPullRequestTime           MetricConfig `mapstructure:"git.repository.pull_request.time"`
+	GitRepositoryPullRequestOpenTime       MetricConfig `mapstructure:"git.repository.pull_request.open.time"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
@@ -67,22 +66,19 @@ func DefaultMetricsConfig() MetricsConfig {
 		GitRepositoryCount: MetricConfig{
 			Enabled: true,
 		},
-		GitRepositoryPullRequestApprovalTime: MetricConfig{
-			Enabled: true,
-		},
-		GitRepositoryPullRequestDeploymentTime: MetricConfig{
-			Enabled: true,
-		},
-		GitRepositoryPullRequestMergeTime: MetricConfig{
+		GitRepositoryPullRequestApprovedTime: MetricConfig{
 			Enabled: true,
 		},
 		GitRepositoryPullRequestMergedCount: MetricConfig{
 			Enabled: true,
 		},
+		GitRepositoryPullRequestMergedTime: MetricConfig{
+			Enabled: true,
+		},
 		GitRepositoryPullRequestOpenCount: MetricConfig{
 			Enabled: true,
 		},
-		GitRepositoryPullRequestTime: MetricConfig{
+		GitRepositoryPullRequestOpenTime: MetricConfig{
 			Enabled: true,
 		},
 	}

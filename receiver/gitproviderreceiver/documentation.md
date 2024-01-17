@@ -14,11 +14,11 @@ metrics:
 
 ### git.repository.branch.commit.aheadby.count
 
-Number of commits the branch is ahead of the default branch
+Number of commits a branch is ahead of the default branch
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
+| {branch} | Gauge | Int |
 
 #### Attributes
 
@@ -29,11 +29,11 @@ Number of commits the branch is ahead of the default branch
 
 ### git.repository.branch.commit.behindby.count
 
-Number of commits the branch is behind the default branch
+Number of commits a branch is behind the default branch
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
+| {branch} | Gauge | Int |
 
 #### Attributes
 
@@ -44,11 +44,11 @@ Number of commits the branch is behind the default branch
 
 ### git.repository.branch.count
 
-Number of branches that exist in the repository
+Number of branches in a repository
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
+| {branch} | Gauge | Int |
 
 #### Attributes
 
@@ -58,11 +58,11 @@ Number of branches that exist in the repository
 
 ### git.repository.branch.line.addition.count
 
-Total additional lines of code in the branch
+Count of lines added to code in a branch
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
+| {branch} | Gauge | Int |
 
 #### Attributes
 
@@ -73,11 +73,11 @@ Total additional lines of code in the branch
 
 ### git.repository.branch.line.deletion.count
 
-Total deleted lines of code in the branch
+Count of lines deleted from code in a branch
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
+| {branch} | Gauge | Int |
 
 #### Attributes
 
@@ -103,49 +103,19 @@ Time the branch has existed
 
 ### git.repository.count
 
-Number of repositories that exist in an organization
+Number of repositories in an organization
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
+| {repository} | Gauge | Int |
 
-### git.repository.pull_request.approval.time
+### git.repository.pull_request.approved.time
 
-Time for the PR to be approved
-
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
-
-#### Attributes
-
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| repository.name | The full name of the Git repository | Any Str |
-| branch.name | The name of the branch in a given repository | Any Str |
-
-### git.repository.pull_request.deployment.time
-
-Time for the merged PR to be deployed
+The amount of time it took a pull request to go from open to approved
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
-
-#### Attributes
-
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| repository.name | The full name of the Git repository | Any Str |
-| branch.name | The name of the branch in a given repository | Any Str |
-
-### git.repository.pull_request.merge.time
-
-Time the PR has been merged
-
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
+| s | Gauge | Int |
 
 #### Attributes
 
@@ -156,25 +126,40 @@ Time the PR has been merged
 
 ### git.repository.pull_request.merged.count
 
-The amount of merged pull requests
+The number of merged pull requests in a repository
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
+| {pull_request} | Gauge | Int |
 
 #### Attributes
 
 | Name | Description | Values |
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
+
+### git.repository.pull_request.merged.time
+
+The amount of time it took a pull request to go from open to merged
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| s | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| branch.name | The name of the branch in a given repository | Any Str |
 
 ### git.repository.pull_request.open.count
 
-The amount of open pull requests
+The number of open pull requests in a repository
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
+| {pull_request} | Gauge | Int |
 
 #### Attributes
 
@@ -182,13 +167,13 @@ The amount of open pull requests
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
 
-### git.repository.pull_request.time
+### git.repository.pull_request.open.time
 
-Time the PR has been open
+The amount of time a pull request has been open
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
+| s | Gauge | Int |
 
 #### Attributes
 
@@ -209,11 +194,11 @@ metrics:
 
 ### git.repository.contributor.count
 
-Total number of unique contributors to this repository
+Total number of unique contributors to a repository
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
+| {contributor} | Gauge | Int |
 
 #### Attributes
 
