@@ -3,7 +3,19 @@ name: Build and Test
 
 on:
     pull_request:
-        branches: [main]
+        paths:
+          - '**/Dokerfile*'
+          - '**/.dockerignore'
+          - .github/**
+          - '**/*.go'
+          - '**/*.mod'
+          - '**/*.sum'
+          - config/**
+          - '**/Makefile*'
+          - '**/documentation.md'
+          - .golangci.yaml
+          - .goreleaser.yaml
+
     push:
         branches: [main]
 
