@@ -2,24 +2,23 @@
 name: Build and Test
 
 on:
-    pull_request:
-        branches: [main]
-        paths:
-          - '**/Dockerfile'
-          - '**/.dockerignore'
-          - '.github/**'
-          - '**.go'
-          - '**.mod'
-          - '**.sum'
-          - 'config/**'
-          - 'Makefile**'
-          - '**/Makefile'
-          - '**/documentation.md'
-          - '.golangci.yaml'
-          - '.goreleaser.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/Dockerfile'
+      - '**/.dockerignore'
+      - .github/**
+      - '**.go'
+      - '**.mod'
+      - '**.sum'
+      - config/**
+      - '**/Makefile*'
+      - '**/documentation.md'
+      - .golangci.yaml
+      - .goreleaser.yaml
 
-    push:
-        branches: [main]
+  push:
+    branches: [main]
 
 jobs:
   lint:
@@ -82,7 +81,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
         with:
-            fetch-depth: 0
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
