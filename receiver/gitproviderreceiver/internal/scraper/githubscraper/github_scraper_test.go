@@ -99,6 +99,9 @@ func TestScrape(t *testing.T) {
 								{
 									Merged: false,
 								},
+								{
+									Merged: true,
+								},
 							},
 						},
 					},
