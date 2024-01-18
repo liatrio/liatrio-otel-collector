@@ -1,20 +1,25 @@
 ---
 # Add 'documentation' label to any change to *.md files
 documentation:
-    - any: ['**/*.md']
+    - changed-files:
+          - any-glob-to-any-file: '**/*.md'
 
 # Add 'docker' label to any change in docker related files
 docker:
-    - any: ['**/Dockerfile*', '**/.dockerignore']
+    - changed-files:
+          - any-glob-to-any-file: ['**/Dockerfile*', '**/.dockerignore']
 
 # Add 'github_actions' label to any change .github/ directory
 github_actions:
-    - any: [.github/**]
+    - changed-files:
+          - any-glob-to-any-file: .github/**
 
 # Add 'go' label to any change *.go files
 go:
-    - any: ['**/*.go', '**/*.mod', '**/*.sum', '**/*.tmpl']
+    - changed-files:
+          - any-glob-to-any-file: ['**/*.go', '**/*.mod', '**/*.sum', '**/*.tmpl']
 
 # Add 'build' to any config files or makefiles
 build:
-    - any: [config/**, '**/Makefile*']
+    - changed-files:
+          - any-glob-to-any-file: [config/**, '**/Makefile*']
