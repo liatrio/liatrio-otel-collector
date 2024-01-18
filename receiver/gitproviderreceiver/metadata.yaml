@@ -54,7 +54,7 @@ metrics:
   git.repository.branch.time:
     enabled: true
     description: Time the branch has existed
-    unit: 1
+    unit: s
     gauge:
       value_type: int
     attributes: [repository.name, branch.name]
