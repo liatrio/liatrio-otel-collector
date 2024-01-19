@@ -384,6 +384,8 @@ go.opentelemetry.io/collector/receiver v0.85.0 h1:ecDJicAq1mbQcsEkzo1q+6Y2DP8plK
 go.opentelemetry.io/collector/receiver v0.85.0/go.mod h1:6pmub7FpyQIAcCLmijUtelzWD9Jj8Csno7W+3FBQFJo=
 go.opentelemetry.io/collector/semconv v0.85.0 h1:TVXgaWeYADXnytlhNq44zyv2W9m3VodBR1ffiMFDusI=
 go.opentelemetry.io/collector/semconv v0.85.0/go.mod h1:j/8THcqVxFna1FpvA2zYIsUperEtOaRaqoLYIN4doWw=
+go.opentelemetry.io/collector/semconv v0.92.0 h1:3+OGPPuVu4rtrz8qGbpbiw7eKKULj4iJaSDTV52HM40=
+go.opentelemetry.io/collector/semconv v0.92.0/go.mod h1:gZ0uzkXsN+J5NpiRcdp9xOhNGQDDui8Y62p15sKrlzo=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.44.0 h1:KfYpVmrjI7JuToy5k8XV3nkapjWx48k4E4JOtVstzQI=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.44.0/go.mod h1:SeQhzAEccGVZVEy7aH87Nh0km+utSpo1pTv6eMMop48=
 go.opentelemetry.io/contrib/propagators/b3 v1.17.0 h1:ImOVvHnku8jijXqkwCSyYKRDt2YrnGXD4BbhcpfbfJo=
