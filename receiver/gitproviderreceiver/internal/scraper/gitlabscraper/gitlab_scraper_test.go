@@ -477,8 +477,8 @@ func TestScrape(t *testing.T) {
 						{
 							Name:              "project",
 							PathWithNamespace: "project",
-							CreatedAt:         gitlab.Time(time.Now().AddDate(0, 0, -1)),
-							LastActivityAt:    gitlab.Time(time.Now().AddDate(0, 0, -1)),
+							CreatedAt:         gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+							LastActivityAt:    gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
 						},
 					},
 					responseCode: http.StatusOK,
@@ -521,7 +521,7 @@ func TestScrape(t *testing.T) {
 						Commits: []*gitlab.Commit{
 							{
 								Title:     "commit1",
-								CreatedAt: gitlab.Time(time.Now().AddDate(0, 0, -1)),
+								CreatedAt: gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
 							},
 						},
 					},
