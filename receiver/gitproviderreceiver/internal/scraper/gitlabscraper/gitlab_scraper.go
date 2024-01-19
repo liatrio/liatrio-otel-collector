@@ -207,9 +207,9 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	for nextPage := 1; nextPage > 0; {
 		// TODO: since we pass in a context already, do we need to create a new background context?
 		projects, res, err := restClient.Groups.ListGroupProjects(gls.cfg.GitLabOrg, &gitlab.ListGroupProjectsOptions{
-			IncludeSubGroups: gitlab.Bool(true),
-			Topic:            gitlab.String(gls.cfg.SearchTopic),
-			Search:           gitlab.String(gls.cfg.SearchQuery),
+			IncludeSubGroups: gitlab.Ptr(true),
+			Topic:            gitlab.Ptr(gls.cfg.SearchTopic),
+			Search:           gitlab.Ptr(gls.cfg.SearchQuery),
 			ListOptions: gitlab.ListOptions{
 				Page:    nextPage,
 				PerPage: 100,
