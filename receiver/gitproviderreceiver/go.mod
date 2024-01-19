@@ -12,7 +12,7 @@ require (
 	go.opentelemetry.io/collector v0.85.0
 	go.opentelemetry.io/collector/component v0.85.0
 	go.opentelemetry.io/collector/config/confighttp v0.85.0
-	go.opentelemetry.io/collector/confmap v0.85.0
+	go.opentelemetry.io/collector/confmap v0.92.0
 	go.opentelemetry.io/collector/consumer v0.85.0
 	go.opentelemetry.io/collector/pdata v1.0.0-rcv0017.0.20231026220224-6405e152a2d9
 	go.opentelemetry.io/collector/receiver v0.85.0
@@ -20,7 +20,10 @@ require (
 	go.uber.org/zap v1.26.0
 )
 
-require github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.88.0 // indirect
+require (
+	github.com/hashicorp/go-version v1.6.0 // indirect
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.88.0 // indirect
+)
 
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
@@ -85,7 +88,7 @@ require (
 	go.opentelemetry.io/collector/exporter v0.85.0 // indirect
 	go.opentelemetry.io/collector/extension v0.85.0 // indirect
 	go.opentelemetry.io/collector/extension/auth v0.85.0 // indirect
-	go.opentelemetry.io/collector/featuregate v1.0.0-rcv0014 // indirect
+	go.opentelemetry.io/collector/featuregate v1.0.1 // indirect
 	go.opentelemetry.io/collector/processor v0.85.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.44.0 // indirect
 	go.opentelemetry.io/contrib/propagators/b3 v1.17.0 // indirect
