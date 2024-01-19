@@ -6,10 +6,17 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"time"
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/google/go-github/v57/github"
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
+)
+
+const (
+	// The default public GitHub GraphQL Endpoint
+	defaultGraphURL = "https://api.github.com/graphql"
 )
 
 // Current GraphQL cost 1
@@ -98,14 +105,11 @@ func (ghs *githubScraper) getCommitData(
 	}
 }
 
-// TODO: this should be able to be removed due to the change in pagination logic
 func getNumPages(p float64, n float64) int {
 	numPages := math.Ceil(n / p)
 
 	return int(numPages)
 }
-
-// END TODO
 
 func add[T ~int | ~float64](a, b T) T {
 	return a + b
@@ -155,30 +159,28 @@ func genDefaultSearchQuery(ownertype string, ghorg string) string {
 // https://docs.github.com/en/enterprise-server@3.8/graphql/guides/forming-calls-with-graphql#the-graphql-endpoint
 // https://docs.github.com/en/enterprise-server@3.8/rest/guides/getting-started-with-the-rest-api#making-a-request
 func (ghs *githubScraper) createClients() (gClient graphql.Client, rClient *github.Client, err error) {
-
-	gURL := "https://api.github.com/graphql"
 	rClient = github.NewClient(ghs.client)
+	gClient = graphql.NewClient(defaultGraphURL, ghs.client)
 
 	if ghs.cfg.HTTPClientSettings.Endpoint != "" {
 
 		// Given endpoint set as `https://myGHEserver.com` we need to join the path
 		// with `api/graphql`
-		gURL, err = url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "api/graphql")
+		gu, err := url.JoinPath(ghs.cfg.HTTPClientSettings.Endpoint, "api/graphql")
 		if err != nil {
-			ghs.logger.Sugar().Errorf("error: %v", err)
+			ghs.logger.Sugar().Errorf("error joining graphql endpoint: %v", err)
 			return nil, nil, err
 		}
+		gClient = graphql.NewClient(gu, ghs.client)
 
 		// The rest client needs the endpoint to be the root of the server
-		rURL := ghs.cfg.HTTPClientSettings.Endpoint
-		rClient, err = github.NewClient(ghs.client).WithEnterpriseURLs(rURL, rURL)
+		ru := ghs.cfg.HTTPClientSettings.Endpoint
+		rClient, err = github.NewClient(ghs.client).WithEnterpriseURLs(ru, ru)
 		if err != nil {
-			ghs.logger.Sugar().Errorf("error: %v", err)
+			ghs.logger.Sugar().Errorf("error creating enterprise client: %v", err)
 			return nil, nil, err
 		}
 	}
-
-	gClient = graphql.NewClient(gURL, ghs.client)
 
 	return gClient, rClient, nil
 }
@@ -213,4 +215,94 @@ func (ghs *githubScraper) getContributorCount(
 	}
 
 	return len(all), nil
+}
+
+// Current GraphQL cost 2
+// See genqlient.graphql getPullRequestData for more information
+func (ghs *githubScraper) getPullRequests(
+	ctx context.Context,
+	client graphql.Client,
+	repoName string,
+) ([]PullRequestNode, error) {
+	var prCursor *string
+	var pullRequests []PullRequestNode
+
+	for hasNextPage := true; hasNextPage; {
+		prs, err := getPullRequestData(
+			ctx,
+			client,
+			repoName,
+			ghs.cfg.GitHubOrg,
+			100,
+			prCursor,
+			[]PullRequestState{"OPEN", "MERGED"},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		pullRequests = append(pullRequests, prs.Repository.PullRequests.Nodes...)
+		prCursor = &prs.Repository.PullRequests.PageInfo.EndCursor
+		hasNextPage = prs.Repository.PullRequests.PageInfo.HasNextPage
+	}
+
+	return pullRequests, nil
+}
+
+func (ghs *githubScraper) getCommitInfo(
+	ctx context.Context,
+	client graphql.Client,
+	repoName string,
+	now pcommon.Timestamp,
+	branch BranchNode,
+) (int, int, int64, error) {
+	comCount := 100
+	var cc *string
+	var adds int = 0
+	var dels int = 0
+	var age int64 = 0
+
+	// We're using BehindBy here because we're comparing against the target
+	// branch, which is the default branch. In essence the response is saying
+	// the default branch is behind the queried branch by X commits which is
+	// the number of commits made to the queried branch but not merged into
+	// the default branch. Doing it this way involves less queries because
+	// we don't have to know the queried branch name ahead of time.
+	comPages := getNumPages(float64(100), float64(branch.Compare.BehindBy))
+
+	for nPage := 1; nPage <= comPages; nPage++ {
+		if nPage == comPages {
+			comCount = branch.Compare.BehindBy % 100
+			// When the last page is full
+			if comCount == 0 {
+				comCount = 100
+			}
+		}
+		c, err := ghs.getCommitData(context.Background(), client, repoName, ghs.cfg.GitHubOrg, comCount, cc, branch.Name)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting commit data", zap.Error(err))
+			return 0, 0, 0, err
+		}
+
+		if len(c.Edges) == 0 {
+			break
+		}
+		cc = &c.PageInfo.EndCursor
+		if nPage == comPages {
+			e := c.GetEdges()
+			oldest := e[len(e)-1].Node.GetCommittedDate()
+			age = int64(time.Since(oldest).Hours())
+		}
+		for b := 0; b < len(c.Edges); b++ {
+			adds = add(adds, c.Edges[b].Node.Additions)
+			dels = add(dels, c.Edges[b].Node.Deletions)
+		}
+
+	}
+	return adds, dels, age, nil
+}
+
+// Get the age/duration between two times in seconds.
+func getAge(start time.Time, end time.Time) int64 {
+	return int64(end.Sub(start).Seconds())
 }

@@ -1,28 +1,29 @@
 ---
 repos:
-    - repo: https://github.com/compilerla/conventional-pre-commit
-      rev: v2.1.1
-      hooks:
-          - id: conventional-pre-commit
-            stages: [commit-msg]
-            args: []
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v2.1.1
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: []
 
-    - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v4.3.0
-      hooks:
-          - id: pretty-format-json
-            types: [file] # override `types: [json]`
-            files: \.(json|json.tpl)$
-            args: [--autofix, --no-sort-keys]
-            stages: [commit]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0
+    hooks:
+      - id: pretty-format-json
+        types: [file]     # override `types: [json]`
+        files: \.(json|json.tpl)$
+        args: [--autofix, --no-sort-keys]
+        stages: [commit]
 
-    - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-      rev: 0.2.1 # or other specific tag
-      hooks:
-          - id: yamlfmt
-            stages: [commit]
+  - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+    rev: 0.2.1   # or other specific tag
+    hooks:
+      - id: yamlfmt
+        stages: [commit]
+        args: [--mapping, '2', --offset, '2', --sequence, '4']
 
-    - repo: https://github.com/DavidAnson/markdownlint-cli2
-      rev: v0.9.2
-      hooks:
-          - id: markdownlint-cli2
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.9.2
+    hooks:
+      - id: markdownlint-cli2

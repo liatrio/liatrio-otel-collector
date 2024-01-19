@@ -1,3 +1,4 @@
+---
 resourceMetrics:
   - resource:
       attributes:
@@ -10,14 +11,14 @@ resourceMetrics:
     schemaUrl: https://opentelemetry.io/schemas/1.9.0
     scopeMetrics:
       - metrics:
-          - description: Number of repositories that exist in an organization
+          - description: Number of repositories in an organization
             gauge:
               dataPoints:
-                - asInt: "0"
-                  startTimeUnixNano: "1000000"
-                  timeUnixNano: "2000000"
+                - asInt: '0'
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
             name: git.repository.count
-            unit: "1"
+            unit: '{repository}'
         scope:
           name: otelcol/gitproviderreceiver
           version: latest

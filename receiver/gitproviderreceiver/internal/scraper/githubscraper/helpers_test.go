@@ -287,6 +287,45 @@ func TestGenDefaultSearchQueryUser(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestGetAge(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		hrsAdd   time.Duration
+		minsAdd  time.Duration
+		expected float64
+	}{
+		{
+			desc:     "TestHalfHourDiff",
+			hrsAdd:   time.Duration(0) * time.Hour,
+			minsAdd:  time.Duration(30) * time.Minute,
+			expected: 60 * 30,
+		},
+		{
+			desc:     "TestHourDiff",
+			hrsAdd:   time.Duration(1) * time.Hour,
+			minsAdd:  time.Duration(0) * time.Minute,
+			expected: 60 * 60,
+		},
+		{
+			desc:     "TestDayDiff",
+			hrsAdd:   time.Duration(24) * time.Hour,
+			minsAdd:  time.Duration(0) * time.Minute,
+			expected: 60 * 60 * 24,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			min := time.Now()
+			max := min.Add(tc.hrsAdd).Add(tc.minsAdd)
+
+			actual := getAge(min, max)
+
+			assert.Equal(t, int64(tc.expected), actual)
+		})
+	}
+}
+
 func TestGetRepos(t *testing.T) {
 	testCases := []struct {
 		desc        string
@@ -388,6 +427,81 @@ func TestGetRepos(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+		})
+	}
+}
+
+func TestCheckOwnerExists(t *testing.T) {
+	testCases := []struct {
+		desc              string
+		login             string
+		expectedError     bool
+		expectedOwnerType string
+		server            *http.ServeMux
+	}{
+		{
+			desc:  "TestOrgOwnerExists",
+			login: "liatrio",
+			server: MockServer(&responses{
+				checkLoginResponse: loginResponse{
+					checkLogin: checkLoginResponse{
+						Organization: checkLoginOrganization{
+							Login: "liatrio",
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedOwnerType: "org",
+		},
+		{
+			desc:  "TestUserOwnerExists",
+			login: "liatrio",
+			server: MockServer(&responses{
+				checkLoginResponse: loginResponse{
+					checkLogin: checkLoginResponse{
+						User: checkLoginUser{
+							Login: "liatrio",
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedOwnerType: "user",
+		},
+		{
+			desc:  "TestLoginError",
+			login: "liatrio",
+			server: MockServer(&responses{
+				checkLoginResponse: loginResponse{
+					checkLogin: checkLoginResponse{
+						Organization: checkLoginOrganization{
+							Login: "liatrio",
+						},
+					},
+					responseCode: http.StatusNotFound,
+				},
+			}),
+			expectedOwnerType: "",
+			expectedError:     true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
+
+			client := graphql.NewClient(server.URL, ghs.client)
+			loginType, err := ghs.login(context.Background(), client, tc.login)
+
+			assert.Equal(t, tc.expectedOwnerType, loginType)
+			if !tc.expectedError {
+				assert.NoError(t, err)
 			}
 		})
 	}
@@ -785,7 +899,7 @@ func TestGetCommitInfo(t *testing.T) {
 				Name: "branch1",
 				Compare: BranchNodeCompareComparison{
 					AheadBy:  0,
-					BehindBy: 101, //100 per page, so this is 2 pages
+					BehindBy: 101, // 100 per page, so this is 2 pages
 				},
 			},
 			expectedAge:       int64(time.Since(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)).Hours()),

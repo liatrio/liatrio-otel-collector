@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Khan/genqlient/graphql"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
@@ -21,20 +20,6 @@ import (
 
 var errClientNotInitErr = errors.New("http client not initialized")
 
-// Not sure if this needs to be here after the refactor
-type PullRequest struct {
-	Title       string
-	CreatedDate time.Time
-	ClosedDate  time.Time
-}
-
-type Repo struct {
-	Name          string
-	Owner         string
-	DefaultBranch string
-	PullRequests  []PullRequest
-}
-
 type githubScraper struct {
 	client   *http.Client
 	cfg      *Config
@@ -45,8 +30,7 @@ type githubScraper struct {
 }
 
 func (ghs *githubScraper) start(_ context.Context, host component.Host) (err error) {
-	ghs.logger.Sugar().Info("Starting the scraper inside scraper.go")
-	// TODO: Fix the ToClient configuration
+	ghs.logger.Sugar().Info("starting the GitHub scraper")
 	ghs.client, err = ghs.cfg.ToClient(host, ghs.settings)
 	return
 }
@@ -65,87 +49,8 @@ func newGitHubScraper(
 	}
 }
 
-// Current GraphQL cost 2
-// See genqlient.graphql getPullRequestData for more information
-func (ghs *githubScraper) getPullRequests(
-	ctx context.Context,
-	client graphql.Client,
-	repoName string,
-) ([]PullRequestNode, error) {
-	var prCursor *string
-	var pullRequests []PullRequestNode
-
-	for hasNextPage := true; hasNextPage; {
-		prs, err := getPullRequestData(ctx, client, repoName, ghs.cfg.GitHubOrg, 100, prCursor, []PullRequestState{"OPEN", "MERGED"})
-		if err != nil {
-			return nil, err
-		}
-		pullRequests = append(pullRequests, prs.Repository.PullRequests.Nodes...)
-		prCursor = &prs.Repository.PullRequests.PageInfo.EndCursor
-		hasNextPage = prs.Repository.PullRequests.PageInfo.HasNextPage
-	}
-	return pullRequests, nil
-}
-
-func (ghs *githubScraper) getCommitInfo(
-	ctx context.Context,
-	client graphql.Client,
-	repoName string,
-	now pcommon.Timestamp,
-	branch BranchNode,
-) (int, int, int64, error) {
-	comCount := 100
-	var cc *string
-	var adds int = 0
-	var dels int = 0
-	var age int64 = 0
-
-	// We're using BehindBy here because we're comparing against the target
-	// branch, which is the default branch. In essence the response is saying
-	// the default branch is behind the queried branch by X commits which is
-	// the number of commits made to the queried branch but not merged into
-	// the default branch. Doing it this way involves less queries because
-	// we don't have to know the queried branch name ahead of time.
-	comPages := getNumPages(float64(100), float64(branch.Compare.BehindBy))
-
-	for nPage := 1; nPage <= comPages; nPage++ {
-		if nPage == comPages {
-			comCount = branch.Compare.BehindBy % 100
-			// When the last page is full
-			if comCount == 0 {
-				comCount = 100
-			}
-		}
-		c, err := ghs.getCommitData(context.Background(), client, repoName, ghs.cfg.GitHubOrg, comCount, cc, branch.Name)
-		if err != nil {
-			ghs.logger.Sugar().Errorf("error getting commit data", zap.Error(err))
-			return 0, 0, 0, err
-		}
-
-		if len(c.Edges) == 0 {
-			break
-		}
-		cc = &c.PageInfo.EndCursor
-		if nPage == comPages {
-			e := c.GetEdges()
-			oldest := e[len(e)-1].Node.GetCommittedDate()
-			age = int64(time.Since(oldest).Hours())
-		}
-		for b := 0; b < len(c.Edges); b++ {
-			adds = add(adds, c.Edges[b].Node.Additions)
-			dels = add(dels, c.Edges[b].Node.Deletions)
-		}
-
-	}
-	return adds, dels, age, nil
-}
-
 // scrape and return metrics
 func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
-	ghs.rb.SetGitVendorName("github")
-	ghs.rb.SetOrganizationName(ghs.cfg.GitHubOrg)
-	res := ghs.rb.Emit()
-
 	if ghs.client == nil {
 		return pmetric.NewMetrics(), errClientNotInitErr
 	}
@@ -155,8 +60,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	currentDate := time.Now().Day()
 	ghs.logger.Sugar().Debugf("current date: %v", currentDate)
-
-	ghs.logger.Sugar().Debug("creating a new github client")
 
 	genClient, restClient, err := ghs.createClients()
 	if err != nil {
@@ -206,6 +109,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(count), name)
 
 			for _, branch := range branches {
+				// Check if the branch is the default branch or if it is not behind the default branch
 				if branch.Name == branch.Repository.DefaultBranchRef.Name || branch.Compare.BehindBy == 0 {
 					continue
 				}
@@ -228,7 +132,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, branch.Repository.Name, branch.Name)
 				ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), branch.Repository.Name, branch.Name)
 				ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), branch.Repository.Name, branch.Name)
-
 			}
 
 			// Get the contributor count for each of the repositories
@@ -249,26 +152,22 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			for _, pr := range prs {
 				if pr.Merged {
 					merged++
-					time := pr.MergedAt
-					age := int64(time.Sub(pr.CreatedAt).Hours())
-					branch := pr.HeadRefName
-					ghs.mb.RecordGitRepositoryPullRequestMergeTimeDataPoint(now, age, name, branch)
-					// only exists if the pr is merged
-					if pr.MergeCommit.Deployments.TotalCount > 0 {
-						deploymentAgeUpperBound := pr.MergeCommit.Deployments.Nodes[0].CreatedAt
-						deploymentAge := int64(deploymentAgeUpperBound.Sub(pr.CreatedAt).Hours())
-						ghs.mb.RecordGitRepositoryPullRequestDeploymentTimeDataPoint(now, deploymentAge, name, pr.HeadRefName)
-					}
+
+					age := getAge(pr.CreatedAt, pr.MergedAt)
+
+					ghs.mb.RecordGitRepositoryPullRequestMergedTimeDataPoint(now, age, name, pr.HeadRefName)
 				} else {
 					open++
-					age := int64(now.AsTime().Sub(pr.CreatedAt).Hours())
-					ghs.mb.RecordGitRepositoryPullRequestTimeDataPoint(now, age, name, pr.HeadRefName)
-				}
 
-				if pr.Reviews.TotalCount > 0 {
-					bound := pr.Reviews.Nodes[0].CreatedAt
-					age := int64(bound.Sub(pr.CreatedAt).Hours())
-					ghs.mb.RecordGitRepositoryPullRequestApprovalTimeDataPoint(now, age, name, pr.HeadRefName)
+					age := getAge(pr.CreatedAt, now.AsTime())
+
+					ghs.mb.RecordGitRepositoryPullRequestOpenTimeDataPoint(now, age, name, pr.HeadRefName)
+
+					if pr.Reviews.TotalCount > 0 {
+						age := getAge(pr.CreatedAt, pr.Reviews.Nodes[0].CreatedAt)
+
+						ghs.mb.RecordGitRepositoryPullRequestApprovedTimeDataPoint(now, age, name, pr.HeadRefName)
+					}
 				}
 			}
 
@@ -276,7 +175,12 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			ghs.mb.RecordGitRepositoryPullRequestMergedCountDataPoint(now, int64(merged), name)
 		}()
 	}
+
 	wg.Wait()
 
+	ghs.rb.SetGitVendorName("github")
+	ghs.rb.SetOrganizationName(ghs.cfg.GitHubOrg)
+
+	res := ghs.rb.Emit()
 	return ghs.mb.Emit(metadata.WithResource(res)), nil
 }

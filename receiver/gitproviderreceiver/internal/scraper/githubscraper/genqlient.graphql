@@ -163,11 +163,7 @@ query getPullRequestData(
   $prStates: [PullRequestState!]
 ) {
   repository(name: $name, owner: $owner) {
-    pullRequests(
-      first: $prFirst,
-      after: $prCursor,
-      states: $prStates
-    ) {
+    pullRequests(first: $prFirst, after: $prCursor, states: $prStates) {
       # @genqlient(typename: "PullRequestNode")
       nodes {
         ... on PullRequest {
@@ -175,7 +171,7 @@ query getPullRequestData(
           merged
           mergedAt
           mergeCommit {
-            deployments(last: 1, orderBy: {field: CREATED_AT, direction: ASC}) {
+            deployments(last: 1, orderBy: { field: CREATED_AT, direction: ASC }) {
               nodes {
                 createdAt
               }
@@ -187,14 +183,14 @@ query getPullRequestData(
         reviews(states: APPROVED, last: 1) {
           totalCount
           nodes {
-            ... on PullRequestReview{
+            ... on PullRequestReview {
               createdAt
             }
           }
         }
       }
       pageInfo {
-        hasNextPage,
+        hasNextPage
         endCursor
       }
     }

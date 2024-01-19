@@ -2,109 +2,109 @@
 # This is an example .goreleaser.yml file with some sensible defaults.
 # Make sure to check the documentation at https://goreleaser.com
 before:
-    hooks:
-        - go generate ./...
-        - make cibuild
+  hooks:
+    - go generate ./...
+    - make cibuild
 builds:
-    - dir: ./build
-      env:
-          - CGO_ENABLED=0
-      goos:
-          - linux
-          - darwin
-          - windows
-      goarch:
-          - '386'
-          - amd64
-          - arm64
-          - arm
-      ignore:
-          - goos: darwin
-            goarch: '386'
-          - goos: darwin
-            goarch: arm
-          - goos: windows
-            goarch: arm
-          - goos: windows
-            goarch: arm64
+  - dir: ./build
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - '386'
+      - amd64
+      - arm64
+      - arm
+    ignore:
+      - goos: darwin
+        goarch: '386'
+      - goos: darwin
+        goarch: arm
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
 
 partial:
-    by: target
+  by: target
 
 dockers:
-    - goos: linux
-      goarch: '386'
-      image_templates:
-          - ghcr.io/liatrio/liatrio-otel-collector:{{ .Version }}-386
-          - ghcr.io/liatrio/liatrio-otel-collector:latest-386
-      extra_files:
-          - config/config.yaml
-      use: buildx
-      build_flag_templates:
-          - --pull
-          - --platform=linux/386
-          - --label=org.opencontainers.image.created={{.Date}}
-          - --label=org.opencontainers.image.name={{.ProjectName}}
-          - --label=org.opencontainers.image.revision={{.FullCommit}}
-          - --label=org.opencontainers.image.version={{.Version}}
-          - --label=org.opencontainers.image.source={{.GitURL}}
-    - goos: linux
-      goarch: amd64
-      image_templates:
-          - ghcr.io/liatrio/liatrio-otel-collector:{{ .Version }}-amd64
-          - ghcr.io/liatrio/liatrio-otel-collector:latest-amd64
-      extra_files:
-          - config/config.yaml
-      use: buildx
-      build_flag_templates:
-          - --pull
-          - --platform=linux/amd64
-          - --label=org.opencontainers.image.created={{.Date}}
-          - --label=org.opencontainers.image.name={{.ProjectName}}
-          - --label=org.opencontainers.image.revision={{.FullCommit}}
-          - --label=org.opencontainers.image.version={{.Version}}
-          - --label=org.opencontainers.image.source={{.GitURL}}
-    - goos: linux
-      goarch: arm64
-      image_templates:
-          - ghcr.io/liatrio/liatrio-otel-collector:{{ .Version }}-arm64
-          - ghcr.io/liatrio/liatrio-otel-collector:latest-arm64
-      extra_files:
-          - config/config.yaml
-      use: buildx
-      build_flag_templates:
-          - --pull
-          - --platform=linux/arm64
-          - --label=org.opencontainers.image.created={{.Date}}
-          - --label=org.opencontainers.image.name={{.ProjectName}}
-          - --label=org.opencontainers.image.revision={{.FullCommit}}
-          - --label=org.opencontainers.image.version={{.Version}}
-          - --label=org.opencontainers.image.source={{.GitURL}}
+  - goos: linux
+    goarch: '386'
+    image_templates:
+      - ghcr.io/liatrio/liatrio-otel-collector:{{ .Version }}-386
+      - ghcr.io/liatrio/liatrio-otel-collector:latest-386
+    extra_files:
+      - config/config.yaml
+    use: buildx
+    build_flag_templates:
+      - --pull
+      - --platform=linux/386
+      - --label=org.opencontainers.image.created={{.Date}}
+      - --label=org.opencontainers.image.name={{.ProjectName}}
+      - --label=org.opencontainers.image.revision={{.FullCommit}}
+      - --label=org.opencontainers.image.version={{.Version}}
+      - --label=org.opencontainers.image.source={{.GitURL}}
+  - goos: linux
+    goarch: amd64
+    image_templates:
+      - ghcr.io/liatrio/liatrio-otel-collector:{{ .Version }}-amd64
+      - ghcr.io/liatrio/liatrio-otel-collector:latest-amd64
+    extra_files:
+      - config/config.yaml
+    use: buildx
+    build_flag_templates:
+      - --pull
+      - --platform=linux/amd64
+      - --label=org.opencontainers.image.created={{.Date}}
+      - --label=org.opencontainers.image.name={{.ProjectName}}
+      - --label=org.opencontainers.image.revision={{.FullCommit}}
+      - --label=org.opencontainers.image.version={{.Version}}
+      - --label=org.opencontainers.image.source={{.GitURL}}
+  - goos: linux
+    goarch: arm64
+    image_templates:
+      - ghcr.io/liatrio/liatrio-otel-collector:{{ .Version }}-arm64
+      - ghcr.io/liatrio/liatrio-otel-collector:latest-arm64
+    extra_files:
+      - config/config.yaml
+    use: buildx
+    build_flag_templates:
+      - --pull
+      - --platform=linux/arm64
+      - --label=org.opencontainers.image.created={{.Date}}
+      - --label=org.opencontainers.image.name={{.ProjectName}}
+      - --label=org.opencontainers.image.revision={{.FullCommit}}
+      - --label=org.opencontainers.image.version={{.Version}}
+      - --label=org.opencontainers.image.source={{.GitURL}}
 
 archives:
-    - format: tar.gz
+  - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of uname.
-      name_template: >-
-          {{ .ProjectName }}_
-          {{- title .Os }}_
-          {{- if eq .Arch "amd64" }}x86_64
-          {{- else if eq .Arch "386" }}i386
-          {{- else }}{{ .Arch }}{{ end }}
-          {{- if .Arm }}v{{ .Arm }}{{ end }}
-      # use zip for windows archives
-      format_overrides:
-          - goos: windows
-            format: zip
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+     # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
 checksum:
-    name_template: checksums.txt
+  name_template: checksums.txt
 snapshot:
-    name_template: '{{ incpatch .Version }}-next'
+  name_template: '{{ incpatch .Version }}-next'
 changelog:
-    sort: asc
-    filters:
-        exclude:
-            - '^docs:'
-            - '^test:'
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
 
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
