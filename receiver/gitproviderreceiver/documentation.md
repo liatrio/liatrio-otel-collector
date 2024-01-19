@@ -92,7 +92,7 @@ Time the branch has existed
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
-| 1 | Gauge | Int |
+| s | Gauge | Int |
 
 #### Attributes
 

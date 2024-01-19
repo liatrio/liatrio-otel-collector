@@ -281,7 +281,7 @@ type metricGitRepositoryBranchTime struct {
 func (m *metricGitRepositoryBranchTime) init() {
 	m.data.SetName("git.repository.branch.time")
 	m.data.SetDescription("Time the branch has existed")
-	m.data.SetUnit("1")
+	m.data.SetUnit("s")
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }

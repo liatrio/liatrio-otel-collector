@@ -40,14 +40,14 @@ metrics:
   git.repository.branch.count:
     enabled: true
     description: Number of branches in a repository
-    unit: "{branch}"
+    unit: '{branch}'
     gauge:
       value_type: int
     attributes: [repository.name]
   git.repository.contributor.count:
     enabled: false
     description: Total number of unique contributors to a repository
-    unit: "{contributor}"
+    unit: '{contributor}'
     gauge:
       value_type: int
     attributes: [repository.name]
@@ -90,7 +90,7 @@ metrics:
   git.repository.pull_request.open.count:
     enabled: true
     description: The number of open pull requests in a repository
-    unit: "{pull_request}"
+    unit: '{pull_request}'
     gauge:
       value_type: int
     attributes: [repository.name]
@@ -104,7 +104,7 @@ metrics:
   git.repository.pull_request.merged.count:
     enabled: true
     description: The number of merged pull requests in a repository
-    unit: "{pull_request}"
+    unit: '{pull_request}'
     gauge:
       value_type: int
     attributes: [repository.name]

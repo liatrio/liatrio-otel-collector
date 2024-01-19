@@ -97,7 +97,7 @@ resourceMetrics:
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
             name: git.repository.branch.time
-            unit: '1'
+            unit: 's'
           - description: Number of repositories in an organization
             gauge:
               dataPoints:
@@ -132,7 +132,7 @@ resourceMetrics:
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
             name: git.repository.pull_request.merged.time
-            unit: 's'
+            unit: s
           - description: The number of open pull requests in a repository
             gauge:
               dataPoints:
@@ -159,7 +159,7 @@ resourceMetrics:
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
             name: git.repository.pull_request.open.time
-            unit: 's'
+            unit: s
         scope:
           name: otelcol/gitproviderreceiver
           version: latest
