@@ -13,6 +13,11 @@
   "schedule": [
     "before 5am"
   ],
+  "ocb": {
+    "fileMatch": [
+      "config/manifest.yaml"
+    ]
+  },
   "packageRules": [
     {
       "matchManagers": [
@@ -25,6 +30,15 @@
         "github-actions"
       ],
       "groupName": "github-actions deps"
+    },
+    {
+      "matchManagers": [
+        "ocb"
+      ],
+      "labels": [
+        "ocb-deps"
+      ],
+      "groupName": "upstream ocb deps"
     },
     {
       "matchManagers": [
