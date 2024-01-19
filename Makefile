@@ -25,6 +25,9 @@ build-debug: install-tools
 	sed 's/debug_compilation: false/debug_compilation: true/g' config/manifest.yaml > config/manifest-debug.yaml
 	$(OCB) --config config/manifest-debug.yaml
 
+# TODO: fix this release through goreleaser. Goreleaser installed through tools.go
+# is the OSS version and doesn't support the `partial:` option in the 
+# .goreleaser.yaml. This option is needed for CI builds but isn't available locally.
 .PHONY: release
 release:
 	$(OCB) --config config/manifest.yaml --skip-compilation
