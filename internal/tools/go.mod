@@ -12,7 +12,7 @@ require (
 	go.opentelemetry.io/build-tools/multimod v0.12.0
 	go.opentelemetry.io/collector/cmd/builder v0.92.0
 	golang.org/x/tools v0.17.0
-	golang.org/x/vuln v1.0.1
+	golang.org/x/vuln v1.0.2
 	honnef.co/go/tools v0.4.6
 )
 
