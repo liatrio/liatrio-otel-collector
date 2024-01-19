@@ -88,6 +88,9 @@
     }
   ],
   "prConcurrentLimit": 10,
+  "ignoreDeps": [
+    "github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver"
+  ],
   "suppressNotifications": [
     "prEditedNotification"
   ]
