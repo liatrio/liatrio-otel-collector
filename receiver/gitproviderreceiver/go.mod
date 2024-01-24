@@ -22,7 +22,6 @@ require (
 
 require (
 	github.com/hashicorp/go-version v1.6.0 // indirect
-	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.93.0 // indirect
 	go.opentelemetry.io/collector v0.93.0 // indirect
 	go.opentelemetry.io/collector/service v0.93.0 // indirect
