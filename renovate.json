@@ -70,7 +70,7 @@
         "gomod"
       ],
       "matchFileNames": [
-        "receiver/**",
+        "internal/tools/**",
         "go.mod"
       ],
       "groupName": "receiver component deps",
@@ -86,6 +86,9 @@
       "groupName": "compgen cmd deps",
       "description": "Groups together all dependencies of the compgen utility"
     }
+  ],
+  "postUpdateOptions": [
+    "gomodTidy"
   ],
   "prConcurrentLimit": 10,
   "ignoreDeps": [
