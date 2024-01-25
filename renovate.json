@@ -33,15 +33,6 @@
     },
     {
       "matchManagers": [
-        "ocb"
-      ],
-      "labels": [
-        "ocb-deps"
-      ],
-      "groupName": "upstream ocb deps"
-    },
-    {
-      "matchManagers": [
         "gomod"
       ],
       "matchUpdateTypes": [
@@ -56,25 +47,25 @@
     },
     {
       "matchManagers": [
-        "gomod"
+        "gomod",
+        "ocb"
       ],
       "matchFileNames": [
         "receiver/**",
         "go.mod"
       ],
-      "groupName": "receiver component deps",
-      "description": "Groups together all dependencies on receiver components"
+      "groupName": "collector component deps",
+      "description": "Groups together all dependencies on collector components"
     },
     {
       "matchManagers": [
         "gomod"
       ],
       "matchFileNames": [
-        "receiver/**",
-        "go.mod"
+        "internal/tools/**"
       ],
-      "groupName": "receiver component deps",
-      "description": "Groups together all dependencies on receiver components"
+      "groupName": "tool deps",
+      "description": "Groups together all dependencies on third party tools"
     },
     {
       "matchManagers": [
