@@ -54,6 +54,10 @@
         "receiver/**",
         "go.mod"
       ],
+      "matchPackageNames": [
+        "github.com/open-telemetry/opentelemetry-collector-contrib/cmd/mdatagen",
+        "go.opentelemetry.io/collector/cmd/builder"
+      ],
       "groupName": "collector component deps",
       "description": "Groups together all dependencies on collector components"
     },
