@@ -1,6 +1,10 @@
 name: Find and Clean Stale Branches
 
-on: [push]
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - stale-branch-poc
 
 jobs:
   find-stale-branches:
