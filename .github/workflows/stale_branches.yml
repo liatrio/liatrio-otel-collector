@@ -1,0 +1,14 @@
+on: [push]
+
+jobs:
+  find-stale-branches:
+    runs-on: ubuntu-latest
+    name: Find Stale Branches
+
+    steps:
+      - name: Run O11y Stale Branch POC
+        id: stale-branch-poc
+        uses: liatrio/O11y-Stale-Branch-POC@v0.0.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-branch-age: '30 days'
