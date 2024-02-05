@@ -1,4 +1,4 @@
-name: Find and Clean Stale Branches
+name: Run O11y Stale Branch POC
 
 on:
   push:
@@ -12,9 +12,9 @@ jobs:
     name: Find Stale Branches
 
     steps:
-      - name: Run O11y Stale Branch POC
+      - name: Run Stale Branch Action
         id: stale-branch-poc
-        uses: liatrio/o11y-stale-branch-poc@v0.0.3
+        uses: liatrio/o11y-stale-branch-poc@v0.0.5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           stale-branch-age: '30 days'
