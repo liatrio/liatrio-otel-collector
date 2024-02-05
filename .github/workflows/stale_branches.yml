@@ -17,4 +17,4 @@ jobs:
         uses: liatrio/o11y-stale-branch-poc@v0.1.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          stale-branch-age: '30 days'
+          stale-branch-age: '3 months'
