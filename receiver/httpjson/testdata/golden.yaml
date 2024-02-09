@@ -1,0 +1,4 @@
+---
+collection_interval: 10s
+initial_delay: 1s
+sample: data
