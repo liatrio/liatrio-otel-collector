@@ -3,4 +3,4 @@
 
 //go:generate ../../../.tools/mdatagen metadata.yaml
 
-package httpjson // import "httpjson"
+package httpjsonreceiver // import "httpjson"

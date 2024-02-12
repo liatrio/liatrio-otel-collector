@@ -1,12 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package httpjson // import "github.com/liatrio/liatrio-otel-collector/receiver/httpjson"
+package httpjsonreceiver // import "github.com/liatrio/liatrio-otel-collector/receiver/httpjson"
 
 import (
 	"errors"
 	"strings"
 
+	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
 )
@@ -22,6 +23,7 @@ var (
 
 // Config that is exposed to this receiver through the OTEL config.yaml
 type Config struct {
+	confighttp.HTTPClientSettings           `mapstructure:",squash"`
 	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
 	sample                                  string
 }

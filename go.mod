@@ -2,7 +2,10 @@ module github.com/liatrio/liatrio-otel-collector
 
 go 1.21
 
-require github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver v0.0.0-00010101000000-000000000000
+require (
+	github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver v0.0.0-00010101000000-000000000000
+	github.com/liatrio/liatrio-otel-collector/receiver/httpjsonreceiver v0.0.0-00010101000000-000000000000
+)
 
 require (
 	github.com/Khan/genqlient v0.6.0 // indirect
@@ -10,6 +13,7 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -17,12 +21,11 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.5 // indirect
-	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
 	github.com/knadh/koanf/providers/confmap v0.1.0 // indirect
-	github.com/knadh/koanf/v2 v2.0.1 // indirect
+	github.com/knadh/koanf/v2 v2.0.2 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -31,27 +34,26 @@ require (
 	github.com/rs/cors v1.10.1 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.11 // indirect
 	github.com/xanzy/go-gitlab v0.96.0 // indirect
-	go.opentelemetry.io/collector v0.93.0 // indirect
-	go.opentelemetry.io/collector/component v0.93.0 // indirect
+	go.opentelemetry.io/collector v0.94.1 // indirect
+	go.opentelemetry.io/collector/component v0.94.1 // indirect
 	go.opentelemetry.io/collector/config/configauth v0.93.0 // indirect
 	go.opentelemetry.io/collector/config/configcompression v0.93.0 // indirect
 	go.opentelemetry.io/collector/config/confighttp v0.93.0 // indirect
 	go.opentelemetry.io/collector/config/configopaque v0.93.0 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.93.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.94.1 // indirect
 	go.opentelemetry.io/collector/config/configtls v0.93.0 // indirect
 	go.opentelemetry.io/collector/config/internal v0.93.0 // indirect
-	go.opentelemetry.io/collector/confmap v0.93.0 // indirect
-	go.opentelemetry.io/collector/consumer v0.93.0 // indirect
+	go.opentelemetry.io/collector/confmap v0.94.1 // indirect
+	go.opentelemetry.io/collector/consumer v0.94.1 // indirect
 	go.opentelemetry.io/collector/extension v0.93.0 // indirect
 	go.opentelemetry.io/collector/extension/auth v0.93.0 // indirect
-	go.opentelemetry.io/collector/featuregate v1.0.1 // indirect
-	go.opentelemetry.io/collector/pdata v1.0.1 // indirect
-	go.opentelemetry.io/collector/receiver v0.93.0 // indirect
+	go.opentelemetry.io/collector/pdata v1.1.0 // indirect
+	go.opentelemetry.io/collector/receiver v0.94.1 // indirect
 	go.opentelemetry.io/collector/semconv v0.93.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0 // indirect
-	go.opentelemetry.io/otel v1.22.0 // indirect
-	go.opentelemetry.io/otel/metric v1.22.0 // indirect
-	go.opentelemetry.io/otel/trace v1.22.0 // indirect
+	go.opentelemetry.io/otel v1.23.0 // indirect
+	go.opentelemetry.io/otel/metric v1.23.0 // indirect
+	go.opentelemetry.io/otel/trace v1.23.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
@@ -61,8 +63,10 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
-	google.golang.org/grpc v1.60.1 // indirect
+	google.golang.org/grpc v1.61.0 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 )
 
 replace github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver => ./receiver/gitproviderreceiver
+
+replace github.com/liatrio/liatrio-otel-collector/receiver/httpjsonreceiver => ./receiver/httpjsonreceiver

@@ -1,6 +1,6 @@
-module httpjson
+module github.com/liatrio/liatrio-otel-collector/receiver/httpjsonreceiver
 
-go 1.19
+go 1.21
 
 require (
 	github.com/alecthomas/assert/v2 v2.5.0
