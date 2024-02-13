@@ -12,8 +12,8 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
 
-	"httpjson/internal"
-	"httpjson/internal/metadata"
+	"httpjsonreceiver/internal"
+	"httpjsonreceiver/internal/metadata"
 )
 
 var (

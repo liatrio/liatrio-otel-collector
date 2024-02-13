@@ -12,10 +12,9 @@ status:
 # See the [mdatagen documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/cmd/mdatagen) for building this file
 # Also see [metadata-sample.yaml](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/cmd/mdatagen/metadata-sample.yaml)
 metrics:
-  sspr.repository.count: #TODO: Stopped short for day -- change to metric name, finish filling the rest out.
-    enabled: true
-    description: Number of repositories in an organization
-    unit: '{repository}'
+  sspr.activated.users:
+    description: Number of users that have successfully completed the user activation process.
+    unit: count
     gauge:
       value_type: int
     attributes: []
