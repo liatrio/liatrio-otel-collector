@@ -1,4 +1,25 @@
----
-collection_interval: 10s
-initial_delay: 1s
-sample: data
+resourceMetrics:
+  - resource: {}
+    scopeMetrics:
+      - metrics:
+          - description: Measures the duration of the HTTP request.
+            gauge:
+              dataPoints:
+                - asInt: "0"
+                  attributes:
+                    - key: http.url
+                      value:
+                        stringValue: http://127.0.0.1:8000
+                    - key: http.status_code
+                      value:
+                        intValue: 200
+                    - key: http.method
+                      value:
+                        stringValue: GET
+                    - key: http.response.json
+                      value:
+                        - myvalue: foo
+                        - myvalue2: bar
+                        - myvalue3: 1
+            name: httpjson.duration
+            unit: ms

@@ -12,8 +12,8 @@ import (
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
 
-	"httpjsonreceiver/internal"
-	"httpjsonreceiver/internal/metadata"
+	"github.com/liatrio/liatrio-otel-collector/receiver/httpjsonreceiver/internal"
+	"github.com/liatrio/liatrio-otel-collector/receiver/httpjsonreceiver/internal/metadata"
 )
 
 var (

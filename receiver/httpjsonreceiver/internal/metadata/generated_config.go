@@ -25,12 +25,12 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for httpjsonreceiver metrics.
 type MetricsConfig struct {
-	SsprActivatedUsers MetricConfig `mapstructure:"sspr.activated.users"`
+	HttpjsonDuration MetricConfig `mapstructure:"httpjson.duration"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		SsprActivatedUsers: MetricConfig{
+		HttpjsonDuration: MetricConfig{
 			Enabled: true,
 		},
 	}

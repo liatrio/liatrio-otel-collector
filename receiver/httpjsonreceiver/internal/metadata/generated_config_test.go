@@ -26,7 +26,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					SsprActivatedUsers: MetricConfig{Enabled: true},
+					HttpjsonDuration: MetricConfig{Enabled: true},
 				},
 			},
 		},
@@ -34,7 +34,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					SsprActivatedUsers: MetricConfig{Enabled: false},
+					HttpjsonDuration: MetricConfig{Enabled: false},
 				},
 			},
 		},

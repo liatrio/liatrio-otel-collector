@@ -12,21 +12,22 @@ import (
 	conventions "go.opentelemetry.io/collector/semconv/v1.18.0"
 )
 
-type metricSsprActivatedUsers struct {
+type metricHttpjsonDuration struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	config   MetricConfig   // metric config provided by user.
 	capacity int            // max observed number of data points added to the metric.
 }
 
-// init fills sspr.activated.users metric with initial data.
-func (m *metricSsprActivatedUsers) init() {
-	m.data.SetName("sspr.activated.users")
-	m.data.SetDescription("Number of users that have successfully completed the user activation process.")
-	m.data.SetUnit("count")
+// init fills httpjson.duration metric with initial data.
+func (m *metricHttpjsonDuration) init() {
+	m.data.SetName("httpjson.duration")
+	m.data.SetDescription("Measures the duration of the HTTP request")
+	m.data.SetUnit("ms")
 	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricSsprActivatedUsers) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
+func (m *metricHttpjsonDuration) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, httpURLAttributeValue string, httpStatusCodeAttributeValue int64, httpMethodAttributeValue string, httpResponseJSONAttributeValue map[string]any) {
 	if !m.config.Enabled {
 		return
 	}
@@ -34,17 +35,21 @@ func (m *metricSsprActivatedUsers) recordDataPoint(start pcommon.Timestamp, ts p
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
+	dp.Attributes().PutStr("http.url", httpURLAttributeValue)
+	dp.Attributes().PutInt("http.status_code", httpStatusCodeAttributeValue)
+	dp.Attributes().PutStr("http.method", httpMethodAttributeValue)
+	dp.Attributes().PutEmptyMap("http.response.json").FromRaw(httpResponseJSONAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
-func (m *metricSsprActivatedUsers) updateCapacity() {
+func (m *metricHttpjsonDuration) updateCapacity() {
 	if m.data.Gauge().DataPoints().Len() > m.capacity {
 		m.capacity = m.data.Gauge().DataPoints().Len()
 	}
 }
 
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
-func (m *metricSsprActivatedUsers) emit(metrics pmetric.MetricSlice) {
+func (m *metricHttpjsonDuration) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
@@ -52,8 +57,8 @@ func (m *metricSsprActivatedUsers) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricSsprActivatedUsers(cfg MetricConfig) metricSsprActivatedUsers {
-	m := metricSsprActivatedUsers{config: cfg}
+func newMetricHttpjsonDuration(cfg MetricConfig) metricHttpjsonDuration {
+	m := metricHttpjsonDuration{config: cfg}
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -64,12 +69,12 @@ func newMetricSsprActivatedUsers(cfg MetricConfig) metricSsprActivatedUsers {
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
-	config                   MetricsBuilderConfig // config of the metrics builder.
-	startTime                pcommon.Timestamp    // start time that will be applied to all recorded data points.
-	metricsCapacity          int                  // maximum observed number of metrics per resource.
-	metricsBuffer            pmetric.Metrics      // accumulates metrics data before emitting.
-	buildInfo                component.BuildInfo  // contains version information.
-	metricSsprActivatedUsers metricSsprActivatedUsers
+	config                 MetricsBuilderConfig // config of the metrics builder.
+	startTime              pcommon.Timestamp    // start time that will be applied to all recorded data points.
+	metricsCapacity        int                  // maximum observed number of metrics per resource.
+	metricsBuffer          pmetric.Metrics      // accumulates metrics data before emitting.
+	buildInfo              component.BuildInfo  // contains version information.
+	metricHttpjsonDuration metricHttpjsonDuration
 }
 
 // metricBuilderOption applies changes to default metrics builder.
@@ -84,11 +89,11 @@ func WithStartTime(startTime pcommon.Timestamp) metricBuilderOption {
 
 func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.CreateSettings, options ...metricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
-		config:                   mbc,
-		startTime:                pcommon.NewTimestampFromTime(time.Now()),
-		metricsBuffer:            pmetric.NewMetrics(),
-		buildInfo:                settings.BuildInfo,
-		metricSsprActivatedUsers: newMetricSsprActivatedUsers(mbc.Metrics.SsprActivatedUsers),
+		config:                 mbc,
+		startTime:              pcommon.NewTimestampFromTime(time.Now()),
+		metricsBuffer:          pmetric.NewMetrics(),
+		buildInfo:              settings.BuildInfo,
+		metricHttpjsonDuration: newMetricHttpjsonDuration(mbc.Metrics.HttpjsonDuration),
 	}
 	for _, op := range options {
 		op(mb)
@@ -146,7 +151,7 @@ func (mb *MetricsBuilder) EmitForResource(rmo ...ResourceMetricsOption) {
 	ils.Scope().SetName("otelcol/httpjsonreceiver")
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
-	mb.metricSsprActivatedUsers.emit(ils.Metrics())
+	mb.metricHttpjsonDuration.emit(ils.Metrics())
 
 	for _, op := range rmo {
 		op(rm)
@@ -167,9 +172,9 @@ func (mb *MetricsBuilder) Emit(rmo ...ResourceMetricsOption) pmetric.Metrics {
 	return metrics
 }
 
-// RecordSsprActivatedUsersDataPoint adds a data point to sspr.activated.users metric.
-func (mb *MetricsBuilder) RecordSsprActivatedUsersDataPoint(ts pcommon.Timestamp, val int64) {
-	mb.metricSsprActivatedUsers.recordDataPoint(mb.startTime, ts, val)
+// RecordHttpjsonDurationDataPoint adds a data point to httpjson.duration metric.
+func (mb *MetricsBuilder) RecordHttpjsonDurationDataPoint(ts pcommon.Timestamp, val int64, httpURLAttributeValue string, httpStatusCodeAttributeValue int64, httpMethodAttributeValue string, httpResponseJSONAttributeValue map[string]any) {
+	mb.metricHttpjsonDuration.recordDataPoint(mb.startTime, ts, val, httpURLAttributeValue, httpStatusCodeAttributeValue, httpMethodAttributeValue, httpResponseJSONAttributeValue)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

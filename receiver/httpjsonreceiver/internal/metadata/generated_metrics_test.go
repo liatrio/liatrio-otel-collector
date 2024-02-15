@@ -57,7 +57,7 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordSsprActivatedUsersDataPoint(ts, 1)
+			mb.RecordHttpjsonDurationDataPoint(ts, 1, "http.url-val", 16, "http.method-val", map[string]any{"key1": "http.response.json-val1", "key2": "http.response.json-val2"})
 
 			res := pcommon.NewResource()
 			metrics := mb.Emit(WithResource(res))
@@ -81,18 +81,30 @@ func TestMetricsBuilder(t *testing.T) {
 			validatedMetrics := make(map[string]bool)
 			for i := 0; i < ms.Len(); i++ {
 				switch ms.At(i).Name() {
-				case "sspr.activated.users":
-					assert.False(t, validatedMetrics["sspr.activated.users"], "Found a duplicate in the metrics slice: sspr.activated.users")
-					validatedMetrics["sspr.activated.users"] = true
+				case "httpjson.duration":
+					assert.False(t, validatedMetrics["httpjson.duration"], "Found a duplicate in the metrics slice: httpjson.duration")
+					validatedMetrics["httpjson.duration"] = true
 					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "Number of users that have successfully completed the user activation process.", ms.At(i).Description())
-					assert.Equal(t, "count", ms.At(i).Unit())
+					assert.Equal(t, "Measures the duration of the HTTP request", ms.At(i).Description())
+					assert.Equal(t, "ms", ms.At(i).Unit())
 					dp := ms.At(i).Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("http.url")
+					assert.True(t, ok)
+					assert.EqualValues(t, "http.url-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("http.status_code")
+					assert.True(t, ok)
+					assert.EqualValues(t, 16, attrVal.Int())
+					attrVal, ok = dp.Attributes().Get("http.method")
+					assert.True(t, ok)
+					assert.EqualValues(t, "http.method-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("http.response.json")
+					assert.True(t, ok)
+					assert.EqualValues(t, map[string]any{"key1": "http.response.json-val1", "key2": "http.response.json-val2"}, attrVal.Map().AsRaw())
 				}
 			}
 		})
