@@ -1,0 +1,9 @@
+default:
+all_set:
+  metrics:
+    sspr.activated.users:
+      enabled: true
+none_set:
+  metrics:
+    sspr.activated.users:
+      enabled: false
