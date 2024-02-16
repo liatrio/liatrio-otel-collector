@@ -5,13 +5,15 @@ package internal // import "httpjson/internal"
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 
 	"net/http"
 	"time"
 
-	"github.com/buger/jsonparser"
+	"github.com/PaesslerAG/jsonpath"
 	"github.com/liatrio/liatrio-otel-collector/receiver/httpjsonreceiver/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/confighttp"
@@ -47,7 +49,8 @@ func (f *ScraperFactory) CreateMetricsScraper(
 type ScraperConfig struct {
 	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
 	confighttp.HTTPClientSettings           `mapstructure:",squash"`
-	Method                                  string `mapstructure:",squash"`
+	Method                                  string            `mapstructure:",squash"`
+	Fields                                  map[string]string `mapstructure:"fields"`
 }
 
 type scraper struct {
@@ -58,28 +61,30 @@ type scraper struct {
 	mb       *metadata.MetricsBuilder
 }
 
-func parseJSON(data []byte) (map[string]any, error) {
+func parseJSON(data []byte, fields map[string]string) map[string]any {
 	metricsMap := make(map[string]any)
-	var funcErr error
+	tmp := interface{}(nil)
+	json.Unmarshal(data, &tmp)
 
-	jsonparser.EachKey(data, func(idx int, value []byte, vt jsonparser.ValueType, err error) {
-		keyString := string(value)
-		metricsMap[keyString] = jsonparser.Get(string(keyString))
+	for key, value := range fields {
+		jv, err := jsonpath.Get(value, tmp)
 		if err != nil {
-			funcErr = err
-			return
+			fmt.Println(err)
 		}
-	})
+		// forcing the value to become a string
+		metricsMap[key] = fmt.Sprintf("%v", jv)
+	}
 
-	return metricsMap, funcErr
+	return metricsMap
 }
 
-func (s *scraper) start(_ context.Context, host component.Host) error {
+func (s *scraper) start(_ context.Context, host component.Host) (err error) {
 	s.logger.Sugar().Info("starting the httpjson scraper")
-	if s.client == nil {
+	s.client, err = s.cfg.ToClient(host, s.settings)
+	if err != nil {
 		return errClientNotInitErr
 	}
-	return nil
+	return
 }
 
 func (s *scraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
@@ -103,12 +108,7 @@ func (s *scraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		return s.mb.Emit(), nil
 	}
 
-	metricsAttributeMap, err := parseJSON(data)
-	if err != nil {
-		s.logger.Sugar().Errorln("Unable to parse json data")
-		return s.mb.Emit(), nil
-	}
-
+	metricsAttributeMap := parseJSON(data, s.cfg.Fields)
 	s.mb.RecordHttpjsonDurationDataPoint(pcommon.NewTimestampFromTime(time.Now()), time.Since(start).Milliseconds(), s.cfg.Endpoint, int64(res.StatusCode), s.cfg.Method, metricsAttributeMap)
 
 	return s.mb.Emit(), nil

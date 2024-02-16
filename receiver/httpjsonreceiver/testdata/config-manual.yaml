@@ -6,8 +6,10 @@ receivers:
     httpjson:
         collection_interval: 10s
         initial_delay: 1s
-        sample: data
-
+        endpoint: http://localhost/statistics
+        fields:
+            status_code: $.status_code
+            version: $.version
 service:
     pipelines:
         metrics:

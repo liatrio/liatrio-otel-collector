@@ -5,7 +5,6 @@ package httpjsonreceiver // import "github.com/liatrio/liatrio-otel-collector/re
 
 import (
 	"errors"
-	"strings"
 
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/confmap"
@@ -15,17 +14,14 @@ import (
 const configKey = "sample"
 
 var (
-	ErrMustString    = errors.New("sample.configuration must be a string")
-	ErrMustNotNil    = errors.New("sample interface must not be nil")
-	ErrSampleConfig  = errors.New("sample config data is required")
-	ErrMustLowercase = errors.New("sample config data must be lowercase")
+	ErrMustNotNil = errors.New("sample interface must not be nil")
 )
 
 // Config that is exposed to this receiver through the OTEL config.yaml
 type Config struct {
 	confighttp.HTTPClientSettings           `mapstructure:",squash"`
 	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
-	sample                                  string
+	fields                                  []string `mapstructure:"fields"`
 }
 
 // Unmarshal a config.Parser into the config struct.
@@ -43,18 +39,16 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 	// dynamically load the individual collector configs based on the key name
 	if componentParser.IsSet(configKey) {
 		// use the value provided in the otel config.yaml
-		value, ok := componentParser.Get(configKey).(string)
+		value, ok := componentParser.Get(configKey).([]string)
 		if !ok {
 			if componentParser.Get(configKey) == nil {
 				return ErrMustNotNil
-			} else {
-				return ErrMustString
 			}
 		}
-		cfg.sample = value
+		cfg.fields = value
 	} else {
 		// default value
-		cfg.sample = "data"
+		cfg.fields = []string{}
 	}
 
 	return nil
@@ -64,14 +58,9 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 func (cfg *Config) Validate() error {
 	var err error = nil
 
-	if cfg.sample == "" {
+	if cfg.fields == nil {
 		// err = multierr.Append(err, errors.New("sample config data is required"))
-		err = ErrSampleConfig
-	} else {
-		if cfg.sample != strings.ToLower(cfg.sample) {
-			// err = multierr.Append(err, errors.New("sample config data must be lowercase"))
-			err = ErrMustLowercase
-		}
+		err = ErrMustNotNil
 	}
 
 	return err

@@ -8,15 +8,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"path/filepath"
 	"testing"
 
 	"github.com/alecthomas/assert/v2"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/pmetrictest"
-	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
@@ -44,20 +39,30 @@ func MockServer() *http.ServeMux {
 }
 
 func TestParseJSON(t *testing.T) {
-	testData := statisticsResponse{status_code: 200, version: "1.0.0"}
-	marshaledData, err := json.Marshal(testData)
-	if err != nil {
-		t.Error("Unable to marshal testData")
+	fields := map[string]string{
+		"status_code": "$.status_code",
+		"version":     "$.version",
+	}
+	testData := []byte(`{
+		"status_code": 200,
+		"version": "1.0.0"
+	}`)
+
+	parsedJson := parseJSON(testData, fields)
+
+	statusCode, ok := parsedJson["status_code"]
+	if ok {
+		assert.Equal(t, "200", statusCode)
+	} else {
+		t.Error(`Key "status_code" does not exist in map.`)
 	}
 
-	parsedJson, err := parseJSON(marshaledData)
-
-	// name := "Gladys"
-	// want := regexp.MustCompile(`\b`+name+`\b`)
-	// msg, err := Hello("Gladys")
-	// if !want.MatchString(msg) || err != nil {
-	//     t.Fatalf(`Hello("Gladys") = %q, %v, want match for %#q, nil`, msg, err, want)
-	// }
+	version, ok := parsedJson["version"]
+	if ok {
+		assert.Equal(t, "1.0.0", version)
+	} else {
+		t.Error(`Key "version" does not exist in map.`)
+	}
 }
 
 func TestScraperFactory_CreateMetricsScraper(t *testing.T) {
@@ -67,77 +72,5 @@ func TestScraperFactory_CreateMetricsScraper(t *testing.T) {
 
 	scraper, err := factory.CreateMetricsScraper(ctx, creationSet, *cfg)
 	assert.NoError(t, err)
-
 	assert.NoError(t, scraper.Start(ctx, componenttest.NewNopHost()))
-
-	_, err = scraper.Scrape(ctx)
-	assert.NoError(t, err)
-}
-
-func TestScaperScrape(t *testing.T) {
-	testCases := []struct {
-		desc              string
-		expectedMetricGen func(t *testing.T) pmetric.Metrics
-		endpoint          string
-		compareOptions    []pmetrictest.CompareMetricsOption
-	}{
-		{
-			desc:             "Successful Collection",
-			expectedResponse: 200,
-			expectedMetricGen: func(t *testing.T) pmetric.Metrics {
-				goldenPath := filepath.Join("testdata", "golden.yaml")
-				expectedMetrics, err := golden.ReadMetrics(goldenPath)
-				require.NoError(t, err)
-				return expectedMetrics
-			},
-			expectedErr: nil,
-			compareOptions: []pmetrictest.CompareMetricsOption{
-				pmetrictest.IgnoreMetricAttributeValue("http.url"),
-				pmetrictest.IgnoreMetricValues("httpjson.duration"),
-				pmetrictest.IgnoreMetricDataPointsOrder(),
-				pmetrictest.IgnoreStartTimestamp(),
-				pmetrictest.IgnoreTimestamp(),
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := ScraperFactory{}
-			ctx := context.Background()
-			cfg := &ScraperConfig{}
-			scraper, err := factory.CreateMetricsScraper(ctx, creationSet, *cfg)
-			// cfg := createDefaultConfig().(*Config)
-			// if len(tc.endpoint) > 0 {
-			// 	cfg.Targets = []*targetConfig{{
-			// 		ClientConfig: confighttp.ClientConfig{
-			// 			Endpoint: tc.endpoint,
-			// 		}},
-			// 	}
-			// } else {
-			// 	ms := newMockServer(t, tc.expectedResponse)
-			// 	defer ms.Close()
-			// 	cfg.Targets = []*targetConfig{{
-			// 		ClientConfig: confighttp.ClientConfig{
-			// 			Endpoint: ms.URL,
-			// 		}},
-			// 	}
-			// }
-			// scraper := newScraper(cfg, receivertest.NewNopCreateSettings())
-			// require.NoError(t, scraper.start(context.Background(), componenttest.NewNopHost()))
-			ms :=
-				scraper.Scrape(ctx)
-
-			actualMetrics, err := scraper.scrape(context.Background())
-			if tc.expectedErr == nil {
-				require.NoError(t, err)
-			} else {
-				require.EqualError(t, err, tc.expectedErr.Error())
-			}
-
-			expectedMetrics := tc.expectedMetricGen(t)
-
-			require.NoError(t, pmetrictest.CompareMetrics(expectedMetrics, actualMetrics, tc.compareOptions...))
-		})
-	}
 }

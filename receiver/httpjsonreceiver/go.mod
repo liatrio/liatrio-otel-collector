@@ -3,7 +3,9 @@ module github.com/liatrio/liatrio-otel-collector/receiver/httpjsonreceiver
 go 1.21
 
 require (
+	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/alecthomas/assert/v2 v2.5.0
+	github.com/buger/jsonparser v1.1.1
 	github.com/google/go-cmp v0.6.0
 	github.com/stretchr/testify v1.8.4
 	go.opentelemetry.io/collector/component v0.94.1
@@ -19,6 +21,7 @@ require (
 )
 
 require (
+	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/alecthomas/repr v0.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
