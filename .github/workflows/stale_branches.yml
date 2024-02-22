@@ -1,9 +1,8 @@
-name: Run O11y Stale Branch POC
+name: Run Cleanup Stale Branch Action
 
 on:
-  workflow_dispatch: {}
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '0 0 * * *'
 
 jobs:
   find-stale-branches:
