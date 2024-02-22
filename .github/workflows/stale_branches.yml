@@ -1,10 +1,9 @@
 name: Run O11y Stale Branch POC
 
 on:
-  push:
-    branches:
-      - stale-branch-poc
   workflow_dispatch: {}
+  schedule:
+    - cron: '0 */6 * * *'
 
 jobs:
   find-stale-branches:
