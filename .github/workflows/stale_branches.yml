@@ -14,7 +14,8 @@ jobs:
     steps:
       - name: Run Stale Branch Action
         id: stale-branch-poc
-        uses: liatrio/o11y-stale-branch-poc@v0.4.1
+        uses: liatrio/cleanup-stale-branches-action@v0.5.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           stale-branch-age: '3 months'
+          stale-branch-issue-age: '7 days'
