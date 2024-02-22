@@ -49,7 +49,13 @@ func createMetricsReceiver(
 		return nil, ErrConfigNotValid
 	}
 
-	scraperConfig := internal.ScraperConfig{ScraperControllerSettings: conf.ScraperControllerSettings}
+	scraperConfig := internal.ScraperConfig{
+		ScraperControllerSettings: conf.ScraperControllerSettings,
+		HTTPClientSettings:        conf.HTTPClientSettings,
+		Method:                    conf.Method,
+		Fields:                    conf.Fields,
+		Endpoint:                  conf.Endpoint,
+	}
 
 	addScraperOpts, err := createAddScraperOpts(ctx, params, scraperConfig)
 	if err != nil {

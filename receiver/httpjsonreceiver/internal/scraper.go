@@ -33,10 +33,12 @@ func (f *ScraperFactory) CreateMetricsScraper(
 	params receiver.CreateSettings,
 	cfg ScraperConfig,
 ) (scraperhelper.Scraper, error) {
+
 	s := &scraper{
 		cfg:      &cfg,
 		logger:   params.Logger,
 		settings: params.TelemetrySettings,
+		mb:       metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, params),
 	}
 
 	return scraperhelper.NewScraper(
@@ -49,8 +51,10 @@ func (f *ScraperFactory) CreateMetricsScraper(
 type ScraperConfig struct {
 	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
 	confighttp.HTTPClientSettings           `mapstructure:",squash"`
-	Method                                  string            `mapstructure:",squash"`
-	Fields                                  map[string]string `mapstructure:"fields"`
+	metadata.MetricsBuilderConfig           `mapstructure:",squash"`
+	Method                                  string                 `mapstructure:",squash"`
+	Fields                                  map[string]interface{} `mapstructure:"fields"`
+	Endpoint                                string                 `mapstructure:"endpoint"`
 }
 
 type scraper struct {
@@ -61,13 +65,13 @@ type scraper struct {
 	mb       *metadata.MetricsBuilder
 }
 
-func parseJSON(data []byte, fields map[string]string) map[string]any {
+func parseJSON(data []byte, fields map[string]interface{}) map[string]any {
 	metricsMap := make(map[string]any)
 	tmp := interface{}(nil)
 	json.Unmarshal(data, &tmp)
 
 	for key, value := range fields {
-		jv, err := jsonpath.Get(value, tmp)
+		jv, err := jsonpath.Get(value.(string), tmp)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -91,25 +95,26 @@ func (s *scraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	req, err := http.NewRequestWithContext(ctx, s.cfg.Method, s.cfg.Endpoint, http.NoBody)
 
 	if err != nil {
-		s.logger.Sugar().Errorln("Unable to create new http request")
+		s.logger.Sugar().Errorln("Unable to create new http request: ", err)
 		return s.mb.Emit(), nil
 	}
 	start := time.Now()
-	res, err := s.client.Do(req)
 
+	res, err := s.client.Do(req)
 	if err != nil {
-		s.logger.Sugar().Errorln("Unable to execute http request")
+		s.logger.Sugar().Errorln("Unable to execute http request: ", err)
 		return s.mb.Emit(), nil
 	}
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		s.logger.Sugar().Errorln("Unable to read http response")
+		s.logger.Sugar().Errorln("Unable to read http response: ", err, "response is: ", res.Body)
 		return s.mb.Emit(), nil
 	}
 
 	metricsAttributeMap := parseJSON(data, s.cfg.Fields)
 	s.mb.RecordHttpjsonDurationDataPoint(pcommon.NewTimestampFromTime(time.Now()), time.Since(start).Milliseconds(), s.cfg.Endpoint, int64(res.StatusCode), s.cfg.Method, metricsAttributeMap)
+	s.mb.RecordHttpjsonDbUnavailableCountDataPoint(pcommon.NewTimestampFromTime(time.Now()), time.Since(start).Milliseconds(), s.cfg.Endpoint, int64(res.StatusCode), s.cfg.Method, metricsAttributeMap)
 
 	return s.mb.Emit(), nil
 }

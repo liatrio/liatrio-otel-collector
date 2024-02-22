@@ -25,11 +25,15 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for httpjsonreceiver metrics.
 type MetricsConfig struct {
-	HttpjsonDuration MetricConfig `mapstructure:"httpjson.duration"`
+	HttpjsonDbUnavailableCount MetricConfig `mapstructure:"httpjson.db_unavailable_count"`
+	HttpjsonDuration           MetricConfig `mapstructure:"httpjson.duration"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
+		HttpjsonDbUnavailableCount: MetricConfig{
+			Enabled: true,
+		},
 		HttpjsonDuration: MetricConfig{
 			Enabled: true,
 		},

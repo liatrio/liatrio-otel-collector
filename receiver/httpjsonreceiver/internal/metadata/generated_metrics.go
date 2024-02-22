@@ -12,6 +12,60 @@ import (
 	conventions "go.opentelemetry.io/collector/semconv/v1.18.0"
 )
 
+type metricHttpjsonDbUnavailableCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills httpjson.db_unavailable_count metric with initial data.
+func (m *metricHttpjsonDbUnavailableCount) init() {
+	m.data.SetName("httpjson.db_unavailable_count")
+	m.data.SetDescription("Measures the number of times the database was unavailable.")
+	m.data.SetUnit("count")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricHttpjsonDbUnavailableCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, httpURLAttributeValue string, httpStatusCodeAttributeValue int64, httpMethodAttributeValue string, httpResponseJSONAttributeValue map[string]any) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("http.url", httpURLAttributeValue)
+	dp.Attributes().PutInt("http.status_code", httpStatusCodeAttributeValue)
+	dp.Attributes().PutStr("http.method", httpMethodAttributeValue)
+	dp.Attributes().PutEmptyMap("http.response.json").FromRaw(httpResponseJSONAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricHttpjsonDbUnavailableCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricHttpjsonDbUnavailableCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricHttpjsonDbUnavailableCount(cfg MetricConfig) metricHttpjsonDbUnavailableCount {
+	m := metricHttpjsonDbUnavailableCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 type metricHttpjsonDuration struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	config   MetricConfig   // metric config provided by user.
@@ -69,12 +123,13 @@ func newMetricHttpjsonDuration(cfg MetricConfig) metricHttpjsonDuration {
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
-	config                 MetricsBuilderConfig // config of the metrics builder.
-	startTime              pcommon.Timestamp    // start time that will be applied to all recorded data points.
-	metricsCapacity        int                  // maximum observed number of metrics per resource.
-	metricsBuffer          pmetric.Metrics      // accumulates metrics data before emitting.
-	buildInfo              component.BuildInfo  // contains version information.
-	metricHttpjsonDuration metricHttpjsonDuration
+	config                           MetricsBuilderConfig // config of the metrics builder.
+	startTime                        pcommon.Timestamp    // start time that will be applied to all recorded data points.
+	metricsCapacity                  int                  // maximum observed number of metrics per resource.
+	metricsBuffer                    pmetric.Metrics      // accumulates metrics data before emitting.
+	buildInfo                        component.BuildInfo  // contains version information.
+	metricHttpjsonDbUnavailableCount metricHttpjsonDbUnavailableCount
+	metricHttpjsonDuration           metricHttpjsonDuration
 }
 
 // metricBuilderOption applies changes to default metrics builder.
@@ -89,11 +144,12 @@ func WithStartTime(startTime pcommon.Timestamp) metricBuilderOption {
 
 func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.CreateSettings, options ...metricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
-		config:                 mbc,
-		startTime:              pcommon.NewTimestampFromTime(time.Now()),
-		metricsBuffer:          pmetric.NewMetrics(),
-		buildInfo:              settings.BuildInfo,
-		metricHttpjsonDuration: newMetricHttpjsonDuration(mbc.Metrics.HttpjsonDuration),
+		config:                           mbc,
+		startTime:                        pcommon.NewTimestampFromTime(time.Now()),
+		metricsBuffer:                    pmetric.NewMetrics(),
+		buildInfo:                        settings.BuildInfo,
+		metricHttpjsonDbUnavailableCount: newMetricHttpjsonDbUnavailableCount(mbc.Metrics.HttpjsonDbUnavailableCount),
+		metricHttpjsonDuration:           newMetricHttpjsonDuration(mbc.Metrics.HttpjsonDuration),
 	}
 	for _, op := range options {
 		op(mb)
@@ -151,6 +207,7 @@ func (mb *MetricsBuilder) EmitForResource(rmo ...ResourceMetricsOption) {
 	ils.Scope().SetName("otelcol/httpjsonreceiver")
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
+	mb.metricHttpjsonDbUnavailableCount.emit(ils.Metrics())
 	mb.metricHttpjsonDuration.emit(ils.Metrics())
 
 	for _, op := range rmo {
@@ -170,6 +227,11 @@ func (mb *MetricsBuilder) Emit(rmo ...ResourceMetricsOption) pmetric.Metrics {
 	metrics := mb.metricsBuffer
 	mb.metricsBuffer = pmetric.NewMetrics()
 	return metrics
+}
+
+// RecordHttpjsonDbUnavailableCountDataPoint adds a data point to httpjson.db_unavailable_count metric.
+func (mb *MetricsBuilder) RecordHttpjsonDbUnavailableCountDataPoint(ts pcommon.Timestamp, val int64, httpURLAttributeValue string, httpStatusCodeAttributeValue int64, httpMethodAttributeValue string, httpResponseJSONAttributeValue map[string]any) {
+	mb.metricHttpjsonDbUnavailableCount.recordDataPoint(mb.startTime, ts, val, httpURLAttributeValue, httpStatusCodeAttributeValue, httpMethodAttributeValue, httpResponseJSONAttributeValue)
 }
 
 // RecordHttpjsonDurationDataPoint adds a data point to httpjson.duration metric.

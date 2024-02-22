@@ -26,7 +26,8 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					HttpjsonDuration: MetricConfig{Enabled: true},
+					HttpjsonDbUnavailableCount: MetricConfig{Enabled: true},
+					HttpjsonDuration:           MetricConfig{Enabled: true},
 				},
 			},
 		},
@@ -34,7 +35,8 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					HttpjsonDuration: MetricConfig{Enabled: false},
+					HttpjsonDbUnavailableCount: MetricConfig{Enabled: false},
+					HttpjsonDuration:           MetricConfig{Enabled: false},
 				},
 			},
 		},

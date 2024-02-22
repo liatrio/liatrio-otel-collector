@@ -11,7 +11,9 @@ import (
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
 )
 
-const configKey = "sample"
+const configKeyEndpoint = "endpoint"
+
+var configKeyFields = "fields"
 
 var (
 	ErrMustNotNil = errors.New("sample interface must not be nil")
@@ -21,7 +23,9 @@ var (
 type Config struct {
 	confighttp.HTTPClientSettings           `mapstructure:",squash"`
 	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
-	fields                                  []string `mapstructure:"fields"`
+	Method                                  string
+	Fields                                  map[string]interface{} `mapstructure:"fields"`
+	Endpoint                                string                 `mapstructure:"endpoint"`
 }
 
 // Unmarshal a config.Parser into the config struct.
@@ -30,25 +34,32 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 		return nil
 	}
 
-	// load the non-dynamic config normally
 	err := componentParser.Unmarshal(cfg)
 	if err != nil {
 		return err
 	}
 
 	// dynamically load the individual collector configs based on the key name
-	if componentParser.IsSet(configKey) {
+	if componentParser.IsSet(configKeyFields) {
 		// use the value provided in the otel config.yaml
-		value, ok := componentParser.Get(configKey).([]string)
-		if !ok {
-			if componentParser.Get(configKey) == nil {
+		value := componentParser.Get(configKeyFields).(map[string]interface{})
+		if value == nil {
+			if componentParser.Get(configKeyFields) == nil {
 				return ErrMustNotNil
 			}
 		}
-		cfg.fields = value
+		cfg.Fields = value
 	} else {
 		// default value
-		cfg.fields = []string{}
+		cfg.Fields = make(map[string]interface{})
+	}
+
+	if componentParser.IsSet(configKeyEndpoint) {
+		value := componentParser.Get(configKeyEndpoint)
+		if value.(string) == "" {
+			return errors.New("URL Endpoint cannot be blank. value: " + value.(string))
+		}
+		cfg.Endpoint = value.(string)
 	}
 
 	return nil
@@ -58,7 +69,7 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 func (cfg *Config) Validate() error {
 	var err error = nil
 
-	if cfg.fields == nil {
+	if cfg.Fields == nil {
 		// err = multierr.Append(err, errors.New("sample config data is required"))
 		err = ErrMustNotNil
 	}

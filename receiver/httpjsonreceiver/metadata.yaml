@@ -33,3 +33,11 @@ metrics:
       value_type: int
     unit: ms
     attributes: [http.url, http.status_code, http.method, http.response.json]
+  httpjson.db_unavailable_count:
+    description: Measures the number of times the database was unavailable.
+    enabled: true
+    gauge:
+      value_type: int
+    unit: count
+    attributes: [http.url, http.status_code, http.method, http.response.json]
+

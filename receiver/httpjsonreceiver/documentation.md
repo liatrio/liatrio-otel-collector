@@ -12,6 +12,23 @@ metrics:
     enabled: false
 ```
 
+### httpjson.db_unavailable_count
+
+Measures the number of times the database was unavailable.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| count | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| http.url | Full HTTP request URL. | Any Str |
+| http.status_code | HTTP response status code | Any Int |
+| http.method | HTTP request method | Any Str |
+| http.response.json | HTTP response JSON data array | Any Map |
+
 ### httpjson.duration
 
 Measures the duration of the HTTP request
