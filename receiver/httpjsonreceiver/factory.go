@@ -52,6 +52,7 @@ func createMetricsReceiver(
 	scraperConfig := internal.ScraperConfig{
 		ScraperControllerSettings: conf.ScraperControllerSettings,
 		HTTPClientSettings:        conf.HTTPClientSettings,
+		MetricsBuilderConfig:      conf.MetricsBuilderConfig,
 		Method:                    conf.Method,
 		Fields:                    conf.Fields,
 		Endpoint:                  conf.Endpoint,

@@ -38,7 +38,7 @@ func (f *ScraperFactory) CreateMetricsScraper(
 		cfg:      &cfg,
 		logger:   params.Logger,
 		settings: params.TelemetrySettings,
-		mb:       metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, params),
+		mb:       metadata.NewMetricsBuilder(cfg.MetricsBuilderConfig, params), // Not loading Enabled default value?
 	}
 
 	return scraperhelper.NewScraper(

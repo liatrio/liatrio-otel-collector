@@ -6,6 +6,7 @@ package httpjsonreceiver // import "github.com/liatrio/liatrio-otel-collector/re
 import (
 	"errors"
 
+	"github.com/liatrio/liatrio-otel-collector/receiver/httpjsonreceiver/internal/metadata"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
@@ -23,6 +24,7 @@ var (
 type Config struct {
 	confighttp.HTTPClientSettings           `mapstructure:",squash"`
 	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
+	metadata.MetricsBuilderConfig           `mapstructure:",squash"`
 	Method                                  string
 	Fields                                  map[string]interface{} `mapstructure:"fields"`
 	Endpoint                                string                 `mapstructure:"endpoint"`
