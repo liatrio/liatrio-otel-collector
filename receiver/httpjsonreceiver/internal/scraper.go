@@ -65,16 +65,44 @@ type scraper struct {
 	mb       *metadata.MetricsBuilder
 }
 
+// func parseJSON(data []byte, fields map[string]interface{}) map[string]any {
+// 	metricsMap := make(map[string]any)
+// 	tmp := interface{}(nil)
+// 	json.Unmarshal(data, &tmp)
+
+// 	for key, value := range fields {
+// 		jv, err := jsonpath.Get(value.(string), tmp)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 		}
+// 		// forcing the value to become a string
+// 		metricsMap[key] = fmt.Sprintf("%v", jv)
+// 	}
+
+// 	return metricsMap
+// }
+
 func parseJSON(data []byte, fields map[string]interface{}) map[string]any {
 	metricsMap := make(map[string]any)
 	tmp := interface{}(nil)
 	json.Unmarshal(data, &tmp)
 
 	for key, value := range fields {
-		jv, err := jsonpath.Get(value.(string), tmp)
+		var jv interface{}
+		var err error
+
+		switch v := value.(type) {
+		case string:
+			jv, err = jsonpath.Get(v, tmp)
+		default:
+			err = fmt.Errorf("unexpected type for field %q: %T", key, value)
+		}
+
 		if err != nil {
 			fmt.Println(err)
+			continue
 		}
+
 		// forcing the value to become a string
 		metricsMap[key] = fmt.Sprintf("%v", jv)
 	}
@@ -93,6 +121,7 @@ func (s *scraper) start(_ context.Context, host component.Host) (err error) {
 
 func (s *scraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	req, err := http.NewRequestWithContext(ctx, s.cfg.Method, s.cfg.Endpoint, http.NoBody)
+	req.Header.Add("Accept", "application/json")
 
 	if err != nil {
 		s.logger.Sugar().Errorln("Unable to create new http request: ", err)
