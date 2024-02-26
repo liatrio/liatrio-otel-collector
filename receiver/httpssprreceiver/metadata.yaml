@@ -1,0 +1,43 @@
+---
+type: httpjsonreceiver
+
+sem_conv_version: 1.18.0
+
+status:
+  class: receiver
+  stability:
+    development: [metrics]
+  distributions: [liatrio]
+
+attributes:
+  http.url:
+    description: Full HTTP request URL.
+    type: string
+  http.status_code:
+    description: HTTP response status code
+    type: int
+  http.method:
+    description: HTTP request method
+    type: string
+  http.response.json:
+    description: HTTP response JSON data array
+    type: map
+
+# See the [mdatagen documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/cmd/mdatagen) for building this file
+# Also see [metadata-sample.yaml](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/cmd/mdatagen/metadata-sample.yaml)
+metrics:
+  httpjson.duration:
+    description: Measures the duration of the HTTP request
+    enabled: true
+    gauge:
+      value_type: int
+    unit: ms
+    attributes: [http.url, http.status_code, http.method, http.response.json]
+  httpjson.db_unavailable_count:
+    description: Measures the number of times the database was unavailable.
+    enabled: true
+    gauge:
+      value_type: int
+    unit: count
+    attributes: [http.url, http.status_code, http.method, http.response.json.db_unavailable_count]
+
