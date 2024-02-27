@@ -5,10 +5,13 @@ go 1.21
 require (
 	github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver v0.0.0-00010101000000-000000000000
 	github.com/liatrio/liatrio-otel-collector/receiver/httpjsonreceiver v0.0.0-00010101000000-000000000000
+	github.com/liatrio/liatrio-otel-collector/receiver/ssprreceiver v0.0.0-00010101000000-000000000000
 )
 
 require (
 	github.com/Khan/genqlient v0.6.0 // indirect
+	github.com/PaesslerAG/gval v1.0.0 // indirect
+	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
@@ -21,8 +24,9 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.5 // indirect
+	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.17.4 // indirect
+	github.com/klauspost/compress v1.17.5 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
 	github.com/knadh/koanf/providers/confmap v0.1.0 // indirect
 	github.com/knadh/koanf/v2 v2.0.2 // indirect
@@ -36,20 +40,21 @@ require (
 	github.com/xanzy/go-gitlab v0.96.0 // indirect
 	go.opentelemetry.io/collector v0.94.1 // indirect
 	go.opentelemetry.io/collector/component v0.94.1 // indirect
-	go.opentelemetry.io/collector/config/configauth v0.93.0 // indirect
-	go.opentelemetry.io/collector/config/configcompression v0.93.0 // indirect
-	go.opentelemetry.io/collector/config/confighttp v0.93.0 // indirect
-	go.opentelemetry.io/collector/config/configopaque v0.93.0 // indirect
+	go.opentelemetry.io/collector/config/configauth v0.94.1 // indirect
+	go.opentelemetry.io/collector/config/configcompression v0.94.1 // indirect
+	go.opentelemetry.io/collector/config/confighttp v0.94.1 // indirect
+	go.opentelemetry.io/collector/config/configopaque v0.94.1 // indirect
 	go.opentelemetry.io/collector/config/configtelemetry v0.94.1 // indirect
-	go.opentelemetry.io/collector/config/configtls v0.93.0 // indirect
-	go.opentelemetry.io/collector/config/internal v0.93.0 // indirect
+	go.opentelemetry.io/collector/config/configtls v0.94.1 // indirect
+	go.opentelemetry.io/collector/config/internal v0.94.1 // indirect
 	go.opentelemetry.io/collector/confmap v0.94.1 // indirect
 	go.opentelemetry.io/collector/consumer v0.94.1 // indirect
-	go.opentelemetry.io/collector/extension v0.93.0 // indirect
-	go.opentelemetry.io/collector/extension/auth v0.93.0 // indirect
+	go.opentelemetry.io/collector/extension v0.94.1 // indirect
+	go.opentelemetry.io/collector/extension/auth v0.94.1 // indirect
+	go.opentelemetry.io/collector/featuregate v1.1.0 // indirect
 	go.opentelemetry.io/collector/pdata v1.1.0 // indirect
 	go.opentelemetry.io/collector/receiver v0.94.1 // indirect
-	go.opentelemetry.io/collector/semconv v0.93.0 // indirect
+	go.opentelemetry.io/collector/semconv v0.94.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0 // indirect
 	go.opentelemetry.io/otel v1.23.0 // indirect
 	go.opentelemetry.io/otel/metric v1.23.0 // indirect
@@ -70,3 +75,5 @@ require (
 replace github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver => ./receiver/gitproviderreceiver
 
 replace github.com/liatrio/liatrio-otel-collector/receiver/httpjsonreceiver => ./receiver/httpjsonreceiver
+
+replace github.com/liatrio/liatrio-otel-collector/receiver/ssprreceiver => ./receiver/ssprreceiver

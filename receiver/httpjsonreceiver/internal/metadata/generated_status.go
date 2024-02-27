@@ -8,8 +8,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+var (
+	Type = component.MustNewType("httpjsonreceiver")
+)
+
 const (
-	Type             = "httpjsonreceiver"
 	MetricsStability = component.StabilityLevelDevelopment
 )
 
