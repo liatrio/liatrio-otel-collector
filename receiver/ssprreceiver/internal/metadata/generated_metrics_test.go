@@ -57,6 +57,10 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
+			mb.RecordSsprConfigurationLockedDataPoint(ts, 1)
+
+			defaultMetricsCount++
+			allMetricsCount++
 			mb.RecordSsprDbUnavailableCountDataPoint(ts, 1)
 
 			defaultMetricsCount++
@@ -85,6 +89,18 @@ func TestMetricsBuilder(t *testing.T) {
 			validatedMetrics := make(map[string]bool)
 			for i := 0; i < ms.Len(); i++ {
 				switch ms.At(i).Name() {
+				case "sspr.configuration.locked":
+					assert.False(t, validatedMetrics["sspr.configuration.locked"], "Found a duplicate in the metrics slice: sspr.configuration.locked")
+					validatedMetrics["sspr.configuration.locked"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Indicates that the application is currently in configuration mode and cannot be logged into by users until unlocked.", ms.At(i).Description())
+					assert.Equal(t, "bool", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
 				case "sspr.db.unavailable_count":
 					assert.False(t, validatedMetrics["sspr.db.unavailable_count"], "Found a duplicate in the metrics slice: sspr.db.unavailable_count")
 					validatedMetrics["sspr.db.unavailable_count"] = true

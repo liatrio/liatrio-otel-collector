@@ -40,4 +40,11 @@ metrics:
     gauge:
       value_type: int
     unit: count
+  sspr.configuration.locked:
+    description: Indicates that the application is currently in configuration mode and cannot be logged into by users until unlocked.
+    enabled: true
+    gauge:
+      value_type: int
+    unit: bool
+
 

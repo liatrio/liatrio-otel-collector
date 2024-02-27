@@ -1,12 +1,16 @@
 default:
 all_set:
   metrics:
+    sspr.configuration.locked:
+      enabled: true
     sspr.db.unavailable_count:
       enabled: true
     sspr.duration:
       enabled: true
 none_set:
   metrics:
+    sspr.configuration.locked:
+      enabled: false
     sspr.db.unavailable_count:
       enabled: false
     sspr.duration:

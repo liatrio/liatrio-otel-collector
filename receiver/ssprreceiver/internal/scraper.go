@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"strconv"
+	"strings"
 
 	"net/http"
 	"time"
@@ -72,7 +73,82 @@ func (s *scraper) parseJSON(data []byte) map[string]any {
 	return unMarshalledJson.(map[string]any)
 }
 
-func getValueAtPath(fullJsonMap interface{}, pathToListOfMaps []string, keyName string) (interface{}, error) {
+func parseError(input map[string]interface{}) (int, float64, string) {
+	errorFlag, ok := input["error"].(bool)
+	if !ok {
+		return 0, 0, "error key not found or not a boolean"
+	}
+
+	if errorFlag {
+		errorCode := input["errorCode"].(float64)
+		errorMessage, _ := input["errorMessage"].(string)
+		return 1, errorCode, errorMessage
+	}
+
+	return 0, 0, "no error"
+}
+
+func parseStatistics(current interface{}, keyName string) (interface{}, error) {
+	// Check if the current value is a []interface{}
+	currentList, ok := current.([]interface{})
+	if !ok {
+		return nil, errors.New("expected []interface{} type for current")
+	}
+
+	// Iterate through the list of maps.
+	for _, item := range currentList {
+		itemMap, ok := item.(map[string]interface{})
+		if !ok {
+			return nil, errors.New("expected map[string]interface{} type in the list")
+		}
+		name, ok := itemMap["name"].(string)
+		if !ok {
+			return nil, errors.New("missing or invalid 'name' field in the list item")
+		}
+		if name == keyName {
+			return itemMap["value"], nil
+		}
+	}
+	return nil, errors.New("key not found in the list")
+}
+
+func parseHealth(current interface{}, desiredKey string, searchString string) (int64, error) {
+	// Check if the current value is a []interface{}
+	currentList, ok := current.([]interface{})
+	if !ok {
+		return 0, errors.New("expected []interface{} type for current")
+	}
+
+	// Iterate through the list of maps.
+	for _, item := range currentList {
+		itemMap, ok := item.(map[string]interface{})
+		if !ok {
+			return 0, errors.New("expected map[string]interface{} type in the list")
+		}
+
+		// Extract the value associated with the desired key.
+		keyValue, ok := itemMap[desiredKey]
+		if !ok {
+			return 0, errors.New("desired key not found in the list item")
+		}
+
+		// Convert the value to a string if possible.
+		detail, ok := keyValue.(string)
+		if !ok {
+			return 0, errors.New("desired key value is not a string")
+		}
+
+		// Check if the detail contains the given searchString.
+		if strings.Contains(detail, searchString) {
+			return 1, nil
+		}
+	}
+
+	// If the searchString is not found in any detail, return 0.
+	return 0, nil
+}
+
+func (s *scraper) getValueAtPath(fullJsonMap interface{}, pathToListOfMaps []string, desiredKey string, searchString string) (interface{}, error) {
 	if len(pathToListOfMaps) == 0 {
 		return nil, errors.New("path is empty")
 	}
@@ -88,31 +164,31 @@ func getValueAtPath(fullJsonMap interface{}, pathToListOfMaps []string, keyName 
 			return nil, errors.New("path not found")
 		}
 
-		switch v := value.(type) {
-		case map[string]interface{}:
-			// Recursively call the function with the subMap.
-			return getValueAtPath(v, pathToListOfMaps[1:], keyName)
-		case []interface{}:
-			// Iterate through the list of maps.
-			for _, item := range v {
-				itemMap, ok := item.(map[string]interface{})
-				if !ok {
-					return nil, errors.New("expected map[string]interface{} type in the list")
-				}
-				name, ok := itemMap["name"].(string)
-				if !ok {
-					return nil, errors.New("missing or invalid 'name' field in the list item")
-				}
-				if name == keyName {
-					// Return the value if the name matches.
-					return itemMap["value"], nil
-				}
+		switch key {
+		case "current":
+			// Handle the "current" case using parseStatistics function
+			v, ok := value.([]interface{})
+			if !ok {
+				return nil, errors.New("unexpected type for 'current' switch case")
 			}
-			// If the key is not found in the list, return an error.
-			return nil, errors.New("key not found in the list")
+			return parseStatistics(v, desiredKey)
+		case "records":
+			// Handle the "records" case using parseHealth function
+			v, ok := value.([]interface{})
+			if !ok {
+				return nil, errors.New("unexpected type for 'records' switch case")
+			}
+			return parseHealth(v, desiredKey, searchString)
 		default:
-			// If the value is neither map nor list, return an error.
-			return nil, errors.New("unexpected type")
+			// For other keys, handle as before
+			switch v := value.(type) {
+			case map[string]interface{}:
+				// Recursively call the function with the subMap.
+				return s.getValueAtPath(v, pathToListOfMaps[1:], desiredKey, searchString)
+			default:
+				// If the value is neither map nor list, return an error.
+				return nil, errors.New("unexpected type")
+			}
 		}
 	}
 
@@ -151,17 +227,39 @@ func (s *scraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	fullJsonPayload := s.parseJSON(data)
 
-	// Begin Metric Creation Pattern Example
-	value, err := getValueAtPath(fullJsonPayload, []string{"data", "current"}, "DB_UNAVAILABLE_COUNT")
-	if err != nil {
-		s.logger.Sugar().Errorln("Error collecting value at given path.")
+	errorState, errorCode, errorMessage := parseError(fullJsonPayload)
+	if errorState == 1 {
+		s.logger.Sugar().Errorln("Error: ", errorCode, "Error Message: ", errorMessage)
+		if errorCode == 5053 {
+			s.mb.RecordSsprConfigurationLockedDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1)
+		}
 	}
-	intValue, err := strconv.ParseInt(value.(string), 10, 64)
+	// Begin Metric Creation Pattern Example
+	// New Metric
+	value, err := s.getValueAtPath(fullJsonPayload, []string{"data", "current"}, "DB_UNAVAILABLE_COUNT", "")
+	if err != nil {
+		s.logger.Sugar().Infoln("Value was not present at the given path. Continuing to next given key.")
+	} else {
+		intValue, err := strconv.ParseInt(value.(string), 10, 64)
+		if err == nil {
+			s.mb.RecordSsprDbUnavailableCountDataPoint(pcommon.NewTimestampFromTime(time.Now()), intValue)
+		} else {
+			s.logger.Sugar().Errorln("Error converting value from string to Int.")
+		}
+	}
+
+	// New Metric
+	configLockedMessage := "PWM is currently in configuration mode. Anyone accessing this site can modify the configuration without authenticating. When ready, restrict the configuration to secure this installation."
+	value, err = s.getValueAtPath(fullJsonPayload, []string{"data", "records"}, "detail", configLockedMessage)
+	if err != nil {
+		s.logger.Sugar().Errorln("Error collecting value at given path.", err)
+	}
 	if err == nil {
-		s.mb.RecordSsprDbUnavailableCountDataPoint(pcommon.NewTimestampFromTime(time.Now()), intValue)
+		s.mb.RecordSsprConfigurationLockedDataPoint(pcommon.NewTimestampFromTime(time.Now()), value.(int64))
 	} else {
 		s.logger.Sugar().Errorln("Error converting value from string to Int.")
 	}
+
 	// End Metric Creation Pattern Example
 
 	return s.mb.Emit(), nil
