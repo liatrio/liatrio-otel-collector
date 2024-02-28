@@ -25,14 +25,14 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for ssprreceiver metrics.
 type MetricsConfig struct {
-	SsprConfigurationLocked MetricConfig `mapstructure:"sspr.configuration.locked"`
-	SsprDbUnavailableCount  MetricConfig `mapstructure:"sspr.db.unavailable_count"`
-	SsprDuration            MetricConfig `mapstructure:"sspr.duration"`
+	SsprConfigurationUnlocked MetricConfig `mapstructure:"sspr.configuration.unlocked"`
+	SsprDbUnavailableCount    MetricConfig `mapstructure:"sspr.db.unavailable_count"`
+	SsprDuration              MetricConfig `mapstructure:"sspr.duration"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		SsprConfigurationLocked: MetricConfig{
+		SsprConfigurationUnlocked: MetricConfig{
 			Enabled: true,
 		},
 		SsprDbUnavailableCount: MetricConfig{

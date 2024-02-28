@@ -12,21 +12,21 @@ import (
 	conventions "go.opentelemetry.io/collector/semconv/v1.18.0"
 )
 
-type metricSsprConfigurationLocked struct {
+type metricSsprConfigurationUnlocked struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	config   MetricConfig   // metric config provided by user.
 	capacity int            // max observed number of data points added to the metric.
 }
 
-// init fills sspr.configuration.locked metric with initial data.
-func (m *metricSsprConfigurationLocked) init() {
-	m.data.SetName("sspr.configuration.locked")
-	m.data.SetDescription("Indicates that the application is currently in configuration mode and cannot be logged into by users until unlocked.")
+// init fills sspr.configuration.unlocked metric with initial data.
+func (m *metricSsprConfigurationUnlocked) init() {
+	m.data.SetName("sspr.configuration.unlocked")
+	m.data.SetDescription("Indicates that the application is currently in configuration mode; it has been unlocked and cannot be logged into by users until locked.")
 	m.data.SetUnit("bool")
 	m.data.SetEmptyGauge()
 }
 
-func (m *metricSsprConfigurationLocked) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
+func (m *metricSsprConfigurationUnlocked) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
 	if !m.config.Enabled {
 		return
 	}
@@ -37,14 +37,14 @@ func (m *metricSsprConfigurationLocked) recordDataPoint(start pcommon.Timestamp,
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
-func (m *metricSsprConfigurationLocked) updateCapacity() {
+func (m *metricSsprConfigurationUnlocked) updateCapacity() {
 	if m.data.Gauge().DataPoints().Len() > m.capacity {
 		m.capacity = m.data.Gauge().DataPoints().Len()
 	}
 }
 
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
-func (m *metricSsprConfigurationLocked) emit(metrics pmetric.MetricSlice) {
+func (m *metricSsprConfigurationUnlocked) emit(metrics pmetric.MetricSlice) {
 	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
@@ -52,8 +52,8 @@ func (m *metricSsprConfigurationLocked) emit(metrics pmetric.MetricSlice) {
 	}
 }
 
-func newMetricSsprConfigurationLocked(cfg MetricConfig) metricSsprConfigurationLocked {
-	m := metricSsprConfigurationLocked{config: cfg}
+func newMetricSsprConfigurationUnlocked(cfg MetricConfig) metricSsprConfigurationUnlocked {
+	m := metricSsprConfigurationUnlocked{config: cfg}
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -167,14 +167,14 @@ func newMetricSsprDuration(cfg MetricConfig) metricSsprDuration {
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
-	config                        MetricsBuilderConfig // config of the metrics builder.
-	startTime                     pcommon.Timestamp    // start time that will be applied to all recorded data points.
-	metricsCapacity               int                  // maximum observed number of metrics per resource.
-	metricsBuffer                 pmetric.Metrics      // accumulates metrics data before emitting.
-	buildInfo                     component.BuildInfo  // contains version information.
-	metricSsprConfigurationLocked metricSsprConfigurationLocked
-	metricSsprDbUnavailableCount  metricSsprDbUnavailableCount
-	metricSsprDuration            metricSsprDuration
+	config                          MetricsBuilderConfig // config of the metrics builder.
+	startTime                       pcommon.Timestamp    // start time that will be applied to all recorded data points.
+	metricsCapacity                 int                  // maximum observed number of metrics per resource.
+	metricsBuffer                   pmetric.Metrics      // accumulates metrics data before emitting.
+	buildInfo                       component.BuildInfo  // contains version information.
+	metricSsprConfigurationUnlocked metricSsprConfigurationUnlocked
+	metricSsprDbUnavailableCount    metricSsprDbUnavailableCount
+	metricSsprDuration              metricSsprDuration
 }
 
 // metricBuilderOption applies changes to default metrics builder.
@@ -189,13 +189,13 @@ func WithStartTime(startTime pcommon.Timestamp) metricBuilderOption {
 
 func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.CreateSettings, options ...metricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
-		config:                        mbc,
-		startTime:                     pcommon.NewTimestampFromTime(time.Now()),
-		metricsBuffer:                 pmetric.NewMetrics(),
-		buildInfo:                     settings.BuildInfo,
-		metricSsprConfigurationLocked: newMetricSsprConfigurationLocked(mbc.Metrics.SsprConfigurationLocked),
-		metricSsprDbUnavailableCount:  newMetricSsprDbUnavailableCount(mbc.Metrics.SsprDbUnavailableCount),
-		metricSsprDuration:            newMetricSsprDuration(mbc.Metrics.SsprDuration),
+		config:                          mbc,
+		startTime:                       pcommon.NewTimestampFromTime(time.Now()),
+		metricsBuffer:                   pmetric.NewMetrics(),
+		buildInfo:                       settings.BuildInfo,
+		metricSsprConfigurationUnlocked: newMetricSsprConfigurationUnlocked(mbc.Metrics.SsprConfigurationUnlocked),
+		metricSsprDbUnavailableCount:    newMetricSsprDbUnavailableCount(mbc.Metrics.SsprDbUnavailableCount),
+		metricSsprDuration:              newMetricSsprDuration(mbc.Metrics.SsprDuration),
 	}
 	for _, op := range options {
 		op(mb)
@@ -253,7 +253,7 @@ func (mb *MetricsBuilder) EmitForResource(rmo ...ResourceMetricsOption) {
 	ils.Scope().SetName("otelcol/ssprreceiver")
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
-	mb.metricSsprConfigurationLocked.emit(ils.Metrics())
+	mb.metricSsprConfigurationUnlocked.emit(ils.Metrics())
 	mb.metricSsprDbUnavailableCount.emit(ils.Metrics())
 	mb.metricSsprDuration.emit(ils.Metrics())
 
@@ -276,9 +276,9 @@ func (mb *MetricsBuilder) Emit(rmo ...ResourceMetricsOption) pmetric.Metrics {
 	return metrics
 }
 
-// RecordSsprConfigurationLockedDataPoint adds a data point to sspr.configuration.locked metric.
-func (mb *MetricsBuilder) RecordSsprConfigurationLockedDataPoint(ts pcommon.Timestamp, val int64) {
-	mb.metricSsprConfigurationLocked.recordDataPoint(mb.startTime, ts, val)
+// RecordSsprConfigurationUnlockedDataPoint adds a data point to sspr.configuration.unlocked metric.
+func (mb *MetricsBuilder) RecordSsprConfigurationUnlockedDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricSsprConfigurationUnlocked.recordDataPoint(mb.startTime, ts, val)
 }
 
 // RecordSsprDbUnavailableCountDataPoint adds a data point to sspr.db.unavailable_count metric.

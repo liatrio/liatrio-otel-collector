@@ -141,6 +141,8 @@ func parseHealth(current interface{}, desiredKey string, searchString string) (i
 		// Check if the detail contains the given searchString.
 		if strings.Contains(detail, searchString) {
 			return 1, nil
+		} else {
+			return 0, errors.New("searchString not found")
 		}
 	}
 
@@ -226,15 +228,22 @@ func (s *scraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	}
 
 	fullJsonPayload := s.parseJSON(data)
-
+	// Begin Error Metric Creation Pattern Example
 	errorState, errorCode, errorMessage := parseError(fullJsonPayload)
 	if errorState == 1 {
 		s.logger.Sugar().Errorln("Error: ", errorCode, "Error Message: ", errorMessage)
+		// Place different codes here and build metrics accordingly
 		if errorCode == 5053 {
-			s.mb.RecordSsprConfigurationLockedDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1)
+			s.mb.RecordSsprConfigurationUnlockedDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1)
 		}
+	} else {
+		// If no error build the metric stating there was no error.
+		s.mb.RecordSsprConfigurationUnlockedDataPoint(pcommon.NewTimestampFromTime(time.Now()), 0)
 	}
-	// Begin Metric Creation Pattern Example
+
+	// End Error Metric Creation Pattern Example
+	// Begin API Metric Creation Pattern Example
+
 	// New Metric
 	value, err := s.getValueAtPath(fullJsonPayload, []string{"data", "current"}, "DB_UNAVAILABLE_COUNT", "")
 	if err != nil {
@@ -243,21 +252,17 @@ func (s *scraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		intValue, err := strconv.ParseInt(value.(string), 10, 64)
 		if err == nil {
 			s.mb.RecordSsprDbUnavailableCountDataPoint(pcommon.NewTimestampFromTime(time.Now()), intValue)
-		} else {
-			s.logger.Sugar().Errorln("Error converting value from string to Int.")
 		}
 	}
 
 	// New Metric
-	configLockedMessage := "PWM is currently in configuration mode. Anyone accessing this site can modify the configuration without authenticating. When ready, restrict the configuration to secure this installation."
+	configLockedMessage := "The application is unavailable or is restarting.  If this error occurs repeatedly please contact your help desk."
 	value, err = s.getValueAtPath(fullJsonPayload, []string{"data", "records"}, "detail", configLockedMessage)
 	if err != nil {
-		s.logger.Sugar().Errorln("Error collecting value at given path.", err)
+		s.logger.Sugar().Infoln("Value was not present at the given path. Continuing to next given key.")
 	}
 	if err == nil {
-		s.mb.RecordSsprConfigurationLockedDataPoint(pcommon.NewTimestampFromTime(time.Now()), value.(int64))
-	} else {
-		s.logger.Sugar().Errorln("Error converting value from string to Int.")
+		s.mb.RecordSsprConfigurationUnlockedDataPoint(pcommon.NewTimestampFromTime(time.Now()), value.(int64))
 	}
 
 	// End Metric Creation Pattern Example

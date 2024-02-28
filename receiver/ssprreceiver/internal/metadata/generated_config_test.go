@@ -26,9 +26,9 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					SsprConfigurationLocked: MetricConfig{Enabled: true},
-					SsprDbUnavailableCount:  MetricConfig{Enabled: true},
-					SsprDuration:            MetricConfig{Enabled: true},
+					SsprConfigurationUnlocked: MetricConfig{Enabled: true},
+					SsprDbUnavailableCount:    MetricConfig{Enabled: true},
+					SsprDuration:              MetricConfig{Enabled: true},
 				},
 			},
 		},
@@ -36,9 +36,9 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					SsprConfigurationLocked: MetricConfig{Enabled: false},
-					SsprDbUnavailableCount:  MetricConfig{Enabled: false},
-					SsprDuration:            MetricConfig{Enabled: false},
+					SsprConfigurationUnlocked: MetricConfig{Enabled: false},
+					SsprDbUnavailableCount:    MetricConfig{Enabled: false},
+					SsprDuration:              MetricConfig{Enabled: false},
 				},
 			},
 		},

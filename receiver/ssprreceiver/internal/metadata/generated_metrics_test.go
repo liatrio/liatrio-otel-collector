@@ -57,7 +57,7 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordSsprConfigurationLockedDataPoint(ts, 1)
+			mb.RecordSsprConfigurationUnlockedDataPoint(ts, 1)
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -89,12 +89,12 @@ func TestMetricsBuilder(t *testing.T) {
 			validatedMetrics := make(map[string]bool)
 			for i := 0; i < ms.Len(); i++ {
 				switch ms.At(i).Name() {
-				case "sspr.configuration.locked":
-					assert.False(t, validatedMetrics["sspr.configuration.locked"], "Found a duplicate in the metrics slice: sspr.configuration.locked")
-					validatedMetrics["sspr.configuration.locked"] = true
+				case "sspr.configuration.unlocked":
+					assert.False(t, validatedMetrics["sspr.configuration.unlocked"], "Found a duplicate in the metrics slice: sspr.configuration.unlocked")
+					validatedMetrics["sspr.configuration.unlocked"] = true
 					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "Indicates that the application is currently in configuration mode and cannot be logged into by users until unlocked.", ms.At(i).Description())
+					assert.Equal(t, "Indicates that the application is currently in configuration mode; it has been unlocked and cannot be logged into by users until locked.", ms.At(i).Description())
 					assert.Equal(t, "bool", ms.At(i).Unit())
 					dp := ms.At(i).Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())

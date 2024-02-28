@@ -12,6 +12,14 @@ metrics:
     enabled: false
 ```
 
+### sspr.configuration.unlocked
+
+Indicates that the application is currently in configuration mode; it has been unlocked and cannot be logged into by users until locked.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| bool | Gauge | Int |
+
 ### sspr.db.unavailable_count
 
 Measures the number of times the database was unavailable.
