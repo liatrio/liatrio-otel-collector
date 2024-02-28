@@ -48,6 +48,14 @@ func (f *ScraperFactory) CreateMetricsScraper(
 	)
 }
 
+type SsprJsonResponse struct {
+	Error          bool   `json:"error"`
+	ErrorCode      int    `json:"errorCode"`
+	SuccessMessage string `json:"successMessage"`
+	ErrorMessage   string `json:"errorMessage"`
+	ErrorDetail    string `json:"errorDetail"`
+}
+
 type ScraperConfig struct {
 	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
 	confighttp.HTTPClientSettings           `mapstructure:",squash"`
