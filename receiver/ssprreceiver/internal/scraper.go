@@ -48,12 +48,13 @@ func (f *ScraperFactory) CreateMetricsScraper(
 	)
 }
 
-type SsprJsonResponse struct {
-	Error          bool   `json:"error"`
-	ErrorCode      int    `json:"errorCode"`
-	SuccessMessage string `json:"successMessage"`
-	ErrorMessage   string `json:"errorMessage"`
-	ErrorDetail    string `json:"errorDetail"`
+type Response struct {
+	Error          bool        `json:"error"`
+	ErrorCode      int         `json:"errorCode,omitempty"`
+	SuccessMessage string      `json:"successMessage,omitempty"`
+	ErrorMessage   string      `json:"errorMessage,omitempty"`
+	ErrorDetail    string      `json:"errorDetail,omitempty"`
+	Data           interface{} `json:"data,omitempty"`
 }
 
 type ScraperConfig struct {
@@ -69,19 +70,18 @@ type scraper struct {
 	logger   *zap.Logger
 	settings component.TelemetrySettings
 	mb       *metadata.MetricsBuilder
+	res      *Response
 }
 
-func (s *scraper) parseJSON(data []byte) map[string]any {
-	unMarshalledJson := interface{}(nil)
-	err := json.Unmarshal(data, &unMarshalledJson)
+func (s *scraper) parseJSON(data []byte) error {
+	err := json.Unmarshal(data, s.res)
 	if err != nil {
 		s.logger.Sugar().Errorln("[ERROR] Unable to unmarshal JSON payload.")
 	}
-
-	return unMarshalledJson.(map[string]any)
+	return nil
 }
 
-func parseError(input map[string]interface{}) (int, float64, string) {
+func (res *Response) parseError(input map[string]interface{}) (int, float64, string) {
 	errorFlag, ok := input["error"].(bool)
 	if !ok {
 		return 0, 0, "error key not found or not a boolean"
@@ -96,7 +96,7 @@ func parseError(input map[string]interface{}) (int, float64, string) {
 	return 0, 0, "no error"
 }
 
-func parseStatistics(current interface{}, keyName string) (interface{}, error) {
+func (res *Response) parseStatistics(current interface{}, keyName string) (interface{}, error) {
 	// Check if the current value is a []interface{}
 	currentList, ok := current.([]interface{})
 	if !ok {
@@ -120,7 +120,7 @@ func parseStatistics(current interface{}, keyName string) (interface{}, error) {
 	return nil, errors.New("key not found in the list")
 }
 
-func parseHealth(current interface{}, desiredKey string, searchString string) (int64, error) {
+func (res *Response) parseHealth(current interface{}, desiredKey string, searchString string) (int64, error) {
 	// Check if the current value is a []interface{}
 	currentList, ok := current.([]interface{})
 	if !ok {
@@ -181,14 +181,14 @@ func (s *scraper) getValueAtPath(fullJsonMap interface{}, pathToListOfMaps []str
 			if !ok {
 				return nil, errors.New("unexpected type for 'current' switch case")
 			}
-			return parseStatistics(v, desiredKey)
+			return s.res.parseStatistics(v, desiredKey)
 		case "records":
 			// Handle the "records" case using parseHealth function
 			v, ok := value.([]interface{})
 			if !ok {
 				return nil, errors.New("unexpected type for 'records' switch case")
 			}
-			return parseHealth(v, desiredKey, searchString)
+			return s.res.parseHealth(v, desiredKey, searchString)
 		default:
 			// For other keys, handle as before
 			switch v := value.(type) {
