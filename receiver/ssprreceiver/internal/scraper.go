@@ -5,6 +5,7 @@ package internal // import "sspr/internal"
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"io"
@@ -48,13 +49,87 @@ func (f *ScraperFactory) CreateMetricsScraper(
 	)
 }
 
-type Response struct {
-	Error          bool        `json:"error"`
-	ErrorCode      int         `json:"errorCode,omitempty"`
-	SuccessMessage string      `json:"successMessage,omitempty"`
-	ErrorMessage   string      `json:"errorMessage,omitempty"`
-	ErrorDetail    string      `json:"errorDetail,omitempty"`
-	Data           interface{} `json:"data,omitempty"`
+type HTTPResponse struct {
+	Status           string
+	StatusCode       int
+	Proto            string
+	ProtoMajor       int
+	ProtoMinor       int
+	Header           http.Header
+	Body             io.ReadCloser
+	ContentLength    int64
+	TransferEncoding []string
+	Close            bool
+	Uncompressed     bool
+	Trailer          http.Header
+	Request          *http.Request
+	TLS              *tls.ConnectionState
+}
+
+type SsprBody struct {
+	Error          bool    `json:"error"`
+	ErrorCode      int     `json:"errorCode,omitempty"`
+	SuccessMessage string  `json:"successMessage,omitempty"`
+	ErrorMessage   string  `json:"errorMessage,omitempty"`
+	ErrorDetail    string  `json:"errorDetail,omitempty"`
+	Data           DataObj `json:"data,omitempty"`
+}
+
+type DataObj interface {
+	GetPayload() interface{}
+}
+
+type RecordData struct {
+	Status string `json:"status"`
+	Topic  string `json:"topic"`
+	Detail string `json:"detail"`
+}
+
+type CurrentData struct {
+	Description string `json:"description"`
+	Labels      []struct {
+		Description string `json:"description"`
+		Name        string `json:"name"`
+		Label       string `json:"label"`
+		Type        string `json:"type"`
+	} `json:"labels"`
+	EventRates []struct {
+		Description string  `json:"description"`
+		Name        string  `json:"name"`
+		Value       float64 `json:"value"`
+	} `json:"eventRates"`
+	Current []struct {
+		Description string  `json:"description"`
+		Name        string  `json:"name"`
+		Value       float64 `json:"value"`
+	} `json:"current"`
+	Cumulative []struct {
+		Description string  `json:"description"`
+		Name        string  `json:"name"`
+		Value       float64 `json:"value"`
+	} `json:"cumulative"`
+	History []struct {
+		Description string `json:"description"`
+		Name        string `json:"name"`
+		Date        string `json:"date"`
+		Year        int    `json:"year"`
+		Month       int    `json:"month"`
+		Day         int    `json:"day"`
+		DaysAgo     int    `json:"daysAgo"`
+		Data        []struct {
+			Description string  `json:"description"`
+			Name        string  `json:"name"`
+			Value       float64 `json:"value"`
+		} `json:"data"`
+	} `json:"history"`
+}
+
+type RecordsList struct {
+	RecordData []*RecordData
+}
+
+type CurrentList struct {
+	CurrentData []*CurrentData
 }
 
 type ScraperConfig struct {
@@ -70,139 +145,82 @@ type scraper struct {
 	logger   *zap.Logger
 	settings component.TelemetrySettings
 	mb       *metadata.MetricsBuilder
-	res      *Response
+	res      *HTTPResponse
+	payload  *SsprBody
+}
+
+func (s *scraper) LoadHTTPResponse(resp *http.Response) {
+	s.res = &HTTPResponse{
+		Status:           resp.Status,
+		StatusCode:       resp.StatusCode,
+		Proto:            resp.Proto,
+		ProtoMajor:       resp.ProtoMajor,
+		ProtoMinor:       resp.ProtoMinor,
+		Header:           resp.Header,
+		Body:             resp.Body,
+		ContentLength:    resp.ContentLength,
+		TransferEncoding: resp.TransferEncoding,
+		Close:            resp.Close,
+		Uncompressed:     resp.Uncompressed,
+		Trailer:          resp.Trailer,
+		Request:          resp.Request,
+		TLS:              resp.TLS,
+	}
+}
+
+func (data *RecordsList) GetPayload() interface{} {
+	return data
+}
+
+func (data *CurrentList) GetPayload() interface{} {
+	return data
 }
 
 func (s *scraper) parseJSON(data []byte) error {
-	err := json.Unmarshal(data, s.res)
+	err := json.Unmarshal(data, s.payload)
 	if err != nil {
 		s.logger.Sugar().Errorln("[ERROR] Unable to unmarshal JSON payload.")
 	}
 	return nil
 }
 
-func (res *Response) parseError(input map[string]interface{}) (int, float64, string) {
-	errorFlag, ok := input["error"].(bool)
-	if !ok {
-		return 0, 0, "error key not found or not a boolean"
-	}
-
-	if errorFlag {
-		errorCode := input["errorCode"].(float64)
-		errorMessage, _ := input["errorMessage"].(string)
-		return 1, errorCode, errorMessage
+func (res *SsprBody) parseError() (int, float64, string) {
+	if res.Error {
+		return 1, float64(res.ErrorCode), res.ErrorMessage
 	}
 
 	return 0, 0, "no error"
 }
 
-func (res *Response) parseStatistics(current interface{}, keyName string) (interface{}, error) {
-	// Check if the current value is a []interface{}
-	currentList, ok := current.([]interface{})
-	if !ok {
-		return nil, errors.New("expected []interface{} type for current")
+func (res *SsprBody) parseHealth(searchString string) (int, error) {
+	records := res.Data.GetPayload().([]RecordData)
+	if len(records) == 0 {
+		return 0, errors.New("records list is empty")
 	}
 
-	// Iterate through the list of maps.
-	for _, item := range currentList {
-		itemMap, ok := item.(map[string]interface{})
-		if !ok {
-			return nil, errors.New("expected map[string]interface{} type in the list")
-		}
-		name, ok := itemMap["name"].(string)
-		if !ok {
-			return nil, errors.New("missing or invalid 'name' field in the list item")
-		}
-		if name == keyName {
-			return itemMap["value"], nil
-		}
-	}
-	return nil, errors.New("key not found in the list")
-}
-
-func (res *Response) parseHealth(current interface{}, desiredKey string, searchString string) (int64, error) {
-	// Check if the current value is a []interface{}
-	currentList, ok := current.([]interface{})
-	if !ok {
-		return 0, errors.New("expected []interface{} type for current")
-	}
-
-	// Iterate through the list of maps.
-	for _, item := range currentList {
-		itemMap, ok := item.(map[string]interface{})
-		if !ok {
-			return 0, errors.New("expected map[string]interface{} type in the list")
-		}
-
-		// Extract the value associated with the desired key.
-		keyValue, ok := itemMap[desiredKey]
-		if !ok {
-			return 0, errors.New("desired key not found in the list item")
-		}
-
-		// Convert the value to a string if possible.
-		detail, ok := keyValue.(string)
-		if !ok {
-			return 0, errors.New("desired key value is not a string")
-		}
-
-		// Check if the detail contains the given searchString.
-		if strings.Contains(detail, searchString) {
+	// Iterate through the records list.
+	for _, record := range records {
+		if strings.Contains(record.Detail, searchString) {
 			return 1, nil
-		} else {
-			return 0, errors.New("searchString not found")
 		}
 	}
-
-	// If the searchString is not found in any detail, return 0.
+	// If the searchString is not found in any record detail, return false.
 	return 0, nil
 }
 
-func (s *scraper) getValueAtPath(fullJsonMap interface{}, pathToListOfMaps []string, desiredKey string, searchString string) (interface{}, error) {
-	if len(pathToListOfMaps) == 0 {
-		return nil, errors.New("path is empty")
-	}
-
-	current, ok := fullJsonMap.(map[string]interface{})
-	if !ok {
-		return nil, errors.New("expected map[string]interface{} type")
-	}
-
-	for _, key := range pathToListOfMaps {
-		value, ok := current[key]
-		if !ok {
-			return nil, errors.New("path not found")
-		}
-
-		switch key {
-		case "current":
-			// Handle the "current" case using parseStatistics function
-			v, ok := value.([]interface{})
-			if !ok {
-				return nil, errors.New("unexpected type for 'current' switch case")
-			}
-			return s.res.parseStatistics(v, desiredKey)
-		case "records":
-			// Handle the "records" case using parseHealth function
-			v, ok := value.([]interface{})
-			if !ok {
-				return nil, errors.New("unexpected type for 'records' switch case")
-			}
-			return s.res.parseHealth(v, desiredKey, searchString)
-		default:
-			// For other keys, handle as before
-			switch v := value.(type) {
-			case map[string]interface{}:
-				// Recursively call the function with the subMap.
-				return s.getValueAtPath(v, pathToListOfMaps[1:], desiredKey, searchString)
-			default:
-				// If the value is neither map nor list, return an error.
-				return nil, errors.New("unexpected type")
+func (res *SsprBody) parseStatistics(keyName string) (interface{}, error) {
+	currentDataList := res.Data.GetPayload().([]CurrentList)
+	for _, currentData := range currentDataList {
+		for _, dataCurrent := range currentData.CurrentData {
+			for _, currentEntry := range dataCurrent.Current {
+				// Check if the Name field matches the keyName.
+				if currentEntry.Name == keyName {
+					return currentEntry.Value, nil
+				}
 			}
 		}
 	}
-
-	return nil, errors.New("key not found in the target map")
+	return nil, errors.New("key not found in the list")
 }
 
 func (s *scraper) start(_ context.Context, host component.Host) (err error) {
@@ -228,16 +246,19 @@ func (s *scraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		s.logger.Sugar().Errorln("Unable to execute http request: ", err)
 		return s.mb.Emit(), nil
 	}
+	// defer res.Body.Close()
 
-	data, err := io.ReadAll(res.Body)
+	s.LoadHTTPResponse(res)
+
+	data, err := io.ReadAll(s.res.Body)
 	if err != nil {
 		s.logger.Sugar().Errorln("Unable to read http response: ", err, "response is: ", res.Body)
 		return s.mb.Emit(), nil
 	}
 
-	fullJsonPayload := s.parseJSON(data)
+	s.parseJSON(data)
 	// Begin Error Metric Creation Pattern Example
-	errorState, errorCode, errorMessage := parseError(fullJsonPayload)
+	errorState, errorCode, errorMessage := s.payload.parseError()
 	if errorState == 1 {
 		s.logger.Sugar().Errorln("Error: ", errorCode, "Error Message: ", errorMessage)
 		// Place different codes here and build metrics accordingly
@@ -253,7 +274,8 @@ func (s *scraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	// Begin API Metric Creation Pattern Example
 
 	// New Metric
-	value, err := s.getValueAtPath(fullJsonPayload, []string{"data", "current"}, "DB_UNAVAILABLE_COUNT", "")
+	// value, err := s.getValueAtPath([]string{"data", "current"}, "DB_UNAVAILABLE_COUNT", "")
+	value, err := s.payload.parseStatistics("DB_UNAVAILABLE_COUNT")
 	if err != nil {
 		s.logger.Sugar().Infoln("Value was not present at the given path. Continuing to next given key.")
 	} else {
@@ -264,14 +286,14 @@ func (s *scraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	}
 
 	// New Metric
-	configLockedMessage := "The application is unavailable or is restarting.  If this error occurs repeatedly please contact your help desk."
-	value, err = s.getValueAtPath(fullJsonPayload, []string{"data", "records"}, "detail", configLockedMessage)
-	if err != nil {
-		s.logger.Sugar().Infoln("Value was not present at the given path. Continuing to next given key.")
-	}
-	if err == nil {
-		s.mb.RecordSsprConfigurationUnlockedDataPoint(pcommon.NewTimestampFromTime(time.Now()), value.(int64))
-	}
+	// configLockedMessage := "The application is unavailable or is restarting.  If this error occurs repeatedly please contact your help desk."
+
+	// if err != nil {
+	// 	s.logger.Sugar().Infoln("Value was not present at the given path. Continuing to next given key.")
+	// }
+	// if err == nil {
+	// 	s.mb.RecordSsprConfigurationUnlockedDataPoint(pcommon.NewTimestampFromTime(time.Now()), value.(int64))
+	// }
 
 	// End Metric Creation Pattern Example
 
