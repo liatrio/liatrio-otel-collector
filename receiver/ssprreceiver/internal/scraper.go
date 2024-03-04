@@ -176,10 +176,39 @@ func (s *scraper) LoadHTTPResponse(resp *http.Response) {
 }
 
 func (s *scraper) parseJSON(data []byte) error {
-	err := json.Unmarshal(data, &s.payload.Data)
+	var tempData map[string]json.RawMessage
+	err := json.Unmarshal(data, &tempData)
 	if err != nil {
 		s.logger.Sugar().Errorln("[ERROR] Unable to unmarshal JSON payload.")
 		return err
+	}
+
+	var ssprBody SsprBody
+	ssprBody.Error = tempData["error"] != nil
+	if ssprBody.Error {
+		// Unmarshal error details if present
+		if err := json.Unmarshal(tempData["error"], &ssprBody.ErrorDetail); err != nil {
+			s.logger.Sugar().Errorln("[ERROR] Unable to unmarshal error details:", err)
+		}
+	} else {
+		// Unmarshal data if not error
+		ssprBody.Data = parseData(tempData["data"])
+	}
+
+	s.payload = &ssprBody
+
+	return nil
+}
+
+func parseData(data json.RawMessage) Data {
+	var recordsList RecordsList
+	if err := json.Unmarshal(data, &recordsList); err == nil {
+		return &recordsList
+	}
+
+	var currentList CurrentList
+	if err := json.Unmarshal(data, &currentList); err == nil {
+		return &currentList
 	}
 
 	return nil
