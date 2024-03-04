@@ -3,7 +3,7 @@ dist:
   name: otelcol-custom
   module: github.com/liatrio/liatrio-otel-collector
   description: Basic OTel Collector distribution for Developers
-  otelcol_version: 0.93.0
+  otelcol_version: 0.96.0
   output_path: ./build
   debug_compilation: false
 
