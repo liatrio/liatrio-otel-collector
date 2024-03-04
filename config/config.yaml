@@ -67,8 +67,10 @@ processors:
     override: false
 
 exporters:
-  logging:
-    verbosity: detailed
+  debug:
+    verbosity: basic
+    sampling_initial: 2
+    sampling_thereafter: 500
 
     ## Uncomment if you want to use OTLP exportation to Grafana cloud
     ## and update with your region
@@ -85,16 +87,12 @@ service:
     metrics:
       receivers: [otlp, prometheus, gitprovider]
       processors: [resourcedetection, batch]
-      exporters: [logging]
+      exporters: [debug]
 
     traces:
       receivers: [otlp]
       processors: [resourcedetection, batch]
-      exporters: [logging]
+      exporters: [debug]
 
     logs:
       receivers: [otlp]
-
-  telemetry:
-    logs:
-      level: debug
