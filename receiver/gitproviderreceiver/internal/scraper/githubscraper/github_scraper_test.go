@@ -170,7 +170,7 @@ func TestScrape(t *testing.T) {
 
 			ghs := newGitHubScraper(context.Background(), receivertest.NewNopCreateSettings(), cfg)
 			ghs.cfg.GitHubOrg = "liatrio"
-			ghs.cfg.HTTPClientSettings.Endpoint = server.URL
+			ghs.cfg.ClientConfig.Endpoint = server.URL
 
 			err := ghs.start(context.Background(), componenttest.NewNopHost())
 			require.NoError(t, err)

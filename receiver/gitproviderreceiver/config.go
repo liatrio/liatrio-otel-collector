@@ -70,7 +70,7 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 			return err
 		}
 
-		err = collectorSection.Unmarshal(collectorCfg, confmap.WithErrorUnused())
+		err = collectorSection.Unmarshal(collectorCfg, confmap.WithIgnoreUnused())
 		if err != nil {
 			return fmt.Errorf("error reading settings for scraper type %q: %w", key, err)
 		}
