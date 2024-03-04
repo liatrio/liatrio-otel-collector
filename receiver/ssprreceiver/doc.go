@@ -3,4 +3,4 @@
 
 //go:generate ../../.tools/mdatagen metadata.yaml
 
-package ssprreceiver // import "sspr"
+package sspr

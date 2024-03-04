@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package ssprreceiver // import "github.com/liatrio/liatrio-otel-collector/receiver/sspr"
+package sspr // import "github.com/liatrio/liatrio-otel-collector/receiver/sspr"
 
 import (
 	"errors"

@@ -10,7 +10,6 @@ import (
 	"errors"
 	"io"
 	"strconv"
-	"strings"
 
 	"net/http"
 	"time"
@@ -67,16 +66,32 @@ type HTTPResponse struct {
 }
 
 type SsprBody struct {
-	Error          bool    `json:"error"`
-	ErrorCode      int     `json:"errorCode,omitempty"`
-	SuccessMessage string  `json:"successMessage,omitempty"`
-	ErrorMessage   string  `json:"errorMessage,omitempty"`
-	ErrorDetail    string  `json:"errorDetail,omitempty"`
-	Data           DataObj `json:"data,omitempty"`
+	Error          bool   `json:"error"`
+	ErrorCode      int    `json:"errorCode,omitempty"`
+	SuccessMessage string `json:"successMessage,omitempty"`
+	ErrorMessage   string `json:"errorMessage,omitempty"`
+	ErrorDetail    string `json:"errorDetail,omitempty"`
+	Data           Data   `json:"data,omitempty"`
 }
 
-type DataObj interface {
-	GetPayload() interface{}
+type Data interface {
+	GetData() interface{}
+}
+
+func (data *RecordsList) GetData() interface{} {
+	return data
+}
+
+func (data *CurrentList) GetData() interface{} {
+	return data
+}
+
+type RecordsList struct {
+	RecordData []*RecordData
+}
+
+type CurrentList struct {
+	CurrentData []*CurrentData
 }
 
 type RecordData struct {
@@ -124,14 +139,6 @@ type CurrentData struct {
 	} `json:"history"`
 }
 
-type RecordsList struct {
-	RecordData []*RecordData
-}
-
-type CurrentList struct {
-	CurrentData []*CurrentData
-}
-
 type ScraperConfig struct {
 	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
 	confighttp.HTTPClientSettings           `mapstructure:",squash"`
@@ -168,58 +175,84 @@ func (s *scraper) LoadHTTPResponse(resp *http.Response) {
 	}
 }
 
-func (data *RecordsList) GetPayload() interface{} {
-	return data
-}
-
-func (data *CurrentList) GetPayload() interface{} {
-	return data
-}
-
 func (s *scraper) parseJSON(data []byte) error {
-	err := json.Unmarshal(data, s.payload)
+	err := json.Unmarshal(data, &s.payload.Data)
 	if err != nil {
 		s.logger.Sugar().Errorln("[ERROR] Unable to unmarshal JSON payload.")
+		return err
 	}
+
 	return nil
 }
 
-func (res *SsprBody) parseError() (int, float64, string) {
-	if res.Error {
-		return 1, float64(res.ErrorCode), res.ErrorMessage
-	}
+// func (res *SsprBody) parseError() (int, float64, string) {
+// 	if res.Error {
+// 		return 1, float64(res.ErrorCode), res.ErrorMessage
+// 	}
 
-	return 0, 0, "no error"
-}
+// 	return 0, 0, "no error"
+// }
 
-func (res *SsprBody) parseHealth(searchString string) (int, error) {
-	records := res.Data.GetPayload().([]RecordData)
-	if len(records) == 0 {
-		return 0, errors.New("records list is empty")
-	}
+// func (res *SsprBody) parseHealth(searchString string) (int, error) {
+// 	records := res.Data.GetPayload().([]RecordData)
+// 	if len(records) == 0 {
+// 		return 0, errors.New("records list is empty")
+// 	}
 
-	// Iterate through the records list.
-	for _, record := range records {
-		if strings.Contains(record.Detail, searchString) {
-			return 1, nil
-		}
-	}
-	// If the searchString is not found in any record detail, return false.
-	return 0, nil
-}
+// 	// Iterate through the records list.
+// 	for _, record := range records {
+// 		if strings.Contains(record.Detail, searchString) {
+// 			return 1, nil
+// 		}
+// 	}
+// 	// If the searchString is not found in any record detail, return false.
+// 	return 0, nil
+// }
 
 func (res *SsprBody) parseStatistics(keyName string) (interface{}, error) {
-	currentDataList := res.Data.GetPayload().([]CurrentList)
-	for _, currentData := range currentDataList {
-		for _, dataCurrent := range currentData.CurrentData {
-			for _, currentEntry := range dataCurrent.Current {
-				// Check if the Name field matches the keyName.
-				if currentEntry.Name == keyName {
-					return currentEntry.Value, nil
+	payload, ok := res.Data.GetData().(map[string]interface{})
+	if !ok {
+		return nil, errors.New("unexpected type for payload")
+	}
+
+	for _, dataMap := range payload {
+		// Check if the 'current' key exists in the dataMap
+		dataMap, ok := dataMap.(map[string]interface{})
+		if !ok {
+			return nil, errors.New("unexpected type for dataMap")
+		}
+
+		if currentData, ok := dataMap["current"]; ok {
+			currentDataSlice, ok := currentData.([]*CurrentData)
+			if !ok {
+				return nil, errors.New("unexpected type for 'current' key")
+			}
+			// Iterate over the 'current' data
+			for _, dataCurrent := range currentDataSlice {
+				// Iterate over the 'current' entries
+				for _, currentEntry := range dataCurrent.Current {
+					// Check if the 'Name' matches the keyName
+					if currentEntry.Name == keyName {
+						return currentEntry.Value, nil
+					}
+				}
+			}
+		} else if recordsData, ok := dataMap["records"]; ok {
+			recordsDataSlice, ok := recordsData.([]*RecordData)
+			if !ok {
+				return nil, errors.New("unexpected type for 'records' key")
+			}
+			// Iterate over the 'records' data
+			for _, recordData := range recordsDataSlice {
+				// Check if the 'Topic' matches the keyName
+				if recordData.Topic == keyName {
+					return recordData.Status, nil
 				}
 			}
 		}
 	}
+
+	// If the key is not found in the payload, return an error
 	return nil, errors.New("key not found in the list")
 }
 
@@ -258,11 +291,11 @@ func (s *scraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	s.parseJSON(data)
 	// Begin Error Metric Creation Pattern Example
-	errorState, errorCode, errorMessage := s.payload.parseError()
-	if errorState == 1 {
-		s.logger.Sugar().Errorln("Error: ", errorCode, "Error Message: ", errorMessage)
+
+	if s.payload.ErrorCode == 1 {
+		s.logger.Sugar().Errorln("Error: ", s.payload.ErrorCode, "Error Message: ", s.payload.ErrorMessage)
 		// Place different codes here and build metrics accordingly
-		if errorCode == 5053 {
+		if s.payload.ErrorCode == 5053 {
 			s.mb.RecordSsprConfigurationUnlockedDataPoint(pcommon.NewTimestampFromTime(time.Now()), 1)
 		}
 	} else {
@@ -275,25 +308,18 @@ func (s *scraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	// New Metric
 	// value, err := s.getValueAtPath([]string{"data", "current"}, "DB_UNAVAILABLE_COUNT", "")
-	value, err := s.payload.parseStatistics("DB_UNAVAILABLE_COUNT")
-	if err != nil {
-		s.logger.Sugar().Infoln("Value was not present at the given path. Continuing to next given key.")
-	} else {
-		intValue, err := strconv.ParseInt(value.(string), 10, 64)
-		if err == nil {
-			s.mb.RecordSsprDbUnavailableCountDataPoint(pcommon.NewTimestampFromTime(time.Now()), intValue)
-		}
-	}
-
-	// New Metric
-	// configLockedMessage := "The application is unavailable or is restarting.  If this error occurs repeatedly please contact your help desk."
-
+	// value, err := s.payload.parseStatistics("DB_UNAVAILABLE_COUNT")
 	// if err != nil {
 	// 	s.logger.Sugar().Infoln("Value was not present at the given path. Continuing to next given key.")
-	// }
-	// if err == nil {
-	// 	s.mb.RecordSsprConfigurationUnlockedDataPoint(pcommon.NewTimestampFromTime(time.Now()), value.(int64))
-	// }
+	// } else {
+	value, err := s.payload.parseStatistics("DB_UNAVAILABLE_COUNT")
+	if err != nil {
+		s.logger.Sugar().Errorln("Unable to parse statistics: ", err)
+	}
+	intValue, err := strconv.ParseInt(value.(string), 10, 64)
+	if err == nil {
+		s.mb.RecordSsprDbUnavailableCountDataPoint(pcommon.NewTimestampFromTime(time.Now()), intValue)
+	}
 
 	// End Metric Creation Pattern Example
 
