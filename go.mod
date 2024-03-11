@@ -5,7 +5,7 @@ go 1.21
 require github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver v0.0.0-00010101000000-000000000000
 
 require (
-	github.com/Khan/genqlient v0.6.0 // indirect
+	github.com/Khan/genqlient v0.7.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect

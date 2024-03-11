@@ -401,12 +401,12 @@ query getAllGroupProjects ($fullPath: ID!, $after: String) {
 `
 
 func getAllGroupProjects(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	fullPath string,
 	after *string,
 ) (*getAllGroupProjectsResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "getAllGroupProjects",
 		Query:  getAllGroupProjects_Operation,
 		Variables: &__getAllGroupProjectsInput{
@@ -414,18 +414,18 @@ func getAllGroupProjects(
 			After:    after,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data getAllGroupProjectsResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ getAllGroupProjectsResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
 // The query or mutation executed by getBranchNames.
@@ -441,29 +441,29 @@ query getBranchNames ($fullPath: ID!) {
 `
 
 func getBranchNames(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	fullPath string,
 ) (*getBranchNamesResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "getBranchNames",
 		Query:  getBranchNames_Operation,
 		Variables: &__getBranchNamesInput{
 			FullPath: fullPath,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data getBranchNamesResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ getBranchNamesResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
 // The query or mutation executed by getMergeRequests.
@@ -493,13 +493,13 @@ query getMergeRequests ($fullPath: ID!, $after: String, $state: MergeRequestStat
 `
 
 func getMergeRequests(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	fullPath string,
 	after *string,
 	state MergeRequestState,
 ) (*getMergeRequestsResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "getMergeRequests",
 		Query:  getMergeRequests_Operation,
 		Variables: &__getMergeRequestsInput{
@@ -508,18 +508,18 @@ func getMergeRequests(
 			State:    state,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data getMergeRequestsResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ getMergeRequestsResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
 // The query or mutation executed by getProjectsByTopic.
@@ -537,12 +537,12 @@ query getProjectsByTopic ($org: String!, $topics: [String!]) {
 `
 
 func getProjectsByTopic(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	org string,
 	topics []string,
 ) (*getProjectsByTopicResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "getProjectsByTopic",
 		Query:  getProjectsByTopic_Operation,
 		Variables: &__getProjectsByTopicInput{
@@ -550,16 +550,16 @@ func getProjectsByTopic(
 			Topics: topics,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data getProjectsByTopicResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ getProjectsByTopicResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
