@@ -18,7 +18,7 @@ endif
 
 .PHONY: build
 build: install-tools
-	GOOS=$(OS) GOARCH=$(ARCH) $(OCB) --config config/manifest.yaml
+	GOOS=$(OS) GOARCH=$(ARCH) CGO_ENABLED=0 $(OCB) --config config/manifest.yaml
 
 .PHONY: build-debug
 build-debug: install-tools
