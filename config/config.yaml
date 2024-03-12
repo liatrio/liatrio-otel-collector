@@ -1,24 +1,26 @@
 ---
 extensions:
   health_check:
+
   pprof:
     endpoint: 0.0.0.0:1777
+
   zpages:
     endpoint: 0.0.0.0:55679
-    ## Uncomment below if you want to enable authentication to GitHub
-    ## Presume that GH_USER and GH_PAT are set as env variables.
-    # basicauth/github:
-    #     client_auth:
-    #         username: ${env:GITHUB_USER}
-    #         password: ${env:GITHUB_PAT}
-    ## Uncomment below if you want to enable authentication to Grafana
-    # basicauth/grafana:
-    #     client_auth:
-    #         username: ${env:GRAF_USER}
-    #         password: ${env:GRAF_PAT}
-    ## Uncomment below if you want to enable authentication to GitLab
-    # bearertokenauth/gitlab:
-    #     token: ${env:GITLAB_PAT}
+
+  bearertokenauth/github:
+    token: ${env:GH_PAT}
+
+  ## Uncomment below if you want to enable authentication to GitLab
+  ## Presume that GL_PAT is set as env variables.
+  # basicauth/gitlab:
+  #     token: ${env:GL_PAT}
+
+  ## Uncomment below if you want to enable authentication to Grafana
+  # basicauth/grafana:
+  #     client_auth:
+  #         username: ${env:GRAF_USER}
+  #         password: ${env:GRAF_PAT}
 
 receivers:
   otlp:
@@ -26,8 +28,8 @@ receivers:
       grpc:
       http:
 
-    ## Collect own metrics based on example from OTEL Contrib Dockerfile
-    ## https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/configs/otelcol-contrib.yaml
+  ## Collect own metrics based on example from OTEL Contrib Dockerfile
+  ## https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/configs/otelcol-contrib.yaml
   prometheus:
     config:
       scrape_configs:
@@ -41,23 +43,15 @@ receivers:
     collection_interval: 60s
     scrapers:
       github:
-        github_org: ${env:GITHUB_ORG}
-        search_query: org:${env:GITHUB_ORG}
-                ## You can specify a custom endpoint URL full list of client settings: https://github.com/open-telemetry/opentelemetry-collector/tree/main/config/confighttp#client-configuration
-                #endpoint: "https://mygithubenterprise.com"
-
-            ## Uncomment if you want to view private authentication required
-            ## GitHub data or and decrease rate limiting.
-            #auth:
-            #    authenticator: basicauth/github
-      gitlab:
-        gitlab_org: ${env:GL_ORG}
-                ## You can specify a custom endpoint URL full list of client settings: https://github.com/open-telemetry/opentelemetry-collector/tree/main/config/confighttp#client-configuration
-                #endpoint: "https://mygitlabenterprise.com"
-            ## Uncomment if you want to view private authentication required
-            ## GitHub data or and decrease rate limiting.
-            #auth:
-            #authenticator: bearertokenauth/gitlab
+        github_org: ${env:GH_ORG}
+        search_query: ${env:SEARCH_QUERY}
+        metrics:
+          git.repository.contributor.count:
+            enabled: true
+        ## You can specify a custom endpoint URL full list of client settings: https://github.com/open-telemetry/opentelemetry-collector/tree/main/config/confighttp#client-configuration
+        #endpoint: "https://mygitlabenterprise.com"
+        auth:
+            authenticator: bearertokenauth/github
 
 processors:
   batch:
@@ -72,27 +66,18 @@ exporters:
     sampling_initial: 2
     sampling_thereafter: 500
 
-    ## Uncomment if you want to use OTLP exportation to Grafana cloud
-    ## and update with your region
-    #otlphttp:
-    #  auth:
-    #    authenticator: basicauth/grafana
-    #  endpoint: https://otlp-gateway-prod-us-central-0.grafana.net/otlp
+  ## Uncomment if you want to use OTLP exportation to Grafana cloud
+  ## and update with your region
+  #otlphttp:
+  #  auth:
+  #    authenticator: basicauth/grafana
+  #  endpoint: https://otlp-gateway-prod-us-central-0.grafana.net/otlp
 
 service:
-    ## Add basicauth/* if you want to use basic auth extensions
-    ## Add bearertokenauth/* if you want to use bearer token auth extensions
-  extensions: [health_check, pprof, zpages]
+  ## Add bearertokenauth/* if you want to use bearer token auth extensions
+  extensions: [health_check, pprof, zpages, bearertokenauth/github]
   pipelines:
     metrics:
-      receivers: [otlp, prometheus, gitprovider]
-      processors: [resourcedetection, batch]
+      receivers: [gitprovider, prometheus]
+      processors: []
       exporters: [debug]
-
-    traces:
-      receivers: [otlp]
-      processors: [resourcedetection, batch]
-      exporters: [debug]
-
-    logs:
-      receivers: [otlp]

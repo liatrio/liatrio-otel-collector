@@ -1246,29 +1246,29 @@ query checkLogin ($login: String!) {
 `
 
 func checkLogin(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	login string,
 ) (*checkLoginResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "checkLogin",
 		Query:  checkLogin_Operation,
 		Variables: &__checkLoginInput{
 			Login: login,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data checkLoginResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ checkLoginResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
 // The query or mutation executed by getBranchData.
@@ -1312,15 +1312,15 @@ query getBranchData ($name: String!, $owner: String!, $branchFirst: Int!, $targe
 // docs: https://github.com/liatrio/liatrio-otel-collector/blob/9bb60b22b88f52f6d51a83b96e7c398d6b450dfc/pkg/receiver/gitproviderreceiver/README.md#rate-limiting
 // https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#predicting-the-point-value-of-a-query
 func getBranchData(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	name string,
 	owner string,
 	branchFirst int,
 	targetBranch string,
 	branchCursor *string,
 ) (*getBranchDataResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "getBranchData",
 		Query:  getBranchData_Operation,
 		Variables: &__getBranchDataInput{
@@ -1331,18 +1331,18 @@ func getBranchData(
 			BranchCursor: branchCursor,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data getBranchDataResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ getBranchDataResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
 // The query or mutation executed by getCommitData.
@@ -1390,8 +1390,8 @@ query getCommitData ($name: String!, $owner: String!, $branchFirst: Int!, $commi
 // docs: https://github.com/liatrio/liatrio-otel-collector/blob/9bb60b22b88f52f6d51a83b96e7c398d6b450dfc/pkg/receiver/gitproviderreceiver/README.md#rate-limiting
 // https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#predicting-the-point-value-of-a-query
 func getCommitData(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	name string,
 	owner string,
 	branchFirst int,
@@ -1399,7 +1399,7 @@ func getCommitData(
 	commitCursor *string,
 	branchName string,
 ) (*getCommitDataResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "getCommitData",
 		Query:  getCommitData_Operation,
 		Variables: &__getCommitDataInput{
@@ -1411,18 +1411,18 @@ func getCommitData(
 			BranchName:   branchName,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data getCommitDataResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ getCommitDataResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
 // The query or mutation executed by getPullRequestData.
@@ -1478,15 +1478,15 @@ query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCu
 // docs: https://github.com/liatrio/liatrio-otel-collector/blob/9bb60b22b88f52f6d51a83b96e7c398d6b450dfc/pkg/receiver/gitproviderreceiver/README.md#rate-limiting
 // https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#predicting-the-point-value-of-a-query
 func getPullRequestData(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	name string,
 	owner string,
 	prFirst int,
 	prCursor *string,
 	prStates []PullRequestState,
 ) (*getPullRequestDataResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "getPullRequestData",
 		Query:  getPullRequestData_Operation,
 		Variables: &__getPullRequestDataInput{
@@ -1497,18 +1497,18 @@ func getPullRequestData(
 			PrStates: prStates,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data getPullRequestDataResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ getPullRequestDataResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
 
 // The query or mutation executed by getRepoDataBySearch.
@@ -1544,12 +1544,12 @@ query getRepoDataBySearch ($searchQuery: String!, $repoCursor: String) {
 // docs: https://github.com/liatrio/liatrio-otel-collector/blob/9bb60b22b88f52f6d51a83b96e7c398d6b450dfc/pkg/receiver/gitproviderreceiver/README.md#rate-limiting
 // https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#predicting-the-point-value-of-a-query
 func getRepoDataBySearch(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	searchQuery string,
 	repoCursor *string,
 ) (*getRepoDataBySearchResponse, error) {
-	req := &graphql.Request{
+	req_ := &graphql.Request{
 		OpName: "getRepoDataBySearch",
 		Query:  getRepoDataBySearch_Operation,
 		Variables: &__getRepoDataBySearchInput{
@@ -1557,16 +1557,16 @@ func getRepoDataBySearch(
 			RepoCursor:  repoCursor,
 		},
 	}
-	var err error
+	var err_ error
 
-	var data getRepoDataBySearchResponse
-	resp := &graphql.Response{Data: &data}
+	var data_ getRepoDataBySearchResponse
+	resp_ := &graphql.Response{Data: &data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return &data_, err_
 }
