@@ -293,9 +293,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok := dp.Attributes().Get("repository.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "repository.name-val", attrVal.Str())
-				case "git.repository.pull_request.open.time":
-					assert.False(t, validatedMetrics["git.repository.pull_request.open.time"], "Found a duplicate in the metrics slice: git.repository.pull_request.open.time")
-					validatedMetrics["git.repository.pull_request.open.time"] = true
+				case "git.repository.pull_request.open_time":
+					assert.False(t, validatedMetrics["git.repository.pull_request.open_time"], "Found a duplicate in the metrics slice: git.repository.pull_request.open_time")
+					validatedMetrics["git.repository.pull_request.open_time"] = true
 					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
 					assert.Equal(t, "The amount of time a pull request has been open", ms.At(i).Description())

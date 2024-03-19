@@ -531,9 +531,9 @@ type metricGitRepositoryPullRequestOpenTime struct {
 	capacity int            // max observed number of data points added to the metric.
 }
 
-// init fills git.repository.pull_request.open.time metric with initial data.
+// init fills git.repository.pull_request.open_time metric with initial data.
 func (m *metricGitRepositoryPullRequestOpenTime) init() {
-	m.data.SetName("git.repository.pull_request.open.time")
+	m.data.SetName("git.repository.pull_request.open_time")
 	m.data.SetDescription("The amount of time a pull request has been open")
 	m.data.SetUnit("s")
 	m.data.SetEmptyGauge()
@@ -878,7 +878,7 @@ func (mb *MetricsBuilder) RecordGitRepositoryPullRequestOpenCountDataPoint(ts pc
 	mb.metricGitRepositoryPullRequestOpenCount.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue)
 }
 
-// RecordGitRepositoryPullRequestOpenTimeDataPoint adds a data point to git.repository.pull_request.open.time metric.
+// RecordGitRepositoryPullRequestOpenTimeDataPoint adds a data point to git.repository.pull_request.open_time metric.
 func (mb *MetricsBuilder) RecordGitRepositoryPullRequestOpenTimeDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, branchNameAttributeValue string) {
 	mb.metricGitRepositoryPullRequestOpenTime.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, branchNameAttributeValue)
 }

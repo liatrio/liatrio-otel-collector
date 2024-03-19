@@ -152,7 +152,7 @@ resourceMetrics:
                         stringValue: project
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
-            name: git.repository.pull_request.open.time
+            name: git.repository.pull_request.open_time
             unit: s
           - description: The amount of time it took a pull request to go from open to merged
             gauge:

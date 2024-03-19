@@ -35,7 +35,7 @@ type MetricsConfig struct {
 	GitRepositoryCount                     MetricConfig `mapstructure:"git.repository.count"`
 	GitRepositoryPullRequestMergedCount    MetricConfig `mapstructure:"git.repository.pull_request.merged.count"`
 	GitRepositoryPullRequestOpenCount      MetricConfig `mapstructure:"git.repository.pull_request.open.count"`
-	GitRepositoryPullRequestOpenTime       MetricConfig `mapstructure:"git.repository.pull_request.open.time"`
+	GitRepositoryPullRequestOpenTime       MetricConfig `mapstructure:"git.repository.pull_request.open_time"`
 	GitRepositoryPullRequestTimeToApproval MetricConfig `mapstructure:"git.repository.pull_request.time_to_approval"`
 	GitRepositoryPullRequestTimeToMerge    MetricConfig `mapstructure:"git.repository.pull_request.time_to_merge"`
 }

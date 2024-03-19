@@ -94,7 +94,7 @@ metrics:
     gauge:
       value_type: int
     attributes: [repository.name]
-  git.repository.pull_request.open.time:
+  git.repository.pull_request.open_time:
     enabled: true
     description: The amount of time a pull request has been open
     unit: s
