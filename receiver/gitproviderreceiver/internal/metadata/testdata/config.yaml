@@ -1,3 +1,4 @@
+---
 default:
 all_set:
   metrics:
@@ -17,8 +18,6 @@ all_set:
       enabled: true
     git.repository.count:
       enabled: true
-    git.repository.pull_request.approved.time:
-      enabled: true
     git.repository.pull_request.merged.count:
       enabled: true
     git.repository.pull_request.merged.time:
@@ -26,6 +25,8 @@ all_set:
     git.repository.pull_request.open.count:
       enabled: true
     git.repository.pull_request.open.time:
+      enabled: true
+    git.repository.pull_request.time_to_approval:
       enabled: true
   resource_attributes:
     git.vendor.name:
@@ -50,8 +51,6 @@ none_set:
       enabled: false
     git.repository.count:
       enabled: false
-    git.repository.pull_request.approved.time:
-      enabled: false
     git.repository.pull_request.merged.count:
       enabled: false
     git.repository.pull_request.merged.time:
@@ -59,6 +58,8 @@ none_set:
     git.repository.pull_request.open.count:
       enabled: false
     git.repository.pull_request.open.time:
+      enabled: false
+    git.repository.pull_request.time_to_approval:
       enabled: false
   resource_attributes:
     git.vendor.name:

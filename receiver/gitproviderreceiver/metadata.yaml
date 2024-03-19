@@ -115,7 +115,7 @@ metrics:
     gauge:
       value_type: int
     attributes: [repository.name, branch.name]
-  git.repository.pull_request.approved.time:
+  git.repository.pull_request.time_to_approval:
     enabled: true
     description: The amount of time it took a pull request to go from open to approved
     unit: s
