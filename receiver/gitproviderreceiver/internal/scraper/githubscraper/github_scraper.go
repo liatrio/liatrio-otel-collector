@@ -155,7 +155,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 					age := getAge(pr.CreatedAt, pr.MergedAt)
 
-					ghs.mb.RecordGitRepositoryPullRequestMergedTimeDataPoint(now, age, name, pr.HeadRefName)
+					ghs.mb.RecordGitRepositoryPullRequestTimeToMergeDataPoint(now, age, name, pr.HeadRefName)
 				} else {
 					open++
 

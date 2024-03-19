@@ -35,10 +35,10 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					GitRepositoryContributorCount:          MetricConfig{Enabled: true},
 					GitRepositoryCount:                     MetricConfig{Enabled: true},
 					GitRepositoryPullRequestMergedCount:    MetricConfig{Enabled: true},
-					GitRepositoryPullRequestMergedTime:     MetricConfig{Enabled: true},
 					GitRepositoryPullRequestOpenCount:      MetricConfig{Enabled: true},
 					GitRepositoryPullRequestOpenTime:       MetricConfig{Enabled: true},
 					GitRepositoryPullRequestTimeToApproval: MetricConfig{Enabled: true},
+					GitRepositoryPullRequestTimeToMerge:    MetricConfig{Enabled: true},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					GitVendorName:    ResourceAttributeConfig{Enabled: true},
@@ -59,10 +59,10 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					GitRepositoryContributorCount:          MetricConfig{Enabled: false},
 					GitRepositoryCount:                     MetricConfig{Enabled: false},
 					GitRepositoryPullRequestMergedCount:    MetricConfig{Enabled: false},
-					GitRepositoryPullRequestMergedTime:     MetricConfig{Enabled: false},
 					GitRepositoryPullRequestOpenCount:      MetricConfig{Enabled: false},
 					GitRepositoryPullRequestOpenTime:       MetricConfig{Enabled: false},
 					GitRepositoryPullRequestTimeToApproval: MetricConfig{Enabled: false},
+					GitRepositoryPullRequestTimeToMerge:    MetricConfig{Enabled: false},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					GitVendorName:    ResourceAttributeConfig{Enabled: false},

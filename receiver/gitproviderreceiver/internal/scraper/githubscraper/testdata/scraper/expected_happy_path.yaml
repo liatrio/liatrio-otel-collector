@@ -97,7 +97,7 @@ resourceMetrics:
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
             name: git.repository.branch.time
-            unit: 's'
+            unit: s
           - description: Number of repositories in an organization
             gauge:
               dataPoints:
@@ -118,21 +118,6 @@ resourceMetrics:
                   timeUnixNano: '2000000'
             name: git.repository.pull_request.merged.count
             unit: '{pull_request}'
-          - description: The amount of time it took a pull request to go from open to merged
-            gauge:
-              dataPoints:
-                - asInt: '0'
-                  attributes:
-                    - key: branch.name
-                      value:
-                        stringValue: ''
-                    - key: repository.name
-                      value:
-                        stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: git.repository.pull_request.merged.time
-            unit: s
           - description: The number of open pull requests in a repository
             gauge:
               dataPoints:
@@ -159,6 +144,21 @@ resourceMetrics:
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
             name: git.repository.pull_request.open.time
+            unit: s
+          - description: The amount of time it took a pull request to go from open to merged
+            gauge:
+              dataPoints:
+                - asInt: '0'
+                  attributes:
+                    - key: branch.name
+                      value:
+                        stringValue: ''
+                    - key: repository.name
+                      value:
+                        stringValue: repo1
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
+            name: git.repository.pull_request.time_to_merge
             unit: s
         scope:
           name: otelcol/gitproviderreceiver

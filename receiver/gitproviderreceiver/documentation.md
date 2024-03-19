@@ -123,21 +123,6 @@ The number of merged pull requests in a repository
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
 
-### git.repository.pull_request.merged.time
-
-The amount of time it took a pull request to go from open to merged
-
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| s | Gauge | Int |
-
-#### Attributes
-
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| repository.name | The full name of the Git repository | Any Str |
-| branch.name | The name of the branch in a given repository | Any Str |
-
 ### git.repository.pull_request.open.count
 
 The number of open pull requests in a repository
@@ -170,6 +155,21 @@ The amount of time a pull request has been open
 ### git.repository.pull_request.time_to_approval
 
 The amount of time it took a pull request to go from open to approved
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| s | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| branch.name | The name of the branch in a given repository | Any Str |
+
+### git.repository.pull_request.time_to_merge
+
+The amount of time it took a pull request to go from open to merged
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |

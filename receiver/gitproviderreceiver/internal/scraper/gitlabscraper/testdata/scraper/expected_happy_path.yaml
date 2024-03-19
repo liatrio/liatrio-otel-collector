@@ -120,7 +120,7 @@ resourceMetrics:
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
             name: git.repository.branch.time
-            unit: 's'
+            unit: s
           - description: Number of repositories in an organization
             gauge:
               dataPoints:
@@ -129,31 +129,6 @@ resourceMetrics:
                   timeUnixNano: '2000000'
             name: git.repository.count
             unit: '{repository}'
-          - description: The amount of time it took a pull request to go from open to merged
-            gauge:
-              dataPoints:
-                - asInt: '2562047'
-                  attributes:
-                    - key: branch.name
-                      value:
-                        stringValue: ''
-                    - key: repository.name
-                      value:
-                        stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '2562047'
-                  attributes:
-                    - key: branch.name
-                      value:
-                        stringValue: ''
-                    - key: repository.name
-                      value:
-                        stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: git.repository.pull_request.merged.time
-            unit: s
           - description: The amount of time a pull request has been open
             gauge:
               dataPoints:
@@ -178,6 +153,31 @@ resourceMetrics:
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
             name: git.repository.pull_request.open.time
+            unit: s
+          - description: The amount of time it took a pull request to go from open to merged
+            gauge:
+              dataPoints:
+                - asInt: '2562047'
+                  attributes:
+                    - key: branch.name
+                      value:
+                        stringValue: ''
+                    - key: repository.name
+                      value:
+                        stringValue: project
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
+                - asInt: '2562047'
+                  attributes:
+                    - key: branch.name
+                      value:
+                        stringValue: ''
+                    - key: repository.name
+                      value:
+                        stringValue: project
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
+            name: git.repository.pull_request.time_to_merge
             unit: s
         scope:
           name: otelcol/gitproviderreceiver

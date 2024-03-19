@@ -108,7 +108,7 @@ metrics:
     gauge:
       value_type: int
     attributes: [repository.name]
-  git.repository.pull_request.merged.time:
+  git.repository.pull_request.time_to_merge:
     enabled: true
     description: The amount of time it took a pull request to go from open to merged
     unit: s

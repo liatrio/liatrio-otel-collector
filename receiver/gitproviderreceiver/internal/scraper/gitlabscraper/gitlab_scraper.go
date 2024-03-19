@@ -155,7 +155,7 @@ func (gls *gitlabScraper) processMergeRequests(client *gitlab.Client, mrs []Merg
 			gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", projectPath, mr.SourceBranch, mrAge)
 		} else {
 			mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Hours())
-			gls.mb.RecordGitRepositoryPullRequestMergedTimeDataPoint(now, mergedAge, projectPath, mr.SourceBranch)
+			gls.mb.RecordGitRepositoryPullRequestTimeToMergeDataPoint(now, mergedAge, projectPath, mr.SourceBranch)
 			gls.logger.Sugar().Debugf("%s merge request for branch %v, merged age: %v", projectPath, mr.SourceBranch, mergedAge)
 		}
 	}
