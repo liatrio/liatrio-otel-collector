@@ -109,33 +109,19 @@ Number of repositories in an organization
 | ---- | ----------- | ---------- |
 | {repository} | Gauge | Int |
 
-### git.repository.pull_request.merged.count
+### git.repository.pull_request.count
 
-The number of merged pull requests in a repository
+The number of pull requests in a repository, categorized by their state (either open or merged)
 
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| {pull_request} | Gauge | Int |
-
-#### Attributes
-
-| Name | Description | Values |
-| ---- | ----------- | ------ |
-| repository.name | The full name of the Git repository | Any Str |
-
-### git.repository.pull_request.open.count
-
-The number of open pull requests in a repository
-
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| {pull_request} | Gauge | Int |
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic |
+| ---- | ----------- | ---------- | ----------------------- | --------- |
+| {pull_request} | Sum | Int | Cumulative | true |
 
 #### Attributes
 
 | Name | Description | Values |
 | ---- | ----------- | ------ |
-| repository.name | The full name of the Git repository | Any Str |
+| type | Allows us to differentiate pull request activity within the repository | Str: ``open``, ``merged`` |
 
 ### git.repository.pull_request.open_time
 

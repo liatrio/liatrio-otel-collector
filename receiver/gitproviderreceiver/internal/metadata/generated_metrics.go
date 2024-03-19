@@ -12,6 +12,32 @@ import (
 	conventions "go.opentelemetry.io/collector/semconv/v1.9.0"
 )
 
+// AttributePullRequestType specifies the a value pull_request_type attribute.
+type AttributePullRequestType int
+
+const (
+	_ AttributePullRequestType = iota
+	AttributePullRequestTypeOpen
+	AttributePullRequestTypeMerged
+)
+
+// String returns the string representation of the AttributePullRequestType.
+func (av AttributePullRequestType) String() string {
+	switch av {
+	case AttributePullRequestTypeOpen:
+		return "open"
+	case AttributePullRequestTypeMerged:
+		return "merged"
+	}
+	return ""
+}
+
+// MapAttributePullRequestType is a helper map of string to AttributePullRequestType attribute value.
+var MapAttributePullRequestType = map[string]AttributePullRequestType{
+	"open":   AttributePullRequestTypeOpen,
+	"merged": AttributePullRequestTypeMerged,
+}
+
 type metricGitRepositoryBranchCommitAheadbyCount struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	config   MetricConfig   // metric config provided by user.
@@ -423,101 +449,52 @@ func newMetricGitRepositoryCount(cfg MetricConfig) metricGitRepositoryCount {
 	return m
 }
 
-type metricGitRepositoryPullRequestMergedCount struct {
+type metricGitRepositoryPullRequestCount struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	config   MetricConfig   // metric config provided by user.
 	capacity int            // max observed number of data points added to the metric.
 }
 
-// init fills git.repository.pull_request.merged.count metric with initial data.
-func (m *metricGitRepositoryPullRequestMergedCount) init() {
-	m.data.SetName("git.repository.pull_request.merged.count")
-	m.data.SetDescription("The number of merged pull requests in a repository")
+// init fills git.repository.pull_request.count metric with initial data.
+func (m *metricGitRepositoryPullRequestCount) init() {
+	m.data.SetName("git.repository.pull_request.count")
+	m.data.SetDescription("The number of pull requests in a repository, categorized by their state (either open or merged)")
 	m.data.SetUnit("{pull_request}")
-	m.data.SetEmptyGauge()
-	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.data.SetEmptySum()
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
+	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricGitRepositoryPullRequestMergedCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string) {
+func (m *metricGitRepositoryPullRequestCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, pullRequestTypeAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp := m.data.Sum().DataPoints().AppendEmpty()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("repository.name", repositoryNameAttributeValue)
+	dp.Attributes().PutStr("type", pullRequestTypeAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
-func (m *metricGitRepositoryPullRequestMergedCount) updateCapacity() {
-	if m.data.Gauge().DataPoints().Len() > m.capacity {
-		m.capacity = m.data.Gauge().DataPoints().Len()
+func (m *metricGitRepositoryPullRequestCount) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
 	}
 }
 
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
-func (m *metricGitRepositoryPullRequestMergedCount) emit(metrics pmetric.MetricSlice) {
-	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+func (m *metricGitRepositoryPullRequestCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()
 	}
 }
 
-func newMetricGitRepositoryPullRequestMergedCount(cfg MetricConfig) metricGitRepositoryPullRequestMergedCount {
-	m := metricGitRepositoryPullRequestMergedCount{config: cfg}
-	if cfg.Enabled {
-		m.data = pmetric.NewMetric()
-		m.init()
-	}
-	return m
-}
-
-type metricGitRepositoryPullRequestOpenCount struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
-}
-
-// init fills git.repository.pull_request.open.count metric with initial data.
-func (m *metricGitRepositoryPullRequestOpenCount) init() {
-	m.data.SetName("git.repository.pull_request.open.count")
-	m.data.SetDescription("The number of open pull requests in a repository")
-	m.data.SetUnit("{pull_request}")
-	m.data.SetEmptyGauge()
-	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
-}
-
-func (m *metricGitRepositoryPullRequestOpenCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string) {
-	if !m.config.Enabled {
-		return
-	}
-	dp := m.data.Gauge().DataPoints().AppendEmpty()
-	dp.SetStartTimestamp(start)
-	dp.SetTimestamp(ts)
-	dp.SetIntValue(val)
-	dp.Attributes().PutStr("repository.name", repositoryNameAttributeValue)
-}
-
-// updateCapacity saves max length of data point slices that will be used for the slice capacity.
-func (m *metricGitRepositoryPullRequestOpenCount) updateCapacity() {
-	if m.data.Gauge().DataPoints().Len() > m.capacity {
-		m.capacity = m.data.Gauge().DataPoints().Len()
-	}
-}
-
-// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
-func (m *metricGitRepositoryPullRequestOpenCount) emit(metrics pmetric.MetricSlice) {
-	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
-		m.updateCapacity()
-		m.data.MoveTo(metrics.AppendEmpty())
-		m.init()
-	}
-}
-
-func newMetricGitRepositoryPullRequestOpenCount(cfg MetricConfig) metricGitRepositoryPullRequestOpenCount {
-	m := metricGitRepositoryPullRequestOpenCount{config: cfg}
+func newMetricGitRepositoryPullRequestCount(cfg MetricConfig) metricGitRepositoryPullRequestCount {
+	m := metricGitRepositoryPullRequestCount{config: cfg}
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -697,8 +674,7 @@ type MetricsBuilder struct {
 	metricGitRepositoryBranchTime                metricGitRepositoryBranchTime
 	metricGitRepositoryContributorCount          metricGitRepositoryContributorCount
 	metricGitRepositoryCount                     metricGitRepositoryCount
-	metricGitRepositoryPullRequestMergedCount    metricGitRepositoryPullRequestMergedCount
-	metricGitRepositoryPullRequestOpenCount      metricGitRepositoryPullRequestOpenCount
+	metricGitRepositoryPullRequestCount          metricGitRepositoryPullRequestCount
 	metricGitRepositoryPullRequestOpenTime       metricGitRepositoryPullRequestOpenTime
 	metricGitRepositoryPullRequestTimeToApproval metricGitRepositoryPullRequestTimeToApproval
 	metricGitRepositoryPullRequestTimeToMerge    metricGitRepositoryPullRequestTimeToMerge
@@ -728,8 +704,7 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.CreateSetting
 		metricGitRepositoryBranchTime:                newMetricGitRepositoryBranchTime(mbc.Metrics.GitRepositoryBranchTime),
 		metricGitRepositoryContributorCount:          newMetricGitRepositoryContributorCount(mbc.Metrics.GitRepositoryContributorCount),
 		metricGitRepositoryCount:                     newMetricGitRepositoryCount(mbc.Metrics.GitRepositoryCount),
-		metricGitRepositoryPullRequestMergedCount:    newMetricGitRepositoryPullRequestMergedCount(mbc.Metrics.GitRepositoryPullRequestMergedCount),
-		metricGitRepositoryPullRequestOpenCount:      newMetricGitRepositoryPullRequestOpenCount(mbc.Metrics.GitRepositoryPullRequestOpenCount),
+		metricGitRepositoryPullRequestCount:          newMetricGitRepositoryPullRequestCount(mbc.Metrics.GitRepositoryPullRequestCount),
 		metricGitRepositoryPullRequestOpenTime:       newMetricGitRepositoryPullRequestOpenTime(mbc.Metrics.GitRepositoryPullRequestOpenTime),
 		metricGitRepositoryPullRequestTimeToApproval: newMetricGitRepositoryPullRequestTimeToApproval(mbc.Metrics.GitRepositoryPullRequestTimeToApproval),
 		metricGitRepositoryPullRequestTimeToMerge:    newMetricGitRepositoryPullRequestTimeToMerge(mbc.Metrics.GitRepositoryPullRequestTimeToMerge),
@@ -803,8 +778,7 @@ func (mb *MetricsBuilder) EmitForResource(rmo ...ResourceMetricsOption) {
 	mb.metricGitRepositoryBranchTime.emit(ils.Metrics())
 	mb.metricGitRepositoryContributorCount.emit(ils.Metrics())
 	mb.metricGitRepositoryCount.emit(ils.Metrics())
-	mb.metricGitRepositoryPullRequestMergedCount.emit(ils.Metrics())
-	mb.metricGitRepositoryPullRequestOpenCount.emit(ils.Metrics())
+	mb.metricGitRepositoryPullRequestCount.emit(ils.Metrics())
 	mb.metricGitRepositoryPullRequestOpenTime.emit(ils.Metrics())
 	mb.metricGitRepositoryPullRequestTimeToApproval.emit(ils.Metrics())
 	mb.metricGitRepositoryPullRequestTimeToMerge.emit(ils.Metrics())
@@ -868,14 +842,9 @@ func (mb *MetricsBuilder) RecordGitRepositoryCountDataPoint(ts pcommon.Timestamp
 	mb.metricGitRepositoryCount.recordDataPoint(mb.startTime, ts, val)
 }
 
-// RecordGitRepositoryPullRequestMergedCountDataPoint adds a data point to git.repository.pull_request.merged.count metric.
-func (mb *MetricsBuilder) RecordGitRepositoryPullRequestMergedCountDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string) {
-	mb.metricGitRepositoryPullRequestMergedCount.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue)
-}
-
-// RecordGitRepositoryPullRequestOpenCountDataPoint adds a data point to git.repository.pull_request.open.count metric.
-func (mb *MetricsBuilder) RecordGitRepositoryPullRequestOpenCountDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string) {
-	mb.metricGitRepositoryPullRequestOpenCount.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue)
+// RecordGitRepositoryPullRequestCountDataPoint adds a data point to git.repository.pull_request.count metric.
+func (mb *MetricsBuilder) RecordGitRepositoryPullRequestCountDataPoint(ts pcommon.Timestamp, val int64, pullRequestTypeAttributeValue AttributePullRequestType) {
+	mb.metricGitRepositoryPullRequestCount.recordDataPoint(mb.startTime, ts, val, pullRequestTypeAttributeValue.String())
 }
 
 // RecordGitRepositoryPullRequestOpenTimeDataPoint adds a data point to git.repository.pull_request.open_time metric.

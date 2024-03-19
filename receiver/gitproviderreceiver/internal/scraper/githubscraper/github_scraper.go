@@ -171,8 +171,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				}
 			}
 
-			ghs.mb.RecordGitRepositoryPullRequestOpenCountDataPoint(now, int64(open), name)
-			ghs.mb.RecordGitRepositoryPullRequestMergedCountDataPoint(now, int64(merged), name)
+			ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(open), metadata.AttributePullRequestTypeOpen)
+			ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(open), metadata.AttributePullRequestTypeMerged)
 		}()
 	}
 

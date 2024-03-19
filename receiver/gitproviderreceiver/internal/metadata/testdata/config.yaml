@@ -18,9 +18,7 @@ all_set:
       enabled: true
     git.repository.count:
       enabled: true
-    git.repository.pull_request.merged.count:
-      enabled: true
-    git.repository.pull_request.open.count:
+    git.repository.pull_request.count:
       enabled: true
     git.repository.pull_request.open_time:
       enabled: true
@@ -51,9 +49,7 @@ none_set:
       enabled: false
     git.repository.count:
       enabled: false
-    git.repository.pull_request.merged.count:
-      enabled: false
-    git.repository.pull_request.open.count:
+    git.repository.pull_request.count:
       enabled: false
     git.repository.pull_request.open_time:
       enabled: false

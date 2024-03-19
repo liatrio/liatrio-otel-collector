@@ -106,29 +106,26 @@ resourceMetrics:
                   timeUnixNano: '2000000'
             name: git.repository.count
             unit: '{repository}'
-          - description: The number of merged pull requests in a repository
-            gauge:
+          - description: The number of pull requests in a repository, categorized by their state (either open or merged)
+            name: git.repository.pull_request.count
+            sum:
+              aggregationTemporality: 2
               dataPoints:
                 - asInt: '1'
                   attributes:
-                    - key: repository.name
+                    - key: type
                       value:
-                        stringValue: repo1
+                        stringValue: merged
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
-            name: git.repository.pull_request.merged.count
-            unit: '{pull_request}'
-          - description: The number of open pull requests in a repository
-            gauge:
-              dataPoints:
                 - asInt: '1'
                   attributes:
-                    - key: repository.name
+                    - key: type
                       value:
-                        stringValue: repo1
+                        stringValue: open
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
-            name: git.repository.pull_request.open.count
+              isMonotonic: true
             unit: '{pull_request}'
           - description: The amount of time a pull request has been open
             gauge:
