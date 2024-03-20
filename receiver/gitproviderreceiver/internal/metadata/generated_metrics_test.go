@@ -88,7 +88,7 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordGitRepositoryPullRequestCountDataPoint(ts, 1, AttributePullRequestTypeOpen)
+			mb.RecordGitRepositoryPullRequestCountDataPoint(ts, 1, AttributePullRequestTypeOpen, "repository.name-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -276,6 +276,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok := dp.Attributes().Get("type")
 					assert.True(t, ok)
 					assert.EqualValues(t, "open", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("repository.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "repository.name-val", attrVal.Str())
 				case "git.repository.pull_request.open_time":
 					assert.False(t, validatedMetrics["git.repository.pull_request.open_time"], "Found a duplicate in the metrics slice: git.repository.pull_request.open_time")
 					validatedMetrics["git.repository.pull_request.open_time"] = true

@@ -466,7 +466,7 @@ func (m *metricGitRepositoryPullRequestCount) init() {
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricGitRepositoryPullRequestCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, pullRequestTypeAttributeValue string) {
+func (m *metricGitRepositoryPullRequestCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, pullRequestTypeAttributeValue string, repositoryNameAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -475,6 +475,7 @@ func (m *metricGitRepositoryPullRequestCount) recordDataPoint(start pcommon.Time
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
 	dp.Attributes().PutStr("type", pullRequestTypeAttributeValue)
+	dp.Attributes().PutStr("repository.name", repositoryNameAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -843,8 +844,8 @@ func (mb *MetricsBuilder) RecordGitRepositoryCountDataPoint(ts pcommon.Timestamp
 }
 
 // RecordGitRepositoryPullRequestCountDataPoint adds a data point to git.repository.pull_request.count metric.
-func (mb *MetricsBuilder) RecordGitRepositoryPullRequestCountDataPoint(ts pcommon.Timestamp, val int64, pullRequestTypeAttributeValue AttributePullRequestType) {
-	mb.metricGitRepositoryPullRequestCount.recordDataPoint(mb.startTime, ts, val, pullRequestTypeAttributeValue.String())
+func (mb *MetricsBuilder) RecordGitRepositoryPullRequestCountDataPoint(ts pcommon.Timestamp, val int64, pullRequestTypeAttributeValue AttributePullRequestType, repositoryNameAttributeValue string) {
+	mb.metricGitRepositoryPullRequestCount.recordDataPoint(mb.startTime, ts, val, pullRequestTypeAttributeValue.String(), repositoryNameAttributeValue)
 }
 
 // RecordGitRepositoryPullRequestOpenTimeDataPoint adds a data point to git.repository.pull_request.open_time metric.

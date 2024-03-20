@@ -137,4 +137,4 @@ metrics:
       monotonic: true
       value_type: int
     unit: '{pull_request}'
-    attributes: [pull_request_type]
+    attributes: [pull_request_type, repository.name]

@@ -113,6 +113,9 @@ resourceMetrics:
               dataPoints:
                 - asInt: '1'
                   attributes:
+                    - key: repository.name
+                      value:
+                        stringValue: repo1
                     - key: type
                       value:
                         stringValue: merged
@@ -120,6 +123,9 @@ resourceMetrics:
                   timeUnixNano: '2000000'
                 - asInt: '1'
                   attributes:
+                    - key: repository.name
+                      value:
+                        stringValue: repo1
                     - key: type
                       value:
                         stringValue: open
