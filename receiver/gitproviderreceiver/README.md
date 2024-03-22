@@ -178,3 +178,81 @@ formula), recall these are lagging indicators so a longer interval is acceptable
 
 - [GitHub GraphQL Primary Rate Limit](https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#primary-rate-limit)
 - [GitHub GraphQL Secondary Rate Limit](https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#secondary-rate-limit)
+
+## Creating, updating or removing metrics
+
+Modifying the `metadata.yaml` is how we change what metrics we want to store,
+and also serves as the source of truth for our application to generate code to
+work with that client.
+
+Let's take the scenario of renaming a metric called
+`git.repository.pull_request.merged.time`. The dot notation is simply
+namespaces, and the final string being the bucket. The ask is instead of making
+`merged` a namespace that contains a `time`, to use `pull_request` as the
+namespace with a bucket of `time_to_merge` instead.
+
+In short, we're going to rename `git.repository.pull_request.merged.time` to
+`git.repository.pull_request.time_to_merge`.
+
+The first thing we need to do is clone the project, and from the root run `make
+install-tools`, next change into the directory of `receiver/gitproviderreceiver`
+and run `go test`.
+
+This will run the tests for the collector, and verify that we're starting our
+changes from a good point.
+
+We start our changes by updating `receiver/gitproviderreceiver/metadata.yaml`,
+we find the string `git.repository.pull_request.merged.time` and replace it with
+`git.repository.pull_request.time_to_merge`.
+
+Next, we should still be in the directory `receiver/gitproviderreceiver` in our
+terminal. Next, run `make gen`.
+
+When running it at the time of writing documentation we see these changes:
+```
+documentation.md
+internal/metadata/generated_config.go
+internal/metadata/generated_config_test.go
+internal/metadata/generated_metrics.go
+internal/metadata/generated_metrics_test.go
+internal/metadata/testdata/config.yaml
+metadata.yaml
+```
+
+What's happening is the `make gen` command is triggering the updates of all the
+generated code, and gives us access to a client API that we can use for our
+scrapers.
+
+It takes the name of our metric `git.repository.pull_request.time_to_merge`, and
+converts it to a method name
+`RecordGitRepositoryPullRequestTimeToMergeDataPoint`. We can then use that
+method within our code to persist details about the metric. You can see the
+parameters it requires by searching for the function in the code base.
+
+Next, let's run our unit tests to verify it worked `go test`. For me, I see an
+error:
+```
+# github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/scraper/githubscraper
+internal/scraper/githubscraper/github_scraper.go:169:14: ghs.mb.RecordGitRepositoryPullRequestMergedTimeDataPoint undefined (type *"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata".MetricsBuilder has no field or method RecordGitRepositoryPullRequestMergedTimeDataPoint)
+FAIL	github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver [build failed]
+```
+
+That's because we renamed the metric, which renamed our method. So search for
+the uses of the old `RecordGitRepositoryPullRequestMergedTimeDataPoint` and
+rename them to `RecordGitRepositoryPullRequestTimeToApprovalDataPoint`.
+
+Running the tests again showed everything as passing.
+
+### Happy Path Updates
+
+Sometimes you'll find that with all your changes your tests still fail, that's
+because in some cases we have tests relying on a file named
+`expected_happy_path.yaml`. The order of the file matters when the order of
+metrics, or attributes changes in the `metadata.yaml` file.
+
+To update the file in the order needed, ensure all your changes are in place,
+and search the project for the two cases of `//golden.WriteMetrics`, and
+uncomment.
+
+Run your tests again, and then comment out `golden.WriteMetrics`. You should be
+able to run your tests and see them pass.
