@@ -97,7 +97,7 @@ resourceMetrics:
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
             name: git.repository.branch.time
-            unit: 's'
+            unit: s
           - description: Number of repositories in an organization
             gauge:
               dataPoints:
@@ -106,44 +106,32 @@ resourceMetrics:
                   timeUnixNano: '2000000'
             name: git.repository.count
             unit: '{repository}'
-          - description: The number of merged pull requests in a repository
-            gauge:
+          - description: The number of pull requests in a repository, categorized by their state (either open or merged)
+            name: git.repository.pull_request.count
+            sum:
+              aggregationTemporality: 2
               dataPoints:
                 - asInt: '1'
                   attributes:
                     - key: repository.name
                       value:
                         stringValue: repo1
+                    - key: state
+                      value:
+                        stringValue: merged
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
-            name: git.repository.pull_request.merged.count
-            unit: '{pull_request}'
-          - description: The amount of time it took a pull request to go from open to merged
-            gauge:
-              dataPoints:
-                - asInt: '0'
-                  attributes:
-                    - key: branch.name
-                      value:
-                        stringValue: ''
-                    - key: repository.name
-                      value:
-                        stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: git.repository.pull_request.merged.time
-            unit: s
-          - description: The number of open pull requests in a repository
-            gauge:
-              dataPoints:
                 - asInt: '1'
                   attributes:
                     - key: repository.name
                       value:
                         stringValue: repo1
+                    - key: state
+                      value:
+                        stringValue: open
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
-            name: git.repository.pull_request.open.count
+              isMonotonic: true
             unit: '{pull_request}'
           - description: The amount of time a pull request has been open
             gauge:
@@ -158,7 +146,22 @@ resourceMetrics:
                         stringValue: repo1
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
-            name: git.repository.pull_request.open.time
+            name: git.repository.pull_request.open_time
+            unit: s
+          - description: The amount of time it took a pull request to go from open to merged
+            gauge:
+              dataPoints:
+                - asInt: '0'
+                  attributes:
+                    - key: branch.name
+                      value:
+                        stringValue: ''
+                    - key: repository.name
+                      value:
+                        stringValue: repo1
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
+            name: git.repository.pull_request.time_to_merge
             unit: s
         scope:
           name: otelcol/gitproviderreceiver

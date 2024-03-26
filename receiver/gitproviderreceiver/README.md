@@ -31,11 +31,10 @@ The current metrics available via scraping from GitHub are:
 - [x] Repository branch time
 - [x] Repository branch count
 - [x] Repository contributor count
-- [x] Repository pull request open count
 - [x] Repository pull request open time
-- [x] Repository pull request merged count
-- [x] Repository pull request merged time
-- [x] Repository pull request approved time
+- [x] Repository pull request time to merge
+- [x] Repository pull request time to approval
+- [x] Repository pull request count | stores an attribute of `pull_request_state` equal to `open` or `merged`
 
 > Note: Some metrics may be disabled by default and have to be explicitly enabled.
 > For example, the repository contributor count metric is one such metric. This is
@@ -178,3 +177,14 @@ formula), recall these are lagging indicators so a longer interval is acceptable
 
 - [GitHub GraphQL Primary Rate Limit](https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#primary-rate-limit)
 - [GitHub GraphQL Secondary Rate Limit](https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api#secondary-rate-limit)
+
+### Updating tests
+
+After using `make gen` you may find your tests failing. This could be due to the
+`expected_happy_path.yaml` missing some of the changes from your code, or being
+out of order.
+
+You can resolve this manually by updating the file, or by regenerating it by
+uncommenting the lines starting with `//golden.WriteMetrics` in your test files,
+and rerunning the unit tests. Comment the lines out again and commit the new
+changes.
