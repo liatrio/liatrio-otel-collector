@@ -141,7 +141,7 @@ func (gls *gitlabScraper) getCombinedMergeRequests(
 	return mrs, nil
 }
 
-func (gls *gitlabScraper) processMergeRequests(client *gitlab.Client, mrs []MergeRequestNode, projectPath string, now pcommon.Timestamp) {
+func (gls *gitlabScraper) processMergeRequests(mrs []MergeRequestNode, projectPath string, now pcommon.Timestamp) {
 	for _, mr := range mrs {
 		gls.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(mr.DiffStatsSummary.Additions), projectPath, mr.SourceBranch)
 		gls.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(mr.DiffStatsSummary.Deletions), projectPath, mr.SourceBranch)
@@ -277,7 +277,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				<-sem
 				return
 			}
-			gls.processMergeRequests(restClient, mrs, project.Path, now)
+			gls.processMergeRequests(mrs, project.Path, now)
 			<-sem
 		}(project)
 	}
