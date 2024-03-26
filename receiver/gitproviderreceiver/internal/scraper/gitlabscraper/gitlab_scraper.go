@@ -87,7 +87,7 @@ func (gls *gitlabScraper) getContributorCount(
 ) (int, error) {
 	contributors, _, err := restClient.Repositories.Contributors(projectPath, nil)
 	if err != nil {
-		gls.logger.Sugar().Errorf("error getting contributors", zap.Error(err))
+		gls.logger.Sugar().Errorf("error getting contributors: %v", zap.Error(err))
 		return 0, err
 	}
 
@@ -129,12 +129,12 @@ func (gls *gitlabScraper) getCombinedMergeRequests(
 ) ([]MergeRequestNode, error) {
 	openMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateOpened)
 	if err != nil {
-		gls.logger.Sugar().Errorf("error getting open merge requests", zap.Error(err))
+		gls.logger.Sugar().Errorf("error getting open merge requests: %v", zap.Error(err))
 		return nil, err
 	}
 	mergedMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateMerged)
 	if err != nil {
-		gls.logger.Sugar().Errorf("error getting merged merge requests", zap.Error(err))
+		gls.logger.Sugar().Errorf("error getting merged merge requests: %v", zap.Error(err))
 		return nil, err
 	}
 	mrs := append(openMrs, mergedMrs...)
@@ -259,7 +259,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		go func(project gitlabProject) {
 			branches, err := gls.getBranchNames(ctx, graphClient, project.Path)
 			if err != nil {
-				gls.logger.Sugar().Errorf("error getting branches", zap.Error(err))
+				gls.logger.Sugar().Errorf("error getting branches: %v", zap.Error(err))
 				<-sem
 				return
 			}
@@ -273,7 +273,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		go func(project gitlabProject) {
 			mrs, err := gls.getCombinedMergeRequests(ctx, graphClient, project.Path)
 			if err != nil {
-				gls.logger.Sugar().Errorf("error getting merge requests", zap.Error(err))
+				gls.logger.Sugar().Errorf("error getting merge requests: %v", zap.Error(err))
 				<-sem
 				return
 			}
