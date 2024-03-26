@@ -88,7 +88,7 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordGitRepositoryPullRequestCountDataPoint(ts, 1, AttributePullRequestTypeOpen, "repository.name-val")
+			mb.RecordGitRepositoryPullRequestCountDataPoint(ts, 1, AttributePullRequestStateOpen, "repository.name-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -273,7 +273,7 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("type")
+					attrVal, ok := dp.Attributes().Get("state")
 					assert.True(t, ok)
 					assert.EqualValues(t, "open", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("repository.name")

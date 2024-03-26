@@ -12,30 +12,30 @@ import (
 	conventions "go.opentelemetry.io/collector/semconv/v1.9.0"
 )
 
-// AttributePullRequestType specifies the a value pull_request_type attribute.
-type AttributePullRequestType int
+// AttributePullRequestState specifies the a value pull_request_state attribute.
+type AttributePullRequestState int
 
 const (
-	_ AttributePullRequestType = iota
-	AttributePullRequestTypeOpen
-	AttributePullRequestTypeMerged
+	_ AttributePullRequestState = iota
+	AttributePullRequestStateOpen
+	AttributePullRequestStateMerged
 )
 
-// String returns the string representation of the AttributePullRequestType.
-func (av AttributePullRequestType) String() string {
+// String returns the string representation of the AttributePullRequestState.
+func (av AttributePullRequestState) String() string {
 	switch av {
-	case AttributePullRequestTypeOpen:
+	case AttributePullRequestStateOpen:
 		return "open"
-	case AttributePullRequestTypeMerged:
+	case AttributePullRequestStateMerged:
 		return "merged"
 	}
 	return ""
 }
 
-// MapAttributePullRequestType is a helper map of string to AttributePullRequestType attribute value.
-var MapAttributePullRequestType = map[string]AttributePullRequestType{
-	"open":   AttributePullRequestTypeOpen,
-	"merged": AttributePullRequestTypeMerged,
+// MapAttributePullRequestState is a helper map of string to AttributePullRequestState attribute value.
+var MapAttributePullRequestState = map[string]AttributePullRequestState{
+	"open":   AttributePullRequestStateOpen,
+	"merged": AttributePullRequestStateMerged,
 }
 
 type metricGitRepositoryBranchCommitAheadbyCount struct {
@@ -466,7 +466,7 @@ func (m *metricGitRepositoryPullRequestCount) init() {
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricGitRepositoryPullRequestCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, pullRequestTypeAttributeValue string, repositoryNameAttributeValue string) {
+func (m *metricGitRepositoryPullRequestCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, pullRequestStateAttributeValue string, repositoryNameAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -474,7 +474,7 @@ func (m *metricGitRepositoryPullRequestCount) recordDataPoint(start pcommon.Time
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("type", pullRequestTypeAttributeValue)
+	dp.Attributes().PutStr("state", pullRequestStateAttributeValue)
 	dp.Attributes().PutStr("repository.name", repositoryNameAttributeValue)
 }
 
@@ -844,8 +844,8 @@ func (mb *MetricsBuilder) RecordGitRepositoryCountDataPoint(ts pcommon.Timestamp
 }
 
 // RecordGitRepositoryPullRequestCountDataPoint adds a data point to git.repository.pull_request.count metric.
-func (mb *MetricsBuilder) RecordGitRepositoryPullRequestCountDataPoint(ts pcommon.Timestamp, val int64, pullRequestTypeAttributeValue AttributePullRequestType, repositoryNameAttributeValue string) {
-	mb.metricGitRepositoryPullRequestCount.recordDataPoint(mb.startTime, ts, val, pullRequestTypeAttributeValue.String(), repositoryNameAttributeValue)
+func (mb *MetricsBuilder) RecordGitRepositoryPullRequestCountDataPoint(ts pcommon.Timestamp, val int64, pullRequestStateAttributeValue AttributePullRequestState, repositoryNameAttributeValue string) {
+	mb.metricGitRepositoryPullRequestCount.recordDataPoint(mb.startTime, ts, val, pullRequestStateAttributeValue.String(), repositoryNameAttributeValue)
 }
 
 // RecordGitRepositoryPullRequestOpenTimeDataPoint adds a data point to git.repository.pull_request.open_time metric.

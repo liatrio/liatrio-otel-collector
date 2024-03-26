@@ -116,7 +116,7 @@ resourceMetrics:
                     - key: repository.name
                       value:
                         stringValue: repo1
-                    - key: type
+                    - key: state
                       value:
                         stringValue: merged
                   startTimeUnixNano: '1000000'
@@ -126,7 +126,7 @@ resourceMetrics:
                     - key: repository.name
                       value:
                         stringValue: repo1
-                    - key: type
+                    - key: state
                       value:
                         stringValue: open
                   startTimeUnixNano: '1000000'
