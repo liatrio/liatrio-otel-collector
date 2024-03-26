@@ -251,7 +251,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		}
 	}
 
-	var maxProcesses int = 3
+	var maxProcesses = 3
 	sem := make(chan int, maxProcesses)
 	// TODO: Must account for when there are more than 100,000 branch names in a project.
 	for _, project := range projectList {
