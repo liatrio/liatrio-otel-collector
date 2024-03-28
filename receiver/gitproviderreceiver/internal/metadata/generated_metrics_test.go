@@ -273,7 +273,7 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("state")
+					attrVal, ok := dp.Attributes().Get("pull_request.state")
 					assert.True(t, ok)
 					assert.EqualValues(t, "open", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("repository.name")
