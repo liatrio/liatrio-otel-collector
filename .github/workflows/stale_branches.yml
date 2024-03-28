@@ -1,0 +1,19 @@
+name: Run Cleanup Stale Branch Action
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  find-stale-branches:
+    runs-on: ubuntu-latest
+    name: Find Stale Branches
+
+    steps:
+      - name: Run Stale Branch Action
+        id: stale-branch-poc
+        uses: liatrio/cleanup-stale-branches-action@v0.5.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-branch-age: '3 months'
+          stale-branch-issue-age: '7 days'
