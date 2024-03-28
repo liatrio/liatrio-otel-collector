@@ -12,7 +12,7 @@ import (
 	conventions "go.opentelemetry.io/collector/semconv/v1.9.0"
 )
 
-// AttributePullRequestState specifies the a value pull_request_state attribute.
+// AttributePullRequestState specifies the a value pull_request.state attribute.
 type AttributePullRequestState int
 
 const (
