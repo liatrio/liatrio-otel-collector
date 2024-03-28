@@ -29,8 +29,7 @@ attributes:
     description: The name of the branch in a given repository
     type: string
   pull_request.state:
-    name_override: state
-    description: Allows us to differentiate pull request activity within the repository
+    description: The state of a pull request
     type: string
     enum:
       - open

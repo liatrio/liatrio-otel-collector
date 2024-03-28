@@ -121,7 +121,7 @@ The number of pull requests in a repository, categorized by their state (either 
 
 | Name | Description | Values |
 | ---- | ----------- | ------ |
-| state | Allows us to differentiate pull request activity within the repository | Str: ``open``, ``merged`` |
+| pull_request.state | The state of a pull request | Str: ``open``, ``merged`` |
 | repository.name | The full name of the Git repository | Any Str |
 
 ### git.repository.pull_request.open_time

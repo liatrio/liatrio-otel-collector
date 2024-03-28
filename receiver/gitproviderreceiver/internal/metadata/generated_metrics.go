@@ -474,7 +474,7 @@ func (m *metricGitRepositoryPullRequestCount) recordDataPoint(start pcommon.Time
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("state", pullRequestStateAttributeValue)
+	dp.Attributes().PutStr("pull_request.state", pullRequestStateAttributeValue)
 	dp.Attributes().PutStr("repository.name", repositoryNameAttributeValue)
 }
 
