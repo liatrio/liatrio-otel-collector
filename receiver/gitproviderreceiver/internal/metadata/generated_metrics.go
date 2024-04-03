@@ -460,17 +460,15 @@ func (m *metricGitRepositoryPullRequestCount) init() {
 	m.data.SetName("git.repository.pull_request.count")
 	m.data.SetDescription("The number of pull requests in a repository, categorized by their state (either open or merged)")
 	m.data.SetUnit("{pull_request}")
-	m.data.SetEmptySum()
-	m.data.Sum().SetIsMonotonic(true)
-	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
-	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
 func (m *metricGitRepositoryPullRequestCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, pullRequestStateAttributeValue string, repositoryNameAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
-	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
@@ -480,14 +478,14 @@ func (m *metricGitRepositoryPullRequestCount) recordDataPoint(start pcommon.Time
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
 func (m *metricGitRepositoryPullRequestCount) updateCapacity() {
-	if m.data.Sum().DataPoints().Len() > m.capacity {
-		m.capacity = m.data.Sum().DataPoints().Len()
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
 	}
 }
 
 // emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
 func (m *metricGitRepositoryPullRequestCount) emit(metrics pmetric.MetricSlice) {
-	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
 		m.updateCapacity()
 		m.data.MoveTo(metrics.AppendEmpty())
 		m.init()

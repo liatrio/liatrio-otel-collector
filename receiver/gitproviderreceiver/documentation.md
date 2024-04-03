@@ -113,9 +113,9 @@ Number of repositories in an organization
 
 The number of pull requests in a repository, categorized by their state (either open or merged)
 
-| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic |
-| ---- | ----------- | ---------- | ----------------------- | --------- |
-| {pull_request} | Sum | Int | Cumulative | true |
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| {pull_request} | Gauge | Int |
 
 #### Attributes
 
