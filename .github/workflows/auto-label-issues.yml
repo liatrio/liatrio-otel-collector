@@ -1,0 +1,18 @@
+---
+name: Label Workflow
+
+on:
+  issues:
+    types:
+      - opened
+      - reopened
+
+jobs:
+  call-label-workflow:
+    uses: liatrio/poc-label-issue-workflow/.github/workflows/label-issue-workflow.yml@v0.1.0
+    with:
+      labels: triage
+      issue_number: ${{ github.event.issue.number }}
+      repo: ${{ github.repository }}
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
