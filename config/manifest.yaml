@@ -47,6 +47,10 @@ receivers:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.96.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.96.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/webhookeventreceiver v0.96.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscloudwatchmetricsreceiver v0.96.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awscloudwatchreceiver v0.96.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8seventsreceiver v0.96.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sobjectsreceiver v0.96.0
 
 connectors:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/spanmetricsconnector v0.96.0
