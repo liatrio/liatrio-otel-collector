@@ -124,7 +124,7 @@ The number of pull requests in a repository, categorized by their state (either 
 | pull_request.state | The state of a pull request | Str: ``open``, ``merged`` |
 | repository.name | The full name of the Git repository | Any Str |
 
-### git.repository.pull_request.open_time
+### git.repository.pull_request.time_open
 
 The amount of time a pull request has been open
 
