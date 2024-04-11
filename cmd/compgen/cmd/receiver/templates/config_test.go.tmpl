@@ -27,8 +27,8 @@ custom config for our custom receiver.
 
 func TestConfig_Unmarshal(t *testing.T) {
 	type fields struct { // Custom struct for the Config passed into Unmarshal() by reference
-		ScraperControllerSettings scraperhelper.ScraperControllerSettings
-		sample                    string
+		ControllerConfig scraperhelper.ControllerConfig
+		sample           string
 	}
 	tests := []struct {
 		name       string // Name of the test
@@ -87,10 +87,10 @@ func TestConfig_Unmarshal(t *testing.T) {
 	}
 	for _, tt := range tests { // loop through test struct objects
 		t.Run(tt.name, func(t *testing.T) {
-			// This Config uses a default configuration for the ScraperControllerSettings and whatever is read from a config.yaml file for the sample data
+			// This Config uses a default configuration for the ControllerConfig and whatever is read from a config.yaml file for the sample data
 			cfg := &Config{ // config to pass into Unmarshal() function
-				ScraperControllerSettings: tt.fields.ScraperControllerSettings,
-				sample:                    tt.fields.sample,
+				ControllerConfig: tt.fields.ControllerConfig,
+				sample:           tt.fields.sample,
 			}
 			confMap, errCM := confmaptest.LoadConf(filepath.Join("testdata", tt.confMapKey))
 			if !errors.Is(errCM, tt.wantErrCM) { // Check if file is supposed to exist or not

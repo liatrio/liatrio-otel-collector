@@ -32,10 +32,10 @@ type gitlabScraper struct {
 	mb       *metadata.MetricsBuilder
 }
 
-func (gls *gitlabScraper) start(_ context.Context, host component.Host) (err error) {
+func (gls *gitlabScraper) start(ctx context.Context, host component.Host) (err error) {
 	gls.logger.Sugar().Info("Starting the scraper inside scraper.go")
 	// TODO: Fix the ToClient configuration
-	gls.client, err = gls.cfg.ToClient(host, gls.settings)
+	gls.client, err = gls.cfg.ToClientContext(ctx, host, gls.settings)
 	return
 }
 

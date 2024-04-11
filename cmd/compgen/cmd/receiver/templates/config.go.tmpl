@@ -22,8 +22,8 @@ var (
 
 // Config that is exposed to this receiver through the OTEL config.yaml
 type Config struct {
-	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
-	sample                                  string
+	scraperhelper.ControllerConfig `mapstructure:",squash"`
+	sample                         string
 }
 
 // Unmarshal a config.Parser into the config struct.
