@@ -41,7 +41,7 @@ func TestLoadConfig(t *testing.T) {
 
 	r1 := cfg.Receivers[component.NewIDWithName(metadata.Type, "customname")].(*Config)
 	expectedConfig := &Config{
-		ScraperControllerSettings: scraperhelper.ScraperControllerSettings{
+		ControllerConfig: scraperhelper.ControllerConfig{
 			CollectionInterval: 30 * time.Second,
 			InitialDelay:       1 * time.Second,
 		},
@@ -77,9 +77,9 @@ func TestLoadInvalidConfig_InvalidScraperKey(t *testing.T) {
 
 func TestConfig_Unmarshal(t *testing.T) {
 	type fields struct {
-		ScraperControllerSettings scraperhelper.ScraperControllerSettings
-		Scrapers                  map[string]internal.Config
-		MetricsBuilderConfig      metadata.MetricsBuilderConfig
+		ControllerConfig     scraperhelper.ControllerConfig
+		Scrapers             map[string]internal.Config
+		MetricsBuilderConfig metadata.MetricsBuilderConfig
 	}
 
 	type args struct {
@@ -108,9 +108,9 @@ func TestConfig_Unmarshal(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			cfg := &Config{
-				ScraperControllerSettings: test.fields.ScraperControllerSettings,
-				Scrapers:                  test.fields.Scrapers,
-				MetricsBuilderConfig:      test.fields.MetricsBuilderConfig,
+				ControllerConfig:     test.fields.ControllerConfig,
+				Scrapers:             test.fields.Scrapers,
+				MetricsBuilderConfig: test.fields.MetricsBuilderConfig,
 			}
 			if err := cfg.Unmarshal(test.args.componentParser); (err != nil) != test.wantErr {
 				t.Errorf("Config.Unmarshal() error = %v, wantErr %v", err, test.wantErr)

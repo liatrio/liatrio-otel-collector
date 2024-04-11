@@ -31,7 +31,7 @@ func NewFactory() receiver.Factory {
 
 // Create the default config based on the const(s) defined above.
 func createDefaultConfig() component.Config {
-	return &Config{ScraperControllerSettings: scraperhelper.NewDefaultScraperControllerSettings(metadata.Type)}
+	return &Config{ControllerConfig: scraperhelper.NewDefaultControllerConfig()}
 }
 
 // Create the metrics receiver according to the OTEL conventions taking in the
@@ -49,7 +49,7 @@ func createMetricsReceiver(
 		return nil, ErrConfigNotValid
 	}
 
-	scraperConfig := internal.ScraperConfig{ScraperControllerSettings: conf.ScraperControllerSettings}
+	scraperConfig := internal.ScraperConfig{ControllerConfig: conf.ControllerConfig}
 
 	addScraperOpts, err := createAddScraperOpts(ctx, params, scraperConfig)
 	if err != nil {
@@ -57,7 +57,7 @@ func createMetricsReceiver(
 	}
 
 	return scraperhelper.NewScraperControllerReceiver(
-		&conf.ScraperControllerSettings,
+		&conf.ControllerConfig,
 		params,
 		consumer,
 		addScraperOpts,
