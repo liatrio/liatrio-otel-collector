@@ -34,7 +34,7 @@ func (f *ScraperFactory) CreateMetricsScraper(
 }
 
 type ScraperConfig struct {
-	scraperhelper.ScraperControllerSettings `mapstructure:",squash"`
+	scraperhelper.ControllerConfig `mapstructure:",squash"`
 }
 
 type scraper struct {
