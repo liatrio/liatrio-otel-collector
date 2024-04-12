@@ -113,18 +113,18 @@ Number of repositories in an organization
 
 The number of pull requests in a repository, categorized by their state (either open or merged)
 
-| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic |
-| ---- | ----------- | ---------- | ----------------------- | --------- |
-| {pull_request} | Sum | Int | Cumulative | true |
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| {pull_request} | Gauge | Int |
 
 #### Attributes
 
 | Name | Description | Values |
 | ---- | ----------- | ------ |
-| state | Allows us to differentiate pull request activity within the repository | Str: ``open``, ``merged`` |
+| pull_request.state | The state of a pull request | Str: ``open``, ``merged`` |
 | repository.name | The full name of the Git repository | Any Str |
 
-### git.repository.pull_request.open_time
+### git.repository.pull_request.time_open
 
 The amount of time a pull request has been open
 

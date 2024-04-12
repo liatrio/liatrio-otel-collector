@@ -28,9 +28,8 @@ attributes:
   branch.name:
     description: The name of the branch in a given repository
     type: string
-  pull_request_state:
-    name_override: state
-    description: Allows us to differentiate pull request activity within the repository
+  pull_request.state:
+    description: The state of a pull request
     type: string
     enum:
       - open
@@ -94,7 +93,7 @@ metrics:
     gauge:
       value_type: int
     attributes: [repository.name, branch.name]
-  git.repository.pull_request.open_time:
+  git.repository.pull_request.time_open:
     enabled: true
     description: The amount of time a pull request has been open
     unit: s
@@ -118,9 +117,7 @@ metrics:
   git.repository.pull_request.count:
     description: The number of pull requests in a repository, categorized by their state (either open or merged)
     enabled: true
-    sum:
-      aggregation_temporality: cumulative
-      monotonic: true
+    gauge:
       value_type: int
     unit: '{pull_request}'
-    attributes: [pull_request_state, repository.name]
+    attributes: [pull_request.state, repository.name]

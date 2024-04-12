@@ -151,7 +151,7 @@ func (gls *gitlabScraper) processMergeRequests(mrs []MergeRequestNode, projectPa
 		// get returned as in Go.
 		if mr.MergedAt.IsZero() {
 			mrAge := int64(time.Since(mr.CreatedAt).Hours())
-			gls.mb.RecordGitRepositoryPullRequestOpenTimeDataPoint(now, mrAge, projectPath, mr.SourceBranch)
+			gls.mb.RecordGitRepositoryPullRequestTimeOpenDataPoint(now, mrAge, projectPath, mr.SourceBranch)
 			gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", projectPath, mr.SourceBranch, mrAge)
 		} else {
 			mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Hours())
