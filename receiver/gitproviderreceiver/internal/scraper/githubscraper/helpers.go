@@ -291,7 +291,7 @@ func (ghs *githubScraper) getCommitInfo(
 		if nPage == comPages {
 			e := c.GetEdges()
 			oldest := e[len(e)-1].Node.GetCommittedDate()
-			age = int64(time.Since(oldest).Hours())
+			age = int64(time.Since(oldest).Seconds())
 		}
 		for b := 0; b < len(c.Edges); b++ {
 			adds = add(adds, c.Edges[b].Node.Additions)
