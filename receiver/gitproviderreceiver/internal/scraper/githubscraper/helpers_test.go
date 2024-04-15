@@ -854,7 +854,7 @@ func TestGetCommitInfo(t *testing.T) {
 					BehindBy: 1,
 				},
 			},
-			expectedAge:       int64(time.Since(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)).Hours()),
+			expectedAge:       int64(time.Since(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)).Seconds()),
 			expectedAdditions: 10,
 			expectedDeletions: 9,
 			expectedErr:       nil,
@@ -902,7 +902,7 @@ func TestGetCommitInfo(t *testing.T) {
 					BehindBy: 101, // 100 per page, so this is 2 pages
 				},
 			},
-			expectedAge:       int64(time.Since(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)).Hours()),
+			expectedAge:       int64(time.Since(time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)).Seconds()),
 			expectedAdditions: 11,
 			expectedDeletions: 10,
 			expectedErr:       nil,
