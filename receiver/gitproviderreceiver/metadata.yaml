@@ -34,6 +34,9 @@ attributes:
     enum:
       - open
       - merged
+  severity:
+    description: The vulnerability severity level
+    type: string
 
 metrics:
   git.repository.count:
@@ -121,3 +124,10 @@ metrics:
       value_type: int
     unit: '{pull_request}'
     attributes: [pull_request.state, repository.name]
+  git.repository.vulnerabilities:
+    enabled: false
+    description: The number of vulnerabilities in the repository
+    unit: '{severity}'
+    gauge:
+      value_type: int
+    attributes: [repository.name, severity]

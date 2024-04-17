@@ -193,6 +193,21 @@ Total number of unique contributors to a repository
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
 
+### git.repository.vulnerabilities
+
+The number of vulnerabilities in the repository
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| {severity} | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| severity | The vulnerability severity level | Any Str |
+
 ## Resource Attributes
 
 | Name | Description | Values | Enabled |

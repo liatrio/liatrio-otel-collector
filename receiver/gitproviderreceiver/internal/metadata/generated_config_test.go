@@ -38,6 +38,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					GitRepositoryPullRequestTimeOpen:       MetricConfig{Enabled: true},
 					GitRepositoryPullRequestTimeToApproval: MetricConfig{Enabled: true},
 					GitRepositoryPullRequestTimeToMerge:    MetricConfig{Enabled: true},
+					GitRepositoryVulnerabilities:           MetricConfig{Enabled: true},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					GitVendorName:    ResourceAttributeConfig{Enabled: true},
@@ -61,6 +62,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					GitRepositoryPullRequestTimeOpen:       MetricConfig{Enabled: false},
 					GitRepositoryPullRequestTimeToApproval: MetricConfig{Enabled: false},
 					GitRepositoryPullRequestTimeToMerge:    MetricConfig{Enabled: false},
+					GitRepositoryVulnerabilities:           MetricConfig{Enabled: false},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					GitVendorName:    ResourceAttributeConfig{Enabled: false},

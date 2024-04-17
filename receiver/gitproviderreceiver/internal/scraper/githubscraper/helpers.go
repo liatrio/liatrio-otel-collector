@@ -306,3 +306,11 @@ func (ghs *githubScraper) getCommitInfo(
 func getAge(start time.Time, end time.Time) int64 {
 	return int64(end.Sub(start).Seconds())
 }
+
+func aggregateSeverity(n []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert) map[string]int {
+	counts := make(map[string]int)
+	for _, v := range n {
+		counts[string(v.SecurityVulnerability.GetSeverity())]++
+	}
+	return counts
+}

@@ -1,3 +1,4 @@
+---
 default:
 all_set:
   metrics:
@@ -24,6 +25,8 @@ all_set:
     git.repository.pull_request.time_to_approval:
       enabled: true
     git.repository.pull_request.time_to_merge:
+      enabled: true
+    git.repository.vulnerabilities:
       enabled: true
   resource_attributes:
     git.vendor.name:
@@ -55,6 +58,8 @@ none_set:
     git.repository.pull_request.time_to_approval:
       enabled: false
     git.repository.pull_request.time_to_merge:
+      enabled: false
+    git.repository.vulnerabilities:
       enabled: false
   resource_attributes:
     git.vendor.name:

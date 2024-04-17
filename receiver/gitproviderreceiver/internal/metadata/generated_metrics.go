@@ -657,6 +657,58 @@ func newMetricGitRepositoryPullRequestTimeToMerge(cfg MetricConfig) metricGitRep
 	return m
 }
 
+type metricGitRepositoryVulnerabilities struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills git.repository.vulnerabilities metric with initial data.
+func (m *metricGitRepositoryVulnerabilities) init() {
+	m.data.SetName("git.repository.vulnerabilities")
+	m.data.SetDescription("The number of vulnerabilities in the repository")
+	m.data.SetUnit("{severity}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricGitRepositoryVulnerabilities) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, severityAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("repository.name", repositoryNameAttributeValue)
+	dp.Attributes().PutStr("severity", severityAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricGitRepositoryVulnerabilities) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricGitRepositoryVulnerabilities) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricGitRepositoryVulnerabilities(cfg MetricConfig) metricGitRepositoryVulnerabilities {
+	m := metricGitRepositoryVulnerabilities{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
@@ -677,6 +729,7 @@ type MetricsBuilder struct {
 	metricGitRepositoryPullRequestTimeOpen       metricGitRepositoryPullRequestTimeOpen
 	metricGitRepositoryPullRequestTimeToApproval metricGitRepositoryPullRequestTimeToApproval
 	metricGitRepositoryPullRequestTimeToMerge    metricGitRepositoryPullRequestTimeToMerge
+	metricGitRepositoryVulnerabilities           metricGitRepositoryVulnerabilities
 }
 
 // metricBuilderOption applies changes to default metrics builder.
@@ -707,6 +760,7 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.CreateSetting
 		metricGitRepositoryPullRequestTimeOpen:       newMetricGitRepositoryPullRequestTimeOpen(mbc.Metrics.GitRepositoryPullRequestTimeOpen),
 		metricGitRepositoryPullRequestTimeToApproval: newMetricGitRepositoryPullRequestTimeToApproval(mbc.Metrics.GitRepositoryPullRequestTimeToApproval),
 		metricGitRepositoryPullRequestTimeToMerge:    newMetricGitRepositoryPullRequestTimeToMerge(mbc.Metrics.GitRepositoryPullRequestTimeToMerge),
+		metricGitRepositoryVulnerabilities:           newMetricGitRepositoryVulnerabilities(mbc.Metrics.GitRepositoryVulnerabilities),
 	}
 	for _, op := range options {
 		op(mb)
@@ -781,6 +835,7 @@ func (mb *MetricsBuilder) EmitForResource(rmo ...ResourceMetricsOption) {
 	mb.metricGitRepositoryPullRequestTimeOpen.emit(ils.Metrics())
 	mb.metricGitRepositoryPullRequestTimeToApproval.emit(ils.Metrics())
 	mb.metricGitRepositoryPullRequestTimeToMerge.emit(ils.Metrics())
+	mb.metricGitRepositoryVulnerabilities.emit(ils.Metrics())
 
 	for _, op := range rmo {
 		op(rm)
@@ -859,6 +914,11 @@ func (mb *MetricsBuilder) RecordGitRepositoryPullRequestTimeToApprovalDataPoint(
 // RecordGitRepositoryPullRequestTimeToMergeDataPoint adds a data point to git.repository.pull_request.time_to_merge metric.
 func (mb *MetricsBuilder) RecordGitRepositoryPullRequestTimeToMergeDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, branchNameAttributeValue string) {
 	mb.metricGitRepositoryPullRequestTimeToMerge.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, branchNameAttributeValue)
+}
+
+// RecordGitRepositoryVulnerabilitiesDataPoint adds a data point to git.repository.vulnerabilities metric.
+func (mb *MetricsBuilder) RecordGitRepositoryVulnerabilitiesDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, severityAttributeValue string) {
+	mb.metricGitRepositoryVulnerabilities.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, severityAttributeValue)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

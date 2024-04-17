@@ -98,6 +98,13 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		name := repo.Name
 		trunk := repo.DefaultBranchRef.Name
 
+		if ghs.cfg.Metrics.GitRepositoryVulnerabilities.Enabled && repo.VulnerabilityAlerts.GetTotalCount() > 0 {
+			aggSev := aggregateSeverity(repo.VulnerabilityAlerts.Nodes)
+			for severity, count := range aggSev {
+				ghs.mb.RecordGitRepositoryVulnerabilitiesDataPoint(now, int64(count), repo.Name, severity)
+			}
+		}
+
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

@@ -37,6 +37,7 @@ type MetricsConfig struct {
 	GitRepositoryPullRequestTimeOpen       MetricConfig `mapstructure:"git.repository.pull_request.time_open"`
 	GitRepositoryPullRequestTimeToApproval MetricConfig `mapstructure:"git.repository.pull_request.time_to_approval"`
 	GitRepositoryPullRequestTimeToMerge    MetricConfig `mapstructure:"git.repository.pull_request.time_to_merge"`
+	GitRepositoryVulnerabilities           MetricConfig `mapstructure:"git.repository.vulnerabilities"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
@@ -76,6 +77,9 @@ func DefaultMetricsConfig() MetricsConfig {
 		},
 		GitRepositoryPullRequestTimeToMerge: MetricConfig{
 			Enabled: true,
+		},
+		GitRepositoryVulnerabilities: MetricConfig{
+			Enabled: false,
 		},
 	}
 }

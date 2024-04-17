@@ -769,6 +769,8 @@ type SearchNodeRepository struct {
 	Name string `json:"name"`
 	// The Ref associated with the repository's default branch.
 	DefaultBranchRef SearchNodeDefaultBranchRef `json:"defaultBranchRef"`
+	// A list of vulnerability alerts that are on this repository.
+	VulnerabilityAlerts SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection `json:"vulnerabilityAlerts"`
 }
 
 // GetTypename returns SearchNodeRepository.Typename, and is useful for accessing the field via an interface.
@@ -785,6 +787,11 @@ func (v *SearchNodeRepository) GetDefaultBranchRef() SearchNodeDefaultBranchRef 
 	return v.DefaultBranchRef
 }
 
+// GetVulnerabilityAlerts returns SearchNodeRepository.VulnerabilityAlerts, and is useful for accessing the field via an interface.
+func (v *SearchNodeRepository) GetVulnerabilityAlerts() SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection {
+	return v.VulnerabilityAlerts
+}
+
 // SearchNodeUser includes the requested fields of the GraphQL type User.
 // The GraphQL type's documentation follows.
 //
@@ -795,6 +802,103 @@ type SearchNodeUser struct {
 
 // GetTypename returns SearchNodeUser.Typename, and is useful for accessing the field via an interface.
 func (v *SearchNodeUser) GetTypename() string { return v.Typename }
+
+// SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection includes the requested fields of the GraphQL type RepositoryVulnerabilityAlertConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for RepositoryVulnerabilityAlert.
+type SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection struct {
+	// Identifies the total count of items in the connection.
+	TotalCount int `json:"totalCount"`
+	// Information to aid in pagination.
+	PageInfo SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo `json:"pageInfo"`
+	// A list of nodes.
+	Nodes []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert `json:"nodes"`
+}
+
+// GetTotalCount returns SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection.TotalCount, and is useful for accessing the field via an interface.
+func (v *SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection) GetTotalCount() int {
+	return v.TotalCount
+}
+
+// GetPageInfo returns SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection) GetPageInfo() SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo {
+	return v.PageInfo
+}
+
+// GetNodes returns SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection) GetNodes() []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert {
+	return v.Nodes
+}
+
+// SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert includes the requested fields of the GraphQL type RepositoryVulnerabilityAlert.
+// The GraphQL type's documentation follows.
+//
+// A Dependabot alert for a repository with a dependency affected by a security vulnerability.
+type SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert struct {
+	Id string `json:"id"`
+	// The associated security vulnerability
+	SecurityVulnerability SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability `json:"securityVulnerability"`
+}
+
+// GetId returns SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert.Id, and is useful for accessing the field via an interface.
+func (v *SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert) GetId() string {
+	return v.Id
+}
+
+// GetSecurityVulnerability returns SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert.SecurityVulnerability, and is useful for accessing the field via an interface.
+func (v *SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert) GetSecurityVulnerability() SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability {
+	return v.SecurityVulnerability
+}
+
+// SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability includes the requested fields of the GraphQL type SecurityVulnerability.
+// The GraphQL type's documentation follows.
+//
+// An individual vulnerability within an Advisory
+type SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability struct {
+	// The severity of the vulnerability within this package
+	Severity SecurityAdvisorySeverity `json:"severity"`
+}
+
+// GetSeverity returns SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability.Severity, and is useful for accessing the field via an interface.
+func (v *SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability) GetSeverity() SecurityAdvisorySeverity {
+	return v.Severity
+}
+
+// SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+// The GraphQL type's documentation follows.
+//
+// Information about pagination in a connection.
+type SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo struct {
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
+}
+
+// GetHasNextPage returns SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo) GetHasNextPage() bool {
+	return v.HasNextPage
+}
+
+// GetEndCursor returns SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo) GetEndCursor() string {
+	return v.EndCursor
+}
+
+// Severity of the vulnerability.
+type SecurityAdvisorySeverity string
+
+const (
+	// Low.
+	SecurityAdvisorySeverityLow SecurityAdvisorySeverity = "LOW"
+	// Moderate.
+	SecurityAdvisorySeverityModerate SecurityAdvisorySeverity = "MODERATE"
+	// High.
+	SecurityAdvisorySeverityHigh SecurityAdvisorySeverity = "HIGH"
+	// Critical.
+	SecurityAdvisorySeverityCritical SecurityAdvisorySeverity = "CRITICAL"
+)
 
 // __checkLoginInput is used internally by genqlient
 type __checkLoginInput struct {
@@ -1523,6 +1627,19 @@ query getRepoDataBySearch ($searchQuery: String!, $repoCursor: String) {
 				name
 				defaultBranchRef {
 					name
+				}
+				vulnerabilityAlerts(first: 100, states: OPEN) {
+					totalCount
+					pageInfo {
+						hasNextPage
+						endCursor
+					}
+					nodes {
+						id
+						securityVulnerability {
+							severity
+						}
+					}
 				}
 			}
 		}

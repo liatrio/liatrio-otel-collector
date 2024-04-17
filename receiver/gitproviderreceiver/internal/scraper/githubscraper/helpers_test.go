@@ -952,3 +952,67 @@ func TestGetCommitInfo(t *testing.T) {
 		})
 	}
 }
+
+func TestAggregateSeverity(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		input    []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert
+		expected map[string]int
+	}{
+		{
+			desc: "TestSingleSeverity",
+			input: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+				{
+					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+						Severity: "HIGH",
+					},
+				},
+			},
+			expected: map[string]int{
+				"HIGH": 1,
+			},
+		},
+		{
+			desc: "TestMultipleSeverities",
+			input: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+				{
+					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+						Severity: "HIGH",
+					},
+				},
+				{
+					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+						Severity: "LOW",
+					},
+				},
+				{
+					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+						Severity: "MEDIUM",
+					},
+				},
+				{
+					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+						Severity: "HIGH",
+					},
+				},
+			},
+			expected: map[string]int{
+				"HIGH":   2,
+				"LOW":    1,
+				"MEDIUM": 1,
+			},
+		},
+		{
+			desc:     "TestEmptyInput",
+			input:    []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
+			expected: map[string]int{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			actual := aggregateSeverity(tc.input)
+			assert.Equal(t, tc.expected, actual)
+		})
+	}
+}
