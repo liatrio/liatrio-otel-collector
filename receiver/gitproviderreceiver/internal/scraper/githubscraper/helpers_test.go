@@ -19,13 +19,14 @@ import (
 )
 
 type responses struct {
-	repoResponse       repoResponse
-	prResponse         prResponse
-	branchResponse     branchResponse
-	commitResponse     commitResponse
-	checkLoginResponse loginResponse
-	contribResponse    contribResponse
-	scrape             bool
+	repoResponse          repoResponse
+	prResponse            prResponse
+	branchResponse        branchResponse
+	commitResponse        commitResponse
+	checkLoginResponse    loginResponse
+	contribResponse       contribResponse
+	vulnerabilityResponse vulnerabilityResponse
+	scrape                bool
 }
 
 type repoResponse struct {
@@ -36,6 +37,12 @@ type repoResponse struct {
 
 type prResponse struct {
 	prs          []getPullRequestDataRepositoryPullRequestsPullRequestConnection
+	responseCode int
+	page         int
+}
+
+type vulnerabilityResponse struct {
+	vulns        []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection
 	responseCode int
 	page         int
 }
@@ -328,10 +335,11 @@ func TestGetAge(t *testing.T) {
 
 func TestGetRepos(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		server      *http.ServeMux
-		expectedErr error
-		expected    int
+		desc                    string
+		server                  *http.ServeMux
+		expectedErr             error
+		expectedRepos           int
+		expectedVulnerabilities int
 	}{
 		{
 			desc: "TestSinglePageResponse",
@@ -344,6 +352,9 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo1",
+									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+										Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -354,8 +365,9 @@ func TestGetRepos(t *testing.T) {
 					responseCode: http.StatusOK,
 				},
 			}),
-			expectedErr: nil,
-			expected:    1,
+			expectedErr:             nil,
+			expectedRepos:           1,
+			expectedVulnerabilities: 0,
 		},
 		{
 			desc: "TestMultiPageResponse",
@@ -368,9 +380,17 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo1",
+									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+										TotalCount: 0,
+										Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
+									},
 								},
 								&SearchNodeRepository{
 									Name: "repo2",
+									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+										TotalCount: 0,
+										Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -382,9 +402,17 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo3",
+									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+										TotalCount: 0,
+										Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
+									},
 								},
 								&SearchNodeRepository{
 									Name: "repo4",
+									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+										TotalCount: 0,
+										Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -395,8 +423,151 @@ func TestGetRepos(t *testing.T) {
 					responseCode: http.StatusOK,
 				},
 			}),
-			expectedErr: nil,
-			expected:    4,
+			expectedErr:             nil,
+			expectedRepos:           4,
+			expectedVulnerabilities: 0,
+		},
+		{
+			desc: "TestSinglePageWithVulnerabilitiesResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				repoResponse: repoResponse{
+					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
+						{
+							RepositoryCount: 1,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Name: "repo1",
+									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+										TotalCount: 2,
+										Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+											{
+												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+													Severity: "HIGH",
+												},
+											},
+											{
+												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+													Severity: "LOW",
+												},
+											},
+										},
+									},
+								},
+							},
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:             nil,
+			expectedRepos:           1,
+			expectedVulnerabilities: 2,
+		},
+		{
+			desc: "TestMultiPageWithVulnerabilitieResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				repoResponse: repoResponse{
+					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
+						{
+							RepositoryCount: 4,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Name: "repo1",
+									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+										TotalCount: 2,
+										Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+											{
+												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+													Severity: "HIGH",
+												},
+											},
+											{
+												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+													Severity: "LOW",
+												},
+											},
+										},
+									},
+								},
+								&SearchNodeRepository{
+									Name: "repo2",
+									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+										TotalCount: 2,
+										Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+											{
+												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+													Severity: "HIGH",
+												},
+											},
+											{
+												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+													Severity: "LOW",
+												},
+											},
+										},
+									},
+								},
+							},
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: true,
+							},
+						},
+						{
+							RepositoryCount: 4,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Name: "repo3",
+									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+										TotalCount: 2,
+										Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+											{
+												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+													Severity: "HIGH",
+												},
+											},
+											{
+												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+													Severity: "LOW",
+												},
+											},
+										},
+									},
+								},
+								&SearchNodeRepository{
+									Name: "repo4",
+									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+										TotalCount: 2,
+										Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+											{
+												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+													Severity: "HIGH",
+												},
+											},
+											{
+												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+													Severity: "LOW",
+												},
+											},
+										},
+									},
+								},
+							},
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:             nil,
+			expectedRepos:           4,
+			expectedVulnerabilities: 8,
 		},
 		{
 			desc: "Test404Response",
@@ -406,8 +577,8 @@ func TestGetRepos(t *testing.T) {
 					responseCode: http.StatusNotFound,
 				},
 			}),
-			expectedErr: errors.New("returned error 404 Not Found: "),
-			expected:    0,
+			expectedErr:   errors.New("returned error 404 Not Found: "),
+			expectedRepos: 0,
 		},
 	}
 	for _, tc := range testCases {
@@ -420,9 +591,16 @@ func TestGetRepos(t *testing.T) {
 			defer server.Close()
 			client := graphql.NewClient(server.URL, ghs.client)
 
-			_, count, err := ghs.getRepos(context.Background(), client, "fake query")
+			sn, count, err := ghs.getRepos(context.Background(), client, "fake query")
 
-			assert.Equal(t, tc.expected, count)
+			var totalVulnerabilities int
+			for _, v := range sn {
+				assert.Equal(t, len(v.VulnerabilityAlerts.Nodes), v.VulnerabilityAlerts.TotalCount)
+				totalVulnerabilities += len(v.VulnerabilityAlerts.Nodes)
+			}
+
+			assert.Equal(t, tc.expectedVulnerabilities, totalVulnerabilities)
+			assert.Equal(t, tc.expectedRepos, count)
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {
