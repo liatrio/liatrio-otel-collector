@@ -1,5 +1,6 @@
 ---
 run:
+  go: '1.21'
   timeout: 10m
   allow-parallel-runners: true
 
@@ -8,15 +9,9 @@ linters-settings:
     check-type-assertions: false
     check-blank: true
 
-  gosimple:
-    go: '1.19'
-
   maligned:
     # print struct with more effective memory layout or not, false by default
     suggest-new: true
-
-  unused:
-    go: '1.19'
 
   lll:
     # max line length, lines longer will be reported. Default is 120.
