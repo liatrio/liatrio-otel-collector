@@ -27,19 +27,6 @@ query getRepoDataBySearch(
         defaultBranchRef {
           name
         }
-        vulnerabilityAlerts(first: 100, states: OPEN) {
-          totalCount
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-          nodes {
-            id
-            securityVulnerability {
-              severity
-            }
-          }
-        }
       }
     }
     pageInfo {

@@ -19,14 +19,14 @@ import (
 )
 
 type responses struct {
-	repoResponse          repoResponse
-	prResponse            prResponse
-	branchResponse        branchResponse
-	commitResponse        commitResponse
-	checkLoginResponse    loginResponse
-	contribResponse       contribResponse
-	vulnerabilityResponse vulnerabilityResponse
-	scrape                bool
+	repoResponse       repoResponse
+	prResponse         prResponse
+	branchResponse     branchResponse
+	commitResponse     commitResponse
+	checkLoginResponse loginResponse
+	contribResponse    contribResponse
+	//vulnerabilityResponse vulnerabilityResponse
+	scrape bool
 }
 
 type repoResponse struct {
@@ -41,11 +41,11 @@ type prResponse struct {
 	page         int
 }
 
-type vulnerabilityResponse struct {
-	vulns        []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection
-	responseCode int
-	page         int
-}
+//type vulnerabilityResponse struct {
+//	vulns        []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection
+//	responseCode int
+//	page         int
+//}
 
 type branchResponse struct {
 	branches     []getBranchDataRepositoryRefsRefConnection
@@ -352,9 +352,9 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo1",
-									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-										Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
-									},
+									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
+									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -380,17 +380,17 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo1",
-									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-										TotalCount: 0,
-										Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
-									},
+									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+									//	TotalCount: 0,
+									//	Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
+									//},
 								},
 								&SearchNodeRepository{
 									Name: "repo2",
-									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-										TotalCount: 0,
-										Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
-									},
+									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+									//	TotalCount: 0,
+									//	Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
+									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -402,17 +402,17 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo3",
-									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-										TotalCount: 0,
-										Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
-									},
+									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+									//	TotalCount: 0,
+									//	Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
+									//},
 								},
 								&SearchNodeRepository{
 									Name: "repo4",
-									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-										TotalCount: 0,
-										Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
-									},
+									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+									//	TotalCount: 0,
+									//	Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
+									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -438,21 +438,21 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo1",
-									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-										TotalCount: 2,
-										Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-											{
-												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-													Severity: "HIGH",
-												},
-											},
-											{
-												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-													Severity: "LOW",
-												},
-											},
-										},
-									},
+									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+									//	TotalCount: 2,
+									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+									//		{
+									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+									//				Severity: "HIGH",
+									//			},
+									//		},
+									//		{
+									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+									//				Severity: "LOW",
+									//			},
+									//		},
+									//	},
+									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -478,39 +478,39 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo1",
-									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-										TotalCount: 2,
-										Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-											{
-												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-													Severity: "HIGH",
-												},
-											},
-											{
-												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-													Severity: "LOW",
-												},
-											},
-										},
-									},
+									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+									//	TotalCount: 2,
+									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+									//		{
+									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+									//				Severity: "HIGH",
+									//			},
+									//		},
+									//		{
+									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+									//				Severity: "LOW",
+									//			},
+									//		},
+									//	},
+									//},
 								},
 								&SearchNodeRepository{
 									Name: "repo2",
-									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-										TotalCount: 2,
-										Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-											{
-												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-													Severity: "HIGH",
-												},
-											},
-											{
-												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-													Severity: "LOW",
-												},
-											},
-										},
-									},
+									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+									//	TotalCount: 2,
+									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+									//		{
+									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+									//				Severity: "HIGH",
+									//			},
+									//		},
+									//		{
+									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+									//				Severity: "LOW",
+									//			},
+									//		},
+									//	},
+									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -522,39 +522,39 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo3",
-									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-										TotalCount: 2,
-										Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-											{
-												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-													Severity: "HIGH",
-												},
-											},
-											{
-												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-													Severity: "LOW",
-												},
-											},
-										},
-									},
+									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+									//	TotalCount: 2,
+									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+									//		{
+									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+									//				Severity: "HIGH",
+									//			},
+									//		},
+									//		{
+									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+									//				Severity: "LOW",
+									//			},
+									//		},
+									//	},
+									//},
 								},
 								&SearchNodeRepository{
 									Name: "repo4",
-									VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-										TotalCount: 2,
-										Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-											{
-												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-													Severity: "HIGH",
-												},
-											},
-											{
-												SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-													Severity: "LOW",
-												},
-											},
-										},
-									},
+									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+									//	TotalCount: 2,
+									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+									//		{
+									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+									//				Severity: "HIGH",
+									//			},
+									//		},
+									//		{
+									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+									//				Severity: "LOW",
+									//			},
+									//		},
+									//	},
+									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -565,9 +565,9 @@ func TestGetRepos(t *testing.T) {
 					responseCode: http.StatusOK,
 				},
 			}),
-			expectedErr:             nil,
-			expectedRepos:           4,
-			expectedVulnerabilities: 8,
+			expectedErr:   nil,
+			expectedRepos: 4,
+			//expectedVulnerabilities: 8,
 		},
 		{
 			desc: "Test404Response",
@@ -591,15 +591,16 @@ func TestGetRepos(t *testing.T) {
 			defer server.Close()
 			client := graphql.NewClient(server.URL, ghs.client)
 
-			sn, count, err := ghs.getRepos(context.Background(), client, "fake query")
+			_, count, err := ghs.getRepos(context.Background(), client, "fake query")
+			//sn, count, err := ghs.getRepos(context.Background(), client, "fake query")
 
-			var totalVulnerabilities int
-			for _, v := range sn {
-				assert.Equal(t, len(v.VulnerabilityAlerts.Nodes), v.VulnerabilityAlerts.TotalCount)
-				totalVulnerabilities += len(v.VulnerabilityAlerts.Nodes)
-			}
+			//var totalVulnerabilities int
+			//for _, v := range sn {
+			//	assert.Equal(t, len(v.VulnerabilityAlerts.Nodes), v.VulnerabilityAlerts.TotalCount)
+			//	totalVulnerabilities += len(v.VulnerabilityAlerts.Nodes)
+			//}
 
-			assert.Equal(t, tc.expectedVulnerabilities, totalVulnerabilities)
+			//assert.Equal(t, tc.expectedVulnerabilities, totalVulnerabilities)
 			assert.Equal(t, tc.expectedRepos, count)
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
@@ -1131,66 +1132,66 @@ func TestGetCommitInfo(t *testing.T) {
 	}
 }
 
-func TestAggregateSeverity(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		input    []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert
-		expected map[string]int
-	}{
-		{
-			desc: "TestSingleSeverity",
-			input: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-				{
-					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-						Severity: "HIGH",
-					},
-				},
-			},
-			expected: map[string]int{
-				"HIGH": 1,
-			},
-		},
-		{
-			desc: "TestMultipleSeverities",
-			input: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-				{
-					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-						Severity: "HIGH",
-					},
-				},
-				{
-					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-						Severity: "LOW",
-					},
-				},
-				{
-					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-						Severity: "MEDIUM",
-					},
-				},
-				{
-					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-						Severity: "HIGH",
-					},
-				},
-			},
-			expected: map[string]int{
-				"HIGH":   2,
-				"LOW":    1,
-				"MEDIUM": 1,
-			},
-		},
-		{
-			desc:     "TestEmptyInput",
-			input:    []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
-			expected: map[string]int{},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			actual := aggregateSeverity(tc.input)
-			assert.Equal(t, tc.expected, actual)
-		})
-	}
-}
+//func TestAggregateSeverity(t *testing.T) {
+//	testCases := []struct {
+//		desc     string
+//		input    []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert
+//		expected map[string]int
+//	}{
+//		{
+//			desc: "TestSingleSeverity",
+//			input: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+//				{
+//					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+//						Severity: "HIGH",
+//					},
+//				},
+//			},
+//			expected: map[string]int{
+//				"HIGH": 1,
+//			},
+//		},
+//		{
+//			desc: "TestMultipleSeverities",
+//			input: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
+//				{
+//					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+//						Severity: "HIGH",
+//					},
+//				},
+//				{
+//					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+//						Severity: "LOW",
+//					},
+//				},
+//				{
+//					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+//						Severity: "MEDIUM",
+//					},
+//				},
+//				{
+//					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
+//						Severity: "HIGH",
+//					},
+//				},
+//			},
+//			expected: map[string]int{
+//				"HIGH":   2,
+//				"LOW":    1,
+//				"MEDIUM": 1,
+//			},
+//		},
+//		{
+//			desc:     "TestEmptyInput",
+//			input:    []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
+//			expected: map[string]int{},
+//		},
+//	}
+//
+//	for _, tc := range testCases {
+//		t.Run(tc.desc, func(t *testing.T) {
+//			actual := aggregateSeverity(tc.input)
+//			assert.Equal(t, tc.expected, actual)
+//		})
+//	}
+//}
