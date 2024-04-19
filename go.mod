@@ -29,7 +29,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/rs/cors v1.10.1 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.11 // indirect
-	github.com/xanzy/go-gitlab v0.102.0 // indirect
+	github.com/xanzy/go-gitlab v0.103.0 // indirect
 	go.opentelemetry.io/collector v0.98.0 // indirect
 	go.opentelemetry.io/collector/component v0.98.0 // indirect
 	go.opentelemetry.io/collector/config/configauth v0.98.0 // indirect
