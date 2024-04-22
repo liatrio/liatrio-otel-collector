@@ -148,7 +148,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			// When enabled, process any CVEs for the repository
 			if ghs.cfg.Metrics.GitRepositoryCveCount.Enabled {
-				cves := ghs.getRepoCVEs(ctx, genClient, "dks-api")
+				cves := ghs.getRepoCVEs(ctx, genClient, name)
 				if len(cves.Repository.VulnerabilityAlerts.Nodes) > 0 {
 					ags := getMapOfCVEScoresGroupedByScore(cves.GetRepository())
 					for severity := range ags.Severities {
