@@ -34,9 +34,15 @@ attributes:
     enum:
       - open
       - merged
-  severity:
-    description: The vulnerability severity level
+  cve.severity:
+    description: The severity of the CVE
     type: string
+    enum:
+      - none
+      - low
+      - medium
+      - high
+      - critical
 
 metrics:
   git.repository.count:
@@ -124,10 +130,10 @@ metrics:
       value_type: int
     unit: '{pull_request}'
     attributes: [pull_request.state, repository.name]
-  git.repository.vulnerabilities:
+  git.repository.cve.count:
     enabled: false
-    description: The number of vulnerabilities in the repository
-    unit: '{severity}'
+    description: The number of Common Vulnerabilities and Exposures (CVEs) in the repository
+    unit: '{cve}'
     gauge:
       value_type: int
-    attributes: [repository.name, severity]
+    attributes: [repository.name, cve.severity]

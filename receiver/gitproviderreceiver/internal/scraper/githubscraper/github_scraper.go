@@ -98,13 +98,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		name := repo.Name
 		trunk := repo.DefaultBranchRef.Name
 
-		//if ghs.cfg.Metrics.GitRepositoryVulnerabilities.Enabled && repo.VulnerabilityAlerts.GetTotalCount() > 0 {
-		//	aggSev := aggregateSeverity(repo.VulnerabilityAlerts.Nodes)
-		//	for severity, count := range aggSev {
-		//		ghs.mb.RecordGitRepositoryVulnerabilitiesDataPoint(now, int64(count), repo.Name, severity)
-		//	}
-		//}
-
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -151,6 +144,17 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			prs, err := ghs.getPullRequests(ctx, genClient, name)
 			if err != nil {
 				ghs.logger.Sugar().Errorf("error %v getting pull requests for repo %s", zap.Error(err), repo.Name)
+			}
+
+			// When enabled, process any CVEs for the repository
+			if ghs.cfg.Metrics.GitRepositoryCveCount.Enabled {
+				cves := ghs.getRepoCVEs(ctx, genClient, "dks-api")
+				if len(cves.Repository.VulnerabilityAlerts.Nodes) > 0 {
+					ags := getMapOfCVEScoresGroupedByScore(cves.GetRepository())
+					for severity := range ags.Severities {
+						ghs.mb.RecordGitRepositoryCveCountDataPoint(now, ags.Count(severity), name, metadata.MapAttributeCveSeverity[severity], ags.ToJson(severity))
+					}
+				}
 			}
 
 			var merged int

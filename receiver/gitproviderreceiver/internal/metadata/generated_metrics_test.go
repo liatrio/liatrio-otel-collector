@@ -86,6 +86,9 @@ func TestMetricsBuilder(t *testing.T) {
 			allMetricsCount++
 			mb.RecordGitRepositoryCountDataPoint(ts, 1)
 
+			allMetricsCount++
+			mb.RecordGitRepositoryCveCountDataPoint(ts, 1, "repository.name-val", AttributeCveSeverityNone, "cve.cvss-val")
+
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordGitRepositoryPullRequestCountDataPoint(ts, 1, AttributePullRequestStateOpen, "repository.name-val")
@@ -101,9 +104,6 @@ func TestMetricsBuilder(t *testing.T) {
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordGitRepositoryPullRequestTimeToMergeDataPoint(ts, 1, "repository.name-val", "branch.name-val")
-
-			allMetricsCount++
-			mb.RecordGitRepositoryVulnerabilitiesDataPoint(ts, 1, "repository.name-val", "severity-val")
 
 			rb := mb.NewResourceBuilder()
 			rb.SetGitVendorName("git.vendor.name-val")
@@ -262,6 +262,27 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
+				case "git.repository.cve.count":
+					assert.False(t, validatedMetrics["git.repository.cve.count"], "Found a duplicate in the metrics slice: git.repository.cve.count")
+					validatedMetrics["git.repository.cve.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The number of Common Vulnerabilities and Exposures (CVEs) in the repository", ms.At(i).Description())
+					assert.Equal(t, "{cve}", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("repository.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("cve.severity")
+					assert.True(t, ok)
+					assert.EqualValues(t, "none", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("cve.cvss")
+					assert.True(t, ok)
+					assert.EqualValues(t, "cve.cvss-val", attrVal.Str())
 				case "git.repository.pull_request.count":
 					assert.False(t, validatedMetrics["git.repository.pull_request.count"], "Found a duplicate in the metrics slice: git.repository.pull_request.count")
 					validatedMetrics["git.repository.pull_request.count"] = true
@@ -334,24 +355,6 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("branch.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "branch.name-val", attrVal.Str())
-				case "git.repository.vulnerabilities":
-					assert.False(t, validatedMetrics["git.repository.vulnerabilities"], "Found a duplicate in the metrics slice: git.repository.vulnerabilities")
-					validatedMetrics["git.repository.vulnerabilities"] = true
-					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
-					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "The number of vulnerabilities in the repository", ms.At(i).Description())
-					assert.Equal(t, "{severity}", ms.At(i).Unit())
-					dp := ms.At(i).Gauge().DataPoints().At(0)
-					assert.Equal(t, start, dp.StartTimestamp())
-					assert.Equal(t, ts, dp.Timestamp())
-					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
-					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("repository.name")
-					assert.True(t, ok)
-					assert.EqualValues(t, "repository.name-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("severity")
-					assert.True(t, ok)
-					assert.EqualValues(t, "severity-val", attrVal.Str())
 				}
 			}
 		})

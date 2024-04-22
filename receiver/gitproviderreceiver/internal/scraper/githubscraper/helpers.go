@@ -2,6 +2,7 @@ package githubscraper
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -307,10 +308,66 @@ func getAge(start time.Time, end time.Time) int64 {
 	return int64(end.Sub(start).Seconds())
 }
 
-//func aggregateSeverity(n []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert) map[string]int {
-//	counts := make(map[string]int)
-//	for _, v := range n {
-//		counts[string(v.SecurityVulnerability.GetSeverity())]++
-//	}
-//	return counts
-//}
+func (ghs *githubScraper) getRepoCVEs(
+	ctx context.Context,
+	client graphql.Client,
+	repo string,
+) *getCveScoresResponse {
+	scores, err := getCveScores(ctx, client, ghs.cfg.GitHubOrg, repo)
+	if err != nil {
+		ghs.logger.Sugar().Errorf("error getting repo data: %v", zap.Error(err))
+	}
+
+	return scores
+}
+
+type CveOutput struct {
+	Severities map[string][]float64
+}
+
+func (c *CveOutput) Count(severity string) int64 {
+	if len(c.Severities[severity]) == 0 {
+		return 0
+	}
+	return int64(len(c.Severities[severity]))
+}
+
+func (c *CveOutput) ToJson(severity string) string {
+	if len(c.Severities[severity]) > 0 {
+		j, err := json.Marshal(c.Severities[severity])
+		if err != nil {
+			return ""
+		}
+		return string(j)
+	}
+
+	return ""
+}
+
+func getMapOfCVEScoresGroupedByScore(n getCveScoresRepository) CveOutput {
+	var cveOutput CveOutput
+	cveOutput.Severities = make(map[string][]float64)
+
+	for _, a := range n.VulnerabilityAlerts.Nodes {
+		score := a.SecurityVulnerability.Advisory.Cvss.Score
+		severity := getSeverityLabel(score)
+		cveOutput.Severities[severity] = append(cveOutput.Severities[severity], score)
+	}
+
+	return cveOutput
+}
+
+func getSeverityLabel(score float64) string {
+	switch {
+	case score == 0:
+		return "none"
+	case score <= 3.9:
+		return "low"
+	case score <= 6.9:
+		return "medium"
+	case score <= 8.9:
+		return "high"
+	default:
+		return "critical"
+	}
+}

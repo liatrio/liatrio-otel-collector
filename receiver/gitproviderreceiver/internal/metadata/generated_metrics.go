@@ -12,6 +12,44 @@ import (
 	conventions "go.opentelemetry.io/collector/semconv/v1.9.0"
 )
 
+// AttributeCveSeverity specifies the a value cve.severity attribute.
+type AttributeCveSeverity int
+
+const (
+	_ AttributeCveSeverity = iota
+	AttributeCveSeverityNone
+	AttributeCveSeverityLow
+	AttributeCveSeverityMedium
+	AttributeCveSeverityHigh
+	AttributeCveSeverityCritical
+)
+
+// String returns the string representation of the AttributeCveSeverity.
+func (av AttributeCveSeverity) String() string {
+	switch av {
+	case AttributeCveSeverityNone:
+		return "none"
+	case AttributeCveSeverityLow:
+		return "low"
+	case AttributeCveSeverityMedium:
+		return "medium"
+	case AttributeCveSeverityHigh:
+		return "high"
+	case AttributeCveSeverityCritical:
+		return "critical"
+	}
+	return ""
+}
+
+// MapAttributeCveSeverity is a helper map of string to AttributeCveSeverity attribute value.
+var MapAttributeCveSeverity = map[string]AttributeCveSeverity{
+	"none":     AttributeCveSeverityNone,
+	"low":      AttributeCveSeverityLow,
+	"medium":   AttributeCveSeverityMedium,
+	"high":     AttributeCveSeverityHigh,
+	"critical": AttributeCveSeverityCritical,
+}
+
 // AttributePullRequestState specifies the a value pull_request.state attribute.
 type AttributePullRequestState int
 
@@ -449,6 +487,59 @@ func newMetricGitRepositoryCount(cfg MetricConfig) metricGitRepositoryCount {
 	return m
 }
 
+type metricGitRepositoryCveCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills git.repository.cve.count metric with initial data.
+func (m *metricGitRepositoryCveCount) init() {
+	m.data.SetName("git.repository.cve.count")
+	m.data.SetDescription("The number of Common Vulnerabilities and Exposures (CVEs) in the repository")
+	m.data.SetUnit("{cve}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricGitRepositoryCveCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, cveSeverityAttributeValue string, cveCvssAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("repository.name", repositoryNameAttributeValue)
+	dp.Attributes().PutStr("cve.severity", cveSeverityAttributeValue)
+	dp.Attributes().PutStr("cve.cvss", cveCvssAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricGitRepositoryCveCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricGitRepositoryCveCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricGitRepositoryCveCount(cfg MetricConfig) metricGitRepositoryCveCount {
+	m := metricGitRepositoryCveCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 type metricGitRepositoryPullRequestCount struct {
 	data     pmetric.Metric // data buffer for generated metric.
 	config   MetricConfig   // metric config provided by user.
@@ -657,58 +748,6 @@ func newMetricGitRepositoryPullRequestTimeToMerge(cfg MetricConfig) metricGitRep
 	return m
 }
 
-type metricGitRepositoryVulnerabilities struct {
-	data     pmetric.Metric // data buffer for generated metric.
-	config   MetricConfig   // metric config provided by user.
-	capacity int            // max observed number of data points added to the metric.
-}
-
-// init fills git.repository.vulnerabilities metric with initial data.
-func (m *metricGitRepositoryVulnerabilities) init() {
-	m.data.SetName("git.repository.vulnerabilities")
-	m.data.SetDescription("The number of vulnerabilities in the repository")
-	m.data.SetUnit("{severity}")
-	m.data.SetEmptyGauge()
-	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
-}
-
-func (m *metricGitRepositoryVulnerabilities) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, severityAttributeValue string) {
-	if !m.config.Enabled {
-		return
-	}
-	dp := m.data.Gauge().DataPoints().AppendEmpty()
-	dp.SetStartTimestamp(start)
-	dp.SetTimestamp(ts)
-	dp.SetIntValue(val)
-	dp.Attributes().PutStr("repository.name", repositoryNameAttributeValue)
-	dp.Attributes().PutStr("severity", severityAttributeValue)
-}
-
-// updateCapacity saves max length of data point slices that will be used for the slice capacity.
-func (m *metricGitRepositoryVulnerabilities) updateCapacity() {
-	if m.data.Gauge().DataPoints().Len() > m.capacity {
-		m.capacity = m.data.Gauge().DataPoints().Len()
-	}
-}
-
-// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
-func (m *metricGitRepositoryVulnerabilities) emit(metrics pmetric.MetricSlice) {
-	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
-		m.updateCapacity()
-		m.data.MoveTo(metrics.AppendEmpty())
-		m.init()
-	}
-}
-
-func newMetricGitRepositoryVulnerabilities(cfg MetricConfig) metricGitRepositoryVulnerabilities {
-	m := metricGitRepositoryVulnerabilities{config: cfg}
-	if cfg.Enabled {
-		m.data = pmetric.NewMetric()
-		m.init()
-	}
-	return m
-}
-
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
@@ -725,11 +764,11 @@ type MetricsBuilder struct {
 	metricGitRepositoryBranchTime                metricGitRepositoryBranchTime
 	metricGitRepositoryContributorCount          metricGitRepositoryContributorCount
 	metricGitRepositoryCount                     metricGitRepositoryCount
+	metricGitRepositoryCveCount                  metricGitRepositoryCveCount
 	metricGitRepositoryPullRequestCount          metricGitRepositoryPullRequestCount
 	metricGitRepositoryPullRequestTimeOpen       metricGitRepositoryPullRequestTimeOpen
 	metricGitRepositoryPullRequestTimeToApproval metricGitRepositoryPullRequestTimeToApproval
 	metricGitRepositoryPullRequestTimeToMerge    metricGitRepositoryPullRequestTimeToMerge
-	metricGitRepositoryVulnerabilities           metricGitRepositoryVulnerabilities
 }
 
 // metricBuilderOption applies changes to default metrics builder.
@@ -756,11 +795,11 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.CreateSetting
 		metricGitRepositoryBranchTime:                newMetricGitRepositoryBranchTime(mbc.Metrics.GitRepositoryBranchTime),
 		metricGitRepositoryContributorCount:          newMetricGitRepositoryContributorCount(mbc.Metrics.GitRepositoryContributorCount),
 		metricGitRepositoryCount:                     newMetricGitRepositoryCount(mbc.Metrics.GitRepositoryCount),
+		metricGitRepositoryCveCount:                  newMetricGitRepositoryCveCount(mbc.Metrics.GitRepositoryCveCount),
 		metricGitRepositoryPullRequestCount:          newMetricGitRepositoryPullRequestCount(mbc.Metrics.GitRepositoryPullRequestCount),
 		metricGitRepositoryPullRequestTimeOpen:       newMetricGitRepositoryPullRequestTimeOpen(mbc.Metrics.GitRepositoryPullRequestTimeOpen),
 		metricGitRepositoryPullRequestTimeToApproval: newMetricGitRepositoryPullRequestTimeToApproval(mbc.Metrics.GitRepositoryPullRequestTimeToApproval),
 		metricGitRepositoryPullRequestTimeToMerge:    newMetricGitRepositoryPullRequestTimeToMerge(mbc.Metrics.GitRepositoryPullRequestTimeToMerge),
-		metricGitRepositoryVulnerabilities:           newMetricGitRepositoryVulnerabilities(mbc.Metrics.GitRepositoryVulnerabilities),
 	}
 	for _, op := range options {
 		op(mb)
@@ -831,11 +870,11 @@ func (mb *MetricsBuilder) EmitForResource(rmo ...ResourceMetricsOption) {
 	mb.metricGitRepositoryBranchTime.emit(ils.Metrics())
 	mb.metricGitRepositoryContributorCount.emit(ils.Metrics())
 	mb.metricGitRepositoryCount.emit(ils.Metrics())
+	mb.metricGitRepositoryCveCount.emit(ils.Metrics())
 	mb.metricGitRepositoryPullRequestCount.emit(ils.Metrics())
 	mb.metricGitRepositoryPullRequestTimeOpen.emit(ils.Metrics())
 	mb.metricGitRepositoryPullRequestTimeToApproval.emit(ils.Metrics())
 	mb.metricGitRepositoryPullRequestTimeToMerge.emit(ils.Metrics())
-	mb.metricGitRepositoryVulnerabilities.emit(ils.Metrics())
 
 	for _, op := range rmo {
 		op(rm)
@@ -896,6 +935,11 @@ func (mb *MetricsBuilder) RecordGitRepositoryCountDataPoint(ts pcommon.Timestamp
 	mb.metricGitRepositoryCount.recordDataPoint(mb.startTime, ts, val)
 }
 
+// RecordGitRepositoryCveCountDataPoint adds a data point to git.repository.cve.count metric.
+func (mb *MetricsBuilder) RecordGitRepositoryCveCountDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, cveSeverityAttributeValue AttributeCveSeverity, cveCvssAttributeValue string) {
+	mb.metricGitRepositoryCveCount.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, cveSeverityAttributeValue.String(), cveCvssAttributeValue)
+}
+
 // RecordGitRepositoryPullRequestCountDataPoint adds a data point to git.repository.pull_request.count metric.
 func (mb *MetricsBuilder) RecordGitRepositoryPullRequestCountDataPoint(ts pcommon.Timestamp, val int64, pullRequestStateAttributeValue AttributePullRequestState, repositoryNameAttributeValue string) {
 	mb.metricGitRepositoryPullRequestCount.recordDataPoint(mb.startTime, ts, val, pullRequestStateAttributeValue.String(), repositoryNameAttributeValue)
@@ -914,11 +958,6 @@ func (mb *MetricsBuilder) RecordGitRepositoryPullRequestTimeToApprovalDataPoint(
 // RecordGitRepositoryPullRequestTimeToMergeDataPoint adds a data point to git.repository.pull_request.time_to_merge metric.
 func (mb *MetricsBuilder) RecordGitRepositoryPullRequestTimeToMergeDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, branchNameAttributeValue string) {
 	mb.metricGitRepositoryPullRequestTimeToMerge.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, branchNameAttributeValue)
-}
-
-// RecordGitRepositoryVulnerabilitiesDataPoint adds a data point to git.repository.vulnerabilities metric.
-func (mb *MetricsBuilder) RecordGitRepositoryVulnerabilitiesDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, severityAttributeValue string) {
-	mb.metricGitRepositoryVulnerabilities.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, severityAttributeValue)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

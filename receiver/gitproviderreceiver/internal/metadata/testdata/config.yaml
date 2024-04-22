@@ -18,6 +18,8 @@ all_set:
       enabled: true
     git.repository.count:
       enabled: true
+    git.repository.cve.count:
+      enabled: true
     git.repository.pull_request.count:
       enabled: true
     git.repository.pull_request.time_open:
@@ -25,8 +27,6 @@ all_set:
     git.repository.pull_request.time_to_approval:
       enabled: true
     git.repository.pull_request.time_to_merge:
-      enabled: true
-    git.repository.vulnerabilities:
       enabled: true
   resource_attributes:
     git.vendor.name:
@@ -51,6 +51,8 @@ none_set:
       enabled: false
     git.repository.count:
       enabled: false
+    git.repository.cve.count:
+      enabled: false
     git.repository.pull_request.count:
       enabled: false
     git.repository.pull_request.time_open:
@@ -58,8 +60,6 @@ none_set:
     git.repository.pull_request.time_to_approval:
       enabled: false
     git.repository.pull_request.time_to_merge:
-      enabled: false
-    git.repository.vulnerabilities:
       enabled: false
   resource_attributes:
     git.vendor.name:

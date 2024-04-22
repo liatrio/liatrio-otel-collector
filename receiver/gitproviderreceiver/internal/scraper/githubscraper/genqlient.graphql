@@ -196,3 +196,27 @@ query getPullRequestData(
     }
   }
 }
+
+query getCveScores($owner: String!, $repo: String!) {
+  repository(owner: $owner, name: $repo, ) {
+    vulnerabilityAlerts(first: 100, states: OPEN) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        id
+        securityVulnerability {
+          severity
+          advisory {
+            cvss {
+              score
+              vectorString
+            }
+          }
+        }
+      }
+    }
+  }
+}
