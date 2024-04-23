@@ -312,8 +312,8 @@ func (ghs *githubScraper) getRepoCVEs(
 	ctx context.Context,
 	client graphql.Client,
 	repo string,
-) *getCveScoresResponse {
-	scores, err := getCveScores(ctx, client, ghs.cfg.GitHubOrg, repo)
+) *getRepoCVEsResponse {
+	scores, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("error getting repo data: %v", zap.Error(err))
 	}
@@ -344,7 +344,7 @@ func (c *CveOutput) ToJson(severity string) string {
 	return ""
 }
 
-func getMapOfCVEScoresGroupedByScore(n getCveScoresRepository) CveOutput {
+func getMapOfCVEScoresGroupedByScore(n getRepoCVEsRepository) CveOutput {
 	var cveOutput CveOutput
 	cveOutput.Severities = make(map[string][]float64)
 

@@ -87,7 +87,7 @@ func TestMetricsBuilder(t *testing.T) {
 			mb.RecordGitRepositoryCountDataPoint(ts, 1)
 
 			allMetricsCount++
-			mb.RecordGitRepositoryCveCountDataPoint(ts, 1, "repository.name-val", AttributeCveSeverityNone, "cve.cvss-val")
+			mb.RecordGitRepositoryCveCountDataPoint(ts, 1, "repository.name-val", AttributeCveSeverityCritical, "cve.cvss-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -279,7 +279,7 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.EqualValues(t, "repository.name-val", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("cve.severity")
 					assert.True(t, ok)
-					assert.EqualValues(t, "none", attrVal.Str())
+					assert.EqualValues(t, "critical", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("cve.cvss")
 					assert.True(t, ok)
 					assert.EqualValues(t, "cve.cvss-val", attrVal.Str())

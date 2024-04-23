@@ -34,6 +34,9 @@ attributes:
     enum:
       - open
       - merged
+  cve.cvss:
+    description: The list of CVEs
+    type: string
   cve.severity:
     description: The severity of the CVE
     type: string
@@ -136,4 +139,4 @@ metrics:
     unit: '{cve}'
     gauge:
       value_type: int
-    attributes: [repository.name, cve.severity]
+    attributes: [repository.name, cve.severity, cve.cvss]

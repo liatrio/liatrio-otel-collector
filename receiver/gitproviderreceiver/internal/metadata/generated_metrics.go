@@ -17,37 +17,37 @@ type AttributeCveSeverity int
 
 const (
 	_ AttributeCveSeverity = iota
-	AttributeCveSeverityNone
-	AttributeCveSeverityLow
-	AttributeCveSeverityMedium
-	AttributeCveSeverityHigh
 	AttributeCveSeverityCritical
+	AttributeCveSeverityHigh
+	AttributeCveSeverityMedium
+	AttributeCveSeverityLow
+	AttributeCveSeverityNone
 )
 
 // String returns the string representation of the AttributeCveSeverity.
 func (av AttributeCveSeverity) String() string {
 	switch av {
-	case AttributeCveSeverityNone:
-		return "none"
-	case AttributeCveSeverityLow:
-		return "low"
-	case AttributeCveSeverityMedium:
-		return "medium"
-	case AttributeCveSeverityHigh:
-		return "high"
 	case AttributeCveSeverityCritical:
 		return "critical"
+	case AttributeCveSeverityHigh:
+		return "high"
+	case AttributeCveSeverityMedium:
+		return "medium"
+	case AttributeCveSeverityLow:
+		return "low"
+	case AttributeCveSeverityNone:
+		return "none"
 	}
 	return ""
 }
 
 // MapAttributeCveSeverity is a helper map of string to AttributeCveSeverity attribute value.
 var MapAttributeCveSeverity = map[string]AttributeCveSeverity{
-	"none":     AttributeCveSeverityNone,
-	"low":      AttributeCveSeverityLow,
-	"medium":   AttributeCveSeverityMedium,
-	"high":     AttributeCveSeverityHigh,
 	"critical": AttributeCveSeverityCritical,
+	"high":     AttributeCveSeverityHigh,
+	"medium":   AttributeCveSeverityMedium,
+	"low":      AttributeCveSeverityLow,
+	"none":     AttributeCveSeverityNone,
 }
 
 // AttributePullRequestState specifies the a value pull_request.state attribute.

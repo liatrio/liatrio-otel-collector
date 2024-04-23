@@ -197,7 +197,7 @@ query getPullRequestData(
   }
 }
 
-query getCveScores($owner: String!, $repo: String!) {
+query getRepoCVEs($owner: String!, $repo: String!) {
   repository(owner: $owner, name: $repo, ) {
     vulnerabilityAlerts(first: 100, states: OPEN) {
       totalCount
