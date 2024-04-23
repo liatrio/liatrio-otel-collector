@@ -38,11 +38,11 @@ attributes:
     description: The severity of the CVE
     type: string
     enum:
-      - none
-      - low
-      - medium
-      - high
       - critical
+      - high
+      - medium
+      - low
+      - none
 
 metrics:
   git.repository.count:
