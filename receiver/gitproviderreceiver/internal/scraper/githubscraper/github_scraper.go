@@ -150,8 +150,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			if ghs.cfg.Metrics.GitRepositoryCveCount.Enabled {
 				cves := ghs.getCVEs(ctx, genClient, name)
 				if len(cves.Repository.VulnerabilityAlerts.Nodes) > 0 {
-					ags := getMapOfCVEScoresGroupedByScore(cves.GetRepository())
-					for severity, total := range ags {
+					sevs := mapSeverities(cves.GetRepository())
+					for severity, total := range sevs {
 						ghs.mb.RecordGitRepositoryCveCountDataPoint(now, total, name, severity)
 					}
 				}

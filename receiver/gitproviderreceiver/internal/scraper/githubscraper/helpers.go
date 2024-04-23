@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
 	"math"
 	"net/url"
 	"time"
+
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/google/go-github/v61/github"
@@ -313,30 +314,31 @@ func (ghs *githubScraper) getCVEs(
 	client graphql.Client,
 	repo string,
 ) *getRepoCVEsResponse {
-	scores, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo)
+	cves, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo)
 	if err != nil {
-		ghs.logger.Sugar().Errorf("error getting repo data: %v", zap.Error(err))
+		ghs.logger.Sugar().Errorf("error getting CVE data from repo: %v", zap.Error(err))
 	}
 
-	return scores
+	return cves
 }
 
-func getMapOfCVEScoresGroupedByScore(
+func mapSeverities(
 	n getRepoCVEsRepository,
 ) map[metadata.AttributeCveSeverity]int64 {
-	// Allows us to map the "MODERATE" to our expected "MEDIUM", while keeping
-	// the logic in the method to nothing but a loop.
+
+	// Allows us to map the "MODERATE" to the conventional "medium" and support
+	// the capital cased values that are returned from GitHub's API.
 	mapping := map[string]metadata.AttributeCveSeverity{
-		"LOW":      metadata.AttributeCveSeverityLow,
-		"MODERATE": metadata.AttributeCveSeverityMedium,
-		"HIGH":     metadata.AttributeCveSeverityHigh,
 		"CRITICAL": metadata.AttributeCveSeverityCritical,
+		"HIGH":     metadata.AttributeCveSeverityHigh,
+		"MODERATE": metadata.AttributeCveSeverityMedium,
+		"LOW":      metadata.AttributeCveSeverityLow,
 	}
-	output := make(map[metadata.AttributeCveSeverity]int64)
+	sevs := make(map[metadata.AttributeCveSeverity]int64)
 
 	for _, a := range n.VulnerabilityAlerts.Nodes {
-		output[mapping[string(a.SecurityVulnerability.Severity)]]++
+		sevs[mapping[string(a.SecurityVulnerability.Severity)]]++
 	}
 
-	return output
+	return sevs
 }
