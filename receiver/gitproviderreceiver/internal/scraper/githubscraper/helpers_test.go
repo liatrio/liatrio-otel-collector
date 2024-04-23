@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
+
 	"github.com/Khan/genqlient/graphql"
 	"github.com/google/go-github/v61/github"
 	"github.com/stretchr/testify/assert"
@@ -1209,6 +1211,78 @@ func TestGetRepoCVEs(t *testing.T) {
 			} else {
 				assert.EqualError(t, err, tc.expectedErr.Error())
 			}
+		})
+	}
+}
+
+func TestAggregateSeverity(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		input    getRepoCVEsRepository
+		expected map[metadata.AttributeCveSeverity]int64
+	}{
+		{
+			desc: "TestSingleSeverity",
+			input: getRepoCVEsRepository{
+				VulnerabilityAlerts: getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+					Nodes: []CVENode{
+						{
+							SecurityVulnerability: CVENodeSecurityVulnerability{
+								Severity: "HIGH",
+							},
+						},
+					},
+				},
+			},
+			expected: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh: 1,
+			},
+		},
+		{
+			desc: "TestMultipleSeverities",
+			input: getRepoCVEsRepository{
+				VulnerabilityAlerts: getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+					Nodes: []CVENode{
+						{
+							SecurityVulnerability: CVENodeSecurityVulnerability{
+								Severity: "HIGH",
+							},
+						},
+						{
+							SecurityVulnerability: CVENodeSecurityVulnerability{
+								Severity: "LOW",
+							},
+						},
+						{
+							SecurityVulnerability: CVENodeSecurityVulnerability{
+								Severity: "MODERATE",
+							},
+						},
+						{
+							SecurityVulnerability: CVENodeSecurityVulnerability{
+								Severity: "HIGH",
+							},
+						},
+					},
+				},
+			},
+			expected: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh:   2,
+				metadata.AttributeCveSeverityLow:    1,
+				metadata.AttributeCveSeverityMedium: 1,
+			},
+		},
+		{
+			desc:     "TestEmptyInput",
+			input:    getRepoCVEsRepository{},
+			expected: map[metadata.AttributeCveSeverity]int64{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			actual := mapSeverities(tc.input)
+			assert.Equal(t, tc.expected, actual)
 		})
 	}
 }
