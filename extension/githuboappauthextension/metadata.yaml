@@ -1,0 +1,10 @@
+---
+type: githubappauth
+
+status:
+  class: extension
+  stability:
+    alpha: [extension]
+
+tests:
+  config:
