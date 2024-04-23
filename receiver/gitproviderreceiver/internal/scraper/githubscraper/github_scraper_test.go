@@ -171,6 +171,26 @@ func TestScrape(t *testing.T) {
 					},
 					responseCode: http.StatusOK,
 				},
+				cveResponse: cveResponse{
+					cves: []getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+						{
+							TotalCount: 2,
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "HIGH",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "MODERATE",
+									},
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
 			}),
 			testFile: "expected_happy_path.yaml",
 		},
@@ -181,6 +201,8 @@ func TestScrape(t *testing.T) {
 			defer server.Close()
 
 			cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+
+			cfg.Metrics.GitRepositoryCveCount.Enabled = true
 
 			ghs := newGitHubScraper(context.Background(), receivertest.NewNopCreateSettings(), cfg)
 			ghs.cfg.GitHubOrg = "liatrio"
