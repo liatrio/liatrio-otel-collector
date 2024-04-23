@@ -377,9 +377,6 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo1",
-									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
-									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -405,17 +402,9 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo1",
-									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-									//	TotalCount: 0,
-									//	Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
-									//},
 								},
 								&SearchNodeRepository{
 									Name: "repo2",
-									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-									//	TotalCount: 0,
-									//	Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
-									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -427,17 +416,9 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo3",
-									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-									//	TotalCount: 0,
-									//	Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
-									//},
 								},
 								&SearchNodeRepository{
 									Name: "repo4",
-									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-									//	TotalCount: 0,
-									//	Nodes:      []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
-									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -463,21 +444,6 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo1",
-									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-									//	TotalCount: 2,
-									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-									//		{
-									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-									//				Severity: "HIGH",
-									//			},
-									//		},
-									//		{
-									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-									//				Severity: "LOW",
-									//			},
-									//		},
-									//	},
-									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -503,39 +469,9 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo1",
-									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-									//	TotalCount: 2,
-									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-									//		{
-									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-									//				Severity: "HIGH",
-									//			},
-									//		},
-									//		{
-									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-									//				Severity: "LOW",
-									//			},
-									//		},
-									//	},
-									//},
 								},
 								&SearchNodeRepository{
 									Name: "repo2",
-									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-									//	TotalCount: 2,
-									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-									//		{
-									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-									//				Severity: "HIGH",
-									//			},
-									//		},
-									//		{
-									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-									//				Severity: "LOW",
-									//			},
-									//		},
-									//	},
-									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -547,39 +483,9 @@ func TestGetRepos(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo3",
-									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-									//	TotalCount: 2,
-									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-									//		{
-									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-									//				Severity: "HIGH",
-									//			},
-									//		},
-									//		{
-									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-									//				Severity: "LOW",
-									//			},
-									//		},
-									//	},
-									//},
 								},
 								&SearchNodeRepository{
 									Name: "repo4",
-									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-									//	TotalCount: 2,
-									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-									//		{
-									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-									//				Severity: "HIGH",
-									//			},
-									//		},
-									//		{
-									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-									//				Severity: "LOW",
-									//			},
-									//		},
-									//	},
-									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{

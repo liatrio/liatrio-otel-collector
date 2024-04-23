@@ -80,20 +80,6 @@ func TestScrape(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Name: "repo1",
-									//VulnerabilityAlerts: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
-									//	Nodes: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-									//		{
-									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-									//				Severity: "HIGH",
-									//			},
-									//		},
-									//		{
-									//			SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-									//				Severity: "LOW",
-									//			},
-									//		},
-									//	},
-									//},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
