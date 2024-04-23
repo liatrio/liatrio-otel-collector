@@ -87,7 +87,7 @@ func TestMetricsBuilder(t *testing.T) {
 			mb.RecordGitRepositoryCountDataPoint(ts, 1)
 
 			allMetricsCount++
-			mb.RecordGitRepositoryCveCountDataPoint(ts, 1, "repository.name-val", AttributeCveSeverityCritical, "cve.cvss-val")
+			mb.RecordGitRepositoryCveCountDataPoint(ts, 1, "repository.name-val", AttributeCveSeverityCritical)
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -280,9 +280,6 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("cve.severity")
 					assert.True(t, ok)
 					assert.EqualValues(t, "critical", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("cve.cvss")
-					assert.True(t, ok)
-					assert.EqualValues(t, "cve.cvss-val", attrVal.Str())
 				case "git.repository.pull_request.count":
 					assert.False(t, validatedMetrics["git.repository.pull_request.count"], "Found a duplicate in the metrics slice: git.repository.pull_request.count")
 					validatedMetrics["git.repository.pull_request.count"] = true

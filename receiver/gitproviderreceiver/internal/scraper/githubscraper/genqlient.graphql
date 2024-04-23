@@ -205,16 +205,11 @@ query getRepoCVEs($owner: String!, $repo: String!) {
         hasNextPage
         endCursor
       }
+      # @genqlient(typename: "CVENode")
       nodes {
         id
         securityVulnerability {
           severity
-          advisory {
-            cvss {
-              score
-              vectorString
-            }
-          }
         }
       }
     }

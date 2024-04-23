@@ -2,9 +2,9 @@ package githubscraper
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
 	"math"
 	"net/url"
 	"time"
@@ -308,7 +308,7 @@ func getAge(start time.Time, end time.Time) int64 {
 	return int64(end.Sub(start).Seconds())
 }
 
-func (ghs *githubScraper) getRepoCVEs(
+func (ghs *githubScraper) getCVEs(
 	ctx context.Context,
 	client graphql.Client,
 	repo string,
@@ -321,53 +321,22 @@ func (ghs *githubScraper) getRepoCVEs(
 	return scores
 }
 
-type CveOutput struct {
-	Severities map[string][]float64
-}
-
-func (c *CveOutput) Count(severity string) int64 {
-	if len(c.Severities[severity]) == 0 {
-		return 0
+func getMapOfCVEScoresGroupedByScore(
+	n getRepoCVEsRepository,
+) map[metadata.AttributeCveSeverity]int64 {
+	// Allows us to map the "MODERATE" to our expected "MEDIUM", while keeping
+	// the logic in the method to nothing but a loop.
+	mapping := map[string]metadata.AttributeCveSeverity{
+		"LOW":      metadata.AttributeCveSeverityLow,
+		"MODERATE": metadata.AttributeCveSeverityMedium,
+		"HIGH":     metadata.AttributeCveSeverityHigh,
+		"CRITICAL": metadata.AttributeCveSeverityCritical,
 	}
-	return int64(len(c.Severities[severity]))
-}
-
-func (c *CveOutput) ToJson(severity string) string {
-	if len(c.Severities[severity]) > 0 {
-		j, err := json.Marshal(c.Severities[severity])
-		if err != nil {
-			return ""
-		}
-		return string(j)
-	}
-
-	return ""
-}
-
-func getMapOfCVEScoresGroupedByScore(n getRepoCVEsRepository) CveOutput {
-	var cveOutput CveOutput
-	cveOutput.Severities = make(map[string][]float64)
+	output := make(map[metadata.AttributeCveSeverity]int64)
 
 	for _, a := range n.VulnerabilityAlerts.Nodes {
-		score := a.SecurityVulnerability.Advisory.Cvss.Score
-		severity := getSeverityLabel(score)
-		cveOutput.Severities[severity] = append(cveOutput.Severities[severity], score)
+		output[mapping[string(a.SecurityVulnerability.Severity)]]++
 	}
 
-	return cveOutput
-}
-
-func getSeverityLabel(score float64) string {
-	switch {
-	case score == 0:
-		return "none"
-	case score <= 3.9:
-		return "low"
-	case score <= 6.9:
-		return "medium"
-	case score <= 8.9:
-		return "high"
-	default:
-		return "critical"
-	}
+	return output
 }

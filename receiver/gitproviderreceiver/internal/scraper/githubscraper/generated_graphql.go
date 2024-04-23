@@ -81,6 +81,36 @@ type BranchNodeRepositoryDefaultBranchRef struct {
 // GetName returns BranchNodeRepositoryDefaultBranchRef.Name, and is useful for accessing the field via an interface.
 func (v *BranchNodeRepositoryDefaultBranchRef) GetName() string { return v.Name }
 
+// CVENode includes the requested fields of the GraphQL type RepositoryVulnerabilityAlert.
+// The GraphQL type's documentation follows.
+//
+// A Dependabot alert for a repository with a dependency affected by a security vulnerability.
+type CVENode struct {
+	Id string `json:"id"`
+	// The associated security vulnerability
+	SecurityVulnerability CVENodeSecurityVulnerability `json:"securityVulnerability"`
+}
+
+// GetId returns CVENode.Id, and is useful for accessing the field via an interface.
+func (v *CVENode) GetId() string { return v.Id }
+
+// GetSecurityVulnerability returns CVENode.SecurityVulnerability, and is useful for accessing the field via an interface.
+func (v *CVENode) GetSecurityVulnerability() CVENodeSecurityVulnerability {
+	return v.SecurityVulnerability
+}
+
+// CVENodeSecurityVulnerability includes the requested fields of the GraphQL type SecurityVulnerability.
+// The GraphQL type's documentation follows.
+//
+// An individual vulnerability within an Advisory
+type CVENodeSecurityVulnerability struct {
+	// The severity of the vulnerability within this package
+	Severity SecurityAdvisorySeverity `json:"severity"`
+}
+
+// GetSeverity returns CVENodeSecurityVulnerability.Severity, and is useful for accessing the field via an interface.
+func (v *CVENodeSecurityVulnerability) GetSeverity() SecurityAdvisorySeverity { return v.Severity }
+
 // CommitNode includes the requested fields of the GraphQL type Ref.
 // The GraphQL type's documentation follows.
 //
@@ -1144,7 +1174,7 @@ type getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnect
 	// Information to aid in pagination.
 	PageInfo getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo `json:"pageInfo"`
 	// A list of nodes.
-	Nodes []getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert `json:"nodes"`
+	Nodes []CVENode `json:"nodes"`
 }
 
 // GetTotalCount returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection.TotalCount, and is useful for accessing the field via an interface.
@@ -1158,84 +1188,8 @@ func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertCon
 }
 
 // GetNodes returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection.Nodes, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection) GetNodes() []getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert {
+func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection) GetNodes() []CVENode {
 	return v.Nodes
-}
-
-// getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert includes the requested fields of the GraphQL type RepositoryVulnerabilityAlert.
-// The GraphQL type's documentation follows.
-//
-// A Dependabot alert for a repository with a dependency affected by a security vulnerability.
-type getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert struct {
-	Id string `json:"id"`
-	// The associated security vulnerability
-	SecurityVulnerability getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability `json:"securityVulnerability"`
-}
-
-// GetId returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert.Id, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert) GetId() string {
-	return v.Id
-}
-
-// GetSecurityVulnerability returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert.SecurityVulnerability, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert) GetSecurityVulnerability() getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability {
-	return v.SecurityVulnerability
-}
-
-// getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability includes the requested fields of the GraphQL type SecurityVulnerability.
-// The GraphQL type's documentation follows.
-//
-// An individual vulnerability within an Advisory
-type getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability struct {
-	// The severity of the vulnerability within this package
-	Severity SecurityAdvisorySeverity `json:"severity"`
-	// The Advisory associated with this Vulnerability
-	Advisory getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisory `json:"advisory"`
-}
-
-// GetSeverity returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability.Severity, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability) GetSeverity() SecurityAdvisorySeverity {
-	return v.Severity
-}
-
-// GetAdvisory returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability.Advisory, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability) GetAdvisory() getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisory {
-	return v.Advisory
-}
-
-// getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisory includes the requested fields of the GraphQL type SecurityAdvisory.
-// The GraphQL type's documentation follows.
-//
-// A GitHub Security Advisory
-type getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisory struct {
-	// The CVSS associated with this advisory
-	Cvss getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisoryCvssCVSS `json:"cvss"`
-}
-
-// GetCvss returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisory.Cvss, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisory) GetCvss() getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisoryCvssCVSS {
-	return v.Cvss
-}
-
-// getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisoryCvssCVSS includes the requested fields of the GraphQL type CVSS.
-// The GraphQL type's documentation follows.
-//
-// The Common Vulnerability Scoring System
-type getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisoryCvssCVSS struct {
-	// The CVSS score associated with this advisory
-	Score float64 `json:"score"`
-	// The CVSS vector string associated with this advisory
-	VectorString string `json:"vectorString"`
-}
-
-// GetScore returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisoryCvssCVSS.Score, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisoryCvssCVSS) GetScore() float64 {
-	return v.Score
-}
-
-// GetVectorString returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisoryCvssCVSS.VectorString, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerabilityAdvisorySecurityAdvisoryCvssCVSS) GetVectorString() string {
-	return v.VectorString
 }
 
 // getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
@@ -1699,12 +1653,6 @@ query getRepoCVEs ($owner: String!, $repo: String!) {
 				id
 				securityVulnerability {
 					severity
-					advisory {
-						cvss {
-							score
-							vectorString
-						}
-					}
 				}
 			}
 		}

@@ -207,7 +207,6 @@ The number of Common Vulnerabilities and Exposures (CVEs) in the repository
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
 | cve.severity | The severity of the CVE | Str: ``critical``, ``high``, ``medium``, ``low``, ``none`` |
-| cve.cvss | The list of CVEs | Any Str |
 
 ## Resource Attributes
 

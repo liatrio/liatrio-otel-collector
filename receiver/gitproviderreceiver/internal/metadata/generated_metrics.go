@@ -502,7 +502,7 @@ func (m *metricGitRepositoryCveCount) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricGitRepositoryCveCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, cveSeverityAttributeValue string, cveCvssAttributeValue string) {
+func (m *metricGitRepositoryCveCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, cveSeverityAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -512,7 +512,6 @@ func (m *metricGitRepositoryCveCount) recordDataPoint(start pcommon.Timestamp, t
 	dp.SetIntValue(val)
 	dp.Attributes().PutStr("repository.name", repositoryNameAttributeValue)
 	dp.Attributes().PutStr("cve.severity", cveSeverityAttributeValue)
-	dp.Attributes().PutStr("cve.cvss", cveCvssAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -936,8 +935,8 @@ func (mb *MetricsBuilder) RecordGitRepositoryCountDataPoint(ts pcommon.Timestamp
 }
 
 // RecordGitRepositoryCveCountDataPoint adds a data point to git.repository.cve.count metric.
-func (mb *MetricsBuilder) RecordGitRepositoryCveCountDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, cveSeverityAttributeValue AttributeCveSeverity, cveCvssAttributeValue string) {
-	mb.metricGitRepositoryCveCount.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, cveSeverityAttributeValue.String(), cveCvssAttributeValue)
+func (mb *MetricsBuilder) RecordGitRepositoryCveCountDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, cveSeverityAttributeValue AttributeCveSeverity) {
+	mb.metricGitRepositoryCveCount.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, cveSeverityAttributeValue.String())
 }
 
 // RecordGitRepositoryPullRequestCountDataPoint adds a data point to git.repository.pull_request.count metric.

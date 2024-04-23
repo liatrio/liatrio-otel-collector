@@ -148,11 +148,11 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			// When enabled, process any CVEs for the repository
 			if ghs.cfg.Metrics.GitRepositoryCveCount.Enabled {
-				cves := ghs.getRepoCVEs(ctx, genClient, name)
+				cves := ghs.getCVEs(ctx, genClient, name)
 				if len(cves.Repository.VulnerabilityAlerts.Nodes) > 0 {
 					ags := getMapOfCVEScoresGroupedByScore(cves.GetRepository())
-					for severity := range ags.Severities {
-						ghs.mb.RecordGitRepositoryCveCountDataPoint(now, ags.Count(severity), name, metadata.MapAttributeCveSeverity[severity], ags.ToJson(severity))
+					for severity, total := range ags {
+						ghs.mb.RecordGitRepositoryCveCountDataPoint(now, total, name, severity)
 					}
 				}
 			}
