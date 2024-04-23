@@ -25,6 +25,7 @@ type responses struct {
 	commitResponse     commitResponse
 	checkLoginResponse loginResponse
 	contribResponse    contribResponse
+	cveResponse        cveResponse
 	//vulnerabilityResponse vulnerabilityResponse
 	scrape bool
 }
@@ -66,6 +67,12 @@ type loginResponse struct {
 
 type contribResponse struct {
 	contribs     [][]*github.Contributor
+	responseCode int
+	page         int
+}
+
+type cveResponse struct {
+	cves         []getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection
 	responseCode int
 	page         int
 }
@@ -158,6 +165,22 @@ func MockServer(responses *responses) *http.ServeMux {
 					return
 				}
 				commitResp.page++
+			}
+
+		case reqBody.OpName == "getRepoCVEs":
+			cveResp := &responses.cveResponse
+			w.WriteHeader(cveResp.responseCode)
+			if cveResp.responseCode == http.StatusOK {
+				cves := getRepoCVEsResponse{
+					Repository: getRepoCVEsRepository{
+						VulnerabilityAlerts: cveResp.cves[cveResp.page],
+					},
+				}
+				graphqlResponse := graphql.Response{Data: &cves}
+				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
+					return
+				}
+				cveResp.page++
 			}
 		}
 	})
@@ -1132,66 +1155,60 @@ func TestGetCommitInfo(t *testing.T) {
 	}
 }
 
-//func TestAggregateSeverity(t *testing.T) {
-//	testCases := []struct {
-//		desc     string
-//		input    []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert
-//		expected map[string]int
-//	}{
-//		{
-//			desc: "TestSingleSeverity",
-//			input: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-//				{
-//					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-//						Severity: "HIGH",
-//					},
-//				},
-//			},
-//			expected: map[string]int{
-//				"HIGH": 1,
-//			},
-//		},
-//		{
-//			desc: "TestMultipleSeverities",
-//			input: []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{
-//				{
-//					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-//						Severity: "HIGH",
-//					},
-//				},
-//				{
-//					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-//						Severity: "LOW",
-//					},
-//				},
-//				{
-//					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-//						Severity: "MEDIUM",
-//					},
-//				},
-//				{
-//					SecurityVulnerability: SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlertSecurityVulnerability{
-//						Severity: "HIGH",
-//					},
-//				},
-//			},
-//			expected: map[string]int{
-//				"HIGH":   2,
-//				"LOW":    1,
-//				"MEDIUM": 1,
-//			},
-//		},
-//		{
-//			desc:     "TestEmptyInput",
-//			input:    []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionNodesRepositoryVulnerabilityAlert{},
-//			expected: map[string]int{},
-//		},
-//	}
-//
-//	for _, tc := range testCases {
-//		t.Run(tc.desc, func(t *testing.T) {
-//			actual := aggregateSeverity(tc.input)
-//			assert.Equal(t, tc.expected, actual)
-//		})
-//	}
-//}
+func TestGetRepoCVEs(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		server           *http.ServeMux
+		expectedErr      error
+		expectedCVECount int
+	}{
+		{
+			desc: "TestSinglePageResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				cveResponse: cveResponse{
+					cves: []getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+						{
+							TotalCount: 1,
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "HIGH",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "MODERATE",
+									},
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:      nil,
+			expectedCVECount: 2,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
+			client := graphql.NewClient(server.URL, ghs.client)
+
+			cves, err := ghs.getCVEs(context.Background(), client, "repo1")
+
+			assert.Equal(t, tc.expectedCVECount, len(cves.Repository.VulnerabilityAlerts.Nodes))
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+		})
+	}
+}
