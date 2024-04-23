@@ -313,13 +313,13 @@ func (ghs *githubScraper) getCVEs(
 	ctx context.Context,
 	client graphql.Client,
 	repo string,
-) *getRepoCVEsResponse {
+) (*getRepoCVEsResponse, error) {
 	cves, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo)
 	if err != nil {
 		ghs.logger.Sugar().Errorf("error getting CVE data from repo: %v", zap.Error(err))
 	}
 
-	return cves
+	return cves, err
 }
 
 func mapSeverities(
