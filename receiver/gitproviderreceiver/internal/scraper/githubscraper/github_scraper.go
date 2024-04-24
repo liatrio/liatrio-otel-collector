@@ -150,7 +150,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			if ghs.cfg.Metrics.GitRepositoryCveCount.Enabled {
 				cves, err := ghs.getCVEs(ctx, genClient, name)
 				if err != nil {
-					ghs.logger.Sugar().Errorf("error %v getting cves from repo %s", zap.Error(err), repo.Name)
+					ghs.logger.Sugar().Errorf("error %v getting cves from repo %s", zap.Error(err), name)
 				}
 
 				if len(cves.Repository.VulnerabilityAlerts.Nodes) > 0 {
