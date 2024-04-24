@@ -527,7 +527,6 @@ func TestGetRepos(t *testing.T) {
 
 			//var totalVulnerabilities int
 			//for _, v := range sn {
-			//	assert.Equal(t, len(v.VulnerabilityAlerts.Nodes), v.VulnerabilityAlerts.TotalCount)
 			//	totalVulnerabilities += len(v.VulnerabilityAlerts.Nodes)
 			//}
 
@@ -1077,7 +1076,6 @@ func TestGetRepoCVEs(t *testing.T) {
 				cveResponse: cveResponse{
 					cves: []getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
 						{
-							TotalCount: 1,
 							Nodes: []CVENode{
 								{
 									SecurityVulnerability: CVENodeSecurityVulnerability{

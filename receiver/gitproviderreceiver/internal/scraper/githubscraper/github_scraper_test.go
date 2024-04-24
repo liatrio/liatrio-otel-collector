@@ -160,7 +160,6 @@ func TestScrape(t *testing.T) {
 				cveResponse: cveResponse{
 					cves: []getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
 						{
-							TotalCount: 2,
 							Nodes: []CVENode{
 								{
 									SecurityVulnerability: CVENodeSecurityVulnerability{

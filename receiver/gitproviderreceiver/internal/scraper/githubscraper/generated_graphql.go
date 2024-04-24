@@ -1169,17 +1169,10 @@ func (v *getRepoCVEsRepository) GetVulnerabilityAlerts() getRepoCVEsRepositoryVu
 //
 // The connection type for RepositoryVulnerabilityAlert.
 type getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection struct {
-	// Identifies the total count of items in the connection.
-	TotalCount int `json:"totalCount"`
 	// Information to aid in pagination.
 	PageInfo getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo `json:"pageInfo"`
 	// A list of nodes.
 	Nodes []CVENode `json:"nodes"`
-}
-
-// GetTotalCount returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection.TotalCount, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection) GetTotalCount() int {
-	return v.TotalCount
 }
 
 // GetPageInfo returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection.PageInfo, and is useful for accessing the field via an interface.
@@ -1644,7 +1637,6 @@ const getRepoCVEs_Operation = `
 query getRepoCVEs ($owner: String!, $repo: String!) {
 	repository(owner: $owner, name: $repo) {
 		vulnerabilityAlerts(first: 100, states: OPEN) {
-			totalCount
 			pageInfo {
 				hasNextPage
 				endCursor
