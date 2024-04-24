@@ -28,8 +28,7 @@ type responses struct {
 	checkLoginResponse loginResponse
 	contribResponse    contribResponse
 	cveResponse        cveResponse
-	//vulnerabilityResponse vulnerabilityResponse
-	scrape bool
+	scrape             bool
 }
 
 type repoResponse struct {
@@ -43,12 +42,6 @@ type prResponse struct {
 	responseCode int
 	page         int
 }
-
-//type vulnerabilityResponse struct {
-//	vulns        []SearchNodeVulnerabilityAlertsRepositoryVulnerabilityAlertConnection
-//	responseCode int
-//	page         int
-//}
 
 type branchResponse struct {
 	branches     []getBranchDataRepositoryRefsRefConnection
