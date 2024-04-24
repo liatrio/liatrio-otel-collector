@@ -315,9 +315,6 @@ func (ghs *githubScraper) getCVEs(
 	repo string,
 ) (*getRepoCVEsResponse, error) {
 	cves, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("error getting CVE data from repo: %v", zap.Error(err))
-	}
 
 	return cves, err
 }
