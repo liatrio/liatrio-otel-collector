@@ -313,10 +313,13 @@ func (ghs *githubScraper) getCVEs(
 	ctx context.Context,
 	client graphql.Client,
 	repo string,
-) (*getRepoCVEsResponse, error) {
-	cves, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo)
+) (map[metadata.AttributeCveSeverity]int64, error) {
+	c, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo)
+	if err != nil {
+		return nil, err
+	}
 
-	return cves, err
+	return mapSeverities(c.GetRepository()), nil
 }
 
 func mapSeverities(
@@ -331,13 +334,13 @@ func mapSeverities(
 		"MODERATE": metadata.AttributeCveSeverityMedium,
 		"LOW":      metadata.AttributeCveSeverityLow,
 	}
-	sevs := make(map[metadata.AttributeCveSeverity]int64)
+	l := make(map[metadata.AttributeCveSeverity]int64)
 
 	for _, node := range n.VulnerabilityAlerts.Nodes {
 		if val, found := mapping[string(node.SecurityVulnerability.Severity)]; found {
-			sevs[val]++
+			l[val]++
 		}
 	}
 
-	return sevs
+	return l
 }

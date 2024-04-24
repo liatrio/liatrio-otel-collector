@@ -1092,7 +1092,7 @@ func TestGetRepoCVEs(t *testing.T) {
 			defer server.Close()
 			client := graphql.NewClient(server.URL, ghs.client)
 
-			cves, err := ghs.getCVEs(context.Background(), client, "repo1")
+			cves, err := getRepoCVEs(context.Background(), client, "test1", "repo1")
 
 			assert.Equal(t, tc.expectedCVECount, len(cves.Repository.VulnerabilityAlerts.Nodes))
 			if tc.expectedErr == nil {
