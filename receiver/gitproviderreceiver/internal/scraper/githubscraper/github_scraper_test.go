@@ -158,7 +158,7 @@ func TestScrape(t *testing.T) {
 					responseCode: http.StatusOK,
 				},
 				cveResponse: cveResponse{
-					cves: []getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+					cves: []VulnerabilityAlerts{
 						{
 							Nodes: []CVENode{
 								{

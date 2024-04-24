@@ -199,6 +199,7 @@ query getPullRequestData(
 
 query getRepoCVEs($owner: String!, $repo: String!) {
   repository(owner: $owner, name: $repo, ) {
+    # @genqlient(typename: "VulnerabilityAlerts")
     vulnerabilityAlerts(first: 100, states: OPEN) {
       pageInfo {
         hasNextPage

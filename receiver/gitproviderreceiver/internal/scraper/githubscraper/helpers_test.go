@@ -67,7 +67,7 @@ type contribResponse struct {
 }
 
 type cveResponse struct {
-	cves         []getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection
+	cves         []VulnerabilityAlerts
 	responseCode int
 	page         int
 }
@@ -1059,7 +1059,7 @@ func TestGetRepoCVEs(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				cveResponse: cveResponse{
-					cves: []getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+					cves: []VulnerabilityAlerts{
 						{
 							Nodes: []CVENode{
 								{
@@ -1113,7 +1113,7 @@ func TestAggregateSeverity(t *testing.T) {
 		{
 			desc: "TestSingleSeverity",
 			input: getRepoCVEsRepository{
-				VulnerabilityAlerts: getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+				VulnerabilityAlerts: VulnerabilityAlerts{
 					Nodes: []CVENode{
 						{
 							SecurityVulnerability: CVENodeSecurityVulnerability{
@@ -1130,7 +1130,7 @@ func TestAggregateSeverity(t *testing.T) {
 		{
 			desc: "TestMultipleSeverities",
 			input: getRepoCVEsRepository{
-				VulnerabilityAlerts: getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection{
+				VulnerabilityAlerts: VulnerabilityAlerts{
 					Nodes: []CVENode{
 						{
 							SecurityVulnerability: CVENodeSecurityVulnerability{

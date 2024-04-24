@@ -840,6 +840,40 @@ const (
 	SecurityAdvisorySeverityCritical SecurityAdvisorySeverity = "CRITICAL"
 )
 
+// VulnerabilityAlerts includes the requested fields of the GraphQL type RepositoryVulnerabilityAlertConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for RepositoryVulnerabilityAlert.
+type VulnerabilityAlerts struct {
+	// Information to aid in pagination.
+	PageInfo VulnerabilityAlertsPageInfo `json:"pageInfo"`
+	// A list of nodes.
+	Nodes []CVENode `json:"nodes"`
+}
+
+// GetPageInfo returns VulnerabilityAlerts.PageInfo, and is useful for accessing the field via an interface.
+func (v *VulnerabilityAlerts) GetPageInfo() VulnerabilityAlertsPageInfo { return v.PageInfo }
+
+// GetNodes returns VulnerabilityAlerts.Nodes, and is useful for accessing the field via an interface.
+func (v *VulnerabilityAlerts) GetNodes() []CVENode { return v.Nodes }
+
+// VulnerabilityAlertsPageInfo includes the requested fields of the GraphQL type PageInfo.
+// The GraphQL type's documentation follows.
+//
+// Information about pagination in a connection.
+type VulnerabilityAlertsPageInfo struct {
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
+}
+
+// GetHasNextPage returns VulnerabilityAlertsPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *VulnerabilityAlertsPageInfo) GetHasNextPage() bool { return v.HasNextPage }
+
+// GetEndCursor returns VulnerabilityAlertsPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *VulnerabilityAlertsPageInfo) GetEndCursor() string { return v.EndCursor }
+
 // __checkLoginInput is used internally by genqlient
 type __checkLoginInput struct {
 	Login string `json:"login"`
@@ -1156,54 +1190,12 @@ func (v *getPullRequestDataResponse) GetRepository() getPullRequestDataRepositor
 // A repository contains the content for a project.
 type getRepoCVEsRepository struct {
 	// A list of vulnerability alerts that are on this repository.
-	VulnerabilityAlerts getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection `json:"vulnerabilityAlerts"`
+	VulnerabilityAlerts VulnerabilityAlerts `json:"vulnerabilityAlerts"`
 }
 
 // GetVulnerabilityAlerts returns getRepoCVEsRepository.VulnerabilityAlerts, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepository) GetVulnerabilityAlerts() getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection {
+func (v *getRepoCVEsRepository) GetVulnerabilityAlerts() VulnerabilityAlerts {
 	return v.VulnerabilityAlerts
-}
-
-// getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection includes the requested fields of the GraphQL type RepositoryVulnerabilityAlertConnection.
-// The GraphQL type's documentation follows.
-//
-// The connection type for RepositoryVulnerabilityAlert.
-type getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection struct {
-	// Information to aid in pagination.
-	PageInfo getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo `json:"pageInfo"`
-	// A list of nodes.
-	Nodes []CVENode `json:"nodes"`
-}
-
-// GetPageInfo returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection.PageInfo, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection) GetPageInfo() getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo {
-	return v.PageInfo
-}
-
-// GetNodes returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection.Nodes, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnection) GetNodes() []CVENode {
-	return v.Nodes
-}
-
-// getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
-// The GraphQL type's documentation follows.
-//
-// Information about pagination in a connection.
-type getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo struct {
-	// When paginating forwards, are there more items?
-	HasNextPage bool `json:"hasNextPage"`
-	// When paginating forwards, the cursor to continue.
-	EndCursor string `json:"endCursor"`
-}
-
-// GetHasNextPage returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo) GetHasNextPage() bool {
-	return v.HasNextPage
-}
-
-// GetEndCursor returns getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
-func (v *getRepoCVEsRepositoryVulnerabilityAlertsRepositoryVulnerabilityAlertConnectionPageInfo) GetEndCursor() string {
-	return v.EndCursor
 }
 
 // getRepoCVEsResponse is returned by getRepoCVEs on success.
