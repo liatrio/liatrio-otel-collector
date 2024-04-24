@@ -193,6 +193,21 @@ Total number of unique contributors to a repository
 | ---- | ----------- | ------ |
 | repository.name | The full name of the Git repository | Any Str |
 
+### git.repository.cve.count
+
+The number of Common Vulnerabilities and Exposures (CVEs) in the repository
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| {cve} | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The full name of the Git repository | Any Str |
+| cve.severity | The severity of the CVE | Str: ``critical``, ``high``, ``medium``, ``low``, ``none`` |
+
 ## Resource Attributes
 
 | Name | Description | Values | Enabled |

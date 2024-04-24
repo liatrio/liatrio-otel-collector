@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
+
 	"github.com/Khan/genqlient/graphql"
 	"github.com/google/go-github/v61/github"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -305,4 +307,40 @@ func (ghs *githubScraper) getCommitInfo(
 // Get the age/duration between two times in seconds.
 func getAge(start time.Time, end time.Time) int64 {
 	return int64(end.Sub(start).Seconds())
+}
+
+func (ghs *githubScraper) getCVEs(
+	ctx context.Context,
+	client graphql.Client,
+	repo string,
+) (map[metadata.AttributeCveSeverity]int64, error) {
+	c, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapSeverities(c.GetRepository()), nil
+}
+
+func mapSeverities(
+	n getRepoCVEsRepository,
+) map[metadata.AttributeCveSeverity]int64 {
+
+	// Allows us to map the "MODERATE" to the conventional "medium" and support
+	// the capital cased values that are returned from GitHub's API.
+	mapping := map[string]metadata.AttributeCveSeverity{
+		"CRITICAL": metadata.AttributeCveSeverityCritical,
+		"HIGH":     metadata.AttributeCveSeverityHigh,
+		"MODERATE": metadata.AttributeCveSeverityMedium,
+		"LOW":      metadata.AttributeCveSeverityLow,
+	}
+	m := make(map[metadata.AttributeCveSeverity]int64)
+
+	for _, node := range n.VulnerabilityAlerts.Nodes {
+		if val, found := mapping[string(node.SecurityVulnerability.Severity)]; found {
+			m[val]++
+		}
+	}
+
+	return m
 }
