@@ -1104,7 +1104,7 @@ func TestGetRepoCVEs(t *testing.T) {
 	}
 }
 
-func TestAggregateSeverity(t *testing.T) {
+func TestMapSeverities(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		input    getRepoCVEsRepository
