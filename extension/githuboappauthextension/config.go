@@ -11,9 +11,11 @@ import (
 )
 
 var (
-	errNoClientIDProvided     = errors.New("no ClientID provided in the GitHub App Auth exporter configuration")
-	errNoTokenURLProvided     = errors.New("no TokenURL provided in OAuth Client Credentials configuration")
-	errNoClientSecretProvided = errors.New("no ClientSecret provided in OAuth Client Credentials configuration")
+	errNoGitHubAppIDProvided      = errors.New("no GitHub App ID provided in the GitHub App Auth extension configuration")
+	errNoGitHubPrivateKeyProvided = errors.New("no GitHub App Private Key provided in the GitHub App Auth extension configuration")
+	errNoClientIDProvided         = errors.New("no ClientID provided in the GitHub App Auth exporter configuration")
+	errNoTokenURLProvided         = errors.New("no TokenURL provided in OAuth Client Credentials configuration")
+	errNoClientSecretProvided     = errors.New("no ClientSecret provided in OAuth Client Credentials configuration")
 )
 
 // Config stores the configuration for GitHub App Auth Client Credentials (2-legged GitHub App Auth flow) setup.
