@@ -337,7 +337,9 @@ func mapSeverities(
 	sevs := make(map[metadata.AttributeCveSeverity]int64)
 
 	for _, node := range n.VulnerabilityAlerts.Nodes {
-		sevs[mapping[string(node.SecurityVulnerability.Severity)]]++
+		if val, found := mapping[string(node.SecurityVulnerability.Severity)]; found {
+			sevs[val]++
+		}
 	}
 
 	return sevs

@@ -1166,6 +1166,21 @@ func TestAggregateSeverity(t *testing.T) {
 			input:    getRepoCVEsRepository{},
 			expected: map[metadata.AttributeCveSeverity]int64{},
 		},
+		{
+			desc: "TestBadInput",
+			input: getRepoCVEsRepository{
+				VulnerabilityAlerts: VulnerabilityAlerts{
+					Nodes: []CVENode{
+						{
+							SecurityVulnerability: CVENodeSecurityVulnerability{
+								Severity: "BAD_INPUT",
+							},
+						},
+					},
+				},
+			},
+			expected: map[metadata.AttributeCveSeverity]int64{},
+		},
 	}
 
 	for _, tc := range testCases {
