@@ -516,14 +516,6 @@ func TestGetRepos(t *testing.T) {
 			client := graphql.NewClient(server.URL, ghs.client)
 
 			_, count, err := ghs.getRepos(context.Background(), client, "fake query")
-			//sn, count, err := ghs.getRepos(context.Background(), client, "fake query")
-
-			//var totalVulnerabilities int
-			//for _, v := range sn {
-			//	totalVulnerabilities += len(v.VulnerabilityAlerts.Nodes)
-			//}
-
-			//assert.Equal(t, tc.expectedVulnerabilities, totalVulnerabilities)
 			assert.Equal(t, tc.expectedRepos, count)
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
