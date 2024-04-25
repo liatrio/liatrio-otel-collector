@@ -39,3 +39,12 @@ func newGitHubAppAuthenticator(cfg *Config, logger *zap.Logger) (*githubAppAuthe
 	// 	},
 	// }, nil
 }
+
+// TODO update this comment with additional details for contextual accuracy.
+// This is a wrapper function due to the requirements for the extension/auth
+// package requiring a function be passed to NewClient() whereas ghinstallation
+// auto creates the client but can't be returned as an extension component.
+func (g *githubAppAuthenticator) roundTripper(base http.RoundTripper) (http.RoundTripper, error) {
+
+    return g.client.Transport, nil
+}
