@@ -23,7 +23,7 @@ exporters:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awsxrayexporter v0.98.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awscloudwatchlogsexporter v0.98.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/influxdbexporter v0.98.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v0.98.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v0.99.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/zipkinexporter v0.98.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter v0.98.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/lokiexporter v0.98.0
