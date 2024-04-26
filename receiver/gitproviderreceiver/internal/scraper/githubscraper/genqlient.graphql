@@ -205,7 +205,7 @@ $alertCursor: String
 ) {
   repository(owner: $owner, name: $repo, ) {
     # @genqlient(typename: "VulnerabilityAlerts")
-    vulnerabilityAlerts(first: 100, after: $alertCursor) {
+    vulnerabilityAlerts(first: 100, states: OPEN, after: $alertCursor) {
       pageInfo {
         hasNextPage
         endCursor
