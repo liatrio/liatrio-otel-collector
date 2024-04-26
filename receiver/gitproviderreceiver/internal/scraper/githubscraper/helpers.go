@@ -319,21 +319,33 @@ func (ghs *githubScraper) getCVEs(
 	d := ghs.getDbotAlerts(ctx, client, repo)
 	c := ghs.getCodeScanAlerts(ctx, rClient, repo)
 
-	return mapSeverities(d.GetRepository(), c), nil
+	return mapSeverities(d, c), nil
 }
 
 func (ghs *githubScraper) getDbotAlerts(
 	ctx context.Context,
 	client graphql.Client,
-	repo string) *getRepoCVEsResponse {
+	repo string,
+) []CVENode {
 
-	c, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("error %v getting dependabot alerts from repo %s", zap.Error(err), repo)
-		return nil
+	var all []CVENode
+	var cursor *string
+
+	for hasNextPage := true; hasNextPage; {
+		alerts, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo, cursor)
+
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error %v getting dependabot alerts from repo %s", zap.Error(err), repo)
+			return nil
+		}
+
+		hasNextPage = alerts.Repository.VulnerabilityAlerts.PageInfo.HasNextPage
+		cursor = &alerts.Repository.VulnerabilityAlerts.PageInfo.EndCursor
+		all = append(all, alerts.Repository.VulnerabilityAlerts.Nodes...)
+
 	}
 
-	return c
+	return all
 }
 
 // Get the Code Scanning Alerts count for a repository via the REST API
@@ -370,7 +382,7 @@ func (ghs *githubScraper) getCodeScanAlerts(
 }
 
 func mapSeverities(
-	n getRepoCVEsRepository,
+	n []CVENode,
 	a []*github.Alert,
 ) map[metadata.AttributeCveSeverity]int64 {
 
@@ -385,7 +397,7 @@ func mapSeverities(
 	}
 	m := make(map[metadata.AttributeCveSeverity]int64)
 
-	for _, node := range n.VulnerabilityAlerts.Nodes {
+	for _, node := range n {
 		if val, found := mapping[string(node.SecurityVulnerability.Severity)]; found {
 			m[val]++
 		}
