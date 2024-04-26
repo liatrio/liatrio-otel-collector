@@ -960,8 +960,9 @@ func (v *__getPullRequestDataInput) GetPrStates() []PullRequestState { return v.
 
 // __getRepoCVEsInput is used internally by genqlient
 type __getRepoCVEsInput struct {
-	Owner string `json:"owner"`
-	Repo  string `json:"repo"`
+	Owner       string  `json:"owner"`
+	Repo        string  `json:"repo"`
+	AlertCursor *string `json:"alertCursor"`
 }
 
 // GetOwner returns __getRepoCVEsInput.Owner, and is useful for accessing the field via an interface.
@@ -969,6 +970,9 @@ func (v *__getRepoCVEsInput) GetOwner() string { return v.Owner }
 
 // GetRepo returns __getRepoCVEsInput.Repo, and is useful for accessing the field via an interface.
 func (v *__getRepoCVEsInput) GetRepo() string { return v.Repo }
+
+// GetAlertCursor returns __getRepoCVEsInput.AlertCursor, and is useful for accessing the field via an interface.
+func (v *__getRepoCVEsInput) GetAlertCursor() *string { return v.AlertCursor }
 
 // __getRepoDataBySearchInput is used internally by genqlient
 type __getRepoDataBySearchInput struct {
@@ -1626,9 +1630,9 @@ func getPullRequestData(
 
 // The query or mutation executed by getRepoCVEs.
 const getRepoCVEs_Operation = `
-query getRepoCVEs ($owner: String!, $repo: String!) {
+query getRepoCVEs ($owner: String!, $repo: String!, $alertCursor: String) {
 	repository(owner: $owner, name: $repo) {
-		vulnerabilityAlerts(first: 100, states: OPEN) {
+		vulnerabilityAlerts(first: 100, after: $alertCursor) {
 			pageInfo {
 				hasNextPage
 				endCursor
@@ -1649,13 +1653,15 @@ func getRepoCVEs(
 	client_ graphql.Client,
 	owner string,
 	repo string,
+	alertCursor *string,
 ) (*getRepoCVEsResponse, error) {
 	req_ := &graphql.Request{
 		OpName: "getRepoCVEs",
 		Query:  getRepoCVEs_Operation,
 		Variables: &__getRepoCVEsInput{
-			Owner: owner,
-			Repo:  repo,
+			Owner:       owner,
+			Repo:        repo,
+			AlertCursor: alertCursor,
 		},
 	}
 	var err_ error
