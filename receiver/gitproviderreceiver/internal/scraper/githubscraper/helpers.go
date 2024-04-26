@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
@@ -312,18 +313,65 @@ func getAge(start time.Time, end time.Time) int64 {
 func (ghs *githubScraper) getCVEs(
 	ctx context.Context,
 	client graphql.Client,
+	rClient *github.Client,
 	repo string,
 ) (map[metadata.AttributeCveSeverity]int64, error) {
+	d := ghs.getDbotAlerts(ctx, client, repo)
+	c := ghs.getCodeScanAlerts(ctx, rClient, repo)
+
+	return mapSeverities(d.GetRepository(), c), nil
+}
+
+func (ghs *githubScraper) getDbotAlerts(
+	ctx context.Context,
+	client graphql.Client,
+	repo string) *getRepoCVEsResponse {
+
 	c, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo)
 	if err != nil {
-		return nil, err
+		ghs.logger.Sugar().Errorf("error %v getting dependabot alerts from repo %s", zap.Error(err), repo)
+		return nil
 	}
 
-	return mapSeverities(c.GetRepository()), nil
+	return c
+}
+
+// Get the Code Scanning Alerts count for a repository via the REST API
+func (ghs *githubScraper) getCodeScanAlerts(
+	ctx context.Context,
+	client *github.Client,
+	repoName string,
+) []*github.Alert {
+	var all []*github.Alert
+
+	// Options for Pagination support, default from GitHub was 30
+	// https://docs.github.com/en/rest/repos/repos#list-repository-contributors
+	opt := &github.AlertListOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+		State:       "open",
+	}
+
+	for {
+		alerts, resp, err := client.CodeScanning.ListAlertsForRepo(ctx, ghs.cfg.GitHubOrg, repoName, opt)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting code scanning alerts from repo", zap.Error(err))
+			return nil
+		}
+
+		all = append(all, alerts...)
+		if resp.NextPage == 0 {
+			break
+		}
+
+		opt.ListOptions.Page = resp.NextPage
+	}
+
+	return all
 }
 
 func mapSeverities(
 	n getRepoCVEsRepository,
+	a []*github.Alert,
 ) map[metadata.AttributeCveSeverity]int64 {
 
 	// Allows us to map the "MODERATE" to the conventional "medium" and support
@@ -332,12 +380,19 @@ func mapSeverities(
 		"CRITICAL": metadata.AttributeCveSeverityCritical,
 		"HIGH":     metadata.AttributeCveSeverityHigh,
 		"MODERATE": metadata.AttributeCveSeverityMedium,
+		"MEDIUM":   metadata.AttributeCveSeverityMedium,
 		"LOW":      metadata.AttributeCveSeverityLow,
 	}
 	m := make(map[metadata.AttributeCveSeverity]int64)
 
 	for _, node := range n.VulnerabilityAlerts.Nodes {
 		if val, found := mapping[string(node.SecurityVulnerability.Severity)]; found {
+			m[val]++
+		}
+	}
+
+	for _, alert := range a {
+		if val, found := mapping[strings.ToUpper(*alert.Rule.SecuritySeverityLevel)]; found {
 			m[val]++
 		}
 	}
