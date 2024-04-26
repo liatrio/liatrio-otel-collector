@@ -3,33 +3,33 @@ package githuboappauthextension // import "github.com/liatrio/liatrio-otel-colle
 import (
 	"net/http"
 
+	"github.com/bradleyfalzon/ghinstallation/v2"
 	"go.uber.org/zap"
-    "github.com/bradleyfalzon/ghinstallation/v2"
 )
 
-// githubAppAuthenticator provides a simple struct to contain an http client 
+// githubAppAuthenticator provides a simple struct to contain an http client
 // with transport created by the ghinstallation library.
 type githubAppAuthenticator struct {
-	logger *zap.Logger
-    transport *ghinstallation.Transport
-	client *http.Client
+	logger    *zap.Logger
+	transport *ghinstallation.Transport
+	client    *http.Client
 }
 
 func newGitHubAppAuthenticator(cfg *Config, logger *zap.Logger) (*githubAppAuthenticator, error) {
-    trans := http.DefaultTransport
+	trans := http.DefaultTransport
 
-    a, err := ghinstallation.NewKeyFromFile(trans, cfg.GitHubAppID, cfg.GitHubAppInstId, cfg.GitHubAppPrivateKeyFile)
-    if err != nil {
-        logger.Sugar().Errorf("unable to create transport using private key: %v", zap.Error(err))
-        return nil, err
-    }
+	a, err := ghinstallation.NewKeyFromFile(trans, cfg.GitHubAppID, cfg.GitHubAppInstId, cfg.GitHubAppPrivateKeyFile)
+	if err != nil {
+		logger.Sugar().Errorf("unable to create transport using private key: %v", zap.Error(err))
+		return nil, err
+	}
 
-    return &githubAppAuthenticator{
-        logger: logger,
-        client: &http.Client{
-            Transport: a,
-        },
-    }, nil
+	return &githubAppAuthenticator{
+		logger: logger,
+		client: &http.Client{
+			Transport: a,
+		},
+	}, nil
 
 }
 
@@ -38,5 +38,5 @@ func newGitHubAppAuthenticator(cfg *Config, logger *zap.Logger) (*githubAppAuthe
 // package requiring a function be passed to NewClient() whereas ghinstallation
 // auto creates the client but can't be returned as an extension component.
 func (g *githubAppAuthenticator) roundTripper(base http.RoundTripper) (http.RoundTripper, error) {
-    return g.client.Transport, nil
+	return g.client.Transport, nil
 }

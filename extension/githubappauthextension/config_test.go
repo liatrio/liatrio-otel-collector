@@ -23,7 +23,8 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewID(metadata.Type),
 			expected: &Config{
-				GitHubAppID:             "ghid",
+				GitHubAppID:             1234,
+				GitHubAppInstId:         1234,
 				GitHubAppPrivateKeyFile: "path/to/something",
 			},
 		},

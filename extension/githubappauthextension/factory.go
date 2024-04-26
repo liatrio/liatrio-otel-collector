@@ -30,7 +30,7 @@ func createExtension(_ context.Context, set extension.CreateSettings, cfg compon
 		return nil, err
 	}
 
-    return auth.NewClient(
-        auth.WithClientRoundTripper(ga.roundTripper),
-    ), nil
-} 
+	return auth.NewClient(
+		auth.WithClientRoundTripper(ga.roundTripper),
+	), nil
+}
