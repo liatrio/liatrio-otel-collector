@@ -12,7 +12,6 @@ import (
 type githubAppAuthenticator struct {
 	logger *zap.Logger
     transport *ghinstallation.Transport
-    // roundTripper *http.RoundTripper
 	client *http.Client
 }
 
@@ -32,12 +31,6 @@ func newGitHubAppAuthenticator(cfg *Config, logger *zap.Logger) (*githubAppAuthe
         },
     }, nil
 
-	// return &githubAppAuthenticator{
-	// 	logger: logger,
-	// 	client: &http.Client{
-	// 		Transport: a,
-	// 	},
-	// }, nil
 }
 
 // TODO update this comment with additional details for contextual accuracy.
@@ -45,6 +38,5 @@ func newGitHubAppAuthenticator(cfg *Config, logger *zap.Logger) (*githubAppAuthe
 // package requiring a function be passed to NewClient() whereas ghinstallation
 // auto creates the client but can't be returned as an extension component.
 func (g *githubAppAuthenticator) roundTripper(base http.RoundTripper) (http.RoundTripper, error) {
-
     return g.client.Transport, nil
 }

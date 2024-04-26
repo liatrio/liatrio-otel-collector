@@ -30,16 +30,7 @@ func createExtension(_ context.Context, set extension.CreateSettings, cfg compon
 		return nil, err
 	}
 
-    // round, _ := ga.roundTripper(ga.client.Transport)
-
-    // TODO change new client with round trip and creds based on https://github.com/bradleyfalzon/ghinstallation
     return auth.NewClient(
         auth.WithClientRoundTripper(ga.roundTripper),
     ), nil
-
-    // return auth.Client(ga.client)
-	 //return auth.NewClient(
-	// 	auth.WithClientRoundTripper(ga.roundTripper),
-	// 	auth.WithClientPerRPCCredentials(ga.perRPCCredentials),
-	// ), nil
 } 
