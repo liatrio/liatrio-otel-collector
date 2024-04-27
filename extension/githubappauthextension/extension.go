@@ -7,13 +7,17 @@ import (
 	"go.uber.org/zap"
 )
 
-// githubAppAuthenticator provides a simple struct to contain an http client
-// with transport created by the ghinstallation library.
+// githubAppAuthenticator provides a simple struct to contain a zap logger and
+// a http client which will return a transport with a roundTripper when the
+// extension is created. This transport is created by the ghinstallation
+// package and provided to the OTEL auth extension package.
 type githubAppAuthenticator struct {
 	logger *zap.Logger
 	client *http.Client
 }
 
+// newGitHubAppAuthenticator calls the ghinstallation package to create the
+// roundTripper transport for use by the OTEL auth package.
 func newGitHubAppAuthenticator(cfg *Config, logger *zap.Logger) (*githubAppAuthenticator, error) {
 	trans := http.DefaultTransport
 
@@ -32,10 +36,11 @@ func newGitHubAppAuthenticator(cfg *Config, logger *zap.Logger) (*githubAppAuthe
 
 }
 
-// TODO update this comment with additional details for contextual accuracy.
-// This is a wrapper function due to the requirements for the extension/auth
-// package requiring a function be passed to NewClient() whereas ghinstallation
-// auto creates the client but can't be returned as an extension component.
+// The roundTripper function has to be defined in this way so that the createExtension
+// function can return auth.NewClient() as a component. Thus we take the
+// roundTripper created by the ghinstallation package, send the transport up,
+// and pass through this function so that the extension can handle
+// authentication.
 func (g *githubAppAuthenticator) roundTripper(base http.RoundTripper) (http.RoundTripper, error) {
 	return g.client.Transport, nil
 }
