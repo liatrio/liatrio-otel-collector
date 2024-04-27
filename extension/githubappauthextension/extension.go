@@ -11,7 +11,6 @@ import (
 // with transport created by the ghinstallation library.
 type githubAppAuthenticator struct {
 	logger    *zap.Logger
-	transport *ghinstallation.Transport
 	client    *http.Client
 }
 
