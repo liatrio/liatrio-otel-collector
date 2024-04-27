@@ -1,6 +1,6 @@
 module github.com/liatrio/liatrio-otel-collector
 
-go 1.22.2
+go 1.21
 
 require (
 	github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension v0.0.0-00010101000000-000000000000
