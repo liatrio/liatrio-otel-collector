@@ -17,9 +17,9 @@ const (
 )
 
 func Meter(settings component.TelemetrySettings) metric.Meter {
-	return settings.MeterProvider.Meter("otelcol/githuboappauth")
+	return settings.MeterProvider.Meter("otelcol/githubappauth")
 }
 
 func Tracer(settings component.TelemetrySettings) trace.Tracer {
-	return settings.TracerProvider.Tracer("otelcol/githuboappauth")
+	return settings.TracerProvider.Tracer("otelcol/githubappauth")
 }

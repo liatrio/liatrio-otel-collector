@@ -8,3 +8,6 @@ status:
 
 tests:
   config:
+    app_id: 1234
+    installation_id: 1234
+    private_key_file: "testdata/test-key.pem"

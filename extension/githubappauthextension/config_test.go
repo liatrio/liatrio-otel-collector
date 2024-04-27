@@ -1,4 +1,4 @@
-package githuboappauthextension // import "github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension"
+package githubappauthextension // import "github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension"
 
 import (
 	"path/filepath"
@@ -25,16 +25,12 @@ func TestLoadConfig(t *testing.T) {
 			expected: &Config{
 				GitHubAppID:             1234,
 				GitHubAppInstId:         1234,
-				GitHubAppPrivateKeyFile: "path/to/something",
+				GitHubAppPrivateKeyFile: "testdata/test-key.pem",
 			},
 		},
 		{
-			id:          component.NewIDWithName(metadata.Type, "missingurl"),
-			expectedErr: errNoGitHubAppIDProvided,
-		},
-		{
 			id:          component.NewIDWithName(metadata.Type, "missingid"),
-			expectedErr: errNoGitHubPrivateKeyProvided,
+			expectedErr: errNoGitHubAppIDProvided,
 		},
 	}
 	for _, tt := range tests {

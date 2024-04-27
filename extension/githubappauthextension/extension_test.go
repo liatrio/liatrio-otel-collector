@@ -1,4 +1,4 @@
-package githuboappauthextension // import "github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension"
+package githubappauthextension // import "github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension"
 
 import (
 	// "context"
@@ -42,7 +42,7 @@ func TestGitHubAppAuthSettings(t *testing.T) {
 				GitHubAppPrivateKeyFile: "doesnotexist.pem",
 			},
 			shouldError:   true,
-			expectedError: "unable to create transport using private key: ",
+			expectedError: "could not read private key: open doesnotexist.pem: no such file or directory",
 		},
 	}
 

@@ -1,4 +1,4 @@
-package githuboappauthextension // import "github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension"
+package githubappauthextension // import "github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension"
 
 import (
 	"net/http"
