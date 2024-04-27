@@ -12,7 +12,7 @@ var (
 	errNoGitHubPrivateKeyProvided = errors.New("no GitHub App Private Key provided in the GitHub App Auth extension configuration")
 )
 
-// Config store the configuration for the GitHub App Installation flow. See:
+// Config stores the configuration for the GitHub App Installation flow. See:
 // https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
 type Config struct {
 
