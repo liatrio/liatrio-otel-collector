@@ -67,6 +67,7 @@ func TestGitHubAppAuthSettings(t *testing.T) {
 		})
 	}
 }
+
 //
 // type testRoundTripper struct {
 // 	testString string

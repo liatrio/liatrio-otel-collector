@@ -10,8 +10,8 @@ import (
 // githubAppAuthenticator provides a simple struct to contain an http client
 // with transport created by the ghinstallation library.
 type githubAppAuthenticator struct {
-	logger    *zap.Logger
-	client    *http.Client
+	logger *zap.Logger
+	client *http.Client
 }
 
 func newGitHubAppAuthenticator(cfg *Config, logger *zap.Logger) (*githubAppAuthenticator, error) {

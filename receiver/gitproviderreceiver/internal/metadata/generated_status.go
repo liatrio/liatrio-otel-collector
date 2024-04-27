@@ -17,9 +17,9 @@ const (
 )
 
 func Meter(settings component.TelemetrySettings) metric.Meter {
-	return settings.MeterProvider.Meter("otelcol/gitproviderreceiver")
+	return settings.MeterProvider.Meter("github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver")
 }
 
 func Tracer(settings component.TelemetrySettings) trace.Tracer {
-	return settings.TracerProvider.Tracer("otelcol/gitproviderreceiver")
+	return settings.TracerProvider.Tracer("github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver")
 }

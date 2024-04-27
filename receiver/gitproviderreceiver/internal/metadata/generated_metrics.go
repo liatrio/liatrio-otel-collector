@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/filter"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
@@ -665,6 +666,8 @@ type MetricsBuilder struct {
 	metricsCapacity                              int                  // maximum observed number of metrics per resource.
 	metricsBuffer                                pmetric.Metrics      // accumulates metrics data before emitting.
 	buildInfo                                    component.BuildInfo  // contains version information.
+	resourceAttributeIncludeFilter               map[string]filter.Filter
+	resourceAttributeExcludeFilter               map[string]filter.Filter
 	metricGitRepositoryBranchCommitAheadbyCount  metricGitRepositoryBranchCommitAheadbyCount
 	metricGitRepositoryBranchCommitBehindbyCount metricGitRepositoryBranchCommitBehindbyCount
 	metricGitRepositoryBranchCount               metricGitRepositoryBranchCount
@@ -707,7 +710,22 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.CreateSetting
 		metricGitRepositoryPullRequestTimeOpen:       newMetricGitRepositoryPullRequestTimeOpen(mbc.Metrics.GitRepositoryPullRequestTimeOpen),
 		metricGitRepositoryPullRequestTimeToApproval: newMetricGitRepositoryPullRequestTimeToApproval(mbc.Metrics.GitRepositoryPullRequestTimeToApproval),
 		metricGitRepositoryPullRequestTimeToMerge:    newMetricGitRepositoryPullRequestTimeToMerge(mbc.Metrics.GitRepositoryPullRequestTimeToMerge),
+		resourceAttributeIncludeFilter:               make(map[string]filter.Filter),
+		resourceAttributeExcludeFilter:               make(map[string]filter.Filter),
 	}
+	if mbc.ResourceAttributes.GitVendorName.MetricsInclude != nil {
+		mb.resourceAttributeIncludeFilter["git.vendor.name"] = filter.CreateFilter(mbc.ResourceAttributes.GitVendorName.MetricsInclude)
+	}
+	if mbc.ResourceAttributes.GitVendorName.MetricsExclude != nil {
+		mb.resourceAttributeExcludeFilter["git.vendor.name"] = filter.CreateFilter(mbc.ResourceAttributes.GitVendorName.MetricsExclude)
+	}
+	if mbc.ResourceAttributes.OrganizationName.MetricsInclude != nil {
+		mb.resourceAttributeIncludeFilter["organization.name"] = filter.CreateFilter(mbc.ResourceAttributes.OrganizationName.MetricsInclude)
+	}
+	if mbc.ResourceAttributes.OrganizationName.MetricsExclude != nil {
+		mb.resourceAttributeExcludeFilter["organization.name"] = filter.CreateFilter(mbc.ResourceAttributes.OrganizationName.MetricsExclude)
+	}
+
 	for _, op := range options {
 		op(mb)
 	}
@@ -766,7 +784,7 @@ func (mb *MetricsBuilder) EmitForResource(rmo ...ResourceMetricsOption) {
 	rm := pmetric.NewResourceMetrics()
 	rm.SetSchemaUrl(conventions.SchemaURL)
 	ils := rm.ScopeMetrics().AppendEmpty()
-	ils.Scope().SetName("otelcol/gitproviderreceiver")
+	ils.Scope().SetName("github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver")
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
 	mb.metricGitRepositoryBranchCommitAheadbyCount.emit(ils.Metrics())
@@ -785,6 +803,17 @@ func (mb *MetricsBuilder) EmitForResource(rmo ...ResourceMetricsOption) {
 	for _, op := range rmo {
 		op(rm)
 	}
+	for attr, filter := range mb.resourceAttributeIncludeFilter {
+		if val, ok := rm.Resource().Attributes().Get(attr); ok && !filter.Matches(val.AsString()) {
+			return
+		}
+	}
+	for attr, filter := range mb.resourceAttributeExcludeFilter {
+		if val, ok := rm.Resource().Attributes().Get(attr); ok && filter.Matches(val.AsString()) {
+			return
+		}
+	}
+
 	if ils.Metrics().Len() > 0 {
 		mb.updateCapacity(rm)
 		rm.MoveTo(mb.metricsBuffer.ResourceMetrics().AppendEmpty())
