@@ -10,7 +10,7 @@ import (
 	_ "github.com/Khan/genqlient"
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	_ "github.com/goreleaser/goreleaser"
-	_ "github.com/open-telemetry/opentelemetry-collector-contrib/cmd/mdatagen"
+	_ "go.opentelemetry.io/collector/cmd/mdatagen"
 	_ "github.com/securego/gosec/v2/cmd/gosec"
 	_ "go.opentelemetry.io/build-tools/crosslink"
 	_ "go.opentelemetry.io/build-tools/multimod"
