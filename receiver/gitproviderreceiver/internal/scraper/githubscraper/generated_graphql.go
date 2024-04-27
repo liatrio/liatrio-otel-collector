@@ -81,6 +81,36 @@ type BranchNodeRepositoryDefaultBranchRef struct {
 // GetName returns BranchNodeRepositoryDefaultBranchRef.Name, and is useful for accessing the field via an interface.
 func (v *BranchNodeRepositoryDefaultBranchRef) GetName() string { return v.Name }
 
+// CVENode includes the requested fields of the GraphQL type RepositoryVulnerabilityAlert.
+// The GraphQL type's documentation follows.
+//
+// A Dependabot alert for a repository with a dependency affected by a security vulnerability.
+type CVENode struct {
+	Id string `json:"id"`
+	// The associated security vulnerability
+	SecurityVulnerability CVENodeSecurityVulnerability `json:"securityVulnerability"`
+}
+
+// GetId returns CVENode.Id, and is useful for accessing the field via an interface.
+func (v *CVENode) GetId() string { return v.Id }
+
+// GetSecurityVulnerability returns CVENode.SecurityVulnerability, and is useful for accessing the field via an interface.
+func (v *CVENode) GetSecurityVulnerability() CVENodeSecurityVulnerability {
+	return v.SecurityVulnerability
+}
+
+// CVENodeSecurityVulnerability includes the requested fields of the GraphQL type SecurityVulnerability.
+// The GraphQL type's documentation follows.
+//
+// An individual vulnerability within an Advisory
+type CVENodeSecurityVulnerability struct {
+	// The severity of the vulnerability within this package
+	Severity SecurityAdvisorySeverity `json:"severity"`
+}
+
+// GetSeverity returns CVENodeSecurityVulnerability.Severity, and is useful for accessing the field via an interface.
+func (v *CVENodeSecurityVulnerability) GetSeverity() SecurityAdvisorySeverity { return v.Severity }
+
 // CommitNode includes the requested fields of the GraphQL type Ref.
 // The GraphQL type's documentation follows.
 //
@@ -796,6 +826,54 @@ type SearchNodeUser struct {
 // GetTypename returns SearchNodeUser.Typename, and is useful for accessing the field via an interface.
 func (v *SearchNodeUser) GetTypename() string { return v.Typename }
 
+// Severity of the vulnerability.
+type SecurityAdvisorySeverity string
+
+const (
+	// Low.
+	SecurityAdvisorySeverityLow SecurityAdvisorySeverity = "LOW"
+	// Moderate.
+	SecurityAdvisorySeverityModerate SecurityAdvisorySeverity = "MODERATE"
+	// High.
+	SecurityAdvisorySeverityHigh SecurityAdvisorySeverity = "HIGH"
+	// Critical.
+	SecurityAdvisorySeverityCritical SecurityAdvisorySeverity = "CRITICAL"
+)
+
+// VulnerabilityAlerts includes the requested fields of the GraphQL type RepositoryVulnerabilityAlertConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for RepositoryVulnerabilityAlert.
+type VulnerabilityAlerts struct {
+	// Information to aid in pagination.
+	PageInfo VulnerabilityAlertsPageInfo `json:"pageInfo"`
+	// A list of nodes.
+	Nodes []CVENode `json:"nodes"`
+}
+
+// GetPageInfo returns VulnerabilityAlerts.PageInfo, and is useful for accessing the field via an interface.
+func (v *VulnerabilityAlerts) GetPageInfo() VulnerabilityAlertsPageInfo { return v.PageInfo }
+
+// GetNodes returns VulnerabilityAlerts.Nodes, and is useful for accessing the field via an interface.
+func (v *VulnerabilityAlerts) GetNodes() []CVENode { return v.Nodes }
+
+// VulnerabilityAlertsPageInfo includes the requested fields of the GraphQL type PageInfo.
+// The GraphQL type's documentation follows.
+//
+// Information about pagination in a connection.
+type VulnerabilityAlertsPageInfo struct {
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
+}
+
+// GetHasNextPage returns VulnerabilityAlertsPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *VulnerabilityAlertsPageInfo) GetHasNextPage() bool { return v.HasNextPage }
+
+// GetEndCursor returns VulnerabilityAlertsPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *VulnerabilityAlertsPageInfo) GetEndCursor() string { return v.EndCursor }
+
 // __checkLoginInput is used internally by genqlient
 type __checkLoginInput struct {
 	Login string `json:"login"`
@@ -879,6 +957,18 @@ func (v *__getPullRequestDataInput) GetPrCursor() *string { return v.PrCursor }
 
 // GetPrStates returns __getPullRequestDataInput.PrStates, and is useful for accessing the field via an interface.
 func (v *__getPullRequestDataInput) GetPrStates() []PullRequestState { return v.PrStates }
+
+// __getRepoCVEsInput is used internally by genqlient
+type __getRepoCVEsInput struct {
+	Owner string `json:"owner"`
+	Repo  string `json:"repo"`
+}
+
+// GetOwner returns __getRepoCVEsInput.Owner, and is useful for accessing the field via an interface.
+func (v *__getRepoCVEsInput) GetOwner() string { return v.Owner }
+
+// GetRepo returns __getRepoCVEsInput.Repo, and is useful for accessing the field via an interface.
+func (v *__getRepoCVEsInput) GetRepo() string { return v.Repo }
 
 // __getRepoDataBySearchInput is used internally by genqlient
 type __getRepoDataBySearchInput struct {
@@ -1093,6 +1183,29 @@ type getPullRequestDataResponse struct {
 func (v *getPullRequestDataResponse) GetRepository() getPullRequestDataRepository {
 	return v.Repository
 }
+
+// getRepoCVEsRepository includes the requested fields of the GraphQL type Repository.
+// The GraphQL type's documentation follows.
+//
+// A repository contains the content for a project.
+type getRepoCVEsRepository struct {
+	// A list of vulnerability alerts that are on this repository.
+	VulnerabilityAlerts VulnerabilityAlerts `json:"vulnerabilityAlerts"`
+}
+
+// GetVulnerabilityAlerts returns getRepoCVEsRepository.VulnerabilityAlerts, and is useful for accessing the field via an interface.
+func (v *getRepoCVEsRepository) GetVulnerabilityAlerts() VulnerabilityAlerts {
+	return v.VulnerabilityAlerts
+}
+
+// getRepoCVEsResponse is returned by getRepoCVEs on success.
+type getRepoCVEsResponse struct {
+	// Lookup a given repository by the owner and repository name.
+	Repository getRepoCVEsRepository `json:"repository"`
+}
+
+// GetRepository returns getRepoCVEsResponse.Repository, and is useful for accessing the field via an interface.
+func (v *getRepoCVEsResponse) GetRepository() getRepoCVEsRepository { return v.Repository }
 
 // getRepoDataBySearchResponse is returned by getRepoDataBySearch on success.
 type getRepoDataBySearchResponse struct {
@@ -1500,6 +1613,54 @@ func getPullRequestData(
 	var err_ error
 
 	var data_ getPullRequestDataResponse
+	resp_ := &graphql.Response{Data: &data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return &data_, err_
+}
+
+// The query or mutation executed by getRepoCVEs.
+const getRepoCVEs_Operation = `
+query getRepoCVEs ($owner: String!, $repo: String!) {
+	repository(owner: $owner, name: $repo) {
+		vulnerabilityAlerts(first: 100, states: OPEN) {
+			pageInfo {
+				hasNextPage
+				endCursor
+			}
+			nodes {
+				id
+				securityVulnerability {
+					severity
+				}
+			}
+		}
+	}
+}
+`
+
+func getRepoCVEs(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	owner string,
+	repo string,
+) (*getRepoCVEsResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "getRepoCVEs",
+		Query:  getRepoCVEs_Operation,
+		Variables: &__getRepoCVEsInput{
+			Owner: owner,
+			Repo:  repo,
+		},
+	}
+	var err_ error
+
+	var data_ getRepoCVEsResponse
 	resp_ := &graphql.Response{Data: &data_}
 
 	err_ = client_.MakeRequest(

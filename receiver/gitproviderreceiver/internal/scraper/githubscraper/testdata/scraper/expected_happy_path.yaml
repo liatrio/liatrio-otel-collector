@@ -106,6 +106,31 @@ resourceMetrics:
                   timeUnixNano: '2000000'
             name: git.repository.count
             unit: '{repository}'
+          - description: The number of Common Vulnerabilities and Exposures (CVEs) in the repository
+            gauge:
+              dataPoints:
+                - asInt: '1'
+                  attributes:
+                    - key: cve.severity
+                      value:
+                        stringValue: high
+                    - key: repository.name
+                      value:
+                        stringValue: repo1
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
+                - asInt: '1'
+                  attributes:
+                    - key: cve.severity
+                      value:
+                        stringValue: medium
+                    - key: repository.name
+                      value:
+                        stringValue: repo1
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
+            name: git.repository.cve.count
+            unit: '{cve}'
           - description: The number of pull requests in a repository, categorized by their state (either open or merged)
             gauge:
               dataPoints:
