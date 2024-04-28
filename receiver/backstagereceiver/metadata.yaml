@@ -1,0 +1,11 @@
+---
+type: backstage
+
+sem_conv_version: 1.9.0
+
+status:
+  class: receiver
+  stability:
+    development: [logs]
+  distributions: [liatrio]
+

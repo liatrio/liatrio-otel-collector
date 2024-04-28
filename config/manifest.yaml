@@ -42,9 +42,10 @@ processors:
 receivers:
   - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.98.0
   - gomod: github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver v0.1.0
+  - gomod: github.com/liatrio/liatrio-otel-collector/receiver/backstagereceiver v0.1.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.98.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver v0.98.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver v0.98.0
+  # - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sclusterreceiver v0.98.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.98.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.98.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/webhookeventreceiver v0.98.0
@@ -59,3 +60,4 @@ connectors:
 
 replaces:
   - github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver => ../receiver/gitproviderreceiver/
+  - github.com/liatrio/liatrio-otel-collector/receiver/backstagereceiver => ../receiver/backstagereceiver/

@@ -8,6 +8,7 @@ module-sets:
     modules:
       - github.com/liatrio/liatrio-otel-collector
       - github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver
+      - github.com/liatrio/liatrio-otel-collector/receiver/backstagereceiver
 
 excluded-modules:
   - github.com/liatrio/liatrio-otel-collector/internal/tools

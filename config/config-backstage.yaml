@@ -1,0 +1,141 @@
+---
+extensions:
+  health_check:
+
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+receivers:
+  ## Collect own metrics based on example from OTEL Contrib Dockerfile
+  ## https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/configs/otelcol-contrib.yaml
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: liatrio-otel-collector
+          scrape_interval: 10s
+          static_configs:
+            - targets: [0.0.0.0:8888]
+
+  backstage:
+    url: https://backstage.liatr.io
+    objects:
+      - group: scaffolder.backstage.io
+        kind: Template
+        interval: 10m
+
+      - group: backstage.io
+        kind: Component
+        interval: 10m
+
+      - group: backstage.io
+        kind: Group
+        interval: 10m
+
+      - group: backstage.io
+        kind: User
+        interval: 10m
+
+      - group: backstage.io
+        kind: Domain
+        interval: 10m
+
+      - group: backstage.io
+        kind: Location
+        interval: 10m
+
+      - group: backstage.io
+        kind: System
+        interval: 10m
+
+      - group: backstage.io
+        kind: Service
+        interval: 10m
+
+      - group: backstage.io
+        kind: API
+        interval: 10m
+
+processors:
+  batch:
+  resourcedetection:
+    detectors: [env]
+    timeout: 2s
+    override: false
+
+  groupbyattrs:
+    keys:
+      - backstage.entity.kind
+      - backstage.entity.type
+      - backstage.entity.owner
+      - backstage.entity.lifecycle
+      - backstage.entity.name
+      - backstage.entity.namespace
+
+  resource/env:
+    attributes:
+      - key: environment.name
+        value: prod
+        action: upsert
+      - key: service.name
+        value: backstage.liatr.io
+        action: upsert
+
+  attributes/logs:
+    actions:
+      - key: loki.attribute.labels
+        action: upsert
+        value: service.name, environment.name
+
+
+
+  transform/to_guage:
+    #error_mode: ignore
+    metric_statements:
+      - context: datapoint
+        statements:
+        - convert_sum_to_gauge()
+
+  #transform/json:
+  #  error_mode: ignore
+  #  log_statements:
+  #    - context: log
+  #      statements:
+  #      - set(attributes["k8s_resource_name"], body["metadata"]["name"])
+
+connectors:
+  count/entities:
+    logs:
+      backstage_entity_count:
+        name: backstage_entity_count
+        description: The number of backstage entities grouped by kind/type/owner/lifecycle
+
+exporters:
+  debug:
+    verbosity: basic
+    sampling_initial: 2
+    sampling_thereafter: 500
+
+  debug/verbose:
+    verbosity: detailed
+
+  otlphttp:
+    endpoint: https://otel-gateway.dev.k8s-platform-v3.liatr.io
+    tls:
+      insecure: false
+
+service:
+  ## Add bearertokenauth/* if you want to use bearer token auth extensions
+  extensions: [health_check, pprof, zpages]
+  pipelines:
+    logs:
+      receivers: [backstage]
+      processors: [resource/env, attributes/logs, groupbyattrs]
+      exporters: [debug/verbose, otlphttp, count/entities]
+
+    metrics:
+      receivers: [count/entities]
+      processors: [transform/to_guage]
+      exporters: [debug/verbose, otlphttp]

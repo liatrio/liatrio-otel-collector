@@ -1,6 +1,7 @@
 {
   "version": "0.3.0",
   "configurations": [
+    
     {
       "name": "Launch Otel Collector in debug",
       "type": "go",
@@ -13,6 +14,18 @@
         "../config/config.yaml"
       ],
       "envFile": "${workspaceFolder}/.debug.env"
+    },
+    {
+      "name": "Launch Otel Collector in debug (backstage)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "cwd": "${workspaceFolder}/build",
+      "program": "${workspaceFolder}/build",
+      "args": [
+        "--config",
+        "../config/config-backstage.yaml"
+      ]
     }
   ]
 }

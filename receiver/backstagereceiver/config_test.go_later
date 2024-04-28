@@ -1,0 +1,108 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+package backstagereceiver
+
+import (
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/liatrio/liatrio-otel-collector/receiver/backstagereceiver/internal/metadata"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap/confmaptest"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
+
+func TestLoadConfig(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		id       component.ID
+		expected *Config
+	}{
+		{
+			id: component.NewIDWithName(metadata.Type, ""),
+			expected: &Config{
+				BackstageAPIConfig: BackstageAPIConfig{
+					URL:   "https://backstage.backstage-system",
+					Token: "password",
+				},
+				Objects: []*BackstageConfig{
+					{
+						Name:          "components",
+						Interval:      time.Hour,
+						FieldSelector: "status.phase=Running",
+						LabelSelector: "environment in (production),tier in (frontend)",
+						gvr: &schema.GroupVersionResource{
+							Group:    "backstage.io",
+							Version:  "v1alpha1",
+							Resource: "components",
+						},
+					},
+				},
+				makeClient: getMockClient,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.id.String(), func(t *testing.T) {
+			cm, err := confmaptest.LoadConf(filepath.Join("testdata", "config.yaml"))
+			require.NoError(t, err)
+
+			factory := NewFactory()
+			cfg := factory.CreateDefaultConfig().(*Config)
+			cfg.makeClient = getMockClient
+
+			sub, err := cm.Sub(tt.id.String())
+			require.NoError(t, err)
+			require.NoError(t, component.UnmarshalConfig(sub, cfg))
+
+			if tt.expected == nil {
+				err = component.ValidateConfig(cfg)
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, component.ValidateConfig(cfg))
+			assert.Equal(t, tt.expected.Objects, cfg.Objects)
+		})
+	}
+}
+
+func TestValidateResourceConflict(t *testing.T) {
+	mockClient := newMockClient()
+	rCfg := createDefaultConfig().(*Config)
+	rCfg.makeClient = mockClient.getMockClient
+
+	// Validate it should choose first gvr if group is not specified
+	rCfg.Objects = []*BackstageConfig{
+		{
+			Name: "myresources",
+		},
+	}
+
+	err := rCfg.Validate()
+	require.NoError(t, err)
+	assert.Equal(t, "group1", rCfg.Objects[0].gvr.Group)
+
+	// Validate it should choose gvr for specified group
+	rCfg.Objects = []*BackstageConfig{
+		{
+			Name:  "myresources",
+			Group: "group2",
+		},
+	}
+
+	err = rCfg.Validate()
+	require.NoError(t, err)
+	assert.Equal(t, "group2", rCfg.Objects[0].gvr.Group)
+}
+
+func TestClientRequired(t *testing.T) {
+	rCfg := createDefaultConfig().(*Config)
+	err := rCfg.Validate()
+	require.Error(t, err)
+}

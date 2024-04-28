@@ -1,0 +1,78 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+package backstagereceiver
+
+import (
+	"context"
+
+	"go.einride.tech/backstage/catalog"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/fake"
+)
+
+type mockClient struct {
+	client catalog.Client
+}
+
+func newMockClient() mockClient {
+	scheme := runtime.NewScheme()
+	objs := []runtime.Object{}
+
+	gvrToListKind := map[schema.GroupVersionResource]string{
+		{Group: "backstage.io", Version: "v1alpha1", Resource: "components"}: "ComponentList",
+	}
+
+	fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, gvrToListKind, objs...)
+	return mockClient{
+		client: fakeClient,
+	}
+
+}
+
+func (c mockClient) getMockClient() (dynamic.Interface, error) {
+	return c.client, nil
+}
+
+func (c mockClient) createComponents(objects ...*unstructured.Unstructured) {
+	components := c.client.Resource(schema.GroupVersionResource{
+		Group:    "backstage.io",
+		Version:  "v1alpha1",
+		Resource: "components",
+	})
+	for _, component := range objects {
+		_, _ = components.Namespace(component.GetNamespace()).Create(context.Background(), component, v1.CreateOptions{})
+	}
+}
+
+func (c mockClient) deleteComponents(objects ...*unstructured.Unstructured) {
+	components := c.client.Resource(schema.GroupVersionResource{
+		Group:    "backstage.io",
+		Version:  "v1",
+		Resource: "components",
+	})
+	for _, component := range objects {
+		_ = components.Namespace(component.GetNamespace()).Delete(context.Background(), component.GetName(), v1.DeleteOptions{})
+	}
+}
+
+func generateComponent(name, namespace string, labels map[string]any, resourceVersion string) *unstructured.Unstructured {
+	component := unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": "backstage.io/v1alpha1",
+			"kind":       "Component",
+			"metadata": map[string]any{
+				"namespace": namespace,
+				"name":      name,
+				"labels":    labels,
+			},
+		},
+	}
+
+	component.SetResourceVersion(resourceVersion)
+	return &component
+}
