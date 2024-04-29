@@ -187,5 +187,8 @@ resourceMetrics:
             name: git.repository.pull_request.time_to_merge
             unit: s
         scope:
-          name: otelcol/gitproviderreceiver
+          name: github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver
+          # Note: Used to be otelcol but after upgrade, scope was throwing an
+          # error and needed to be set to full module name
+          # name: otelcol/gitproviderreceiver
           version: latest

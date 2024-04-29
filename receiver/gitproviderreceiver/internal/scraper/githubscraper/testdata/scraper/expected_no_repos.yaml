@@ -20,5 +20,8 @@ resourceMetrics:
             name: git.repository.count
             unit: '{repository}'
         scope:
-          name: otelcol/gitproviderreceiver
+          name: github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver
+          # Note: Used to be otelcol but after upgrade, scope was throwing an
+          # error and needed to be set to full module name
+          # name: otelcol/gitproviderreceiver
           version: latest

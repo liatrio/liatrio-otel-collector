@@ -9,17 +9,17 @@ import (
 )
 
 var (
-	Type = component.MustNewType("gitprovider")
+	Type = component.MustNewType("githubappauth")
 )
 
 const (
-	MetricsStability = component.StabilityLevelDevelopment
+	ExtensionStability = component.StabilityLevelAlpha
 )
 
 func Meter(settings component.TelemetrySettings) metric.Meter {
-	return settings.MeterProvider.Meter("github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver")
+	return settings.MeterProvider.Meter("github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension")
 }
 
 func Tracer(settings component.TelemetrySettings) trace.Tracer {
-	return settings.TracerProvider.Tracer("github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver")
+	return settings.TracerProvider.Tracer("github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension")
 }
