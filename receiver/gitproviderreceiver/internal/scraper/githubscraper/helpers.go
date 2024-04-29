@@ -312,19 +312,19 @@ func getAge(start time.Time, end time.Time) int64 {
 
 func (ghs *githubScraper) getCVEs(
 	ctx context.Context,
-	client graphql.Client,
+	gClient graphql.Client,
 	rClient *github.Client,
 	repo string,
 ) (map[metadata.AttributeCveSeverity]int64, error) {
-	d := ghs.getDbotAlerts(ctx, client, repo)
+	d := ghs.getDepbotAlerts(ctx, gClient, repo)
 	c := ghs.getCodeScanAlerts(ctx, rClient, repo)
 
 	return mapSeverities(d, c), nil
 }
 
-func (ghs *githubScraper) getDbotAlerts(
+func (ghs *githubScraper) getDepbotAlerts(
 	ctx context.Context,
-	client graphql.Client,
+	gClient graphql.Client,
 	repo string,
 ) []CVENode {
 
@@ -332,7 +332,7 @@ func (ghs *githubScraper) getDbotAlerts(
 	var cursor *string
 
 	for hasNextPage := true; hasNextPage; {
-		alerts, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo, cursor)
+		alerts, err := getRepoCVEs(ctx, gClient, ghs.cfg.GitHubOrg, repo, cursor)
 
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error %v getting dependabot alerts from repo %s", zap.Error(err), repo)
@@ -352,19 +352,19 @@ func (ghs *githubScraper) getDbotAlerts(
 func (ghs *githubScraper) getCodeScanAlerts(
 	ctx context.Context,
 	client *github.Client,
-	repoName string,
+	repo string,
 ) []*github.Alert {
 	var all []*github.Alert
 
-	// Options for Pagination support, default from GitHub was 30
-	// https://docs.github.com/en/rest/repos/repos#list-repository-contributors
+	// Options for Pagination support, default from GitHub was 30. Max is 100
+	// https://docs.github.com/en/rest/code-scanning/code-scanning?apiVersion=2022-11-28
 	opt := &github.AlertListOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
 		State:       "open",
 	}
 
 	for {
-		alerts, resp, err := client.CodeScanning.ListAlertsForRepo(ctx, ghs.cfg.GitHubOrg, repoName, opt)
+		alerts, resp, err := client.CodeScanning.ListAlertsForRepo(ctx, ghs.cfg.GitHubOrg, repo, opt)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting code scanning alerts from repo", zap.Error(err))
 			return nil
