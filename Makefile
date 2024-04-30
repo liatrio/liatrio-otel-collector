@@ -68,10 +68,11 @@ dockerbuild:
 
 .PHONY: scan-all
 scan-all:
-	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) scan"
+	$(OSV) -r .
 
 .PHONY: tidy-all
 tidy-all:
+	$(MAKE) tidy
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) tidy"
 
 .PHONY: fmt-all
