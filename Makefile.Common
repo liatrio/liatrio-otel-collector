@@ -47,6 +47,7 @@ OCB := $(TOOLS_BIN_DIR)/builder
 GORELEASER := $(TOOLS_BIN_DIR)/goreleaser
 MULTIMOD := $(TOOLS_BIN_DIR)/multimod
 CROSSLINK := $(TOOLS_BIN_DIR)/crosslink
+OSV := $(TOOLS_BIN_DIR)/osv-scanner
 
 .PHONY: lint
 lint:
@@ -68,3 +69,8 @@ test:
 .PHONY: fmt
 fmt:
 	go fmt ./...
+
+.PHONY: scan
+scan:
+	$(OSV) -r .
+
