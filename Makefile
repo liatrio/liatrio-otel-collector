@@ -6,7 +6,7 @@ ARCH := $(shell uname -m)
 
 # Arguments for getting directories & executing commands against them
 PKG_DIRS = $(shell find ./* -not -path "./build/*" -not -path "./tmp/*" -type f -name "go.mod" -exec dirname {} \; | sort | grep -E '^./')
-CHECKS = generate lint-all test-all tidy-all fmt-all multimod-verify crosslink
+CHECKS = generate fmt-all tidy-all lint-all test-all scan-all multimod-verify crosslink
 
 # set ARCH var based on output
 ifeq ($(ARCH),x86_64)
@@ -66,8 +66,13 @@ dockerbuild:
 	$(MAKE) build OS=linux ARCH=amd64
 	docker build . -t liatrio/liatrio-otel-collector:localdev --build-arg BIN_PATH="./build/otelcol-custom"
 
+.PHONY: scan-all
+scan-all:
+	$(OSV) -r .
+
 .PHONY: tidy-all
 tidy-all:
+	$(MAKE) tidy
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) tidy"
 
 .PHONY: fmt-all
