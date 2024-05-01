@@ -351,7 +351,7 @@ func (ghs *githubScraper) getDepBotAlerts(
 // Get the Code Scanning Alerts count for a repository via the REST API
 func (ghs *githubScraper) getCodeScanAlerts(
 	ctx context.Context,
-	client *github.Client,
+	rClient *github.Client,
 	repo string,
 ) []*github.Alert {
 	var alerts []*github.Alert
@@ -364,7 +364,7 @@ func (ghs *githubScraper) getCodeScanAlerts(
 	}
 
 	for {
-		a, resp, err := client.CodeScanning.ListAlertsForRepo(ctx, ghs.cfg.GitHubOrg, repo, opt)
+		a, resp, err := rClient.CodeScanning.ListAlertsForRepo(ctx, ghs.cfg.GitHubOrg, repo, opt)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting code scanning alerts from repo", zap.Error(err))
 			return nil
