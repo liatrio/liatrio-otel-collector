@@ -197,10 +197,15 @@ query getPullRequestData(
   }
 }
 
-query getRepoCVEs($owner: String!, $repo: String!) {
+query getRepoCVEs(
+$owner: String!, 
+$repo: String!, 
+# @genqlient(pointer: true)
+$alertCursor: String
+) {
   repository(owner: $owner, name: $repo, ) {
     # @genqlient(typename: "VulnerabilityAlerts")
-    vulnerabilityAlerts(first: 100, states: OPEN) {
+    vulnerabilityAlerts(first: 100, states: OPEN, after: $alertCursor) {
       pageInfo {
         hasNextPage
         endCursor

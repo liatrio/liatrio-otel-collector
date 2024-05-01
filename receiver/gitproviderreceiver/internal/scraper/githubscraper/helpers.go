@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
@@ -311,19 +312,78 @@ func getAge(start time.Time, end time.Time) int64 {
 
 func (ghs *githubScraper) getCVEs(
 	ctx context.Context,
-	client graphql.Client,
+	gClient graphql.Client,
+	rClient *github.Client,
 	repo string,
 ) (map[metadata.AttributeCveSeverity]int64, error) {
-	c, err := getRepoCVEs(ctx, client, ghs.cfg.GitHubOrg, repo)
-	if err != nil {
-		return nil, err
+	d := ghs.getDepBotAlerts(ctx, gClient, repo)
+	c := ghs.getCodeScanAlerts(ctx, rClient, repo)
+
+	return mapSeverities(d, c), nil
+}
+
+func (ghs *githubScraper) getDepBotAlerts(
+	ctx context.Context,
+	gClient graphql.Client,
+	repo string,
+) []CVENode {
+
+	var alerts []CVENode
+	var cursor *string
+
+	for hasNextPage := true; hasNextPage; {
+		a, err := getRepoCVEs(ctx, gClient, ghs.cfg.GitHubOrg, repo, cursor)
+
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error %v getting dependabot alerts from repo %s", zap.Error(err), repo)
+			return nil
+		}
+
+		hasNextPage = a.Repository.VulnerabilityAlerts.PageInfo.HasNextPage
+		cursor = &a.Repository.VulnerabilityAlerts.PageInfo.EndCursor
+		alerts = append(alerts, a.Repository.VulnerabilityAlerts.Nodes...)
+
 	}
 
-	return mapSeverities(c.GetRepository()), nil
+	return alerts
+}
+
+// Get the Code Scanning Alerts count for a repository via the REST API
+func (ghs *githubScraper) getCodeScanAlerts(
+	ctx context.Context,
+	rClient *github.Client,
+	repo string,
+) []*github.Alert {
+	var alerts []*github.Alert
+
+	// Options for Pagination support, default from GitHub was 30. Max is 100
+	// https://docs.github.com/en/rest/code-scanning/code-scanning?apiVersion=2022-11-28
+	opt := &github.AlertListOptions{
+		ListOptions: github.ListOptions{PerPage: 50},
+		State:       "open",
+	}
+
+	for {
+		a, resp, err := rClient.CodeScanning.ListAlertsForRepo(ctx, ghs.cfg.GitHubOrg, repo, opt)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting code scanning alerts from repo", zap.Error(err))
+			return nil
+		}
+
+		alerts = append(alerts, a...)
+		if resp.NextPage == 0 {
+			break
+		}
+
+		opt.ListOptions.Page = resp.NextPage
+	}
+
+	return alerts
 }
 
 func mapSeverities(
-	n getRepoCVEsRepository,
+	nodes []CVENode,
+	alerts []*github.Alert,
 ) map[metadata.AttributeCveSeverity]int64 {
 
 	// Allows us to map the "MODERATE" to the conventional "medium" and support
@@ -332,12 +392,19 @@ func mapSeverities(
 		"CRITICAL": metadata.AttributeCveSeverityCritical,
 		"HIGH":     metadata.AttributeCveSeverityHigh,
 		"MODERATE": metadata.AttributeCveSeverityMedium,
+		"MEDIUM":   metadata.AttributeCveSeverityMedium,
 		"LOW":      metadata.AttributeCveSeverityLow,
 	}
 	m := make(map[metadata.AttributeCveSeverity]int64)
 
-	for _, node := range n.VulnerabilityAlerts.Nodes {
-		if val, found := mapping[string(node.SecurityVulnerability.Severity)]; found {
+	for _, node := range nodes {
+		if val, found := mapping[strings.ToUpper(string(node.SecurityVulnerability.Severity))]; found {
+			m[val]++
+		}
+	}
+
+	for _, alert := range alerts {
+		if val, found := mapping[strings.ToUpper(*alert.Rule.SecuritySeverityLevel)]; found {
 			m[val]++
 		}
 	}

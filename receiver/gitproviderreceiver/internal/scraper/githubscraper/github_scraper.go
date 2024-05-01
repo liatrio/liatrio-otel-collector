@@ -148,7 +148,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			// When enabled, process any CVEs for the repository
 			if ghs.cfg.Metrics.GitRepositoryCveCount.Enabled {
-				cves, err := ghs.getCVEs(ctx, genClient, name)
+				cves, err := ghs.getCVEs(ctx, genClient, restClient, name)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error %v getting cves from repo %s", zap.Error(err), name)
 				}
