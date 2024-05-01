@@ -79,16 +79,6 @@ type codeScanAlertResponse struct {
 	page           int
 }
 
-// func setupRestEndpoint(responses *responses) string{
-
-// 	switch {
-// 		case responses.codeScanAlertResponse != (codeScanAlertResponse{}):
-// 			return
-// 		}
-
-// 	return 0
-// }
-
 func MockServer(responses *responses) *http.ServeMux {
 	var mux http.ServeMux
 	contribRestEndpoint := "/api-v3/repos/o/r/contributors"
