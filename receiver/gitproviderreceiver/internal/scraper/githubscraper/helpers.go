@@ -328,24 +328,24 @@ func (ghs *githubScraper) getDepBotAlerts(
 	repo string,
 ) []CVENode {
 
-	var all []CVENode
+	var alerts []CVENode
 	var cursor *string
 
 	for hasNextPage := true; hasNextPage; {
-		alerts, err := getRepoCVEs(ctx, gClient, ghs.cfg.GitHubOrg, repo, cursor)
+		a, err := getRepoCVEs(ctx, gClient, ghs.cfg.GitHubOrg, repo, cursor)
 
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error %v getting dependabot alerts from repo %s", zap.Error(err), repo)
 			return nil
 		}
 
-		hasNextPage = alerts.Repository.VulnerabilityAlerts.PageInfo.HasNextPage
-		cursor = &alerts.Repository.VulnerabilityAlerts.PageInfo.EndCursor
-		all = append(all, alerts.Repository.VulnerabilityAlerts.Nodes...)
+		hasNextPage = a.Repository.VulnerabilityAlerts.PageInfo.HasNextPage
+		cursor = &a.Repository.VulnerabilityAlerts.PageInfo.EndCursor
+		alerts = append(alerts, a.Repository.VulnerabilityAlerts.Nodes...)
 
 	}
 
-	return all
+	return alerts
 }
 
 // Get the Code Scanning Alerts count for a repository via the REST API
