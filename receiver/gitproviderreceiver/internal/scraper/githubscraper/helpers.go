@@ -382,8 +382,8 @@ func (ghs *githubScraper) getCodeScanAlerts(
 }
 
 func mapSeverities(
-	n []CVENode,
-	a []*github.Alert,
+	nodes []CVENode,
+	alerts []*github.Alert,
 ) map[metadata.AttributeCveSeverity]int64 {
 
 	// Allows us to map the "MODERATE" to the conventional "medium" and support
@@ -397,13 +397,13 @@ func mapSeverities(
 	}
 	m := make(map[metadata.AttributeCveSeverity]int64)
 
-	for _, node := range n {
+	for _, node := range nodes {
 		if val, found := mapping[strings.ToUpper(string(node.SecurityVulnerability.Severity))]; found {
 			m[val]++
 		}
 	}
 
-	for _, alert := range a {
+	for _, alert := range alerts {
 		if val, found := mapping[strings.ToUpper(*alert.Rule.SecuritySeverityLevel)]; found {
 			m[val]++
 		}
