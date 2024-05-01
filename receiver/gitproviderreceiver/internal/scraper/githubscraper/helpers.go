@@ -316,13 +316,13 @@ func (ghs *githubScraper) getCVEs(
 	rClient *github.Client,
 	repo string,
 ) (map[metadata.AttributeCveSeverity]int64, error) {
-	d := ghs.getDepbotAlerts(ctx, gClient, repo)
+	d := ghs.getDepBotAlerts(ctx, gClient, repo)
 	c := ghs.getCodeScanAlerts(ctx, rClient, repo)
 
 	return mapSeverities(d, c), nil
 }
 
-func (ghs *githubScraper) getDepbotAlerts(
+func (ghs *githubScraper) getDepBotAlerts(
 	ctx context.Context,
 	gClient graphql.Client,
 	repo string,
@@ -354,23 +354,23 @@ func (ghs *githubScraper) getCodeScanAlerts(
 	client *github.Client,
 	repo string,
 ) []*github.Alert {
-	var all []*github.Alert
+	var alerts []*github.Alert
 
 	// Options for Pagination support, default from GitHub was 30. Max is 100
 	// https://docs.github.com/en/rest/code-scanning/code-scanning?apiVersion=2022-11-28
 	opt := &github.AlertListOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
+		ListOptions: github.ListOptions{PerPage: 50},
 		State:       "open",
 	}
 
 	for {
-		alerts, resp, err := client.CodeScanning.ListAlertsForRepo(ctx, ghs.cfg.GitHubOrg, repo, opt)
+		a, resp, err := client.CodeScanning.ListAlertsForRepo(ctx, ghs.cfg.GitHubOrg, repo, opt)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting code scanning alerts from repo", zap.Error(err))
 			return nil
 		}
 
-		all = append(all, alerts...)
+		alerts = append(alerts, a...)
 		if resp.NextPage == 0 {
 			break
 		}
@@ -378,7 +378,7 @@ func (ghs *githubScraper) getCodeScanAlerts(
 		opt.ListOptions.Page = resp.NextPage
 	}
 
-	return all
+	return alerts
 }
 
 func mapSeverities(
@@ -398,7 +398,7 @@ func mapSeverities(
 	m := make(map[metadata.AttributeCveSeverity]int64)
 
 	for _, node := range n {
-		if val, found := mapping[string(node.SecurityVulnerability.Severity)]; found {
+		if val, found := mapping[strings.ToUpper(string(node.SecurityVulnerability.Severity))]; found {
 			m[val]++
 		}
 	}
