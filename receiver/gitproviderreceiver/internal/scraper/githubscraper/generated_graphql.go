@@ -1632,7 +1632,7 @@ func getPullRequestData(
 const getRepoCVEs_Operation = `
 query getRepoCVEs ($owner: String!, $repo: String!, $alertCursor: String) {
 	repository(owner: $owner, name: $repo) {
-		vulnerabilityAlerts(first: 100, after: $alertCursor) {
+		vulnerabilityAlerts(first: 100, states: OPEN, after: $alertCursor) {
 			pageInfo {
 				hasNextPage
 				endCursor
