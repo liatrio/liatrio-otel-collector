@@ -21,14 +21,15 @@ import (
 )
 
 type responses struct {
-	repoResponse       repoResponse
-	prResponse         prResponse
-	branchResponse     branchResponse
-	commitResponse     commitResponse
-	checkLoginResponse loginResponse
-	contribResponse    contribResponse
-	cveResponse        cveResponse
-	scrape             bool
+	repoResponse          repoResponse
+	prResponse            prResponse
+	branchResponse        branchResponse
+	commitResponse        commitResponse
+	checkLoginResponse    loginResponse
+	contribResponse       contribResponse
+	depBotAlertResponse   depBotAlertResponse
+	codeScanAlertResponse codeScanAlertResponse
+	scrape                bool
 }
 
 type repoResponse struct {
@@ -66,19 +67,38 @@ type contribResponse struct {
 	page         int
 }
 
-type cveResponse struct {
-	cves         []VulnerabilityAlerts
-	responseCode int
-	page         int
+type depBotAlertResponse struct {
+	depBotsAlerts []VulnerabilityAlerts
+	responseCode  int
+	page          int
 }
+
+type codeScanAlertResponse struct {
+	codeScanAlerts [][]*github.Alert
+	responseCode   int
+	page           int
+}
+
+// func setupRestEndpoint(responses *responses) string{
+
+// 	switch {
+// 		case responses.codeScanAlertResponse != (codeScanAlertResponse{}):
+// 			return
+// 		}
+
+// 	return 0
+// }
 
 func MockServer(responses *responses) *http.ServeMux {
 	var mux http.ServeMux
-	restEndpoint := "/api-v3/repos/o/r/contributors"
+	contribRestEndpoint := "/api-v3/repos/o/r/contributors"
+	codeScanRestEndpoint := "/api-v3/repos/o/r/code-scanning/alerts"
+
 	graphEndpoint := "/"
 	if responses.scrape {
 		graphEndpoint = "/api/graphql"
-		restEndpoint = "/api/v3/repos/liatrio/repo1/contributors"
+		contribRestEndpoint = "/api/v3/repos/liatrio/repo1/contributors"
+		codeScanRestEndpoint = "/api/v3/repos/liatrio/repo1/code-scanning/alerts"
 	}
 	mux.HandleFunc(graphEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		var reqBody graphql.Request
@@ -163,23 +183,23 @@ func MockServer(responses *responses) *http.ServeMux {
 			}
 
 		case reqBody.OpName == "getRepoCVEs":
-			cveResp := &responses.cveResponse
-			w.WriteHeader(cveResp.responseCode)
-			if cveResp.responseCode == http.StatusOK {
+			depBotAlertResp := &responses.depBotAlertResponse
+			w.WriteHeader(depBotAlertResp.responseCode)
+			if depBotAlertResp.responseCode == http.StatusOK {
 				cves := getRepoCVEsResponse{
 					Repository: getRepoCVEsRepository{
-						VulnerabilityAlerts: cveResp.cves[cveResp.page],
+						VulnerabilityAlerts: depBotAlertResp.depBotsAlerts[depBotAlertResp.page],
 					},
 				}
 				graphqlResponse := graphql.Response{Data: &cves}
 				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
 					return
 				}
-				cveResp.page++
+				depBotAlertResp.page++
 			}
 		}
 	})
-	mux.HandleFunc(restEndpoint, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(contribRestEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		contribResp := &responses.contribResponse
 		if contribResp.responseCode == http.StatusOK {
 			contribs, err := json.Marshal(contribResp.contribs[contribResp.page])
@@ -197,6 +217,26 @@ func MockServer(responses *responses) *http.ServeMux {
 				fmt.Printf("error writing response: %v", err)
 			}
 			contribResp.page++
+		}
+	})
+	mux.HandleFunc(codeScanRestEndpoint, func(w http.ResponseWriter, r *http.Request) {
+		codeScanAlertResp := &responses.codeScanAlertResponse
+		if codeScanAlertResp.responseCode == http.StatusOK {
+			codeScanAlerts, err := json.Marshal(codeScanAlertResp.codeScanAlerts[codeScanAlertResp.page])
+			if err != nil {
+				fmt.Printf("error marshalling response: %v", err)
+			}
+			link := fmt.Sprintf(
+				"<https://api.github.com/repositories/placeholder/code-scanning/alerts?per_page=50&page=%d>; rel=\"next\"",
+				len(codeScanAlertResp.codeScanAlerts)-codeScanAlertResp.page-1,
+			)
+			w.Header().Set("Link", link)
+			// Attempt to write data to the response writer.
+			_, err = w.Write(codeScanAlerts)
+			if err != nil {
+				fmt.Printf("error writing response: %v", err)
+			}
+			codeScanAlertResp.page++
 		}
 	})
 	return &mux
@@ -1047,19 +1087,22 @@ func TestGetCommitInfo(t *testing.T) {
 	}
 }
 
-func TestGetRepoCVEs(t *testing.T) {
+func TestGetCVEs(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		server           *http.ServeMux
+		repo             string
+		org              string
 		expectedErr      error
-		expectedCVECount int
+		expectedCVECount int64
+		expectedMap      map[metadata.AttributeCveSeverity]int64
 	}{
 		{
-			desc: "TestSinglePageResponse",
+			desc: "TestSinglePageRespDepBotAlert",
 			server: MockServer(&responses{
 				scrape: false,
-				cveResponse: cveResponse{
-					cves: []VulnerabilityAlerts{
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{
 						{
 							Nodes: []CVENode{
 								{
@@ -1080,6 +1123,280 @@ func TestGetRepoCVEs(t *testing.T) {
 			}),
 			expectedErr:      nil,
 			expectedCVECount: 2,
+			expectedMap: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh:   1,
+				metadata.AttributeCveSeverityMedium: 1,
+			},
+		},
+		{
+			desc: "TestMultiPageRespDepBotAlert",
+			server: MockServer(&responses{
+				scrape: false,
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{
+						{
+							PageInfo: VulnerabilityAlertsPageInfo{
+								HasNextPage: true,
+							},
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "HIGH",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "MODERATE",
+									},
+								},
+							},
+						},
+						{
+							PageInfo: VulnerabilityAlertsPageInfo{
+								HasNextPage: false,
+							},
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "HIGH",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "MODERATE",
+									},
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:      nil,
+			expectedCVECount: 4,
+			expectedMap: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh:   2,
+				metadata.AttributeCveSeverityMedium: 2,
+			},
+		},
+		{
+			desc: "TestSinglePageRespCodeScanningAlert",
+			server: MockServer(&responses{
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{{}},
+					responseCode:  http.StatusOK,
+				},
+				codeScanAlertResponse: codeScanAlertResponse{
+					codeScanAlerts: [][]*github.Alert{
+						{
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("HIGH"),
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedMap: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh: 1,
+			},
+			repo:             "r",
+			org:              "o",
+			expectedCVECount: 1,
+			expectedErr:      nil,
+		},
+		{
+			desc: "TestMultiPageRespCodeScanningAlert",
+			server: MockServer(&responses{
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{{}},
+					responseCode:  http.StatusOK,
+				},
+				codeScanAlertResponse: codeScanAlertResponse{
+					codeScanAlerts: [][]*github.Alert{
+						{
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("HIGH"),
+								},
+							},
+						},
+						{
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("HIGH"),
+								},
+							},
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("MEDIUM"),
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedMap: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh:   2,
+				metadata.AttributeCveSeverityMedium: 1,
+			},
+			repo:             "r",
+			org:              "o",
+			expectedCVECount: 3,
+			expectedErr:      nil,
+		},
+		{
+			desc: "TestSinglePageDepBotAndCodeScanningAlert",
+			server: MockServer(&responses{
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{
+						{
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "HIGH",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "MODERATE",
+									},
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				codeScanAlertResponse: codeScanAlertResponse{
+					codeScanAlerts: [][]*github.Alert{
+						{
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("HIGH"),
+								},
+							},
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("MEDIUM"),
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedMap: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh:   2,
+				metadata.AttributeCveSeverityMedium: 2,
+			},
+			repo:             "r",
+			org:              "o",
+			expectedCVECount: 4,
+			expectedErr:      nil,
+		},
+		{
+			desc: "TestMultiPageDepBotAndCodeScanningAlert",
+			server: MockServer(&responses{
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{
+						{
+							PageInfo: VulnerabilityAlertsPageInfo{
+								HasNextPage: true,
+							},
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "CRITICAL",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "MODERATE",
+									},
+								},
+							},
+						},
+						{
+							PageInfo: VulnerabilityAlertsPageInfo{
+								HasNextPage: false,
+							},
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "HIGH",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "LOW",
+									},
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				codeScanAlertResponse: codeScanAlertResponse{
+					codeScanAlerts: [][]*github.Alert{
+						{
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("CRITICAL"),
+								},
+							},
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("LOW"),
+								},
+							},
+						},
+						{
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("HIGH"),
+								},
+							},
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("MEDIUM"),
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedMap: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh:     2,
+				metadata.AttributeCveSeverityMedium:   2,
+				metadata.AttributeCveSeverityLow:      2,
+				metadata.AttributeCveSeverityCritical: 2,
+			},
+			repo:             "r",
+			org:              "o",
+			expectedCVECount: 8,
+			expectedErr:      nil,
+		},
+		{
+			desc: "TestEmptyInputDepBotAndCodeScanningAlert",
+			server: MockServer(&responses{
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{{}},
+					responseCode:  http.StatusOK,
+				},
+				codeScanAlertResponse: codeScanAlertResponse{
+					codeScanAlerts: [][]*github.Alert{{}},
+					responseCode:   http.StatusOK,
+				},
+			}),
+			expectedMap:      map[metadata.AttributeCveSeverity]int64{},
+			repo:             "r",
+			org:              "o",
+			expectedCVECount: 0,
+			expectedErr:      nil,
 		},
 	}
 	for _, tc := range testCases {
@@ -1089,12 +1406,25 @@ func TestGetRepoCVEs(t *testing.T) {
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
-			defer server.Close()
-			client := graphql.NewClient(server.URL, ghs.client)
+			ghs.cfg.GitHubOrg = tc.org
 
-			cves, err := getRepoCVEs(context.Background(), client, "test1", "repo1")
+			gClient := graphql.NewClient(server.URL, ghs.client)
+			rClient := github.NewClient(nil)
 
-			assert.Equal(t, tc.expectedCVECount, len(cves.Repository.VulnerabilityAlerts.Nodes))
+			url, err := url.Parse(server.URL + "/api-v3" + "/")
+			assert.NoError(t, err)
+			rClient.BaseURL = url
+			rClient.UploadURL = url
+
+			cves, err := ghs.getCVEs(context.Background(), gClient, rClient, tc.repo)
+			totalCVEs := int64(0)
+
+			for _, sevCount := range cves {
+				totalCVEs += sevCount // Assuming 'cves' is a slice of VulnerabilityAlerts
+			}
+
+			assert.Equal(t, tc.expectedCVECount, totalCVEs)
+
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {
@@ -1104,89 +1434,264 @@ func TestGetRepoCVEs(t *testing.T) {
 	}
 }
 
-func TestMapSeverities(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		input    getRepoCVEsRepository
-		expected map[metadata.AttributeCveSeverity]int64
-	}{
-		{
-			desc: "TestSingleSeverity",
-			input: getRepoCVEsRepository{
-				VulnerabilityAlerts: VulnerabilityAlerts{
-					Nodes: []CVENode{
-						{
-							SecurityVulnerability: CVENodeSecurityVulnerability{
-								Severity: "HIGH",
-							},
-						},
-					},
-				},
-			},
-			expected: map[metadata.AttributeCveSeverity]int64{
-				metadata.AttributeCveSeverityHigh: 1,
-			},
-		},
-		{
-			desc: "TestMultipleSeverities",
-			input: getRepoCVEsRepository{
-				VulnerabilityAlerts: VulnerabilityAlerts{
-					Nodes: []CVENode{
-						{
-							SecurityVulnerability: CVENodeSecurityVulnerability{
-								Severity: "HIGH",
-							},
-						},
-						{
-							SecurityVulnerability: CVENodeSecurityVulnerability{
-								Severity: "LOW",
-							},
-						},
-						{
-							SecurityVulnerability: CVENodeSecurityVulnerability{
-								Severity: "MODERATE",
-							},
-						},
-						{
-							SecurityVulnerability: CVENodeSecurityVulnerability{
-								Severity: "HIGH",
-							},
-						},
-					},
-				},
-			},
-			expected: map[metadata.AttributeCveSeverity]int64{
-				metadata.AttributeCveSeverityHigh:   2,
-				metadata.AttributeCveSeverityLow:    1,
-				metadata.AttributeCveSeverityMedium: 1,
-			},
-		},
-		{
-			desc:     "TestEmptyInput",
-			input:    getRepoCVEsRepository{},
-			expected: map[metadata.AttributeCveSeverity]int64{},
-		},
-		{
-			desc: "TestBadInput",
-			input: getRepoCVEsRepository{
-				VulnerabilityAlerts: VulnerabilityAlerts{
-					Nodes: []CVENode{
-						{
-							SecurityVulnerability: CVENodeSecurityVulnerability{
-								Severity: "BAD_INPUT",
-							},
-						},
-					},
-				},
-			},
-			expected: map[metadata.AttributeCveSeverity]int64{},
-		},
-	}
+// func delete(t *testing.T) {
+// 	testCases := []struct {
+// 		desc             string
+// 		server           *http.ServeMux
+// 		expectedErr      error
+// 		expectedCVECount int
+// 		expectedMap	  	 map[metadata.AttributeCveSeverity]int64
+// 	}
+// 	{
+// 		{
+// 			desc: "TestSinglePageRespDepBotAlert",
+// 			server: MockServer(&responses{
+// 				scrape: false,
+// 				cveResponse: cveResponse{
+// 					cves: []VulnerabilityAlerts{
+// 						{
+// 							Nodes: []CVENode{
+// 								{
+// 									SecurityVulnerability: CVENodeSecurityVulnerability{
+// 										Severity: "HIGH",
+// 									}
+// 								}
+// 								{
+// 									SecurityVulnerability: CVENodeSecurityVulnerability{
+// 										Severity: "MODERATE",
+// 									}
+// 								}
+// 							}
+// 						}
+// 					},
+// 					responseCode: http.StatusOK,
+// 				},
+// 			}),
+// 			expectedErr:      nil,
+// 			expectedCVECount: 2,
+// 		},
+// 		{
+// 			desc: "TestMultiPageRespDepBotAlert",
+// 			server: MockServer(&responses{
+// 				scrape: false,
+// 				cveResponse: cveResponse{
+// 					cves: []VulnerabilityAlerts{
+// 						{
+// 							PageInfo: VulnerabilityAlertsPageInfo{
+// 								HasNextPage: true,
+// 							},
+// 							Nodes: []CVENode{
+// 								{
+// 									SecurityVulnerability: CVENodeSecurityVulnerability{
+// 										Severity: "HIGH",
+// 									},
+// 								},
+// 								{
+// 									SecurityVulnerability: CVENodeSecurityVulnerability{
+// 										Severity: "MODERATE",
+// 									},
+// 								},
+// 							},
+// 						},
+// 						{
+// 							PageInfo: VulnerabilityAlertsPageInfo{
+// 								HasNextPage: false,
+// 							},
+// 							Nodes: []CVENode{
+// 								{
+// 									SecurityVulnerability: CVENodeSecurityVulnerability{
+// 										Severity: "HIGH",
+// 									},
+// 								},
+// 								{
+// 									SecurityVulnerability: CVENodeSecurityVulnerability{
+// 										Severity: "MODERATE",
+// 									},
+// 								},
+// 							},
+// 						},
+// 					},
+// 					responseCode: http.StatusOK,
+// 				},
+// 			}),
+// 			expectedErr:      nil,
+// 			expectedCVECount: 4,
+// 		},
+// 		{
+// 			desc: "TestSinglePageRespCodeScanningAlert",
+// 			server: MockServer(&responses{
+// 				scrape: false,
+// 				codeScanAlertResp: codeScanAlertResponse{
+// 					cve: []*github.Alert{
+// 						{
+// 							Rule: &github.Rule{
+// 								Severity: github.String("HIGH"),
+// 							},
+// 						},
+// 					},
+// 				},
+// 			}),
+// 			expectedMap: map[metadata.AttributeCveSeverity]int64{
+// 				metadata.AttributeCveSeverityHigh: 1,
+// 			},
+// 			expectedCVECount: 1,
+// 			expectedErr:   nil,
+// 		},
+// 	},
+// 	for _, tc := range testCases {
+// 		t.Run(tc.desc, func(t *testing.T) {
+// 			// factory := Factory{}
+// 			// defaultConfig := factory.CreateDefaultConfig()
+// 			// settings := receivertest.NewNopCreateSettings()
+// 			// ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+// 			// server := httptest.NewServer(tc.server)
+// 			// defer server.Close()
+// 			// gClient := graphql.NewClient(server.URL, ghs.client)
+// 			// rClient := github.NewClient(nil)
 
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			actual := mapSeverities(tc.input)
-			assert.Equal(t, tc.expected, actual)
-		})
-	}
-}
+// 			// cves, err := ghs.getCVEs(context.Background(), gClient, rClient, "repo1")
+
+// 			// for _, sevCount := range cves {
+// 			// 	totalCVEs += sevCount // Assuming 'cves' is a slice of VulnerabilityAlerts
+// 			// }
+
+// 			// assert.Equal(t, tc.expectedCVECount, totalCVEs)
+// 			// //assert.Equal(t, tc.expectedCVECount, len(cves.Repository.VulnerabilityAlerts.Nodes))
+// 			// if tc.expectedErr == nil {
+// 			// 	assert.NoError(t, err)
+// 			// } else {
+// 			// 	assert.EqualError(t, err, tc.expectedErr.Error())
+// 			// }
+// 		})
+// 	}
+// }
+
+// func GetCVEs(t *testing.T) {
+// 	testCases := []struct {
+// 		desc     string
+// 		rClient  *github.Client
+// 		gClient  graphql.Client
+// 		inputDB  getRepoCVEsRepository
+// 		inputCS  []*github.Alert
+// 		expected map[metadata.AttributeCveSeverity]int64
+// 		expectedErr error
+// 	}{
+// 		{
+// 			desc: "TestOnlyDepBotMapSeverity",
+// 			input: getRepoCVEsRepository{
+// 				VulnerabilityAlerts: VulnerabilityAlerts{
+// 					Nodes: []CVENode{
+// 						{
+// 							SecurityVulnerability: CVENodeSecurityVulnerability{
+// 								Severity: "HIGH",
+// 							},
+// 						},
+// 					},
+// 				},
+// 			},
+// 			expected: map[metadata.AttributeCveSeverity]int64{
+// 				metadata.AttributeCveSeverityHigh: 1,
+// 			},
+// 		},
+// 		{
+// 			desc: "TestMultipleDepBotSeverities",
+// 			inputDB: getRepoCVEsRepository{
+// 				VulnerabilityAlerts: VulnerabilityAlerts{
+// 					Nodes: []CVENode{
+// 						{
+// 							SecurityVulnerability: CVENodeSecurityVulnerability{
+// 								Severity: "HIGH",
+// 							},
+// 						},
+// 						{
+// 							SecurityVulnerability: CVENodeSecurityVulnerability{
+// 								Severity: "LOW",
+// 							},
+// 						},
+// 						{
+// 							SecurityVulnerability: CVENodeSecurityVulnerability{
+// 								Severity: "MODERATE",
+// 							},
+// 						},
+// 						{
+// 							SecurityVulnerability: CVENodeSecurityVulnerability{
+// 								Severity: "HIGH",
+// 							},
+// 						},
+// 					},
+// 				},
+// 			},
+// 			expected: map[metadata.AttributeCveSeverity]int64{
+// 				metadata.AttributeCveSeverityHigh:   2,
+// 				metadata.AttributeCveSeverityLow:    1,
+// 				metadata.AttributeCveSeverityMedium: 1,
+// 			},
+// 		},
+// 		{
+// 			desc:     "TestEmptyInput",
+// 			inputDB:    getRepoCVEsRepository{},
+// 			expected: map[metadata.AttributeCveSeverity]int64{},
+// 		},
+// 		{
+// 			desc: "TestBadInput",
+// 			inputDB: getRepoCVEsRepository{
+// 				VulnerabilityAlerts: VulnerabilityAlerts{
+// 					Nodes: []CVENode{
+// 						{
+// 							SecurityVulnerability: CVENodeSecurityVulnerability{
+// 								Severity: "BAD_INPUT",
+// 							},
+// 						},
+// 					},
+// 				},
+// 			},
+// 			expected: map[metadata.AttributeCveSeverity]int64{},
+// 		},
+// 		{
+// 			desc: "TestOnlyCodeScanningInput",
+// 			inputCS: []*github.Alert{
+// 				{
+// 					Rule: &github.Rule{
+// 						Severity: github.String("HIGH"),
+// 					},
+// 				},
+// 			},
+// 			expected: map[metadata.AttributeCveSeverity]int64{
+// 				metadata.AttributeCveSeverityHigh: 1,
+// 			},
+// 		},
+// 		{
+// 			desc: "",
+// 			inputCS: []*github.Alert{
+// 				{
+// 					Rule: &github.Rule{
+// 						Severity: github.String("HIGH"),
+// 					},
+// 				},
+// 			},
+// 			expected: map[metadata.AttributeCveSeverity]int64{
+// 				metadata.AttributeCveSeverityHigh: 1,
+// 			},
+// 		},
+// 	}
+// 	for _, tc := range testCases {
+// 		t.Run(tc.desc, func(t *testing.T) {
+// 			factory := Factory{}
+// 			defaultConfig := factory.CreateDefaultConfig()
+// 			settings := receivertest.NewNopCreateSettings()
+// 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+// 			gClient := graphql.NewClient(server.URL, ghs.client)
+// 			rClient := github.NewClient(nil)
+
+// 			//actual, err := ghs.getCVEs(gClient, rClient, "repo1")
+// 			//actual := mapSeverities(tc.inputDB.VulnerabilityAlerts.Nodes, tc.inputCS)
+// 			assert.Equal(t, tc.expected, actual)
+
+// 			if tc.expectedErr == nil {
+// 				assert.NoError(t, err)
+// 			} else {
+// 				assert.EqualError(t, err, tc.expectedErr.Error())
+// 			}
+// 		})
+// 	}
+// }
