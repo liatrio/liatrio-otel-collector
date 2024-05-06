@@ -170,14 +170,6 @@ query getPullRequestData(
           createdAt
           merged
           mergedAt
-          mergeCommit {
-            deployments(last: 1, orderBy: { field: CREATED_AT, direction: ASC }) {
-              nodes {
-                createdAt
-              }
-              totalCount
-            }
-          }
         }
         headRefName
         reviews(states: APPROVED, last: 1) {

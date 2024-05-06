@@ -436,8 +436,6 @@ type PullRequestNode struct {
 	Merged bool `json:"merged"`
 	// The date and time that the pull request was merged.
 	MergedAt time.Time `json:"mergedAt"`
-	// The commit that was created when this pull request was merged.
-	MergeCommit PullRequestNodeMergeCommit `json:"mergeCommit"`
 	// Identifies the name of the head Ref associated with the pull request, even if the ref has been deleted.
 	HeadRefName string `json:"headRefName"`
 	// A list of reviews associated with the pull request.
@@ -453,64 +451,12 @@ func (v *PullRequestNode) GetMerged() bool { return v.Merged }
 // GetMergedAt returns PullRequestNode.MergedAt, and is useful for accessing the field via an interface.
 func (v *PullRequestNode) GetMergedAt() time.Time { return v.MergedAt }
 
-// GetMergeCommit returns PullRequestNode.MergeCommit, and is useful for accessing the field via an interface.
-func (v *PullRequestNode) GetMergeCommit() PullRequestNodeMergeCommit { return v.MergeCommit }
-
 // GetHeadRefName returns PullRequestNode.HeadRefName, and is useful for accessing the field via an interface.
 func (v *PullRequestNode) GetHeadRefName() string { return v.HeadRefName }
 
 // GetReviews returns PullRequestNode.Reviews, and is useful for accessing the field via an interface.
 func (v *PullRequestNode) GetReviews() PullRequestNodeReviewsPullRequestReviewConnection {
 	return v.Reviews
-}
-
-// PullRequestNodeMergeCommit includes the requested fields of the GraphQL type Commit.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git commit.
-type PullRequestNodeMergeCommit struct {
-	// The deployments associated with a commit.
-	Deployments PullRequestNodeMergeCommitDeploymentsDeploymentConnection `json:"deployments"`
-}
-
-// GetDeployments returns PullRequestNodeMergeCommit.Deployments, and is useful for accessing the field via an interface.
-func (v *PullRequestNodeMergeCommit) GetDeployments() PullRequestNodeMergeCommitDeploymentsDeploymentConnection {
-	return v.Deployments
-}
-
-// PullRequestNodeMergeCommitDeploymentsDeploymentConnection includes the requested fields of the GraphQL type DeploymentConnection.
-// The GraphQL type's documentation follows.
-//
-// The connection type for Deployment.
-type PullRequestNodeMergeCommitDeploymentsDeploymentConnection struct {
-	// A list of nodes.
-	Nodes []PullRequestNodeMergeCommitDeploymentsDeploymentConnectionNodesDeployment `json:"nodes"`
-	// Identifies the total count of items in the connection.
-	TotalCount int `json:"totalCount"`
-}
-
-// GetNodes returns PullRequestNodeMergeCommitDeploymentsDeploymentConnection.Nodes, and is useful for accessing the field via an interface.
-func (v *PullRequestNodeMergeCommitDeploymentsDeploymentConnection) GetNodes() []PullRequestNodeMergeCommitDeploymentsDeploymentConnectionNodesDeployment {
-	return v.Nodes
-}
-
-// GetTotalCount returns PullRequestNodeMergeCommitDeploymentsDeploymentConnection.TotalCount, and is useful for accessing the field via an interface.
-func (v *PullRequestNodeMergeCommitDeploymentsDeploymentConnection) GetTotalCount() int {
-	return v.TotalCount
-}
-
-// PullRequestNodeMergeCommitDeploymentsDeploymentConnectionNodesDeployment includes the requested fields of the GraphQL type Deployment.
-// The GraphQL type's documentation follows.
-//
-// Represents triggered deployment instance.
-type PullRequestNodeMergeCommitDeploymentsDeploymentConnectionNodesDeployment struct {
-	// Identifies the date and time when the object was created.
-	CreatedAt time.Time `json:"createdAt"`
-}
-
-// GetCreatedAt returns PullRequestNodeMergeCommitDeploymentsDeploymentConnectionNodesDeployment.CreatedAt, and is useful for accessing the field via an interface.
-func (v *PullRequestNodeMergeCommitDeploymentsDeploymentConnectionNodesDeployment) GetCreatedAt() time.Time {
-	return v.CreatedAt
 }
 
 // PullRequestNodeReviewsPullRequestReviewConnection includes the requested fields of the GraphQL type PullRequestReviewConnection.
@@ -1552,14 +1498,6 @@ query getPullRequestData ($name: String!, $owner: String!, $prFirst: Int!, $prCu
 					createdAt
 					merged
 					mergedAt
-					mergeCommit {
-						deployments(last: 1, orderBy: {field:CREATED_AT,direction:ASC}) {
-							nodes {
-								createdAt
-							}
-							totalCount
-						}
-					}
 				}
 				headRefName
 				reviews(states: APPROVED, last: 1) {
