@@ -145,7 +145,7 @@ func TestGetInitialCommit(t *testing.T) {
 			settings := receivertest.NewNopCreateSettings()
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
-			defer server.Close()
+			defer func() { server.Close() }()
 			client, err := gitlab.NewClient("", gitlab.WithBaseURL(server.URL))
 			assert.NoError(t, err)
 			commit, err := gls.getInitialCommit(client, "project", "defaultBranch", "branch")

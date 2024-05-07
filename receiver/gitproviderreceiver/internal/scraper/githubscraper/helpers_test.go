@@ -542,7 +542,7 @@ func TestGetRepos(t *testing.T) {
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
-			defer server.Close()
+			defer func() { server.Close() }()
 			client := graphql.NewClient(server.URL, ghs.client)
 
 			_, count, err := ghs.getRepos(context.Background(), client, "fake query")
@@ -809,6 +809,7 @@ func TestGetContributors(t *testing.T) {
 			ghs.cfg.GitHubOrg = tc.org
 
 			server := httptest.NewServer(tc.server)
+			defer func() { server.Close() }()
 
 			client := github.NewClient(nil)
 			url, err := url.Parse(server.URL + "/api-v3" + "/")
@@ -1396,6 +1397,7 @@ func TestGetCVEs(t *testing.T) {
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
+			defer func() { server.Close() }()
 			ghs.cfg.GitHubOrg = tc.org
 
 			gClient := graphql.NewClient(server.URL, ghs.client)
