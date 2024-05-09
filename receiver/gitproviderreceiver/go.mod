@@ -111,10 +111,10 @@ require (
 	go.opentelemetry.io/otel/exporters/prometheus v0.47.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.25.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.25.0 // indirect
-	go.opentelemetry.io/otel/metric v1.25.0
+	go.opentelemetry.io/otel/metric v1.26.0
 	go.opentelemetry.io/otel/sdk v1.25.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.25.0 // indirect
-	go.opentelemetry.io/otel/trace v1.25.0
+	go.opentelemetry.io/otel/trace v1.26.0
 	go.opentelemetry.io/proto/otlp v1.2.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
