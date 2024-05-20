@@ -93,7 +93,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	var wg sync.WaitGroup
 	wg.Add(len(repos))
-    var mux sync.Mutex
+	var mux sync.Mutex
 
 	for _, repo := range repos {
 		repo := repo
@@ -109,9 +109,9 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				ghs.logger.Sugar().Errorf("error %v getting branch count for repo %s", zap.Error(err), repo.Name)
 			}
 
-            // Create a mutual exclusion lock to prevent the recordDataPoint 
-            // from having a nil pointer error passing in the SetStartTimestamp
-            mux.Lock()
+			// Create a mutual exclusion lock to prevent the recordDataPoint
+			// from having a nil pointer error passing in the SetStartTimestamp
+			mux.Lock()
 			ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(count), name)
 
 			for _, branch := range branches {
@@ -187,7 +187,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(open), metadata.AttributePullRequestStateOpen, name)
 			ghs.mb.RecordGitRepositoryPullRequestCountDataPoint(now, int64(merged), metadata.AttributePullRequestStateMerged, name)
-            mux.Unlock()
+			mux.Unlock()
 		}()
 	}
 

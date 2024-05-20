@@ -16,7 +16,6 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"github.com/google/go-github/v61/github"
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
@@ -1059,11 +1058,10 @@ func TestGetCommitInfo(t *testing.T) {
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopCreateSettings()
 			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			now := pcommon.NewTimestampFromTime(time.Now())
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
 			client := graphql.NewClient(server.URL, ghs.client)
-			adds, dels, age, err := ghs.getCommitInfo(context.Background(), client, "repo1", now, tc.branch)
+			adds, dels, age, err := ghs.getCommitInfo(context.Background(), client, "repo1", tc.branch)
 
 			assert.Equal(t, tc.expectedAge, age)
 			assert.Equal(t, tc.expectedDeletions, dels)
