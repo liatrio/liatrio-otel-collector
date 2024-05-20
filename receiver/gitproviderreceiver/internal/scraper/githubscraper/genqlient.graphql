@@ -36,6 +36,33 @@ query getRepoDataBySearch(
   }
 }
 
+query getRepoDataByTeam(
+    $org: String!
+    $team: String!
+    # @genqlient(pointer: true)
+    $repoCursor: String
+){
+	organization(login: $org){
+    team(slug: $team){
+      repositories(first: 100, after: $repoCursor){
+        totalCount
+        # @genqlient(typename: "TeamRepositoryNode")
+        nodes{
+          id
+          name
+          defaultBranchRef {
+            name
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+}
+
 query checkLogin($login: String!) {
   user(login: $login) {
     login

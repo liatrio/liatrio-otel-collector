@@ -20,7 +20,8 @@ import (
 )
 
 type responses struct {
-	repoResponse          repoResponse
+	searchRepoResponse    searchRepoResponse
+	teamRepoResponse      teamRepoResponse
 	prResponse            prResponse
 	branchResponse        branchResponse
 	commitResponse        commitResponse
@@ -31,8 +32,14 @@ type responses struct {
 	scrape                bool
 }
 
-type repoResponse struct {
+type searchRepoResponse struct {
 	repos        []getRepoDataBySearchSearchSearchResultItemConnection
+	responseCode int
+	page         int
+}
+
+type teamRepoResponse struct {
+	repos        []getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection
 	responseCode int
 	page         int
 }
@@ -106,8 +113,25 @@ func MockServer(responses *responses) *http.ServeMux {
 					return
 				}
 			}
+		case reqBody.OpName == "getRepoDataByTeam":
+			repoResp := &responses.teamRepoResponse
+			w.WriteHeader(repoResp.responseCode)
+			if repoResp.responseCode == http.StatusOK {
+				repos := getRepoDataByTeamResponse{
+					Organization: getRepoDataByTeamOrganization{
+						Team: getRepoDataByTeamOrganizationTeam{
+							Repositories: repoResp.repos[repoResp.page],
+						},
+					},
+				}
+				graphqlResponse := graphql.Response{Data: &repos}
+				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
+					return
+				}
+				repoResp.page++
+			}
 		case reqBody.OpName == "getRepoDataBySearch":
-			repoResp := &responses.repoResponse
+			repoResp := &responses.searchRepoResponse
 			w.WriteHeader(repoResp.responseCode)
 			if repoResp.responseCode == http.StatusOK {
 				repos := getRepoDataBySearchResponse{
@@ -380,7 +404,7 @@ func TestGetAge(t *testing.T) {
 	}
 }
 
-func TestGetRepos(t *testing.T) {
+func TestGetSearchRepos(t *testing.T) {
 	testCases := []struct {
 		desc                    string
 		server                  *http.ServeMux
@@ -392,7 +416,7 @@ func TestGetRepos(t *testing.T) {
 			desc: "TestSinglePageResponse",
 			server: MockServer(&responses{
 				scrape: false,
-				repoResponse: repoResponse{
+				searchRepoResponse: searchRepoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 1,
@@ -417,7 +441,7 @@ func TestGetRepos(t *testing.T) {
 			desc: "TestMultiPageResponse",
 			server: MockServer(&responses{
 				scrape: false,
-				repoResponse: repoResponse{
+				searchRepoResponse: searchRepoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 4,
@@ -459,7 +483,7 @@ func TestGetRepos(t *testing.T) {
 			desc: "TestSinglePageWithVulnerabilitiesResponse",
 			server: MockServer(&responses{
 				scrape: false,
-				repoResponse: repoResponse{
+				searchRepoResponse: searchRepoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 1,
@@ -484,7 +508,7 @@ func TestGetRepos(t *testing.T) {
 			desc: "TestMultiPageWithVulnerabilitieResponse",
 			server: MockServer(&responses{
 				scrape: false,
-				repoResponse: repoResponse{
+				searchRepoResponse: searchRepoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 4,
@@ -526,7 +550,7 @@ func TestGetRepos(t *testing.T) {
 			desc: "Test404Response",
 			server: MockServer(&responses{
 				scrape: false,
-				repoResponse: repoResponse{
+				searchRepoResponse: searchRepoResponse{
 					responseCode: http.StatusNotFound,
 				},
 			}),
@@ -544,7 +568,182 @@ func TestGetRepos(t *testing.T) {
 			defer func() { server.Close() }()
 			client := graphql.NewClient(server.URL, ghs.client)
 
-			_, count, err := ghs.getRepos(context.Background(), client, "fake query")
+			_, count, err := ghs.getSearchRepos(context.Background(), client, "fake query")
+			assert.Equal(t, tc.expectedRepos, count)
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+		})
+	}
+}
+
+func TestGetTeamRepos(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		server                  *http.ServeMux
+		expectedErr             error
+		expectedRepos           int
+		expectedVulnerabilities int
+	}{
+		{
+			desc: "TestSinglePageResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				teamRepoResponse: teamRepoResponse{
+					repos: []getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection{
+						{
+							TotalCount: 1,
+							Nodes: []TeamRepositoryNode{
+								{
+									Name: "repo1",
+								},
+							},
+							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:             nil,
+			expectedRepos:           1,
+			expectedVulnerabilities: 0,
+		},
+		{
+			desc: "TestMultiPageResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				teamRepoResponse: teamRepoResponse{
+					repos: []getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection{
+						{
+							TotalCount: 4,
+							Nodes: []TeamRepositoryNode{
+								{
+									Name: "repo1",
+								},
+								{
+									Name: "repo2",
+								},
+							},
+							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{
+								HasNextPage: true,
+							},
+						},
+						{
+							TotalCount: 4,
+							Nodes: []TeamRepositoryNode{
+								{
+									Name: "repo3",
+								},
+								{
+									Name: "repo4",
+								},
+							},
+							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:             nil,
+			expectedRepos:           4,
+			expectedVulnerabilities: 0,
+		},
+		{
+			desc: "TestSinglePageWithVulnerabilitiesResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				teamRepoResponse: teamRepoResponse{
+					repos: []getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection{
+						{
+							TotalCount: 1,
+							Nodes: []TeamRepositoryNode{
+								{
+									Name: "repo1",
+								},
+							},
+							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:             nil,
+			expectedRepos:           1,
+			expectedVulnerabilities: 2,
+		},
+		{
+			desc: "TestMultiPageWithVulnerabilitieResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				teamRepoResponse: teamRepoResponse{
+					repos: []getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection{
+						{
+							TotalCount: 4,
+							Nodes: []TeamRepositoryNode{
+								{
+									Name: "repo1",
+								},
+								{
+									Name: "repo2",
+								},
+							},
+							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{
+								HasNextPage: true,
+							},
+						},
+						{
+							TotalCount: 4,
+							Nodes: []TeamRepositoryNode{
+								{
+									Name: "repo3",
+								},
+								{
+									Name: "repo4",
+								},
+							},
+							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:   nil,
+			expectedRepos: 4,
+			//expectedVulnerabilities: 8,
+		},
+		{
+			desc: "Test404Response",
+			server: MockServer(&responses{
+				scrape: false,
+				teamRepoResponse: teamRepoResponse{
+					responseCode: http.StatusNotFound,
+				},
+			}),
+			expectedErr:   errors.New("returned error 404 Not Found: "),
+			expectedRepos: 0,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			server := httptest.NewServer(tc.server)
+			defer func() { server.Close() }()
+			client := graphql.NewClient(server.URL, ghs.client)
+
+			_, count, err := ghs.getTeamRepos(context.Background(), client)
 			assert.Equal(t, tc.expectedRepos, count)
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)

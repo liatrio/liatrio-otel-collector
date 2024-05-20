@@ -20,6 +20,10 @@ resource_attributes:
     # github, gitlab, bitbucket, gittea
     description: The name of the Git vendor/provider (ie. GitHub / GitLab)
     type: string
+  team.name:
+    enabled: true
+    description: The name of the team in the organization
+    type: string
 
 attributes:
   repository.name:

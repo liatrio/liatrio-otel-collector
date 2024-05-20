@@ -24,7 +24,7 @@ const (
 
 // Current GraphQL cost 1
 // See genqlient.graphql getRepoDataBySearch for more information
-func (ghs *githubScraper) getRepos(
+func (ghs *githubScraper) getSearchRepos(
 	ctx context.Context,
 	client graphql.Client,
 	searchQuery string,
@@ -51,6 +51,33 @@ func (ghs *githubScraper) getRepos(
 		next = r.Search.PageInfo.HasNextPage
 	}
 
+	return repos, count, nil
+}
+
+// Current GraphQL cost 1
+// See genqlient.graphql getRepoDataBySearch for more information
+func (ghs *githubScraper) getTeamRepos(
+	ctx context.Context,
+	client graphql.Client,
+) ([]TeamRepositoryNode, int, error) {
+	// here we use a pointer to a string so that graphql will receive null if the
+	// value is not set since the after: $repoCursor is optional to graphql
+	var cursor *string
+	var repos []TeamRepositoryNode
+	var count int
+
+	for next := true; next; {
+		r, err := getRepoDataByTeam(ctx, client, ghs.cfg.GitHubOrg, ghs.cfg.GitHubTeam, cursor)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting repo data", zap.Error(err))
+			return nil, 0, err
+		}
+		repos = append(repos, r.Organization.Team.Repositories.Nodes...)
+
+		count = r.Organization.Team.Repositories.TotalCount
+		cursor = &r.Organization.Team.Repositories.PageInfo.EndCursor
+		next = r.Organization.Team.Repositories.PageInfo.HasNextPage
+	}
 	return repos, count, nil
 }
 

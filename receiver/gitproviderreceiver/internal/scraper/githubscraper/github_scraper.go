@@ -29,6 +29,20 @@ type githubScraper struct {
 	rb       *metadata.ResourceBuilder
 }
 
+// Adding this so that the returns from getting repositories from a search query vs a team query can be
+// put into one struct and the loop for processing the data can be the same
+// The underlying structure of the repository nodes are the same but genqlient generates them uniquely
+// for each query hence this structure.  Probably a better way, just want it to work for now.
+type unifiedRepo struct {
+	Id               string
+	Name             string
+	DefaultBranchRef defaultBranch
+}
+
+type defaultBranch struct {
+	Name string
+}
+
 func (ghs *githubScraper) start(ctx context.Context, host component.Host) (err error) {
 	ghs.logger.Sugar().Info("starting the GitHub scraper")
 	ghs.client, err = ghs.cfg.ToClient(ctx, host, ghs.settings)
@@ -83,13 +97,48 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		ghs.logger.Sugar().Debugf("using search query where query is: %v", ghs.cfg.SearchQuery)
 	}
 
-	repos, count, err := ghs.getRepos(ctx, genClient, sq)
-	if err != nil {
-		ghs.logger.Sugar().Errorf("error getting repo data: %v", zap.Error(err))
-		return ghs.mb.Emit(), err
+	var repos []unifiedRepo
+	var repoCount int
+
+	// If both team and search query are set, team takes precendence.  Might want to make it
+	// impossible to set both in the config
+	if ghs.cfg.GitHubTeam != "" {
+		teamRepos, count, err := ghs.getTeamRepos(ctx, genClient)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting repo data: %v", zap.Error(err))
+			return ghs.mb.Emit(), err
+		}
+		repoCount = count
+		for _, repo := range teamRepos {
+			unifiedRepo := unifiedRepo{
+				Id:   repo.Id,
+				Name: repo.Name,
+				DefaultBranchRef: defaultBranch{
+					Name: repo.DefaultBranchRef.Name,
+				},
+			}
+			repos = append(repos, unifiedRepo)
+		}
+	} else {
+		searchRepos, count, err := ghs.getSearchRepos(ctx, genClient, sq)
+		if err != nil {
+			ghs.logger.Sugar().Errorf("error getting repo data: %v", zap.Error(err))
+			return ghs.mb.Emit(), err
+		}
+		repoCount = count
+		for _, repo := range searchRepos {
+			unifiedRepo := unifiedRepo{
+				Id:   repo.Id,
+				Name: repo.Name,
+				DefaultBranchRef: defaultBranch{
+					Name: repo.DefaultBranchRef.Name,
+				},
+			}
+			repos = append(repos, unifiedRepo)
+		}
 	}
 
-	ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(count))
+	ghs.mb.RecordGitRepositoryCountDataPoint(now, int64(repoCount))
 
 	var wg sync.WaitGroup
 	wg.Add(len(repos))
@@ -195,6 +244,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	ghs.rb.SetGitVendorName("github")
 	ghs.rb.SetOrganizationName(ghs.cfg.GitHubOrg)
+	ghs.rb.SetTeamName(ghs.cfg.GitHubTeam)
 
 	res := ghs.rb.Emit()
 	return ghs.mb.Emit(metadata.WithResource(res)), nil

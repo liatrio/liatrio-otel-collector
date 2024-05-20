@@ -10,7 +10,7 @@ resourceMetrics:
             stringValue: liatrio
         - key: team.name
           value:
-            stringValue: ""
+            stringValue: tag-o11y
     schemaUrl: https://opentelemetry.io/schemas/1.9.0
     scopeMetrics:
       - metrics:
@@ -191,7 +191,4 @@ resourceMetrics:
             unit: s
         scope:
           name: github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver
-          # Note: Used to be otelcol but after upgrade, scope was throwing an
-          # error and needed to be set to full module name
-          # name: otelcol/gitproviderreceiver
           version: latest
