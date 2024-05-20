@@ -74,13 +74,11 @@ func (ghs *githubScraper) getBranches(
 			ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
 			return nil, 0, err
 		}
-        // ghs.logger.Sugar().Infof("INSIDE getBranches FUNCTION: branch count for repo %s: %d", repoName, r.Repository.Refs.TotalCount)
 		count = r.Repository.Refs.TotalCount
 		cursor = &r.Repository.Refs.PageInfo.EndCursor
 		next = r.Repository.Refs.PageInfo.HasNextPage
 		branches = append(branches, r.Repository.Refs.Nodes...)
 	}
-    // ghs.logger.Sugar().Infof("INSIDE getBranches FUNCTION: returning %v\n%d", branches, count)
 	return branches, count, nil
 }
 
@@ -258,7 +256,6 @@ func (ghs *githubScraper) getCommitInfo(
 	ctx context.Context,
 	client graphql.Client,
 	repoName string,
-	// now pcommon.Timestamp,
 	branch BranchNode,
 ) (int, int, int64, error) {
 	comCount := 100
@@ -274,7 +271,6 @@ func (ghs *githubScraper) getCommitInfo(
 	// the default branch. Doing it this way involves less queries because
 	// we don't have to know the queried branch name ahead of time.
 	comPages := getNumPages(float64(100), float64(branch.Compare.BehindBy))
-    // ghs.logger.Sugar().Infof("INSIDE getCommitInfo FUNCTION: comPages: %d", comPages)
 
 	for nPage := 1; nPage <= comPages; nPage++ {
 		if nPage == comPages {
@@ -298,17 +294,13 @@ func (ghs *githubScraper) getCommitInfo(
 			e := c.GetEdges()
 			oldest := e[len(e)-1].Node.GetCommittedDate()
 			age = int64(time.Since(oldest).Seconds())
-            // ghs.logger.Sugar().Infof("INSIDE getCommitInfo FUNCTION: age: %d", age)
 		}
 		for b := 0; b < len(c.Edges); b++ {
 			adds = add(adds, c.Edges[b].Node.Additions)
-            // ghs.logger.Sugar().Infof("INSIDE getCommitInfo FUNCTION: adds: %d", adds)
 			dels = add(dels, c.Edges[b].Node.Deletions)
-            // ghs.logger.Sugar().Infof("INSIDE getCommitInfo FUNCTION: dels: %d", dels)
 		}
 
 	}
-    // ghs.logger.Sugar().Infof("INSIDE getCommitInfo FUNCTION: returning %d, %d, %d", adds, dels, age)
 	return adds, dels, age, nil
 }
 

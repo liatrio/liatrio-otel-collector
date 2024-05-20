@@ -99,19 +99,18 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		repo := repo
 		name := repo.Name
 		trunk := repo.DefaultBranchRef.Name
-		// now := now
+		now := now
 
 		go func() {
 			defer wg.Done()
-
-			now := pcommon.NewTimestampFromTime(time.Now())
 
 			branches, count, err := ghs.getBranches(ctx, genClient, name, trunk)
 			if err != nil {
 				ghs.logger.Sugar().Errorf("error %v getting branch count for repo %s", zap.Error(err), repo.Name)
 			}
-			// ghs.logger.Sugar().Infof("BRANCH count for repo %s: %d", repo.Name, count)
 
+            // Create a mutual exclusion lock to prevent the recordDataPoint 
+            // from having a nil pointer error passing in the SetStartTimestamp
             mux.Lock()
 			ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(count), name)
 
@@ -120,16 +119,11 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				if branch.Name == branch.Repository.DefaultBranchRef.Name || branch.Compare.BehindBy == 0 {
 					continue
 				}
-				// ghs.logger.Sugar().Infof(
-				// 	"default branch behind by: %d\n %s branch behind by: %d in repo: %s",
-				// 	branch.Compare.BehindBy, branch.Name, branch.Compare.AheadBy, branch.Repository.Name)
 
 				// Yes, this looks weird. The aheadby metric is referring to the number of commits the branch is AHEAD OF the
 				// default branch, which in the context of the query is the behind by value. See the above below comment about
 				// BehindBy vs AheadBy.
-				// ghs.logger.Sugar().Infof("BRANCH %s is ahead by %d commits", branch.Name, branch.Compare.BehindBy)
 				ghs.mb.RecordGitRepositoryBranchCommitAheadbyCountDataPoint(now, int64(branch.Compare.BehindBy), branch.Repository.Name, branch.Name)
-				// ghs.logger.Sugar().Infof("BRANCH %s is behind by %d commits", branch.Name, branch.Compare.AheadBy)
 				ghs.mb.RecordGitRepositoryBranchCommitBehindbyCountDataPoint(now, int64(branch.Compare.AheadBy), branch.Repository.Name, branch.Name)
 
 				adds, dels, age, err := ghs.getCommitInfo(ctx, genClient, branch.Repository.Name, branch)
@@ -138,11 +132,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					continue
 				}
 
-				// ghs.logger.Sugar().Infof("BRANCH recording branch time %v", age)
 				ghs.mb.RecordGitRepositoryBranchTimeDataPoint(now, age, branch.Repository.Name, branch.Name)
-				// ghs.logger.Sugar().Infof("BRANCH recording branch line adds %d", adds)
 				ghs.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(adds), branch.Repository.Name, branch.Name)
-				// ghs.logger.Sugar().Infof("BRANCH recording branch line dels %d", dels)
 				ghs.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(dels), branch.Repository.Name, branch.Name)
 			}
 
@@ -178,20 +169,17 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 					age := getAge(pr.CreatedAt, pr.MergedAt)
 
-					// ghs.logger.Sugar().Infof("PULL REQUEST: time to merge is %v", age)
 					ghs.mb.RecordGitRepositoryPullRequestTimeToMergeDataPoint(now, age, name, pr.HeadRefName)
 				} else {
 					open++
 
 					age := getAge(pr.CreatedAt, now.AsTime())
 
-					// ghs.logger.Sugar().Infof("PULL REQUEST: open time is %v", age)
 					ghs.mb.RecordGitRepositoryPullRequestTimeOpenDataPoint(now, age, name, pr.HeadRefName)
 
 					if pr.Reviews.TotalCount > 0 {
 						age := getAge(pr.CreatedAt, pr.Reviews.Nodes[0].CreatedAt)
 
-						// ghs.logger.Sugar().Infof("PULL REQUEST: approval time is %v", age)
 						ghs.mb.RecordGitRepositoryPullRequestTimeToApprovalDataPoint(now, age, name, pr.HeadRefName)
 					}
 				}
