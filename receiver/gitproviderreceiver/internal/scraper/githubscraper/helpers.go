@@ -13,7 +13,7 @@ import (
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/google/go-github/v61/github"
-	"go.opentelemetry.io/collector/pdata/pcommon"
+
 	"go.uber.org/zap"
 )
 
@@ -93,7 +93,7 @@ func (ghs *githubScraper) getCommitData(
 	cc *string,
 	branchName string,
 ) (*CommitNodeTargetCommitHistoryCommitHistoryConnection, error) {
-	data, err := getCommitData(context.Background(), client, repoName, ghs.cfg.GitHubOrg, 1, comCount, cc, branchName)
+	data, err := getCommitData(ctx, client, repoName, ghs.cfg.GitHubOrg, 1, comCount, cc, branchName)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +256,6 @@ func (ghs *githubScraper) getCommitInfo(
 	ctx context.Context,
 	client graphql.Client,
 	repoName string,
-	now pcommon.Timestamp,
 	branch BranchNode,
 ) (int, int, int64, error) {
 	comCount := 100
@@ -281,7 +280,7 @@ func (ghs *githubScraper) getCommitInfo(
 				comCount = 100
 			}
 		}
-		c, err := ghs.getCommitData(context.Background(), client, repoName, ghs.cfg.GitHubOrg, comCount, cc, branch.Name)
+		c, err := ghs.getCommitData(ctx, client, repoName, ghs.cfg.GitHubOrg, comCount, cc, branch.Name)
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error getting commit data", zap.Error(err))
 			return 0, 0, 0, err
