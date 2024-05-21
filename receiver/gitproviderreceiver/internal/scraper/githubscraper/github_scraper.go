@@ -100,7 +100,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	var repos []unifiedRepo
 	var repoCount int
 
-	// If both team and search query are set, team takes precendence.  Might want to make it
+	// If both team and search query are set, team takes precedence.  Might want to make it
 	// impossible to set both in the config
 	if ghs.cfg.GitHubTeam != "" {
 		teamRepos, count, err := ghs.getTeamRepos(ctx, genClient)
