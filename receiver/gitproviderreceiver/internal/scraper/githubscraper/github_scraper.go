@@ -106,7 +106,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			branches, count, err := ghs.getBranches(ctx, genClient, name, trunk)
 			if err != nil {
-				ghs.logger.Sugar().Errorf("error getting branch count for repo %s", zap.Error(err), repo.Name)
+				ghs.logger.Sugar().Errorf("error getting branch count: %v", zap.Error(err))
 			}
 
 			// Create a mutual exclusion lock to prevent the recordDataPoint
@@ -145,20 +145,20 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			// Get the contributor count for each of the repositories
 			contribs, err := ghs.getContributorCount(ctx, restClient, name)
 			if err != nil {
-				ghs.logger.Sugar().Errorf("error getting contributor count for repo %s", zap.Error(err), repo.Name)
+				ghs.logger.Sugar().Errorf("error getting contributor: %v", zap.Error(err))
 			}
 			ghs.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contribs), name)
 
 			prs, err := ghs.getPullRequests(ctx, genClient, name)
 			if err != nil {
-				ghs.logger.Sugar().Errorf("error getting pull requests for repo %s", zap.Error(err), repo.Name)
+				ghs.logger.Sugar().Errorf("error getting pull requests: %v", zap.Error(err))
 			}
 
 			// When enabled, process any CVEs for the repository
 			if ghs.cfg.Metrics.GitRepositoryCveCount.Enabled {
 				cves, err := ghs.getCVEs(ctx, genClient, restClient, name)
 				if err != nil {
-					ghs.logger.Sugar().Errorf("error getting cves from repo %s", zap.Error(err), name)
+					ghs.logger.Sugar().Errorf("error getting cves: %v", zap.Error(err))
 				}
 				for s, c := range cves {
 					ghs.mb.RecordGitRepositoryCveCountDataPoint(now, c, name, s)
