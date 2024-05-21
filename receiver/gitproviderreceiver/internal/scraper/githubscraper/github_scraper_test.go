@@ -128,18 +128,15 @@ func TestScrape(t *testing.T) {
 					responseCode: http.StatusOK,
 				},
 				commitResponse: commitResponse{
-					commits: []CommitNodeTargetCommit{
+					commits: []BranchHistoryTargetCommit{
 						{
-							History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
-								Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+							History: BranchHistoryTargetCommitHistoryCommitHistoryConnection{
+								Nodes: []CommitNode{
 									{
-										Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
-											//Because the date was static, the test would fail as the branch age would change as time passed
-											//Made it dynamically generated for yesterdays date, keeping the age at 24 hours
-											CommittedDate: time.Now().AddDate(0, 0, -1),
-											Additions:     10,
-											Deletions:     9,
-										},
+
+										CommittedDate: time.Now().AddDate(0, 0, -1),
+										Additions:     10,
+										Deletions:     9,
 									},
 								},
 							},
@@ -205,7 +202,7 @@ func TestScrape(t *testing.T) {
 			// and needs to be rebuilt to satisfy the unit tests. When the metadata.yaml changes, and code is
 			// introduced, or removed. We'll need to update the metrics by uncommenting the below and running
 			// `make test` to generate it. Then we're safe to comment this out again and see happy tests.
-			//golden.WriteMetrics(t, expectedFile, actualMetrics) // This line is temporary! TODO remove this!!
+			// golden.WriteMetrics(t, expectedFile, actualMetrics) // This line is temporary! TODO remove this!!
 
 			expectedMetrics, err := golden.ReadMetrics(expectedFile)
 			require.NoError(t, err)

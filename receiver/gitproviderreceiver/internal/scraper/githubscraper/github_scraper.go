@@ -115,7 +115,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(count), name)
 
 			for _, branch := range branches {
-				// See https://github.com/liatrio/liatrio-otel-collector/blob/main/receiver/gitproviderreceiver/internal/scraper/githubscraper/README.md#github-limitations
+				// See
+				// https://github.com/liatrio/liatrio-otel-collector/blob/main/receiver/gitproviderreceiver/internal/scraper/githubscraper/README.md#github-limitations
 				// for more information as to why we do not emit metrics for
 				// the default branch (trunk) nor any branch with no changes to
 				// it.
@@ -123,7 +124,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					continue
 				}
 
-				// See https://github.com/liatrio/liatrio-otel-collector/blob/main/receiver/gitproviderreceiver/internal/scraper/githubscraper/README.md#github-limitations
+				// See
+				// https://github.com/liatrio/liatrio-otel-collector/blob/main/receiver/gitproviderreceiver/internal/scraper/githubscraper/README.md#github-limitations
 				// for more information as to why `BehindBy` and `AheadBy` are
 				// swapped.
 				ghs.mb.RecordGitRepositoryBranchCommitAheadbyCountDataPoint(now, int64(branch.Compare.BehindBy), branch.Repository.Name, branch.Name)

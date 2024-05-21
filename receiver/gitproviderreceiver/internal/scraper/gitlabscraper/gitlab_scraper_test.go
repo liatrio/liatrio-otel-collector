@@ -559,7 +559,7 @@ func TestScrape(t *testing.T) {
 			// and needs to be rebuilt to satisfy the unit tests. When the metadata.yaml changes, and code is
 			// introduced, or removed. We'll need to update the metrics by uncommenting the below and running
 			// `make test` to generate it. Then we're safe to comment this out again and see happy tests.
-			//golden.WriteMetrics(t, expectedFile, actualMetrics) // This line is temporary! TODO remove this!!
+			// golden.WriteMetrics(t, expectedFile, actualMetrics) // This line is temporary! TODO remove this!!
 
 			expectedMetrics, err := golden.ReadMetrics(expectedFile)
 			require.NoError(t, err)

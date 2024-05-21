@@ -20,9 +20,9 @@ import (
 const (
 	// The default public GitHub GraphQL Endpoint
 	defaultGraphURL = "https://api.github.com/graphql"
-    // The default maximum number of items to be returned in a GraphQL or REST
-    // API query.
-    defaultReturnItems = 100
+	// The default maximum number of items to be returned in a GraphQL or REST
+	// API query.
+	defaultReturnItems = 100
 )
 
 // Current GraphQL cost 1
@@ -274,7 +274,6 @@ func (ghs *githubScraper) evalCommits(
 	}
 	return additions, deletions, age, nil
 }
-
 
 // Current GraphQL cost 1
 // See genqlient.graphql getCommitData for more information
