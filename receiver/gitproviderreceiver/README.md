@@ -46,23 +46,40 @@ A more complete example using the GitHub & GitLab scrapers with authentication i
 extensions:
     bearertokenauth/github:
         token: ${env:GH_PAT}
+    bearertokenauth/gitlab:
+        token: ${env:GL_PAT}
 
 receivers:
     gitprovider:
         initial_delay: 1s
-        collection_interval: 60s
+        collection_interval: 300s
         scrapers:
+            # GitHub Scraper settings
             github:
                 metrics:
                     git.repository.contributor.count:
+                        enabled: true
+                    git.repository.cve.count:
                         enabled: true
                 github_org: myfancyorg
                 search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<github_org>"
                 endpoint: "https://selfmanagedenterpriseserver.com"
                 auth:
                     authenticator: bearertokenauth/github
+            # GitLab scraper settings
+            gitlab:
+                metrics:
+                    git.repository.contributor.count:
+                        enabled: true
+                    git.repository.cve.count:
+                        enabled: true
+                gitlab_org: myfancyorg
+                search_topic: "o11yalltheway"
+                auth:
+                    authenticator: bearertokenauth/gitlab
+
 service:
-    extensions: [bearertokenauth/github]
+    extensions: [bearertokenauth/github, bearertokenauth/gitlab]
     pipelines:
         metrics:
             receivers: [..., gitprovider]
