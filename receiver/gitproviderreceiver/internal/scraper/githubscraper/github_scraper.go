@@ -106,7 +106,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			branches, count, err := ghs.getBranches(ctx, genClient, name, trunk)
 			if err != nil {
-				ghs.logger.Sugar().Errorf("error %v getting branch count for repo %s", zap.Error(err), repo.Name)
+				ghs.logger.Sugar().Errorf("error getting branch count for repo %s", zap.Error(err), repo.Name)
 			}
 
 			// Create a mutual exclusion lock to prevent the recordDataPoint
@@ -115,18 +115,21 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			ghs.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(count), name)
 
 			for _, branch := range branches {
-				// Check if the branch is the default branch or if it is not behind the default branch
+				// See https://github.com/liatrio/liatrio-otel-collector/blob/main/receiver/gitproviderreceiver/internal/scraper/githubscraper/README.md#github-limitations
+				// for more information as to why we do not emit metrics for
+				// the default branch (trunk) nor any branch with no changes to
+				// it.
 				if branch.Name == branch.Repository.DefaultBranchRef.Name || branch.Compare.BehindBy == 0 {
 					continue
 				}
 
-				// Yes, this looks weird. The aheadby metric is referring to the number of commits the branch is AHEAD OF the
-				// default branch, which in the context of the query is the behind by value. See the above below comment about
-				// BehindBy vs AheadBy.
+				// See https://github.com/liatrio/liatrio-otel-collector/blob/main/receiver/gitproviderreceiver/internal/scraper/githubscraper/README.md#github-limitations
+				// for more information as to why `BehindBy` and `AheadBy` are
+				// swapped.
 				ghs.mb.RecordGitRepositoryBranchCommitAheadbyCountDataPoint(now, int64(branch.Compare.BehindBy), branch.Repository.Name, branch.Name)
 				ghs.mb.RecordGitRepositoryBranchCommitBehindbyCountDataPoint(now, int64(branch.Compare.AheadBy), branch.Repository.Name, branch.Name)
 
-				adds, dels, age, err := ghs.getCommitInfo(ctx, genClient, branch.Repository.Name, branch)
+				adds, dels, age, err := ghs.evalCommits(ctx, genClient, branch.Repository.Name, branch)
 				if err != nil {
 					ghs.logger.Sugar().Errorf("error getting commit info: %v", zap.Error(err))
 					continue
@@ -140,20 +143,20 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			// Get the contributor count for each of the repositories
 			contribs, err := ghs.getContributorCount(ctx, restClient, name)
 			if err != nil {
-				ghs.logger.Sugar().Errorf("error %v getting contributor count for repo %s", zap.Error(err), repo.Name)
+				ghs.logger.Sugar().Errorf("error getting contributor count for repo %s", zap.Error(err), repo.Name)
 			}
 			ghs.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contribs), name)
 
 			prs, err := ghs.getPullRequests(ctx, genClient, name)
 			if err != nil {
-				ghs.logger.Sugar().Errorf("error %v getting pull requests for repo %s", zap.Error(err), repo.Name)
+				ghs.logger.Sugar().Errorf("error getting pull requests for repo %s", zap.Error(err), repo.Name)
 			}
 
 			// When enabled, process any CVEs for the repository
 			if ghs.cfg.Metrics.GitRepositoryCveCount.Enabled {
 				cves, err := ghs.getCVEs(ctx, genClient, restClient, name)
 				if err != nil {
-					ghs.logger.Sugar().Errorf("error %v getting cves from repo %s", zap.Error(err), name)
+					ghs.logger.Sugar().Errorf("error getting cves from repo %s", zap.Error(err), name)
 				}
 				for s, c := range cves {
 					ghs.mb.RecordGitRepositoryCveCountDataPoint(now, c, name, s)
