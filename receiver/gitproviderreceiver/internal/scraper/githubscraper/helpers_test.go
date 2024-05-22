@@ -50,7 +50,7 @@ type branchResponse struct {
 }
 
 type commitResponse struct {
-	commits      []CommitNodeTargetCommit
+	commits      []BranchHistoryTargetCommit
 	responseCode int
 	page         int
 }
@@ -154,13 +154,13 @@ func MockServer(responses *responses) *http.ServeMux {
 			commitResp := &responses.commitResponse
 			w.WriteHeader(commitResp.responseCode)
 			if commitResp.responseCode == http.StatusOK {
-				commitNodes := []CommitNode{
+				branchHistory := []BranchHistory{
 					{Target: &commitResp.commits[commitResp.page]},
 				}
 				commits := getCommitDataResponse{
 					Repository: getCommitDataRepository{
 						Refs: getCommitDataRepositoryRefsRefConnection{
-							Nodes: commitNodes,
+							Nodes: branchHistory,
 						},
 					},
 				}
@@ -260,61 +260,6 @@ func TestGetNumPages1(t *testing.T) {
 	expected := 1
 
 	num := getNumPages(p, n)
-
-	assert.Equal(t, expected, num)
-}
-
-func TestAddInt(t *testing.T) {
-	a := 100
-	b := 100
-
-	expected := 200
-
-	num := add(a, b)
-
-	assert.Equal(t, expected, num)
-}
-
-func TestAddZero(t *testing.T) {
-	a := 0
-	b := 1
-
-	expected := 1
-
-	num := add(a, b)
-
-	assert.Equal(t, expected, num)
-}
-
-func TestAddFloat(t *testing.T) {
-	a := 10.5
-	b := 10.5
-
-	expected := 21.0
-
-	num := add(a, b)
-
-	assert.Equal(t, expected, num)
-}
-
-func TestAddNegativeInt(t *testing.T) {
-	a := 1
-	b := -1
-
-	expected := 0
-
-	num := add(a, b)
-
-	assert.Equal(t, expected, num)
-}
-
-func TestAddNegativeFloat(t *testing.T) {
-	a := 1.5
-	b := -10.0
-
-	expected := -8.5
-
-	num := add(a, b)
 
 	assert.Equal(t, expected, num)
 }
@@ -938,7 +883,7 @@ func TestGetPullRequests(t *testing.T) {
 	}
 }
 
-func TestGetCommitInfo(t *testing.T) {
+func TestEvalCommits(t *testing.T) {
 	testCases := []struct {
 		desc              string
 		server            *http.ServeMux
@@ -949,20 +894,73 @@ func TestGetCommitInfo(t *testing.T) {
 		expectedDeletions int
 	}{
 		{
+			desc: "TestNoBranchChanges",
+			server: MockServer(&responses{
+				scrape: false,
+				commitResponse: commitResponse{
+					commits: []BranchHistoryTargetCommit{
+						{
+							History: BranchHistoryTargetCommitHistoryCommitHistoryConnection{
+								Nodes: []CommitNode{},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			branch: BranchNode{
+				Name: "branch1",
+				Compare: BranchNodeCompareComparison{
+					AheadBy:  0,
+					BehindBy: 0,
+				},
+			},
+			expectedAge:       0,
+			expectedAdditions: 0,
+			expectedDeletions: 0,
+			expectedErr:       nil,
+		},
+		{
+			desc: "TestNoCommitsResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				commitResponse: commitResponse{
+					commits: []BranchHistoryTargetCommit{
+						{
+							History: BranchHistoryTargetCommitHistoryCommitHistoryConnection{
+								Nodes: []CommitNode{},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			branch: BranchNode{
+				Name: "branch1",
+				Compare: BranchNodeCompareComparison{
+					AheadBy:  0,
+					BehindBy: 1,
+				},
+			},
+			expectedAge:       0,
+			expectedAdditions: 0,
+			expectedDeletions: 0,
+			expectedErr:       nil,
+		},
+		{
 			desc: "TestSinglePageResponse",
 			server: MockServer(&responses{
 				scrape: false,
 				commitResponse: commitResponse{
-					commits: []CommitNodeTargetCommit{
+					commits: []BranchHistoryTargetCommit{
 						{
-							History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
-								Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+							History: BranchHistoryTargetCommitHistoryCommitHistoryConnection{
+								Nodes: []CommitNode{
 									{
-										Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
-											CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
-											Additions:     10,
-											Deletions:     9,
-										},
+
+										CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+										Additions:     10,
+										Deletions:     9,
 									},
 								},
 							},
@@ -988,29 +986,27 @@ func TestGetCommitInfo(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				commitResponse: commitResponse{
-					commits: []CommitNodeTargetCommit{
+					commits: []BranchHistoryTargetCommit{
 						{
-							History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
-								Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+							History: BranchHistoryTargetCommitHistoryCommitHistoryConnection{
+								Nodes: []CommitNode{
 									{
-										Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
-											CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
-											Additions:     10,
-											Deletions:     9,
-										},
+
+										CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+										Additions:     10,
+										Deletions:     9,
 									},
 								},
 							},
 						},
 						{
-							History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
-								Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+							History: BranchHistoryTargetCommitHistoryCommitHistoryConnection{
+								Nodes: []CommitNode{
 									{
-										Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
-											CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
-											Additions:     1,
-											Deletions:     1,
-										},
+
+										CommittedDate: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+										Additions:     1,
+										Deletions:     1,
 									},
 								},
 							},
@@ -1061,7 +1057,7 @@ func TestGetCommitInfo(t *testing.T) {
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
 			client := graphql.NewClient(server.URL, ghs.client)
-			adds, dels, age, err := ghs.getCommitInfo(context.Background(), client, "repo1", tc.branch)
+			adds, dels, age, err := ghs.evalCommits(context.Background(), client, "repo1", tc.branch)
 
 			assert.Equal(t, tc.expectedAge, age)
 			assert.Equal(t, tc.expectedDeletions, dels)
