@@ -1,4 +1,3 @@
----
 resourceMetrics:
   - resource:
       attributes:
@@ -14,105 +13,105 @@ resourceMetrics:
     schemaUrl: https://opentelemetry.io/schemas/1.9.0
     scopeMetrics:
       - metrics:
-          - description: Number of commits a branch is ahead of the default branch
+          - description: The number of commits a branch is ahead of the default branch (trunk).
             gauge:
               dataPoints:
-                - asInt: '1'
+                - asInt: "1"
                   attributes:
                     - key: branch.name
                       value:
                         stringValue: main
                     - key: repository.name
                       value:
-                        stringValue: ''
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.branch.commit.aheadby.count
-            unit: '{branch}'
-          - description: Number of commits a branch is behind the default branch
+            unit: '{commit}'
+          - description: The number of commits a branch is behind the default branch (trunk).
             gauge:
               dataPoints:
-                - asInt: '0'
+                - asInt: "0"
                   attributes:
                     - key: branch.name
                       value:
                         stringValue: main
                     - key: repository.name
                       value:
-                        stringValue: ''
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.branch.commit.behindby.count
-            unit: '{branch}'
-          - description: Number of branches in a repository
+            unit: '{commit}'
+          - description: The number of branches in a repository.
             gauge:
               dataPoints:
-                - asInt: '1'
+                - asInt: "1"
                   attributes:
                     - key: repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.branch.count
             unit: '{branch}'
-          - description: Count of lines added to code in a branch
+          - description: The number of lines added in a branch relative to the default branch (trunk).
             gauge:
               dataPoints:
-                - asInt: '10'
+                - asInt: "10"
                   attributes:
                     - key: branch.name
                       value:
                         stringValue: main
                     - key: repository.name
                       value:
-                        stringValue: ''
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.branch.line.addition.count
-            unit: '{branch}'
-          - description: Count of lines deleted from code in a branch
+            unit: '{line}'
+          - description: The number of lines deleted in a branch relative to the default branch (trunk).
             gauge:
               dataPoints:
-                - asInt: '9'
+                - asInt: "9"
                   attributes:
                     - key: branch.name
                       value:
                         stringValue: main
                     - key: repository.name
                       value:
-                        stringValue: ''
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.branch.line.deletion.count
-            unit: '{branch}'
-          - description: Time the branch has existed
+            unit: '{line}'
+          - description: Time a branch created from the default branch (trunk) has existed.
             gauge:
               dataPoints:
-                - asInt: '86400'
+                - asInt: "86400"
                   attributes:
                     - key: branch.name
                       value:
                         stringValue: main
                     - key: repository.name
                       value:
-                        stringValue: ''
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.branch.time
             unit: s
-          - description: Number of repositories in an organization
+          - description: The number of repositories in an organization.
             gauge:
               dataPoints:
-                - asInt: '1'
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                - asInt: "1"
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.count
             unit: '{repository}'
-          - description: The number of Common Vulnerabilities and Exposures (CVEs) in the repository
+          - description: The number of Common Vulnerabilities and Exposures (CVEs) in the repository.
             gauge:
               dataPoints:
-                - asInt: '1'
+                - asInt: "1"
                   attributes:
                     - key: cve.severity
                       value:
@@ -120,9 +119,9 @@ resourceMetrics:
                     - key: repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '1'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "1"
                   attributes:
                     - key: cve.severity
                       value:
@@ -130,14 +129,14 @@ resourceMetrics:
                     - key: repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.cve.count
             unit: '{cve}'
-          - description: The number of pull requests in a repository, categorized by their state (either open or merged)
+          - description: The number of pull requests in a repository, categorized by their state (either open or merged).
             gauge:
               dataPoints:
-                - asInt: '1'
+                - asInt: "1"
                   attributes:
                     - key: pull_request.state
                       value:
@@ -145,9 +144,9 @@ resourceMetrics:
                     - key: repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '1'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "1"
                   attributes:
                     - key: pull_request.state
                       value:
@@ -155,38 +154,38 @@ resourceMetrics:
                     - key: repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.pull_request.count
             unit: '{pull_request}'
-          - description: The amount of time a pull request has been open
+          - description: The amount of time a pull request has been open.
             gauge:
               dataPoints:
-                - asInt: '9223372036'
+                - asInt: "9223372036"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.pull_request.time_open
             unit: s
-          - description: The amount of time it took a pull request to go from open to merged
+          - description: The amount of time it took a pull request to go from open to merged.
             gauge:
               dataPoints:
-                - asInt: '0'
+                - asInt: "0"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.pull_request.time_to_merge
             unit: s
         scope:
