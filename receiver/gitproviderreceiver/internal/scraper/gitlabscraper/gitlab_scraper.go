@@ -110,6 +110,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	for _, project := range projectList {
 		project := project
 		path := project.Path
+		now := now
 		go func() {
 			defer wg.Done()
 
