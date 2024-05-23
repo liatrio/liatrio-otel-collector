@@ -422,8 +422,9 @@ func TestGetSearchRepos(t *testing.T) {
 							RepositoryCount: 1,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo1",
-								},
+									Repo: Repo{
+										Name: "repo1",
+									}},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
 								HasNextPage: false,
@@ -447,10 +448,14 @@ func TestGetSearchRepos(t *testing.T) {
 							RepositoryCount: 4,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo1",
+									Repo: Repo{
+										Name: "repo1",
+									},
 								},
 								&SearchNodeRepository{
-									Name: "repo2",
+									Repo: Repo{
+										Name: "repo2",
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -461,10 +466,14 @@ func TestGetSearchRepos(t *testing.T) {
 							RepositoryCount: 4,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo3",
+									Repo: Repo{
+										Name: "repo3",
+									},
 								},
 								&SearchNodeRepository{
-									Name: "repo4",
+									Repo: Repo{
+										Name: "repo4",
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -489,7 +498,9 @@ func TestGetSearchRepos(t *testing.T) {
 							RepositoryCount: 1,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo1",
+									Repo: Repo{
+										Name: "repo1",
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -514,10 +525,14 @@ func TestGetSearchRepos(t *testing.T) {
 							RepositoryCount: 4,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo1",
+									Repo: Repo{
+										Name: "repo1",
+									},
 								},
 								&SearchNodeRepository{
-									Name: "repo2",
+									Repo: Repo{
+										Name: "repo2",
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -528,10 +543,14 @@ func TestGetSearchRepos(t *testing.T) {
 							RepositoryCount: 4,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo3",
+									Repo: Repo{
+										Name: "repo1",
+									},
 								},
 								&SearchNodeRepository{
-									Name: "repo4",
+									Repo: Repo{
+										Name: "repo4",
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -568,182 +587,7 @@ func TestGetSearchRepos(t *testing.T) {
 			defer func() { server.Close() }()
 			client := graphql.NewClient(server.URL, ghs.client)
 
-			_, count, err := ghs.getSearchRepos(context.Background(), client, "fake query")
-			assert.Equal(t, tc.expectedRepos, count)
-			if tc.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-			}
-		})
-	}
-}
-
-func TestGetTeamRepos(t *testing.T) {
-	testCases := []struct {
-		desc                    string
-		server                  *http.ServeMux
-		expectedErr             error
-		expectedRepos           int
-		expectedVulnerabilities int
-	}{
-		{
-			desc: "TestSinglePageResponse",
-			server: MockServer(&responses{
-				scrape: false,
-				teamRepoResponse: teamRepoResponse{
-					repos: []getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection{
-						{
-							TotalCount: 1,
-							Nodes: []TeamRepositoryNode{
-								{
-									Name: "repo1",
-								},
-							},
-							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{
-								HasNextPage: false,
-							},
-						},
-					},
-					responseCode: http.StatusOK,
-				},
-			}),
-			expectedErr:             nil,
-			expectedRepos:           1,
-			expectedVulnerabilities: 0,
-		},
-		{
-			desc: "TestMultiPageResponse",
-			server: MockServer(&responses{
-				scrape: false,
-				teamRepoResponse: teamRepoResponse{
-					repos: []getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection{
-						{
-							TotalCount: 4,
-							Nodes: []TeamRepositoryNode{
-								{
-									Name: "repo1",
-								},
-								{
-									Name: "repo2",
-								},
-							},
-							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{
-								HasNextPage: true,
-							},
-						},
-						{
-							TotalCount: 4,
-							Nodes: []TeamRepositoryNode{
-								{
-									Name: "repo3",
-								},
-								{
-									Name: "repo4",
-								},
-							},
-							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{
-								HasNextPage: false,
-							},
-						},
-					},
-					responseCode: http.StatusOK,
-				},
-			}),
-			expectedErr:             nil,
-			expectedRepos:           4,
-			expectedVulnerabilities: 0,
-		},
-		{
-			desc: "TestSinglePageWithVulnerabilitiesResponse",
-			server: MockServer(&responses{
-				scrape: false,
-				teamRepoResponse: teamRepoResponse{
-					repos: []getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection{
-						{
-							TotalCount: 1,
-							Nodes: []TeamRepositoryNode{
-								{
-									Name: "repo1",
-								},
-							},
-							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{
-								HasNextPage: false,
-							},
-						},
-					},
-					responseCode: http.StatusOK,
-				},
-			}),
-			expectedErr:             nil,
-			expectedRepos:           1,
-			expectedVulnerabilities: 2,
-		},
-		{
-			desc: "TestMultiPageWithVulnerabilitieResponse",
-			server: MockServer(&responses{
-				scrape: false,
-				teamRepoResponse: teamRepoResponse{
-					repos: []getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection{
-						{
-							TotalCount: 4,
-							Nodes: []TeamRepositoryNode{
-								{
-									Name: "repo1",
-								},
-								{
-									Name: "repo2",
-								},
-							},
-							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{
-								HasNextPage: true,
-							},
-						},
-						{
-							TotalCount: 4,
-							Nodes: []TeamRepositoryNode{
-								{
-									Name: "repo3",
-								},
-								{
-									Name: "repo4",
-								},
-							},
-							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{
-								HasNextPage: false,
-							},
-						},
-					},
-					responseCode: http.StatusOK,
-				},
-			}),
-			expectedErr:   nil,
-			expectedRepos: 4,
-			//expectedVulnerabilities: 8,
-		},
-		{
-			desc: "Test404Response",
-			server: MockServer(&responses{
-				scrape: false,
-				teamRepoResponse: teamRepoResponse{
-					responseCode: http.StatusNotFound,
-				},
-			}),
-			expectedErr:   errors.New("returned error 404 Not Found: "),
-			expectedRepos: 0,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			server := httptest.NewServer(tc.server)
-			defer func() { server.Close() }()
-			client := graphql.NewClient(server.URL, ghs.client)
-
-			_, count, err := ghs.getTeamRepos(context.Background(), client)
+			_, count, err := ghs.getRepos(context.Background(), client, "fake query")
 			assert.Equal(t, tc.expectedRepos, count)
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)

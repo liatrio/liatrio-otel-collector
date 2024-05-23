@@ -79,7 +79,9 @@ func TestScrape(t *testing.T) {
 							RepositoryCount: 1,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo1",
+									Repo: Repo{
+										Name: "repo1",
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -195,9 +197,11 @@ func TestScrape(t *testing.T) {
 					repos: []getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection{
 						{
 							TotalCount: 1,
-							Nodes: []TeamRepositoryNode{
+							Nodes: []TeamNode{
 								{
-									Name: "repo1",
+									Repo: Repo{
+										Name: "repo1",
+									},
 								},
 							},
 							PageInfo: getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo{

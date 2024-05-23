@@ -1,3 +1,12 @@
+# @genqlient(typename: "Repo")
+fragment Repo on Repository{
+  id
+  name
+  defaultBranchRef {
+    name
+  }
+}
+
 # Query cost breakdown (highlights are the only things that cost points)
 # search: 1 (even though we fetch 100 repos it is a single request)
 #
@@ -22,11 +31,7 @@ query getRepoDataBySearch(
     # @genqlient(typename: "SearchNode")
     nodes {
       ... on Repository {
-        id
-        name
-        defaultBranchRef {
-          name
-        }
+        ...Repo
       }
     }
     pageInfo {
@@ -46,13 +51,9 @@ query getRepoDataByTeam(
     team(slug: $team){
       repositories(first: 100, after: $repoCursor){
         totalCount
-        # @genqlient(typename: "TeamRepositoryNode")
+        # @genqlient(typename: "TeamNode")
         nodes{
-          id
-          name
-          defaultBranchRef {
-            name
-          }
+          ...Repo
         }
         pageInfo {
           hasNextPage

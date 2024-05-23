@@ -504,6 +504,39 @@ const (
 	PullRequestStateMerged PullRequestState = "MERGED"
 )
 
+// Repo includes the GraphQL fields of Repository requested by the fragment Repo.
+// The GraphQL type's documentation follows.
+//
+// A repository contains the content for a project.
+type Repo struct {
+	Id string `json:"id"`
+	// The name of the repository.
+	Name string `json:"name"`
+	// The Ref associated with the repository's default branch.
+	DefaultBranchRef RepoDefaultBranchRef `json:"defaultBranchRef"`
+}
+
+// GetId returns Repo.Id, and is useful for accessing the field via an interface.
+func (v *Repo) GetId() string { return v.Id }
+
+// GetName returns Repo.Name, and is useful for accessing the field via an interface.
+func (v *Repo) GetName() string { return v.Name }
+
+// GetDefaultBranchRef returns Repo.DefaultBranchRef, and is useful for accessing the field via an interface.
+func (v *Repo) GetDefaultBranchRef() RepoDefaultBranchRef { return v.DefaultBranchRef }
+
+// RepoDefaultBranchRef includes the requested fields of the GraphQL type Ref.
+// The GraphQL type's documentation follows.
+//
+// Represents a Git reference.
+type RepoDefaultBranchRef struct {
+	// The ref name.
+	Name string `json:"name"`
+}
+
+// GetName returns RepoDefaultBranchRef.Name, and is useful for accessing the field via an interface.
+func (v *RepoDefaultBranchRef) GetName() string { return v.Name }
+
 // SearchNode includes the requested fields of the GraphQL interface SearchResultItem.
 //
 // SearchNode is implemented by the following types:
@@ -635,10 +668,14 @@ func __marshalSearchNode(v *SearchNode) ([]byte, error) {
 	case *SearchNodeRepository:
 		typename = "Repository"
 
+		premarshaled, err := v.__premarshalJSON()
+		if err != nil {
+			return nil, err
+		}
 		result := struct {
 			TypeName string `json:"__typename"`
-			*SearchNodeRepository
-		}{typename, v}
+			*__premarshalSearchNodeRepository
+		}{typename, premarshaled}
 		return json.Marshal(result)
 	case *SearchNodeUser:
 		typename = "User"
@@ -666,18 +703,6 @@ type SearchNodeApp struct {
 
 // GetTypename returns SearchNodeApp.Typename, and is useful for accessing the field via an interface.
 func (v *SearchNodeApp) GetTypename() string { return v.Typename }
-
-// SearchNodeDefaultBranchRef includes the requested fields of the GraphQL type Ref.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git reference.
-type SearchNodeDefaultBranchRef struct {
-	// The ref name.
-	Name string `json:"name"`
-}
-
-// GetName returns SearchNodeDefaultBranchRef.Name, and is useful for accessing the field via an interface.
-func (v *SearchNodeDefaultBranchRef) GetName() string { return v.Name }
 
 // SearchNodeDiscussion includes the requested fields of the GraphQL type Discussion.
 // The GraphQL type's documentation follows.
@@ -740,25 +765,74 @@ func (v *SearchNodePullRequest) GetTypename() string { return v.Typename }
 // A repository contains the content for a project.
 type SearchNodeRepository struct {
 	Typename string `json:"__typename"`
-	Id       string `json:"id"`
-	// The name of the repository.
-	Name string `json:"name"`
-	// The Ref associated with the repository's default branch.
-	DefaultBranchRef SearchNodeDefaultBranchRef `json:"defaultBranchRef"`
+	Repo     `json:"-"`
 }
 
 // GetTypename returns SearchNodeRepository.Typename, and is useful for accessing the field via an interface.
 func (v *SearchNodeRepository) GetTypename() string { return v.Typename }
 
 // GetId returns SearchNodeRepository.Id, and is useful for accessing the field via an interface.
-func (v *SearchNodeRepository) GetId() string { return v.Id }
+func (v *SearchNodeRepository) GetId() string { return v.Repo.Id }
 
 // GetName returns SearchNodeRepository.Name, and is useful for accessing the field via an interface.
-func (v *SearchNodeRepository) GetName() string { return v.Name }
+func (v *SearchNodeRepository) GetName() string { return v.Repo.Name }
 
 // GetDefaultBranchRef returns SearchNodeRepository.DefaultBranchRef, and is useful for accessing the field via an interface.
-func (v *SearchNodeRepository) GetDefaultBranchRef() SearchNodeDefaultBranchRef {
-	return v.DefaultBranchRef
+func (v *SearchNodeRepository) GetDefaultBranchRef() RepoDefaultBranchRef {
+	return v.Repo.DefaultBranchRef
+}
+
+func (v *SearchNodeRepository) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*SearchNodeRepository
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.SearchNodeRepository = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.Repo)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalSearchNodeRepository struct {
+	Typename string `json:"__typename"`
+
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	DefaultBranchRef RepoDefaultBranchRef `json:"defaultBranchRef"`
+}
+
+func (v *SearchNodeRepository) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *SearchNodeRepository) __premarshalJSON() (*__premarshalSearchNodeRepository, error) {
+	var retval __premarshalSearchNodeRepository
+
+	retval.Typename = v.Typename
+	retval.Id = v.Repo.Id
+	retval.Name = v.Repo.Name
+	retval.DefaultBranchRef = v.Repo.DefaultBranchRef
+	return &retval, nil
 }
 
 // SearchNodeUser includes the requested fields of the GraphQL type User.
@@ -786,40 +860,72 @@ const (
 	SecurityAdvisorySeverityCritical SecurityAdvisorySeverity = "CRITICAL"
 )
 
-// TeamRepositoryNode includes the requested fields of the GraphQL type Repository.
+// TeamNode includes the requested fields of the GraphQL type Repository.
 // The GraphQL type's documentation follows.
 //
 // A repository contains the content for a project.
-type TeamRepositoryNode struct {
+type TeamNode struct {
+	Repo `json:"-"`
+}
+
+// GetId returns TeamNode.Id, and is useful for accessing the field via an interface.
+func (v *TeamNode) GetId() string { return v.Repo.Id }
+
+// GetName returns TeamNode.Name, and is useful for accessing the field via an interface.
+func (v *TeamNode) GetName() string { return v.Repo.Name }
+
+// GetDefaultBranchRef returns TeamNode.DefaultBranchRef, and is useful for accessing the field via an interface.
+func (v *TeamNode) GetDefaultBranchRef() RepoDefaultBranchRef { return v.Repo.DefaultBranchRef }
+
+func (v *TeamNode) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*TeamNode
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.TeamNode = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.Repo)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalTeamNode struct {
 	Id string `json:"id"`
-	// The name of the repository.
+
 	Name string `json:"name"`
-	// The Ref associated with the repository's default branch.
-	DefaultBranchRef TeamRepositoryNodeDefaultBranchRef `json:"defaultBranchRef"`
+
+	DefaultBranchRef RepoDefaultBranchRef `json:"defaultBranchRef"`
 }
 
-// GetId returns TeamRepositoryNode.Id, and is useful for accessing the field via an interface.
-func (v *TeamRepositoryNode) GetId() string { return v.Id }
-
-// GetName returns TeamRepositoryNode.Name, and is useful for accessing the field via an interface.
-func (v *TeamRepositoryNode) GetName() string { return v.Name }
-
-// GetDefaultBranchRef returns TeamRepositoryNode.DefaultBranchRef, and is useful for accessing the field via an interface.
-func (v *TeamRepositoryNode) GetDefaultBranchRef() TeamRepositoryNodeDefaultBranchRef {
-	return v.DefaultBranchRef
+func (v *TeamNode) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
 }
 
-// TeamRepositoryNodeDefaultBranchRef includes the requested fields of the GraphQL type Ref.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git reference.
-type TeamRepositoryNodeDefaultBranchRef struct {
-	// The ref name.
-	Name string `json:"name"`
-}
+func (v *TeamNode) __premarshalJSON() (*__premarshalTeamNode, error) {
+	var retval __premarshalTeamNode
 
-// GetName returns TeamRepositoryNodeDefaultBranchRef.Name, and is useful for accessing the field via an interface.
-func (v *TeamRepositoryNodeDefaultBranchRef) GetName() string { return v.Name }
+	retval.Id = v.Repo.Id
+	retval.Name = v.Repo.Name
+	retval.DefaultBranchRef = v.Repo.DefaultBranchRef
+	return &retval, nil
+}
 
 // VulnerabilityAlerts includes the requested fields of the GraphQL type RepositoryVulnerabilityAlertConnection.
 // The GraphQL type's documentation follows.
@@ -1381,7 +1487,7 @@ type getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection struc
 	// Identifies the total count of items in the connection.
 	TotalCount int `json:"totalCount"`
 	// A list of nodes.
-	Nodes []TeamRepositoryNode `json:"nodes"`
+	Nodes []TeamNode `json:"nodes"`
 	// Information to aid in pagination.
 	PageInfo getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo `json:"pageInfo"`
 }
@@ -1392,7 +1498,7 @@ func (v *getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection) 
 }
 
 // GetNodes returns getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection.Nodes, and is useful for accessing the field via an interface.
-func (v *getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection) GetNodes() []TeamRepositoryNode {
+func (v *getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection) GetNodes() []TeamNode {
 	return v.Nodes
 }
 
@@ -1761,17 +1867,20 @@ query getRepoDataBySearch ($searchQuery: String!, $repoCursor: String) {
 		nodes {
 			__typename
 			... on Repository {
-				id
-				name
-				defaultBranchRef {
-					name
-				}
+				... Repo
 			}
 		}
 		pageInfo {
 			hasNextPage
 			endCursor
 		}
+	}
+}
+fragment Repo on Repository {
+	id
+	name
+	defaultBranchRef {
+		name
 	}
 }
 `
@@ -1821,11 +1930,7 @@ query getRepoDataByTeam ($org: String!, $team: String!, $repoCursor: String) {
 			repositories(first: 100, after: $repoCursor) {
 				totalCount
 				nodes {
-					id
-					name
-					defaultBranchRef {
-						name
-					}
+					... Repo
 				}
 				pageInfo {
 					hasNextPage
@@ -1833,6 +1938,13 @@ query getRepoDataByTeam ($org: String!, $team: String!, $repoCursor: String) {
 				}
 			}
 		}
+	}
+}
+fragment Repo on Repository {
+	id
+	name
+	defaultBranchRef {
+		name
 	}
 }
 `
