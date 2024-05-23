@@ -130,18 +130,15 @@ func TestScrape(t *testing.T) {
 					responseCode: http.StatusOK,
 				},
 				commitResponse: commitResponse{
-					commits: []CommitNodeTargetCommit{
+					commits: []BranchHistoryTargetCommit{
 						{
-							History: CommitNodeTargetCommitHistoryCommitHistoryConnection{
-								Edges: []CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdge{
+							History: BranchHistoryTargetCommitHistoryCommitHistoryConnection{
+								Nodes: []CommitNode{
 									{
-										Node: CommitNodeTargetCommitHistoryCommitHistoryConnectionEdgesCommitEdgeNodeCommit{
-											//Because the date was static, the test would fail as the branch age would change as time passed
-											//Made it dynamically generated for yesterdays date, keeping the age at 24 hours
-											CommittedDate: time.Now().AddDate(0, 0, -1),
-											Additions:     10,
-											Deletions:     9,
-										},
+
+										CommittedDate: time.Now().AddDate(0, 0, -1),
+										Additions:     10,
+										Deletions:     9,
 									},
 								},
 							},
@@ -366,7 +363,6 @@ func TestScrape(t *testing.T) {
 					pmetrictest.IgnoreStartTimestamp(),
 				))
 			}
-
 		})
 	}
 }

@@ -1,115 +1,114 @@
----
 resourceMetrics:
   - resource: {}
     schemaUrl: https://opentelemetry.io/schemas/1.9.0
     scopeMetrics:
       - metrics:
-          - description: Number of branches in a repository
+          - description: The number of branches in a repository.
             gauge:
               dataPoints:
-                - asInt: '1'
+                - asInt: "1"
                   attributes:
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.branch.count
             unit: '{branch}'
-          - description: Count of lines added to code in a branch
+          - description: The number of lines added in a branch relative to the default branch (trunk).
             gauge:
               dataPoints:
-                - asInt: '0'
+                - asInt: "0"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '0'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "0"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '0'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "0"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '0'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "0"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.branch.line.addition.count
-            unit: '{branch}'
-          - description: Count of lines deleted from code in a branch
+            unit: '{line}'
+          - description: The number of lines deleted in a branch relative to the default branch (trunk).
             gauge:
               dataPoints:
-                - asInt: '0'
+                - asInt: "0"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '0'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "0"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '0'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "0"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '0'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "0"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.branch.line.deletion.count
-            unit: '{branch}'
-          - description: Time the branch has existed
+            unit: '{line}'
+          - description: Time a branch created from the default branch (trunk) has existed.
             gauge:
               dataPoints:
-                - asInt: '24'
+                - asInt: "24"
                   attributes:
                     - key: branch.name
                       value:
@@ -117,71 +116,68 @@ resourceMetrics:
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.branch.time
             unit: s
-          - description: Number of repositories in an organization
+          - description: The number of repositories in an organization.
             gauge:
               dataPoints:
-                - asInt: '1'
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                - asInt: "1"
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.count
             unit: '{repository}'
-          - description: The amount of time a pull request has been open
+          - description: The amount of time a pull request has been open.
             gauge:
               dataPoints:
-                - asInt: '24'
+                - asInt: "24"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '24'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "24"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.pull_request.time_open
             unit: s
-          - description: The amount of time it took a pull request to go from open to merged
+          - description: The amount of time it took a pull request to go from open to merged.
             gauge:
               dataPoints:
-                - asInt: '2562047'
+                - asInt: "2562047"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '2562047'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "2562047"
                   attributes:
                     - key: branch.name
                       value:
-                        stringValue: ''
+                        stringValue: ""
                     - key: repository.name
                       value:
                         stringValue: project
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
             name: git.repository.pull_request.time_to_merge
             unit: s
         scope:
           name: github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver
-          # Note: Used to be otelcol but after upgrade, scope was throwing an
-          # error and needed to be set to full module name
-          # name: otelcol/gitproviderreceiver
           version: latest
