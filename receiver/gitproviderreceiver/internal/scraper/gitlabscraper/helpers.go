@@ -20,12 +20,12 @@ type gitlabProject struct {
 	LastActivityAt time.Time
 }
 
-func (gls *gitlabScraper) getProjects(client *gitlab.Client) ([]gitlabProject, error) {
+func (gls *gitlabScraper) getProjects(restClient *gitlab.Client) ([]gitlabProject, error) {
 	var projectList []gitlabProject
 
 	for nextPage := 1; nextPage > 0; {
 		// TODO: since we pass in a context already, do we need to create a new background context?
-		projects, res, err := client.Groups.ListGroupProjects(gls.cfg.GitLabOrg, &gitlab.ListGroupProjectsOptions{
+		projects, res, err := restClient.Groups.ListGroupProjects(gls.cfg.GitLabOrg, &gitlab.ListGroupProjectsOptions{
 			IncludeSubGroups: gitlab.Ptr(true),
 			Topic:            gitlab.Ptr(gls.cfg.SearchTopic),
 			Search:           gitlab.Ptr(gls.cfg.SearchQuery),
