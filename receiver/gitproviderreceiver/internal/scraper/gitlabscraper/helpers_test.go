@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xanzy/go-gitlab"
@@ -137,6 +138,86 @@ func MockServer(responses *responses) *http.ServeMux {
 		}
 	})
 	return &mux
+}
+
+func TestGetProjects(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		server        *http.ServeMux
+		expectedErr   error
+		expectedCount int
+	}{
+		{
+			desc: "TestSingleProject",
+			server: MockServer(&responses{
+				projectResponse: projectResponse{
+					projects: []*gitlab.Project{
+						{
+							Name:              "project1",
+							PathWithNamespace: "project1",
+							CreatedAt:         gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+							LastActivityAt:    gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedCount: 1,
+			expectedErr:   nil,
+		},
+		{
+			desc: "TestMultipleProjects",
+			server: MockServer(&responses{
+				projectResponse: projectResponse{
+					projects: []*gitlab.Project{
+						{
+							Name:              "project1",
+							PathWithNamespace: "project1",
+							CreatedAt:         gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+							LastActivityAt:    gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+						},
+						{
+							Name:              "project2",
+							PathWithNamespace: "project2",
+							CreatedAt:         gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+							LastActivityAt:    gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+						},
+						{
+							Name:              "project3",
+							PathWithNamespace: "project3",
+							CreatedAt:         gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+							LastActivityAt:    gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedCount: 3,
+			expectedErr:   nil,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopCreateSettings()
+			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
+
+			gls.cfg.GitLabOrg = "project"
+			client, err := gitlab.NewClient("", gitlab.WithBaseURL(server.URL))
+			assert.NoError(t, err)
+			projects, err := gls.getProjects(client)
+
+			assert.Equal(t, tc.expectedCount, len(projects))
+			if tc.expectedErr != nil {
+				assert.Equal(t, tc.expectedErr, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestGetContributorCount(t *testing.T) {

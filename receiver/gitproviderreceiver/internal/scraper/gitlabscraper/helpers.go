@@ -2,10 +2,12 @@ package gitlabscraper
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/xanzy/go-gitlab"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 
 	"github.com/Khan/genqlient/graphql"
@@ -16,6 +18,57 @@ type gitlabProject struct {
 	Path           string
 	CreatedAt      time.Time
 	LastActivityAt time.Time
+}
+
+func (gls *gitlabScraper) getProjects(restClient *gitlab.Client) ([]gitlabProject, error) {
+	var projectList []gitlabProject
+
+	for nextPage := 1; nextPage > 0; {
+		// TODO: since we pass in a context already, do we need to create a new background context?
+		projects, res, err := restClient.Groups.ListGroupProjects(gls.cfg.GitLabOrg, &gitlab.ListGroupProjectsOptions{
+			IncludeSubGroups: gitlab.Ptr(true),
+			Topic:            gitlab.Ptr(gls.cfg.SearchTopic),
+			Search:           gitlab.Ptr(gls.cfg.SearchQuery),
+			ListOptions: gitlab.ListOptions{
+				Page:    nextPage,
+				PerPage: 100,
+			},
+		})
+		if err != nil {
+			gls.logger.Sugar().Errorf("error: %v", err)
+			return nil, err
+		}
+
+		if len(projects) == 0 {
+			errMsg := fmt.Sprintf("no GitLab projects found for the given group/org: %s", gls.cfg.GitLabOrg)
+			err = errors.New(errMsg)
+			gls.logger.Sugar().Error(err)
+			return nil, err
+		}
+
+		for _, p := range projects {
+			projectList = append(projectList, gitlabProject{
+				Name:           p.Name,
+				Path:           p.PathWithNamespace,
+				CreatedAt:      *p.CreatedAt,
+				LastActivityAt: *p.LastActivityAt,
+			})
+		}
+
+		nextPageHeader := res.Header.Get("x-next-page")
+		if len(nextPageHeader) > 0 {
+			nextPage, err = strconv.Atoi(nextPageHeader)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error: %v", err)
+
+				return nil, err
+			}
+		} else {
+			nextPage = 0
+		}
+	}
+
+	return projectList, nil
 }
 
 func (gls *gitlabScraper) getBranchNames(ctx context.Context, client graphql.Client, projectPath string) (*getBranchNamesProjectRepository, error) {
@@ -35,28 +88,6 @@ func (gls *gitlabScraper) getInitialCommit(client *gitlab.Client, projectPath st
 		return nil, nil
 	}
 	return diff.Commits[0], nil
-}
-
-func (gls *gitlabScraper) processBranches(client *gitlab.Client, branches *getBranchNamesProjectRepository, projectPath string, now pcommon.Timestamp) {
-	gls.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(branches.BranchNames)), projectPath)
-	gls.logger.Sugar().Debugf("%s branch count: %v", projectPath, int64(len(branches.BranchNames)))
-
-	for _, branch := range branches.BranchNames {
-		if branch == branches.RootRef {
-			continue
-		}
-
-		commit, err := gls.getInitialCommit(client, projectPath, branches.RootRef, branch)
-		if err != nil {
-			gls.logger.Sugar().Errorf("error: %v", err)
-		}
-
-		if commit != nil {
-			branchAge := time.Since(*commit.CreatedAt).Hours()
-			gls.logger.Sugar().Debugf("%v age: %v hours, commit name: %s", branch, branchAge, commit.Title)
-			gls.mb.RecordGitRepositoryBranchTimeDataPoint(now, int64(branchAge), projectPath, branch)
-		}
-	}
 }
 
 func (gls *gitlabScraper) getContributorCount(
@@ -117,24 +148,4 @@ func (gls *gitlabScraper) getCombinedMergeRequests(
 	}
 	mrs := append(openMrs, mergedMrs...)
 	return mrs, nil
-}
-
-func (gls *gitlabScraper) processMergeRequests(mrs []MergeRequestNode, projectPath string, now pcommon.Timestamp) {
-	for _, mr := range mrs {
-		gls.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(mr.DiffStatsSummary.Additions), projectPath, mr.SourceBranch)
-		gls.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(mr.DiffStatsSummary.Deletions), projectPath, mr.SourceBranch)
-
-		// Checks if the merge request has been merged. This is done with IsZero() which tells us if the
-		// time is or isn't  January 1, year 1, 00:00:00 UTC, which is what null in graphql date values
-		// get returned as in Go.
-		if mr.MergedAt.IsZero() {
-			mrAge := int64(time.Since(mr.CreatedAt).Hours())
-			gls.mb.RecordGitRepositoryPullRequestTimeOpenDataPoint(now, mrAge, projectPath, mr.SourceBranch)
-			gls.logger.Sugar().Debugf("%s merge request for branch %v, age: %v", projectPath, mr.SourceBranch, mrAge)
-		} else {
-			mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Hours())
-			gls.mb.RecordGitRepositoryPullRequestTimeToMergeDataPoint(now, mergedAge, projectPath, mr.SourceBranch)
-			gls.logger.Sugar().Debugf("%s merge request for branch %v, merged age: %v", projectPath, mr.SourceBranch, mergedAge)
-		}
-	}
 }

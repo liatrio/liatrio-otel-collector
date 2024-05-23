@@ -38,7 +38,6 @@ func TestNewGitLabScraper(t *testing.T) {
 func TestScrape(t *testing.T) {
 	testCases := []struct {
 		desc          string
-		resp          string
 		expectedErr   error
 		server        *http.ServeMux
 		expectedCount int

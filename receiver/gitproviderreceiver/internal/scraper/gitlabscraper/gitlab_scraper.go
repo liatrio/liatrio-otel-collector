@@ -5,10 +5,9 @@ package gitlabscraper
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
+	"sync"
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
@@ -95,107 +94,88 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		gls.logger.Sugar().Errorf("error: %v", err)
 	}
 
-	var projectList []gitlabProject
-
-	for nextPage := 1; nextPage > 0; {
-		// TODO: since we pass in a context already, do we need to create a new background context?
-		projects, res, err := restClient.Groups.ListGroupProjects(gls.cfg.GitLabOrg, &gitlab.ListGroupProjectsOptions{
-			IncludeSubGroups: gitlab.Ptr(true),
-			Topic:            gitlab.Ptr(gls.cfg.SearchTopic),
-			Search:           gitlab.Ptr(gls.cfg.SearchQuery),
-			ListOptions: gitlab.ListOptions{
-				Page:    nextPage,
-				PerPage: 100,
-			},
-		})
-		if err != nil {
-			gls.logger.Sugar().Errorf("error: %v", err)
-
-			return gls.mb.Emit(), err
-		}
-
-		if len(projects) == 0 {
-			errMsg := fmt.Sprintf("no GitLab projects found for the given group/org: %s", gls.cfg.GitLabOrg)
-			err = errors.New(errMsg)
-			gls.logger.Sugar().Error(err)
-
-			return gls.mb.Emit(), err
-		}
-
-		for _, p := range projects {
-			projectList = append(projectList, gitlabProject{
-				Name:           p.Name,
-				Path:           p.PathWithNamespace,
-				CreatedAt:      *p.CreatedAt,
-				LastActivityAt: *p.LastActivityAt,
-			})
-		}
-
-		nextPageHeader := res.Header.Get("x-next-page")
-		if len(nextPageHeader) > 0 {
-			nextPage, err = strconv.Atoi(nextPageHeader)
-			if err != nil {
-				gls.logger.Sugar().Errorf("error: %v", err)
-
-				return gls.mb.Emit(), err
-			}
-		} else {
-			nextPage = 0
-		}
+	projectList, err := gls.getProjects(restClient)
+	if err != nil {
+		gls.logger.Sugar().Errorf("error: %v", err)
+		return gls.mb.Emit(), err
 	}
-
-	var maxProcesses = 3
-	sem := make(chan int, maxProcesses)
-	// TODO: Must account for when there are more than 100,000 branch names in a project.
-	for _, project := range projectList {
-		sem <- 1
-		go func(project gitlabProject) {
-			branches, err := gls.getBranchNames(ctx, graphClient, project.Path)
-			if err != nil {
-				gls.logger.Sugar().Errorf("error getting branches: %v", zap.Error(err))
-				<-sem
-				return
-			}
-			gls.processBranches(restClient, branches, project.Path, now)
-			<-sem
-		}(project)
-	}
-
-	for _, project := range projectList {
-		sem <- 1
-		go func(project gitlabProject) {
-			mrs, err := gls.getCombinedMergeRequests(ctx, graphClient, project.Path)
-			if err != nil {
-				gls.logger.Sugar().Errorf("error getting merge requests: %v", zap.Error(err))
-				<-sem
-				return
-			}
-			gls.processMergeRequests(mrs, project.Path, now)
-			<-sem
-		}(project)
-	}
-
-	for _, project := range projectList {
-		sem <- 1
-		go func(project gitlabProject) {
-			contributorCount, err := gls.getContributorCount(restClient, project.Path)
-			if err != nil {
-				gls.logger.Sugar().Errorf("error: %v", err)
-				<-sem
-				return
-			}
-			gls.logger.Sugar().Debugf("contributor count: %v for repo %v", contributorCount, project.Path)
-			gls.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contributorCount), project.Path)
-			<-sem
-		}(project)
-	}
-	// wait until all goroutines are finished
-	for i := 0; i < maxProcesses; i++ {
-		sem <- 1
-	}
-
 	// record repository count metric
 	gls.mb.RecordGitRepositoryCountDataPoint(now, int64(len(projectList)))
+
+	var wg sync.WaitGroup
+	wg.Add(len(projectList))
+	var mux sync.Mutex
+
+	// TODO: Must account for when there are more than 100,000 branch names in a project.
+	for _, project := range projectList {
+		project := project
+		path := project.Path
+		now := now
+		go func() {
+			defer wg.Done()
+
+			branches, err := gls.getBranchNames(ctx, graphClient, path)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error getting branches: %v", zap.Error(err))
+				return
+			}
+			// Create a mutual exclusion lock to prevent the recordDataPoint
+			// from having a nil pointer error passing in the SetStartTimestamp
+			mux.Lock()
+			gls.mb.RecordGitRepositoryBranchCountDataPoint(now, int64(len(branches.BranchNames)), path)
+
+			for _, branch := range branches.BranchNames {
+				if branch == branches.RootRef {
+					continue
+				}
+
+				commit, err := gls.getInitialCommit(restClient, path, branches.RootRef, branch)
+				if err != nil {
+					gls.logger.Sugar().Errorf("error: %v", err)
+				}
+
+				if commit != nil {
+					branchAge := time.Since(*commit.CreatedAt).Hours()
+					gls.mb.RecordGitRepositoryBranchTimeDataPoint(now, int64(branchAge), path, branch)
+				}
+			}
+
+			// Get both the merged and open merge requests for the repository
+			mrs, err := gls.getCombinedMergeRequests(ctx, graphClient, path)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error getting merge requests: %v", zap.Error(err))
+				return
+			}
+
+			// Get the number of contributors for the repository
+			contributorCount, err := gls.getContributorCount(restClient, path)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error: %v", err)
+				return
+			}
+			gls.mb.RecordGitRepositoryContributorCountDataPoint(now, int64(contributorCount), path)
+
+			for _, mr := range mrs {
+				gls.mb.RecordGitRepositoryBranchLineAdditionCountDataPoint(now, int64(mr.DiffStatsSummary.Additions), path, mr.SourceBranch)
+				gls.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(mr.DiffStatsSummary.Deletions), path, mr.SourceBranch)
+
+				// Checks if the merge request has been merged. This is done with IsZero() which tells us if the
+				// time is or isn't  January 1, year 1, 00:00:00 UTC, which is what null in graphql date values
+				// get returned as in Go.
+				if mr.MergedAt.IsZero() {
+					mrAge := int64(time.Since(mr.CreatedAt).Hours())
+					gls.mb.RecordGitRepositoryPullRequestTimeOpenDataPoint(now, mrAge, path, mr.SourceBranch)
+				} else {
+					mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Hours())
+					gls.mb.RecordGitRepositoryPullRequestTimeToMergeDataPoint(now, mergedAge, path, mr.SourceBranch)
+				}
+			}
+
+			mux.Unlock()
+		}()
+	}
+
+	wg.Wait()
 
 	gls.rb.SetGitVendorName("gitlab")
 	gls.rb.SetOrganizationName(gls.cfg.GitLabOrg)
