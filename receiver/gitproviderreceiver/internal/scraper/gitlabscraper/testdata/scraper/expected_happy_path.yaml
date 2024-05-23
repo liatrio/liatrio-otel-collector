@@ -1,5 +1,12 @@
 resourceMetrics:
-  - resource: {}
+  - resource:
+      attributes:
+        - key: git.vendor.name
+          value:
+            stringValue: gitlab
+        - key: organization.name
+          value:
+            stringValue: project
     schemaUrl: https://opentelemetry.io/schemas/1.9.0
     scopeMetrics:
       - metrics:
