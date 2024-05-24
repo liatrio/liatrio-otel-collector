@@ -25,10 +25,6 @@ const (
 	defaultReturnItems = 100
 )
 
-// type RepositoryNode interface {
-// 	GetName() string
-// }
-
 // Current GraphQL cost 1
 // See genqlient.graphql getRepoDataBySearch for more information
 func (ghs *githubScraper) getRepos(
