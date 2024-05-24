@@ -21,7 +21,7 @@ resource_attributes:
     description: The name of the Git vendor/provider (ie. GitHub / GitLab)
     type: string
   team.name:
-    enabled: true
+    enabled: false
     description: The name of the team in the organization
     type: string
 

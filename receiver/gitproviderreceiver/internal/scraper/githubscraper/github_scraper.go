@@ -200,9 +200,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	ghs.rb.SetGitVendorName("github")
 	ghs.rb.SetOrganizationName(ghs.cfg.GitHubOrg)
-	if ghs.cfg.GitHubTeam != "" {
-		ghs.rb.SetTeamName(ghs.cfg.GitHubTeam)
-	}
+	ghs.rb.SetTeamName(ghs.cfg.GitHubTeam)
+
 	res := ghs.rb.Emit()
 	return ghs.mb.Emit(metadata.WithResource(res)), nil
 }
