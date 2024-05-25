@@ -7,9 +7,6 @@ resourceMetrics:
         - key: organization.name
           value:
             stringValue: liatrio
-        - key: team.name
-          value:
-            stringValue: tag-o11y
     schemaUrl: https://opentelemetry.io/schemas/1.9.0
     scopeMetrics:
       - metrics:

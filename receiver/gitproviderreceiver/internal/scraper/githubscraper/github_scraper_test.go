@@ -312,6 +312,7 @@ func TestScrape(t *testing.T) {
 
 			// TestHappyPathWithTeam is a special case where we need to set the team name
 			if tc.desc == "TestHappyPathWithTeam" {
+				cfg.ResourceAttributes.TeamName.Enabled = true
 				ghs.cfg.GitHubTeam = "tag-o11y"
 				err := ghs.start(context.Background(), componenttest.NewNopHost())
 				require.NoError(t, err)
