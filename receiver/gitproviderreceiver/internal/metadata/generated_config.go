@@ -117,6 +117,7 @@ func (rac *ResourceAttributeConfig) Unmarshal(parser *confmap.Conf) error {
 type ResourceAttributesConfig struct {
 	GitVendorName    ResourceAttributeConfig `mapstructure:"git.vendor.name"`
 	OrganizationName ResourceAttributeConfig `mapstructure:"organization.name"`
+	TeamName         ResourceAttributeConfig `mapstructure:"team.name"`
 }
 
 func DefaultResourceAttributesConfig() ResourceAttributesConfig {
@@ -126,6 +127,9 @@ func DefaultResourceAttributesConfig() ResourceAttributesConfig {
 		},
 		OrganizationName: ResourceAttributeConfig{
 			Enabled: true,
+		},
+		TeamName: ResourceAttributeConfig{
+			Enabled: false,
 		},
 	}
 }

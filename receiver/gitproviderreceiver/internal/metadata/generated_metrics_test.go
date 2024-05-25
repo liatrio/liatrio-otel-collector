@@ -121,6 +121,7 @@ func TestMetricsBuilder(t *testing.T) {
 			rb := mb.NewResourceBuilder()
 			rb.SetGitVendorName("git.vendor.name-val")
 			rb.SetOrganizationName("organization.name-val")
+			rb.SetTeamName("team.name-val")
 			res := rb.Emit()
 			metrics := mb.Emit(WithResource(res))
 

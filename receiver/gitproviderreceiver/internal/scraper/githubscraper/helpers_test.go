@@ -20,7 +20,8 @@ import (
 )
 
 type responses struct {
-	repoResponse          repoResponse
+	searchRepoResponse    searchRepoResponse
+	teamRepoResponse      teamRepoResponse
 	prResponse            prResponse
 	branchResponse        branchResponse
 	commitResponse        commitResponse
@@ -31,8 +32,14 @@ type responses struct {
 	scrape                bool
 }
 
-type repoResponse struct {
+type searchRepoResponse struct {
 	repos        []getRepoDataBySearchSearchSearchResultItemConnection
+	responseCode int
+	page         int
+}
+
+type teamRepoResponse struct {
+	repos        []getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection
 	responseCode int
 	page         int
 }
@@ -106,8 +113,25 @@ func MockServer(responses *responses) *http.ServeMux {
 					return
 				}
 			}
+		case reqBody.OpName == "getRepoDataByTeam":
+			repoResp := &responses.teamRepoResponse
+			w.WriteHeader(repoResp.responseCode)
+			if repoResp.responseCode == http.StatusOK {
+				repos := getRepoDataByTeamResponse{
+					Organization: getRepoDataByTeamOrganization{
+						Team: getRepoDataByTeamOrganizationTeam{
+							Repositories: repoResp.repos[repoResp.page],
+						},
+					},
+				}
+				graphqlResponse := graphql.Response{Data: &repos}
+				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
+					return
+				}
+				repoResp.page++
+			}
 		case reqBody.OpName == "getRepoDataBySearch":
-			repoResp := &responses.repoResponse
+			repoResp := &responses.searchRepoResponse
 			w.WriteHeader(repoResp.responseCode)
 			if repoResp.responseCode == http.StatusOK {
 				repos := getRepoDataBySearchResponse{
@@ -325,7 +349,7 @@ func TestGetAge(t *testing.T) {
 	}
 }
 
-func TestGetRepos(t *testing.T) {
+func TestGetSearchRepos(t *testing.T) {
 	testCases := []struct {
 		desc                    string
 		server                  *http.ServeMux
@@ -337,14 +361,15 @@ func TestGetRepos(t *testing.T) {
 			desc: "TestSinglePageResponse",
 			server: MockServer(&responses{
 				scrape: false,
-				repoResponse: repoResponse{
+				searchRepoResponse: searchRepoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 1,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo1",
-								},
+									Repo: Repo{
+										Name: "repo1",
+									}},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
 								HasNextPage: false,
@@ -362,16 +387,20 @@ func TestGetRepos(t *testing.T) {
 			desc: "TestMultiPageResponse",
 			server: MockServer(&responses{
 				scrape: false,
-				repoResponse: repoResponse{
+				searchRepoResponse: searchRepoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 4,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo1",
+									Repo: Repo{
+										Name: "repo1",
+									},
 								},
 								&SearchNodeRepository{
-									Name: "repo2",
+									Repo: Repo{
+										Name: "repo2",
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -382,10 +411,14 @@ func TestGetRepos(t *testing.T) {
 							RepositoryCount: 4,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo3",
+									Repo: Repo{
+										Name: "repo3",
+									},
 								},
 								&SearchNodeRepository{
-									Name: "repo4",
+									Repo: Repo{
+										Name: "repo4",
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -404,13 +437,15 @@ func TestGetRepos(t *testing.T) {
 			desc: "TestSinglePageWithVulnerabilitiesResponse",
 			server: MockServer(&responses{
 				scrape: false,
-				repoResponse: repoResponse{
+				searchRepoResponse: searchRepoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 1,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo1",
+									Repo: Repo{
+										Name: "repo1",
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -429,16 +464,20 @@ func TestGetRepos(t *testing.T) {
 			desc: "TestMultiPageWithVulnerabilitieResponse",
 			server: MockServer(&responses{
 				scrape: false,
-				repoResponse: repoResponse{
+				searchRepoResponse: searchRepoResponse{
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 4,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo1",
+									Repo: Repo{
+										Name: "repo1",
+									},
 								},
 								&SearchNodeRepository{
-									Name: "repo2",
+									Repo: Repo{
+										Name: "repo2",
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -449,10 +488,14 @@ func TestGetRepos(t *testing.T) {
 							RepositoryCount: 4,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo3",
+									Repo: Repo{
+										Name: "repo1",
+									},
 								},
 								&SearchNodeRepository{
-									Name: "repo4",
+									Repo: Repo{
+										Name: "repo4",
+									},
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -471,7 +514,7 @@ func TestGetRepos(t *testing.T) {
 			desc: "Test404Response",
 			server: MockServer(&responses{
 				scrape: false,
-				repoResponse: repoResponse{
+				searchRepoResponse: searchRepoResponse{
 					responseCode: http.StatusNotFound,
 				},
 			}),

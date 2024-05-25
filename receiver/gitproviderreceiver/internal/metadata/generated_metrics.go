@@ -817,6 +817,12 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.CreateSetting
 	if mbc.ResourceAttributes.OrganizationName.MetricsExclude != nil {
 		mb.resourceAttributeExcludeFilter["organization.name"] = filter.CreateFilter(mbc.ResourceAttributes.OrganizationName.MetricsExclude)
 	}
+	if mbc.ResourceAttributes.TeamName.MetricsInclude != nil {
+		mb.resourceAttributeIncludeFilter["team.name"] = filter.CreateFilter(mbc.ResourceAttributes.TeamName.MetricsInclude)
+	}
+	if mbc.ResourceAttributes.TeamName.MetricsExclude != nil {
+		mb.resourceAttributeExcludeFilter["team.name"] = filter.CreateFilter(mbc.ResourceAttributes.TeamName.MetricsExclude)
+	}
 
 	for _, op := range options {
 		op(mb)

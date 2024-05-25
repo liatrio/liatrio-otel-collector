@@ -43,6 +43,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 				ResourceAttributes: ResourceAttributesConfig{
 					GitVendorName:    ResourceAttributeConfig{Enabled: true},
 					OrganizationName: ResourceAttributeConfig{Enabled: true},
+					TeamName:         ResourceAttributeConfig{Enabled: true},
 				},
 			},
 		},
@@ -67,6 +68,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 				ResourceAttributes: ResourceAttributesConfig{
 					GitVendorName:    ResourceAttributeConfig{Enabled: false},
 					OrganizationName: ResourceAttributeConfig{Enabled: false},
+					TeamName:         ResourceAttributeConfig{Enabled: false},
 				},
 			},
 		},
@@ -105,6 +107,7 @@ func TestResourceAttributesConfig(t *testing.T) {
 			want: ResourceAttributesConfig{
 				GitVendorName:    ResourceAttributeConfig{Enabled: true},
 				OrganizationName: ResourceAttributeConfig{Enabled: true},
+				TeamName:         ResourceAttributeConfig{Enabled: true},
 			},
 		},
 		{
@@ -112,6 +115,7 @@ func TestResourceAttributesConfig(t *testing.T) {
 			want: ResourceAttributesConfig{
 				GitVendorName:    ResourceAttributeConfig{Enabled: false},
 				OrganizationName: ResourceAttributeConfig{Enabled: false},
+				TeamName:         ResourceAttributeConfig{Enabled: false},
 			},
 		},
 	}

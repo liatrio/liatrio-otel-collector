@@ -214,3 +214,4 @@ The number of Common Vulnerabilities and Exposures (CVEs) in the repository.
 | ---- | ----------- | ------ | ------- |
 | git.vendor.name | The name of the Git vendor/provider (ie. GitHub / GitLab) | Any Str | true |
 | organization.name | Git Organization or Project Name | Any Str | true |
+| team.name | The name of the team in the organization | Any Str | false |

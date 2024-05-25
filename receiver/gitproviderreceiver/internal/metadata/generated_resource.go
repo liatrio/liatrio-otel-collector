@@ -35,6 +35,13 @@ func (rb *ResourceBuilder) SetOrganizationName(val string) {
 	}
 }
 
+// SetTeamName sets provided value as "team.name" attribute.
+func (rb *ResourceBuilder) SetTeamName(val string) {
+	if rb.config.TeamName.Enabled {
+		rb.res.Attributes().PutStr("team.name", val)
+	}
+}
+
 // Emit returns the built resource and resets the internal builder state.
 func (rb *ResourceBuilder) Emit() pcommon.Resource {
 	r := rb.res
