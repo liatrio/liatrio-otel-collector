@@ -10,7 +10,7 @@ require (
 	github.com/securego/gosec/v2 v2.20.1-0.20240525090044-5f0084eb01a9
 	go.opentelemetry.io/build-tools/crosslink v0.13.0
 	go.opentelemetry.io/build-tools/multimod v0.13.0
-	go.opentelemetry.io/collector/cmd/builder v0.101.0
+	go.opentelemetry.io/collector/cmd/builder v0.102.1
 	go.opentelemetry.io/collector/cmd/mdatagen v0.101.0
 	golang.org/x/tools v0.21.1-0.20240514024235-59d9797072e7
 	golang.org/x/vuln v1.1.1
