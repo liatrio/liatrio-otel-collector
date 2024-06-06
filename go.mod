@@ -37,19 +37,19 @@ require (
 	github.com/rs/cors v1.10.1 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.11 // indirect
 	github.com/xanzy/go-gitlab v0.105.0 // indirect
-	go.opentelemetry.io/collector v0.102.0 // indirect
-	go.opentelemetry.io/collector/component v0.102.0 // indirect
-	go.opentelemetry.io/collector/config/configauth v0.102.0 // indirect
+	go.opentelemetry.io/collector v0.102.1 // indirect
+	go.opentelemetry.io/collector/component v0.102.1 // indirect
+	go.opentelemetry.io/collector/config/configauth v0.102.1 // indirect
 	go.opentelemetry.io/collector/config/configcompression v1.9.0 // indirect
-	go.opentelemetry.io/collector/config/confighttp v0.102.0 // indirect
+	go.opentelemetry.io/collector/config/confighttp v0.102.1 // indirect
 	go.opentelemetry.io/collector/config/configopaque v1.9.0 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.102.0 // indirect
-	go.opentelemetry.io/collector/config/configtls v0.102.0 // indirect
-	go.opentelemetry.io/collector/config/internal v0.102.0 // indirect
-	go.opentelemetry.io/collector/confmap v0.102.0 // indirect
-	go.opentelemetry.io/collector/consumer v0.102.0 // indirect
-	go.opentelemetry.io/collector/extension v0.102.0 // indirect
-	go.opentelemetry.io/collector/extension/auth v0.102.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.102.1 // indirect
+	go.opentelemetry.io/collector/config/configtls v0.102.1 // indirect
+	go.opentelemetry.io/collector/config/internal v0.102.1 // indirect
+	go.opentelemetry.io/collector/confmap v0.102.1 // indirect
+	go.opentelemetry.io/collector/consumer v0.102.1 // indirect
+	go.opentelemetry.io/collector/extension v0.102.1 // indirect
+	go.opentelemetry.io/collector/extension/auth v0.102.1 // indirect
 	go.opentelemetry.io/collector/featuregate v1.9.0 // indirect
 	go.opentelemetry.io/collector/filter v0.101.0 // indirect
 	go.opentelemetry.io/collector/pdata v1.9.0 // indirect
