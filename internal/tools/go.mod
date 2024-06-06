@@ -6,7 +6,6 @@ require (
 	github.com/Khan/genqlient v0.7.0
 	github.com/golangci/golangci-lint v1.59.0
 	github.com/google/osv-scanner v1.7.4
-	github.com/goreleaser/goreleaser v1.26.2
 	github.com/goreleaser/goreleaser/v2 v2.0.0
 	github.com/securego/gosec/v2 v2.20.1-0.20240525090044-5f0084eb01a9
 	go.opentelemetry.io/build-tools/crosslink v0.13.0
