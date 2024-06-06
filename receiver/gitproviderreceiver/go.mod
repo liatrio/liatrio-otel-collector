@@ -11,10 +11,10 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.101.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.101.0
 	github.com/stretchr/testify v1.9.0
-	go.opentelemetry.io/collector/component v0.102.0
-	go.opentelemetry.io/collector/config/confighttp v0.102.0
-	go.opentelemetry.io/collector/confmap v0.102.0
-	go.opentelemetry.io/collector/consumer v0.102.0
+	go.opentelemetry.io/collector/component v0.102.1
+	go.opentelemetry.io/collector/config/confighttp v0.102.1
+	go.opentelemetry.io/collector/confmap v0.102.1
+	go.opentelemetry.io/collector/consumer v0.102.1
 	go.opentelemetry.io/collector/filter v0.101.0
 	go.opentelemetry.io/collector/otelcol v0.101.0
 	go.opentelemetry.io/collector/pdata v1.9.0
@@ -28,14 +28,14 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.101.0 // indirect
-	go.opentelemetry.io/collector v0.102.0 // indirect
+	go.opentelemetry.io/collector v0.102.1 // indirect
 	go.opentelemetry.io/collector/confmap/converter/expandconverter v0.101.0 // indirect
 	go.opentelemetry.io/collector/confmap/provider/envprovider v0.101.0 // indirect
 	go.opentelemetry.io/collector/confmap/provider/fileprovider v0.101.0 // indirect
 	go.opentelemetry.io/collector/confmap/provider/httpprovider v0.101.0 // indirect
 	go.opentelemetry.io/collector/confmap/provider/httpsprovider v0.101.0 // indirect
 	go.opentelemetry.io/collector/confmap/provider/yamlprovider v0.101.0 // indirect
-	go.opentelemetry.io/collector/pdata/testdata v0.102.0 // indirect
+	go.opentelemetry.io/collector/pdata/testdata v0.102.1 // indirect
 	go.opentelemetry.io/collector/service v0.101.0 // indirect
 	go.opentelemetry.io/contrib/config v0.7.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
@@ -87,16 +87,16 @@ require (
 	github.com/xanzy/go-gitlab v0.105.0
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/collector/config/configauth v0.102.0 // indirect
+	go.opentelemetry.io/collector/config/configauth v0.102.1 // indirect
 	go.opentelemetry.io/collector/config/configcompression v1.9.0 // indirect
 	go.opentelemetry.io/collector/config/configopaque v1.9.0 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.102.0 // indirect
-	go.opentelemetry.io/collector/config/configtls v0.102.0 // indirect
-	go.opentelemetry.io/collector/config/internal v0.102.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.102.1 // indirect
+	go.opentelemetry.io/collector/config/configtls v0.102.1 // indirect
+	go.opentelemetry.io/collector/config/internal v0.102.1 // indirect
 	go.opentelemetry.io/collector/connector v0.101.0 // indirect
 	go.opentelemetry.io/collector/exporter v0.101.0 // indirect
-	go.opentelemetry.io/collector/extension v0.102.0 // indirect
-	go.opentelemetry.io/collector/extension/auth v0.102.0 // indirect
+	go.opentelemetry.io/collector/extension v0.102.1 // indirect
+	go.opentelemetry.io/collector/extension/auth v0.102.1 // indirect
 	go.opentelemetry.io/collector/featuregate v1.9.0 // indirect
 	go.opentelemetry.io/collector/processor v0.101.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.52.0 // indirect
