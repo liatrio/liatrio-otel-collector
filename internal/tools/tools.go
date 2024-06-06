@@ -10,7 +10,7 @@ import (
 	_ "github.com/Khan/genqlient"
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	_ "github.com/google/osv-scanner/cmd/osv-scanner"
-	_ "github.com/goreleaser/goreleaser"
+	_ "github.com/goreleaser/goreleaser/v2"
 	_ "github.com/securego/gosec/v2/cmd/gosec"
 	_ "go.opentelemetry.io/build-tools/crosslink"
 	_ "go.opentelemetry.io/build-tools/multimod"
