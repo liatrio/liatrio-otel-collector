@@ -2,7 +2,7 @@ module github.com/liatrio/liatrio-otel-collector
 
 go 1.22
 
-toolchain go1.22.2
+toolchain go1.22.4
 
 require (
 	github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension v0.0.0-00010101000000-000000000000
