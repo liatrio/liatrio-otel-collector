@@ -135,7 +135,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				}
 
 				if commit != nil {
-					branchAge := time.Since(*commit.CreatedAt).Hours()
+					branchAge := time.Since(*commit.CreatedAt).Seconds()
 					gls.mb.RecordGitRepositoryBranchTimeDataPoint(now, int64(branchAge), path, branch)
 				}
 			}
@@ -163,10 +163,10 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				// time is or isn't  January 1, year 1, 00:00:00 UTC, which is what null in graphql date values
 				// get returned as in Go.
 				if mr.MergedAt.IsZero() {
-					mrAge := int64(time.Since(mr.CreatedAt).Hours())
+					mrAge := int64(time.Since(mr.CreatedAt).Seconds())
 					gls.mb.RecordGitRepositoryPullRequestTimeOpenDataPoint(now, mrAge, path, mr.SourceBranch)
 				} else {
-					mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Hours())
+					mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Seconds())
 					gls.mb.RecordGitRepositoryPullRequestTimeToMergeDataPoint(now, mergedAge, path, mr.SourceBranch)
 				}
 			}
