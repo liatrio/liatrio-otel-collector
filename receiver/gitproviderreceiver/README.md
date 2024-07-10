@@ -122,16 +122,16 @@ The current metrics available via scraping from GitHub are:
 The current metrics available via scraping from GitLab are:
 
 - [x] Repository count
-- [ ] Repository contributor count
+- [x] Repository contributor count
 - [x] Repository branch count
 - [x] Repository branch time
 - [x] Repository branch commit aheadby count
 - [x] Repository branch commit behindby count
 - [x] Repository branch line addition count
 - [x] Repository branch line deletion count
-- [ ] Repository pull request open time
-- [ ] Repository pull request time to merge
-- [ ] Repository pull request time to approval
+- [x] Repository pull request open time
+- [x] Repository pull request time to merge
+- [x] Repository pull request time to approval
 - [x] Repository pull request count | stores an attribute of `pull_request.state` equal to `open` or `merged`
 - [ ] Repository CVE count | stores an attribute of `cve.severity` equal to `low`, `medium`, `high`, or `critical`
 

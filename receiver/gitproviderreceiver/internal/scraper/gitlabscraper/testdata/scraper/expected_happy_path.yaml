@@ -115,7 +115,7 @@ resourceMetrics:
           - description: Time a branch created from the default branch (trunk) has existed.
             gauge:
               dataPoints:
-                - asInt: "24"
+                - asInt: "86400"
                   attributes:
                     - key: branch.name
                       value:
@@ -138,7 +138,7 @@ resourceMetrics:
           - description: The amount of time a pull request has been open.
             gauge:
               dataPoints:
-                - asInt: "24"
+                - asInt: "86400"
                   attributes:
                     - key: branch.name
                       value:
@@ -148,7 +148,7 @@ resourceMetrics:
                         stringValue: project
                   startTimeUnixNano: "1000000"
                   timeUnixNano: "2000000"
-                - asInt: "24"
+                - asInt: "86400"
                   attributes:
                     - key: branch.name
                       value:
@@ -163,7 +163,7 @@ resourceMetrics:
           - description: The amount of time it took a pull request to go from open to merged.
             gauge:
               dataPoints:
-                - asInt: "2562047"
+                - asInt: "9223372036"
                   attributes:
                     - key: branch.name
                       value:
@@ -173,7 +173,7 @@ resourceMetrics:
                         stringValue: project
                   startTimeUnixNano: "1000000"
                   timeUnixNano: "2000000"
-                - asInt: "2562047"
+                - asInt: "9223372036"
                   attributes:
                     - key: branch.name
                       value:
