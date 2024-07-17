@@ -29,6 +29,7 @@ func (gls *gitlabScraper) getProjects(restClient *gitlab.Client) ([]gitlabProjec
 			IncludeSubGroups: gitlab.Ptr(true),
 			Topic:            gitlab.Ptr(gls.cfg.SearchTopic),
 			Search:           gitlab.Ptr(gls.cfg.SearchQuery),
+			Archived:         gitlab.Ptr(false),
 			ListOptions: gitlab.ListOptions{
 				Page:    nextPage,
 				PerPage: 100,
