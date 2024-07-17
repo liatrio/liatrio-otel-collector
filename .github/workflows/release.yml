@@ -22,19 +22,27 @@ jobs:
       - name: Fetch all tags
         run: git fetch --force --tags
 
+      - name: Generate a token
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ steps.generate_token.outputs.token }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           # go version must be quoted on version  1.21+ or else setup action
           # will pull down version 1.2 instead of 1.21
-          go-version: '1.22'
+          go-version: "1.22"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -49,5 +57,5 @@ jobs:
           version: latest
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
           GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
