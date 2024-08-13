@@ -5,15 +5,15 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "**/Dockerfile"
-      - "**/.dockerignore"
+      - '**/Dockerfile'
+      - '**/.dockerignore'
       - .github/**
-      - "**.go"
-      - "**.mod"
-      - "**.sum"
+      - '**.go'
+      - '**.mod'
+      - '**.sum'
       - config/**
-      - "**/Makefile*"
-      - "**/documentation.md"
+      - '**/Makefile*'
+      - '**/documentation.md'
       - .golangci.yaml
       - .goreleaser.yaml
 
@@ -24,7 +24,7 @@ jobs:
   lint:
     strategy:
       matrix:
-        go: ["1.22"]
+        go: ['1.22']
     name: lint
     runs-on: ubuntu-latest
     steps:
@@ -64,11 +64,11 @@ jobs:
     strategy:
       matrix:
         GOOS: [darwin, linux, windows]
-        GOARCH: [arm64, amd64, "386"]
-        go: ["1.22"]
+        GOARCH: [arm64, amd64, '386']
+        go: ['1.22']
         exclude:
           - GOOS: darwin
-            GOARCH: "386"
+            GOARCH: '386'
           - GOOS: darwin
             GOARCH: arm
           - GOOS: windows
@@ -119,7 +119,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go: ["1.22"]
+        go: ['1.22']
     name: test
     runs-on: ubuntu-latest
     steps:
@@ -147,6 +147,24 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Clone repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+      - name: Get next version
+        id: get_next_version
+        uses: thenativeweb/get-next-version@f9202b1ab94b345e7ca86da624762a5e17d4cd3e # v2.6.2
+        with:
+          prefix: v   # optional, defaults to ''
+      - name: Install tools
+        run: make install-tools
+      # TODO: Add this target and uncomment
+      # - name: Run MultiMod
+      #   run: make multi-mod
+      - uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842 # v5
+        id: auto-commit-action
+        with:
+          commit_message: 'chore: udpate versions with multi mod'
       - name: Generate a token
         id: generate_token
         uses: actions/create-github-app-token@v1
