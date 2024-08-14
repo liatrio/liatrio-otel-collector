@@ -165,19 +165,18 @@ jobs:
         run: |
           new_version=${{ steps.get_next_version.outputs.version }}
           sed -i "s/version: .*/version: ${new_version}/" versions.yaml
+      - name: Set Git user to the commit author #This is so multimod prerelease can get author info
+        run: |
+          git config --global user.name "${{ github.event.head_commit.committer.name }}"
+          git config --global user.email "${{ github.event.head_commit.committer.email }}"
+      - name: Stage changes
+        run: git add .
+      - name: Commit changes
+        run: |
+          git commit -m "Automated commit: prepare for multimod (version ${{ steps.get_next_version.outputs.version }})"
       - name: Multimod prerelease
         run: make multimod-prerelease
-      - name: Generate a token
-        id: generate_token
-        uses: actions/create-github-app-token@v1
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
-      - name: Run go-semantic-release
-        uses: go-semantic-release/action@v1
-        with:
-          github-token: ${{ steps.generate_token.outputs.token }}
-          changelog-generator-opt: emojis=true
-          allow-initial-development-versions: true
+      - name: Push changes
+        run: git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
