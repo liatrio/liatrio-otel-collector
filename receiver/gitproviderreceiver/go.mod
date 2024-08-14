@@ -11,7 +11,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.101.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.101.0
 	github.com/stretchr/testify v1.9.0
-	go.opentelemetry.io/collector/component v0.102.1
+	go.opentelemetry.io/collector/component v0.107.0
 	go.opentelemetry.io/collector/config/confighttp v0.102.1
 	go.opentelemetry.io/collector/confmap v0.102.1
 	go.opentelemetry.io/collector/consumer v0.102.1
