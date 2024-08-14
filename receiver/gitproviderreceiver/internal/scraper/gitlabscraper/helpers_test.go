@@ -200,7 +200,7 @@ func TestGetProjects(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			factory := Factory{}
 			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
+			settings := receivertest.NewNopSettings()
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
@@ -274,7 +274,7 @@ func TestGetContributorCount(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			factory := Factory{}
 			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
+			settings := receivertest.NewNopSettings()
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
@@ -382,7 +382,7 @@ func TestGetMergeRequests(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			factory := Factory{}
 			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
+			settings := receivertest.NewNopSettings()
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
@@ -488,7 +488,7 @@ func TestGetCombinedMergeRequests(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			factory := Factory{}
 			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
+			settings := receivertest.NewNopSettings()
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
@@ -557,7 +557,7 @@ func TestGetBranchNames(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			factory := Factory{}
 			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
+			settings := receivertest.NewNopSettings()
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
@@ -635,7 +635,7 @@ func TestGetInitialCommit(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			factory := Factory{}
 			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopCreateSettings()
+			settings := receivertest.NewNopSettings()
 			gls := newGitLabScraper(context.Background(), settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
 			defer func() { server.Close() }()

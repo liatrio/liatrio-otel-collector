@@ -41,7 +41,7 @@ func (gls *gitlabScraper) start(ctx context.Context, host component.Host) (err e
 
 func newGitLabScraper(
 	_ context.Context,
-	settings receiver.CreateSettings,
+	settings receiver.Settings,
 	cfg *Config,
 ) *gitlabScraper {
 	return &gitlabScraper{

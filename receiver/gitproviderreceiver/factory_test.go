@@ -17,7 +17,7 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal"
 )
 
-var creationSet = receivertest.NewNopCreateSettings()
+var creationSet = receivertest.NewNopSettings()
 
 type mockConfig struct{}
 

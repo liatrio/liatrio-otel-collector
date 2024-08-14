@@ -30,7 +30,7 @@ func TestNewGitLabScraper(t *testing.T) {
 	factory := Factory{}
 	defaultConfig := factory.CreateDefaultConfig()
 
-	s := newGitLabScraper(context.Background(), receiver.CreateSettings{}, defaultConfig.(*Config))
+	s := newGitLabScraper(context.Background(), receiver.Settings{}, defaultConfig.(*Config))
 
 	assert.NotNil(t, s)
 }
@@ -124,7 +124,7 @@ func TestScrape(t *testing.T) {
 
 			cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
 
-			gls := newGitLabScraper(context.Background(), receivertest.NewNopCreateSettings(), cfg)
+			gls := newGitLabScraper(context.Background(), receivertest.NewNopSettings(), cfg)
 			gls.cfg.GitLabOrg = "project"
 			gls.cfg.ClientConfig.Endpoint = server.URL
 
