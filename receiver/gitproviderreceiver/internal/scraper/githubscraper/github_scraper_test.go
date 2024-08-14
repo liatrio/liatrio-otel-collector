@@ -26,7 +26,7 @@ func TestNewGitHubScraper(t *testing.T) {
 	factory := Factory{}
 	defaultConfig := factory.CreateDefaultConfig()
 
-	s := newGitHubScraper(context.Background(), receiver.CreateSettings{}, defaultConfig.(*Config))
+	s := newGitHubScraper(context.Background(), receiver.Settings{}, defaultConfig.(*Config))
 
 	assert.NotNil(t, s)
 }
@@ -306,7 +306,7 @@ func TestScrape(t *testing.T) {
 
 			cfg.Metrics.GitRepositoryCveCount.Enabled = true
 
-			ghs := newGitHubScraper(context.Background(), receivertest.NewNopCreateSettings(), cfg)
+			ghs := newGitHubScraper(context.Background(), receivertest.NewNopSettings(), cfg)
 			ghs.cfg.GitHubOrg = "liatrio"
 			ghs.cfg.ClientConfig.Endpoint = server.URL
 

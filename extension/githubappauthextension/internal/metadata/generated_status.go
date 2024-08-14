@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	Type = component.MustNewType("githubappauth")
+	Type      = component.MustNewType("githubappauth")
+	ScopeName = "github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension"
 )
 
 const (

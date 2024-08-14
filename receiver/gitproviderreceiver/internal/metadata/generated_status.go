@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	Type = component.MustNewType("gitprovider")
+	Type      = component.MustNewType("gitprovider")
+	ScopeName = "github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver"
 )
 
 const (
