@@ -156,15 +156,17 @@ jobs:
         uses: thenativeweb/get-next-version@f9202b1ab94b345e7ca86da624762a5e17d4cd3e # v2.6.2
         with:
           prefix: v   # optional, defaults to ''
+      - name: Show the next version
+        run: |
+          echo ${{ steps.get_next_version.outputs.version }}
       - name: Install tools
         run: make install-tools
-      # TODO: Add this target and uncomment
-      # - name: Run MultiMod
-      #   run: make multi-mod
-      - uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842 # v5
-        id: auto-commit-action
-        with:
-          commit_message: 'chore: udpate versions with multi mod'
+      - name: Update VERSION file
+        run: |
+          new_version=${{ steps.get_next_version.outputs.version }}
+          sed -i "s/version: .*/version: ${new_version}/" versions.yaml
+      - name: Multimod prerelease
+        run: make multimod-prerelease
       - name: Generate a token
         id: generate_token
         uses: actions/create-github-app-token@v1
