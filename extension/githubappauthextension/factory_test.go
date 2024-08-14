@@ -43,7 +43,7 @@ func TestCreateExtension(t *testing.T) {
 			cfg.GitHubAppInstId = testcase.settings.GitHubAppInstId
 			cfg.GitHubAppPrivateKeyFile = testcase.settings.GitHubAppPrivateKeyFile
 
-			ext, err := createExtension(context.Background(), extensiontest.NewNopCreateSettings(), cfg)
+			ext, err := createExtension(context.Background(), extensiontest.NewNopSettings(), cfg)
 			if testcase.shouldError {
 				assert.Error(t, err)
 				assert.Nil(t, ext)
