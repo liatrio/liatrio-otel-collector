@@ -1,6 +1,8 @@
 module github.com/liatrio/liatrio-otel-collector/internal/tools
 
-go 1.22
+go 1.22.4
+
+toolchain go1.22.6
 
 require (
 	github.com/Khan/genqlient v0.7.0
@@ -236,7 +238,6 @@ require (
 	github.com/google/generative-ai-go v0.17.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-containerregistry v0.20.1 // indirect
-	github.com/google/go-github/v62 v62.0.0 // indirect
 	github.com/google/go-github/v63 v63.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/ko v0.15.4 // indirect
@@ -426,7 +427,6 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/t-yuki/gocover-cobertura v0.0.0-20180217150009-aaee18c8195c // indirect
 	github.com/tdakkota/asciicheck v0.2.0 // indirect
 	github.com/tetafro/godot v1.4.16 // indirect
 	github.com/tidwall/gjson v1.17.1 // indirect
