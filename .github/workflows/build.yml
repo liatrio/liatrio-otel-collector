@@ -1,163 +1,184 @@
 ---
-name: Build and Test
-
-on:
-  pull_request:
-    branches: [main]
-    paths:
-      - "**/Dockerfile"
-      - "**/.dockerignore"
-      - .github/**
-      - "**.go"
-      - "**.mod"
-      - "**.sum"
-      - config/**
-      - "**/Makefile*"
-      - "**/documentation.md"
-      - .golangci.yaml
-      - .goreleaser.yaml
-
-  push:
-    branches: [main]
-
-jobs:
-  lint:
-    strategy:
-      matrix:
-        go: ["1.22"]
-    name: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go }}
-          cache: false
-
-      - name: Make install-tools
-        run: make install-tools
-
-      - name: Make lint-all
-        run: make lint-all
-
-      - name: Check Code Generation
-        run: |
-          make generate
-          git diff -s --exit-code || (echo 'Generated code is out of date. Run make generate and commit the changes' && exit 1)
-
-      - name: Check packages are up-to-date
-        run: |
-          make tidy-all
-          git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
-
-      - name: Check crosslink run
-        run: |
-          make crosslink
-          git diff -s --exit-code || (echo 'Replace statements not updated. Run make crosslink and commit the changes' && exit 1)
-
-  build:
-    name: build
-    strategy:
-      matrix:
-        GOOS: [darwin, linux, windows]
-        GOARCH: [arm64, amd64, "386"]
-        go: ["1.22"]
-        exclude:
-          - GOOS: darwin
-            GOARCH: "386"
-          - GOOS: darwin
-            GOARCH: arm
-          - GOOS: windows
-            GOARCH: arm
-          - GOOS: windows
-            GOARCH: arm64
-    runs-on:
-      group: bigger
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go }}
-          cache: false
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Generate a token
-        id: generate_token
-        uses: actions/create-github-app-token@v1
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        if: steps.cache.outputs.cache-hit != 'true'
-        with:
-          distribution: goreleaser-pro
-          version: latest
-          args: release --clean --snapshot --split
-        env:
-          GGOOS: ${{ matrix.GOOS }}
-          GGOARCH: ${{ matrix.GOARCH }}
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-          GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
-
-  test:
-    strategy:
-      matrix:
-        go: ["1.22"]
-    name: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go }}
-          cache: false
-
-      - name: Make test-all
-        run: make test-all
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-
-  go-semantic-release:
-    if: ${{ github.ref == 'refs/heads/main' }}
-    needs: [lint, build]
-    runs-on:
-      group: bigger
-    permissions:
-      contents: write
-    steps:
-      - name: Generate a token
-        id: generate_token
-        uses: actions/create-github-app-token@v1
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
-      - name: Run go-semantic-release
-        uses: go-semantic-release/action@v1
-        with:
-          github-token: ${{ steps.generate_token.outputs.token }}
-          changelog-generator-opt: emojis=true
-          allow-initial-development-versions: true
+  name: Build and Test
+  
+  on:
+    pull_request:
+      branches: [main]
+      paths:
+        - '**/Dockerfile'
+        - '**/.dockerignore'
+        - .github/**
+        - '**.go'
+        - '**.mod'
+        - '**.sum'
+        - config/**
+        - '**/Makefile*'
+        - '**/documentation.md'
+        - .golangci.yaml
+        - .goreleaser.yaml
+  
+    push:
+      branches: [main]
+  
+  jobs:
+    lint:
+      strategy:
+        matrix:
+          go: ['1.22']
+      name: lint
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+  
+        - name: Set up Go
+          uses: actions/setup-go@v5
+          with:
+            go-version: ${{ matrix.go }}
+            cache: false
+  
+        - name: Make install-tools
+          run: make install-tools
+  
+        - name: Make lint-all
+          run: make lint-all
+  
+        - name: Check Code Generation
+          run: |
+            make generate
+            git diff -s --exit-code || (echo 'Generated code is out of date. Run make generate and commit the changes' && exit 1)
+  
+        - name: Check packages are up-to-date
+          run: |
+            make tidy-all
+            git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
+  
+        - name: Check crosslink run
+          run: |
+            make crosslink
+            git diff -s --exit-code || (echo 'Replace statements not updated. Run make crosslink and commit the changes' && exit 1)
+  
+    build:
+      name: build
+      strategy:
+        matrix:
+          GOOS: [darwin, linux, windows]
+          GOARCH: [arm64, amd64, '386']
+          go: ['1.22']
+          exclude:
+            - GOOS: darwin
+              GOARCH: '386'
+            - GOOS: darwin
+              GOARCH: arm
+            - GOOS: windows
+              GOARCH: arm
+            - GOOS: windows
+              GOARCH: arm64
+      runs-on:
+        group: bigger
+      steps:
+        - name: Check out code
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+  
+        - name: Set up Go
+          uses: actions/setup-go@v5
+          with:
+            go-version: ${{ matrix.go }}
+            cache: false
+  
+        - name: Set up QEMU
+          uses: docker/setup-qemu-action@v3
+  
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v3
+  
+        - name: Generate a token
+          id: generate_token
+          uses: actions/create-github-app-token@v1
+          with:
+            app_id: ${{ secrets.APP_ID }}
+            private_key: ${{ secrets.APP_PRIVATE_KEY }}
+            owner: ${{ github.repository_owner }}
+  
+        - name: Run GoReleaser
+          uses: goreleaser/goreleaser-action@v6
+          if: steps.cache.outputs.cache-hit != 'true'
+          with:
+            distribution: goreleaser-pro
+            version: latest
+            args: release --clean --snapshot --split
+          env:
+            GGOOS: ${{ matrix.GOOS }}
+            GGOARCH: ${{ matrix.GOARCH }}
+            GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+            GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+  
+    test:
+      strategy:
+        matrix:
+          go: ['1.22']
+      name: test
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+  
+        - name: Set up Go
+          uses: actions/setup-go@v5
+          with:
+            go-version: ${{ matrix.go }}
+            cache: false
+  
+        - name: Make test-all
+          run: make test-all
+  
+        - name: Upload coverage to Codecov
+          uses: codecov/codecov-action@v4
+  
+    go-semantic-release:
+      if: ${{ github.ref == 'refs/heads/main' }}
+      needs: [lint, build]
+      runs-on:
+        group: bigger
+      permissions:
+        contents: write
+      steps:
+        - name: Clone repository
+          uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+          with:
+            fetch-depth: 0
+        - name: Get next version
+          id: get_next_version
+          uses: thenativeweb/get-next-version@f9202b1ab94b345e7ca86da624762a5e17d4cd3e # v2.6.2
+          with:
+            prefix: v   # optional, defaults to ''
+        - name: Show the next version
+          run: |
+            echo ${{ steps.get_next_version.outputs.version }}
+        - name: Install tools
+          run: make install-tools
+        - name: Update VERSION file
+          run: |
+            new_version=${{ steps.get_next_version.outputs.version }}
+            sed -i "s/version: .*/version: ${new_version}/" versions.yaml
+        - name: Multimod prerelease
+          run: make multimod-prerelease
+        - name: Generate a token
+          id: generate_token
+          uses: actions/create-github-app-token@v1
+          with:
+            app_id: ${{ secrets.APP_ID }}
+            private_key: ${{ secrets.APP_PRIVATE_KEY }}
+            owner: ${{ github.repository_owner }}
+  
+        - name: Run go-semantic-release
+          uses: go-semantic-release/action@v1
+          with:
+            github-token: ${{ steps.generate_token.outputs.token }}
+            changelog-generator-opt: emojis=true
+            allow-initial-development-versions: true
+  
