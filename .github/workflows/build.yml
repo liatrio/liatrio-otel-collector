@@ -179,14 +179,12 @@ jobs:
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
           set -eo pipefail
-          gh auth login --with-token ${{ steps.generate_token.outputs.token }}
+          gh auth login --hostname github.com --git-protocol https --with-token <<< "${{ steps.generate_token.outputs.token }}"
           yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
           git add .
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
           make multimod-prerelease
           git push origin main
-        # env:
-        #   GH_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Run go-semantic-release
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
