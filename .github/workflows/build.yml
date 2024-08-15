@@ -151,6 +151,8 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
+      - name: Install tools
+        run: make install-tools
       - name: Get next version
         id: get_next_version
         uses: thenativeweb/get-next-version@f9202b1ab94b345e7ca86da624762a5e17d4cd3e # v2.6.2
@@ -159,8 +161,6 @@ jobs:
       - name: Show the next version
         run: |
           echo ${{ steps.get_next_version.outputs.version }}
-      - name: Install tools
-        run: make install-tools
       - name: Update VERSION file
         run: |
           new_version=${{ steps.get_next_version.outputs.version }}
@@ -172,15 +172,20 @@ jobs:
       - name: Stage changes
         run: git add .
       - name: Commit changes
+        id: commit_step  # Adding an ID to reference this step later
         run: |
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
+        continue-on-error: true  # This allows the workflow to continue even if the commit command fails
       - name: Multimod prerelease
+        if: steps.commit_step.outcome == 'success'
         run: make multimod-prerelease
       - name: Push changes
+        if: steps.commit_step.outcome == 'success'
         run: git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate a token
+        if: steps.commit_step.outcome == 'success'
         id: generate_token
         uses: actions/create-github-app-token@v1
         with:
@@ -188,6 +193,7 @@ jobs:
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
       - name: Run go-semantic-release
+        if: steps.commit_step.outcome == 'success'
         uses: go-semantic-release/action@v1
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
