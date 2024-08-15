@@ -157,7 +157,7 @@ jobs:
         id: get_next_version
         uses: thenativeweb/get-next-version@f9202b1ab94b345e7ca86da624762a5e17d4cd3e # v2.6.2
         with:
-          prefix: v   # optional, defaults to ''
+          prefix: v # optional, defaults to ''
       - name: Show the next version
         run: |
           echo ${{ steps.get_next_version.outputs.version }}
@@ -166,17 +166,6 @@ jobs:
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
           yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
-      - name: Multimod release #This is so multimod prerelease can get author info
-        if: steps.get_next_version.outputs.hasNextVersion == 'true'
-        run: |
-          git config --global user.name "${{ github.event.head_commit.committer.name }}"
-          git config --global user.email "${{ github.event.head_commit.committer.email }}"
-          git add .
-          git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
-          make multimod-prerelease
-          git push origin main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate a token
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         id: generate_token
@@ -185,6 +174,16 @@ jobs:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+      - name: Multimod release #This is so multimod prerelease can get author info
+        if: steps.get_next_version.outputs.hasNextVersion == 'true'
+        run: |
+          gh auth login --with-token ${{ generate_token.outputs.token }}
+          git add .
+          git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
+          make multimod-prerelease
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run go-semantic-release
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         uses: go-semantic-release/action@v1
