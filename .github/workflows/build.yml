@@ -177,7 +177,7 @@ jobs:
       - name: Multimod release #This is so multimod prerelease can get author info
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
-          gh auth login --with-token ${{ generate_token.outputs.token }}
+          gh auth login --with-token ${{ steps.generate_token.outputs.token }}
           git add .
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
           make multimod-prerelease
