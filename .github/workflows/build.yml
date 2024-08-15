@@ -161,31 +161,34 @@ jobs:
       - name: Show the next version
         run: |
           echo ${{ steps.get_next_version.outputs.version }}
+          echo ${{ steps.get_next_version.outputs.hasNextVersion }}
       - name: Update VERSION file
+        if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
           new_version=${{ steps.get_next_version.outputs.version }}
           sed -i "s/version: .*/version: ${new_version}/" versions.yaml
       - name: Set Git user to the commit author #This is so multimod prerelease can get author info
+        if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
           git config --global user.name "${{ github.event.head_commit.committer.name }}"
           git config --global user.email "${{ github.event.head_commit.committer.email }}"
       - name: Stage changes
+        if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: git add .
       - name: Commit changes
-        id: commit_step  # Adding an ID to reference this step later
+        if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
-        continue-on-error: true  # This allows the workflow to continue even if the commit command fails
       - name: Multimod prerelease
-        if: steps.commit_step.outcome == 'success'
+        if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: make multimod-prerelease
       - name: Push changes
-        if: steps.commit_step.outcome == 'success'
+        if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate a token
-        if: steps.commit_step.outcome == 'success'
+        if: steps.get_next_version.outputs.hasNextVersion == 'true'
         id: generate_token
         uses: actions/create-github-app-token@v1
         with:
@@ -193,7 +196,7 @@ jobs:
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
       - name: Run go-semantic-release
-        if: steps.commit_step.outcome == 'success'
+        if: steps.get_next_version.outputs.hasNextVersion == 'true'
         uses: go-semantic-release/action@v1
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
