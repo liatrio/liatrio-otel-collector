@@ -151,21 +151,21 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
+
       - name: Install tools
         run: make install-tools
+
       - name: Get next version
         id: get_next_version
         uses: thenativeweb/get-next-version@f9202b1ab94b345e7ca86da624762a5e17d4cd3e # v2.6.2
         with:
           prefix: v # optional, defaults to ''
+
       - name: Show the next version
         run: |
           echo ${{ steps.get_next_version.outputs.version }}
           echo ${{ steps.get_next_version.outputs.hasNextVersion }}
-      - name: Update VERSION file
-        if: steps.get_next_version.outputs.hasNextVersion == 'true'
-        run: |
-          yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
+
       - name: Generate a token
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         id: generate_token
@@ -174,16 +174,19 @@ jobs:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+
       - name: Multimod release #This is so multimod prerelease can get author info
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
-          gh auth login --with-token ${{ steps.generate_token.outputs.token }}
+          gh auth login
+          yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
           git add .
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
           make multimod-prerelease
           git push origin main
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+
       - name: Run go-semantic-release
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         uses: go-semantic-release/action@v1
