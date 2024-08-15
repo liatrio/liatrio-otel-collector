@@ -173,7 +173,7 @@ jobs:
         run: git add .
       - name: Commit changes
         run: |
-          git commit -m "Automated commit: prepare for multimod (version ${{ steps.get_next_version.outputs.version }})"
+          git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
       - name: Multimod prerelease
         run: make multimod-prerelease
       - name: Push changes
