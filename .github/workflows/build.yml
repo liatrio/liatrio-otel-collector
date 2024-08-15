@@ -165,8 +165,7 @@ jobs:
       - name: Update VERSION file
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
-          new_version=${{ steps.get_next_version.outputs.version }}
-          sed -i "s/version: .*/version: ${new_version}/" versions.yaml
+          yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
       - name: Set Git user to the commit author #This is so multimod prerelease can get author info
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
