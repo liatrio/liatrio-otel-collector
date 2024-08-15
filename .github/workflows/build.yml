@@ -166,24 +166,15 @@ jobs:
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
           yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
-      - name: Set Git user to the commit author #This is so multimod prerelease can get author info
+      - name: Multimod release #This is so multimod prerelease can get author info
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
           git config --global user.name "${{ github.event.head_commit.committer.name }}"
           git config --global user.email "${{ github.event.head_commit.committer.email }}"
-      - name: Stage changes
-        if: steps.get_next_version.outputs.hasNextVersion == 'true'
-        run: git add .
-      - name: Commit changes
-        if: steps.get_next_version.outputs.hasNextVersion == 'true'
-        run: |
+          git add .
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
-      - name: Multimod prerelease
-        if: steps.get_next_version.outputs.hasNextVersion == 'true'
-        run: make multimod-prerelease
-      - name: Push changes
-        if: steps.get_next_version.outputs.hasNextVersion == 'true'
-        run: git push origin main
+          make multimod-prerelease
+          git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate a token
