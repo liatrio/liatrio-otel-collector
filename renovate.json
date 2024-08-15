@@ -23,7 +23,8 @@
       "matchManagers": [
         "dockerfile"
       ],
-      "groupName": "dockerfile deps"
+      "groupName": "dockerfile deps",
+      "semanticCommitType": "fix"
     },
     {
       "matchManagers": [
