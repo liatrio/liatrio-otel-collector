@@ -195,10 +195,10 @@ jobs:
           git fsck
           # git push
 
-      - name: Run go-semantic-release
-        if: steps.get_next_version.outputs.hasNextVersion == 'true'
-        uses: go-semantic-release/action@v1
-        with:
-          github-token: ${{ steps.generate_token.outputs.token }}
-          changelog-generator-opt: emojis=true
-          allow-initial-development-versions: true
+      # - name: Run go-semantic-release
+      #   if: steps.get_next_version.outputs.hasNextVersion == 'true'
+      #   uses: go-semantic-release/action@v1
+      #   with:
+      #     github-token: ${{ steps.generate_token.outputs.token }}
+      #     changelog-generator-opt: emojis=true
+      #     allow-initial-development-versions: true
