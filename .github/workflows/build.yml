@@ -186,7 +186,7 @@ jobs:
         run: |
           set -eo pipefail
           git config --global user.name '${{ steps.generate_token.outputs.app-slug }}[bot]'
-          git config --global user.email '${{ steps.generate_token.outputs.app-slug }}[bot]@users.noreply.github.com>'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate_token.outputs.app-slug }}[bot]@users.noreply.github.com>'
           gh auth login --hostname github.com --git-protocol https --with-token <<< "${{ steps.generate_token.outputs.token }}"
           yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
           git add .
@@ -194,6 +194,7 @@ jobs:
           git log --name-status HEAD^..HEAD
           make multimod-prerelease
           git log --name-status HEAD^..HEAD
+          git tag
           git fsck
           # git push
 
