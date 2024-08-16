@@ -185,14 +185,15 @@ jobs:
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
           set -eo pipefail
-          gh auth login --hostname github.com --git-protocol https --with-token <<< "${{ steps.generate_token.outputs.token }}"
-          yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
           git config --global user.name '${{ steps.generate_token.outputs.app-slug }}[bot]'
           git config --global user.email '${{ steps.generate_token.outputs.app-slug }}[bot]@users.noreply.github.com>'
+          gh auth login --hostname github.com --git-protocol https --with-token <<< "${{ steps.generate_token.outputs.token }}"
+          yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
           git add .
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
           make multimod-prerelease
-          git push
+          git fsck
+          # git push
 
       - name: Run go-semantic-release
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
