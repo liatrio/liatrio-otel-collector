@@ -179,7 +179,7 @@ jobs:
         id: get-user-id
         run: echo "user-id=$(gh api "/users/${{ steps.generate_token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Multimod release #This is so multimod prerelease can get author info
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
@@ -191,7 +191,9 @@ jobs:
           yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
           git add .
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
+          git log --name-status HEAD^..HEAD
           make multimod-prerelease
+          git log --name-status HEAD^..HEAD
           git fsck
           # git push
 
