@@ -2,23 +2,27 @@
 name: Build and Test
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - '**/Dockerfile'
-      - '**/.dockerignore'
-      - .github/**
-      - '**.go'
-      - '**.mod'
-      - '**.sum'
-      - config/**
-      - '**/Makefile*'
-      - '**/documentation.md'
-      - .golangci.yaml
-      - .goreleaser.yaml
-
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ["install-tools"]
+    types:
+      - completed
+  # pull_request:
+  #   branches: [main]
+  #   paths:
+  #     - '**/Dockerfile'
+  #     - '**/.dockerignore'
+  #     - .github/**
+  #     - '**.go'
+  #     - '**.mod'
+  #     - '**.sum'
+  #     - config/**
+  #     - '**/Makefile*'
+  #     - '**/documentation.md'
+  #     - .golangci.yaml
+  #     - .goreleaser.yaml
+  #
+  # push:
+  #   branches: [main]
 
 jobs:
   # lint:
