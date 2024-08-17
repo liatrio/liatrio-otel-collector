@@ -2,66 +2,120 @@
 name: Build and Test
 
 on:
-  workflow_run:
-    workflows: ["install-tools"]
-    types:
-      - completed
-  # pull_request:
-  #   branches: [main]
-  #   paths:
-  #     - '**/Dockerfile'
-  #     - '**/.dockerignore'
-  #     - .github/**
-  #     - '**.go'
-  #     - '**.mod'
-  #     - '**.sum'
-  #     - config/**
-  #     - '**/Makefile*'
-  #     - '**/documentation.md'
-  #     - .golangci.yaml
-  #     - .goreleaser.yaml
-  #
-  # push:
-  #   branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/Dockerfile'
+      - '**/.dockerignore'
+      - .github/**
+      - '**.go'
+      - '**.mod'
+      - '**.sum'
+      - config/**
+      - '**/Makefile*'
+      - '**/documentation.md'
+      - .golangci.yaml
+      - .goreleaser.yaml
+
+  push:
+    branches: [main]
 
 jobs:
-  # lint:
-  #   strategy:
-  #     matrix:
-  #       go: ['1.22']
-  #   name: lint
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  #
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v5
-  #       with:
-  #         go-version: ${{ matrix.go }}
-  #         cache: false
-  #
-  #     - name: Make install-tools
-  #       run: make install-tools
-  #
-  #     - name: Make lint-all
-  #       run: make lint-all
-  #
-  #     - name: Check Code Generation
-  #       run: |
-  #         make generate
-  #         git diff -s --exit-code || (echo 'Generated code is out of date. Run make generate and commit the changes' && exit 1)
-  #
-  #     - name: Check packages are up-to-date
-  #       run: |
-  #         make tidy-all
-  #         git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
-  #
-  #     - name: Check crosslink run
-  #       run: |
-  #         make crosslink
-  #         git diff -s --exit-code || (echo 'Replace statements not updated. Run make crosslink and commit the changes' && exit 1)
+
+  install-tools:
+    name: install-tools
+    strategy:
+      matrix:
+        GOOS: [darwin, linux, windows]
+        GOARCH: [arm64, amd64, '386']
+        go: ['1.22']
+        exclude:
+          - GOOS: darwin
+            GOARCH: '386'
+          - GOOS: darwin
+            GOARCH: arm
+          - GOOS: windows
+            GOARCH: arm
+          - GOOS: windows
+            GOARCH: arm64
+    runs-on:
+      group: bigger
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # - name: Set up Go
+      #   uses: actions/setup-go@v5
+      #   with:
+      #     go-version: ${{ matrix.go }}
+      #     cache: true
+      #     cache-dependency-path: |
+      #       go.sum
+      #       receiver/**/go.sum
+      #       extension/**/go.sum
+      #       internal/**/tools/go.sum
+      #       cmd/**/go.sum
+
+      - name: Make install-tools
+        run: make install-tools
+
+      - name: Cache Tools
+        id: cache-tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            .tools/
+          key: go-${{ matrix.go }}-arch-${{ matrix.GOARCH }}-os-${{ matrix.GOOS }}-tools
+
+
+  lint:
+    needs: [install-tools]
+    strategy:
+      matrix:
+        go: ['1.22']
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false
+
+      - name: Restore cache
+        id: cache-primes-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .tools/
+          # Only linting on amd64 in linux
+          key: go-${{ matrix.go }}-arch-amd64-os-linux-tools
+
+      # - name: Make install-tools
+      #   run: make install-tools
+
+      - name: Make lint-all
+        run: make lint-all
+
+      - name: Check Code Generation
+        run: |
+          make generate
+          git diff -s --exit-code || (echo 'Generated code is out of date. Run make generate and commit the changes' && exit 1)
+
+      - name: Check packages are up-to-date
+        run: |
+          make tidy-all
+          git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
+
+      - name: Check crosslink run
+        run: |
+          make crosslink
+          git diff -s --exit-code || (echo 'Replace statements not updated. Run make crosslink and commit the changes' && exit 1)
 
   build:
     needs: [install-tools]
