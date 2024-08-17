@@ -1,0 +1,70 @@
+---
+name: Lint
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/Dockerfile'
+      - '**/.dockerignore'
+      - .github/**
+      - '**.go'
+      - '**.mod'
+      - '**.sum'
+      - config/**
+      - '**/Makefile*'
+      - '**/documentation.md'
+      - .golangci.yaml
+      - .goreleaser.yaml
+
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    needs: [install-tools]
+    strategy:
+      matrix:
+        go: ['1.22']
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false
+
+      # - name: Make install-tools
+      #   run: make install-tools
+
+      - name: Restore cache
+        id: cache-primes-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .tools/
+          # Only linting on amd64 in linux
+          key: go-${{ matrix.go }}-arch-amd64-os-linux-tools
+
+      - name: Make lint-all
+        run: make lint-all
+
+      - name: Check Code Generation
+        run: |
+          make generate
+          git diff -s --exit-code || (echo 'Generated code is out of date. Run make generate and commit the changes' && exit 1)
+
+      - name: Check packages are up-to-date
+        run: |
+          make tidy-all
+          git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
+
+      - name: Check crosslink run
+        run: |
+          make crosslink
+          git diff -s --exit-code || (echo 'Replace statements not updated. Run make crosslink and commit the changes' && exit 1)
