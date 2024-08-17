@@ -45,17 +45,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      # - name: Set up Go
-      #   uses: actions/setup-go@v5
-      #   with:
-      #     go-version: ${{ matrix.go }}
-      #     cache: true
-      #     cache-dependency-path: |
-      #       go.sum
-      #       receiver/**/go.sum
-      #       extension/**/go.sum
-      #       internal/**/tools/go.sum
-      #       cmd/**/go.sum
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+          cache-dependency-path: |
+            go.sum
+            receiver/**/go.sum
+            extension/**/go.sum
+            internal/**/tools/go.sum
+            cmd/**/go.sum
 
       - name: Make install-tools
         run: make install-tools
@@ -81,11 +81,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go }}
-          cache: false
+      # - name: Set up Go
+      #   uses: actions/setup-go@v5
+      #   with:
+      #     go-version: ${{ matrix.go }}
+      #     cache: false
 
       - name: Restore cache
         id: cache-primes-restore
@@ -142,11 +142,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go }}
-          cache: false
+      # - name: Set up Go
+      #   uses: actions/setup-go@v5
+      #   with:
+      #     go-version: ${{ matrix.go }}
+      #     cache: false
 
       - name: Restore cache
         id: cache-primes-restore
@@ -185,6 +185,7 @@ jobs:
           GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
 
   test:
+    needs: [install-tools]
     strategy:
       matrix:
         go: ['1.22']
@@ -195,11 +196,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go }}
-          cache: false
+      # - name: Set up Go
+      #   uses: actions/setup-go@v5
+      #   with:
+      #     go-version: ${{ matrix.go }}
+      #     cache: false
 
       - name: Make test-all
         run: make test-all
