@@ -151,9 +151,9 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           # token: ${{ steps.generate_token.outputs.token }}
-          ref: ${{ github.head_ref }}
-          persist-credentials: false
-          # fetch-depth: 0
+          # ref: ${{ github.head_ref }}
+          # persist-credentials: false
+          fetch-depth: 0
 
       - name: Install tools
         run: make install-tools
