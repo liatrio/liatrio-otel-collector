@@ -5,15 +5,15 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "**/Dockerfile"
-      - "**/.dockerignore"
+      - '**/Dockerfile'
+      - '**/.dockerignore'
       - .github/**
-      - "**.go"
-      - "**.mod"
-      - "**.sum"
+      - '**.go'
+      - '**.mod'
+      - '**.sum'
       - config/**
-      - "**/Makefile*"
-      - "**/documentation.md"
+      - '**/Makefile*'
+      - '**/documentation.md'
       - .golangci.yaml
       - .goreleaser.yaml
 
@@ -24,7 +24,7 @@ jobs:
   lint:
     strategy:
       matrix:
-        go: ["1.22"]
+        go: ['1.22']
     name: lint
     runs-on: ubuntu-latest
     steps:
@@ -64,11 +64,11 @@ jobs:
     strategy:
       matrix:
         GOOS: [darwin, linux, windows]
-        GOARCH: [arm64, amd64, "386"]
-        go: ["1.22"]
+        GOARCH: [arm64, amd64, '386']
+        go: ['1.22']
         exclude:
           - GOOS: darwin
-            GOARCH: "386"
+            GOARCH: '386'
           - GOOS: darwin
             GOARCH: arm
           - GOOS: windows
@@ -119,7 +119,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go: ["1.22"]
+        go: ['1.22']
     name: test
     runs-on: ubuntu-latest
     steps:
@@ -148,15 +148,57 @@ jobs:
       contents: write
     steps:
       - name: Generate a token
+        # if: steps.get_next_version.outputs.hasNextVersion == 'true'
         id: generate_token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@31c86eb3b33c9b601a1f60f98dcbfd1d70f379b4 # v1.10.3
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
+      - name: Clone repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Install tools
+        run: make install-tools
+
+      - name: Get next version
+        id: get_next_version
+        uses: thenativeweb/get-next-version@f9202b1ab94b345e7ca86da624762a5e17d4cd3e # v2.6.2
+        with:
+          prefix: v # optional, defaults to ''
+
+      - name: Show the next version
+        run: |
+          echo ${{ steps.get_next_version.outputs.version }}
+          echo ${{ steps.get_next_version.outputs.hasNextVersion }}
+
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.generate_token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+
+      - name: Multimod release #This is so multimod prerelease can get author info
+        if: steps.get_next_version.outputs.hasNextVersion == 'true'
+        run: |
+          set -eo pipefail
+          git config --global user.name '${{ steps.generate_token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate_token.outputs.app-slug }}[bot]@users.noreply.github.com'
+          # gh auth login --hostname github.com --git-protocol https --with-token <<< "${{ steps.generate_token.outputs.token }}"
+          yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
+          git add .
+          git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
+          make multimod-prerelease
+          git push
+
       - name: Run go-semantic-release
-        uses: go-semantic-release/action@v1
+        if: steps.get_next_version.outputs.hasNextVersion == 'true'
+        uses: go-semantic-release/action@48d83acd958dae62e73701aad20a5b5844a3bf45 # v1.23.0
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           changelog-generator-opt: emojis=true
