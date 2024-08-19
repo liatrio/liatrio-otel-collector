@@ -20,6 +20,7 @@ permissions: read-all
 
 jobs:
   analysis:
+    if: github.actor != 'liatrio-otel-collector-release[bot]'
     name: Scorecard analysis
     runs-on: ubuntu-latest
     permissions:
