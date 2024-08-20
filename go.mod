@@ -6,7 +6,7 @@ toolchain go1.22.2
 
 require (
 	github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension v0.61.0
-	github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver v0.61.0
+	github.com/liatrio/liatrio-otel-collector/receiver/vcsmetricsreceiver v0.61.0
 )
 
 require (
@@ -77,6 +77,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver => ./receiver/gitproviderreceiver
+replace github.com/liatrio/liatrio-otel-collector/receiver/vcsmetricsreceiver => ./receiver/vcsmetricsreceiver
 
 replace github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension => ./extension/githubappauthextension

@@ -85,7 +85,7 @@
   ],
   "prConcurrentLimit": 10,
   "ignoreDeps": [
-    "github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver",
+    "github.com/liatrio/liatrio-otel-collector/receiver/vcsmetricsreceiver",
     "github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension"
   ],
   "suppressNotifications": [
