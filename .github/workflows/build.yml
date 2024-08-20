@@ -142,8 +142,8 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
 
-  go-semantic-release:
-    if: ${{ github.ref == 'refs/heads/main' }} || github.actor != 'liatrio-otel-collector-release[bot]'
+  prepare-go-semantic-release:
+    if: ${{ github.ref == 'refs/heads/main' }} && github.actor != 'liatrio-otel-collector-release[bot]'
     needs: [lint, build]
     runs-on:
       group: bigger
