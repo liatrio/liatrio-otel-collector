@@ -3,7 +3,7 @@ name: Go Semantic Release
 
 on:
   workflow_run:
-    workflows: [Build and Test]
+    workflows: [build-and-test]
     types:
       - completed
 
