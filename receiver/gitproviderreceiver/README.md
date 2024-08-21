@@ -98,7 +98,7 @@ service:
 
 The queries under the hood are all read queries, there is no write. They read repos, orgs, branches, commits, metadata, issues, pull requests, and GHAS security events.
 
-It is recommend to use the [GitHub App Authentication Extension](https://github.com/liatrio/liatrio-otel-collector/tree/main/extension/githubappauthextension) for authentication because GitHub Apps use OAUTH and are more secure, locks down permissions better, and increases rate limits.
+It is recommend to use the [GitHub App Authentication Extension](https://github.com/liatrio/liatrio-otel-collector/tree/main/extension/githubappauthextension) for authentication. GitHub Apps offer better security through OAUTH, provide more granular control over permissions, and increase rate limits.
 
 This receiver is developed upstream in the [liatrio-otel-collector distribution](https://github.com/liatrio/liatrio-otel-collector)
 where a quick start exists with an [example config](https://github.com/liatrio/liatrio-otel-collector/blob/main/config/config.yaml)
