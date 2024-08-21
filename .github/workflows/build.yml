@@ -143,7 +143,7 @@ jobs:
         uses: codecov/codecov-action@v4
 
   multimod-prepare-release:
-    if: ${{ github.ref == 'refs/heads/main' }} && github.actor != 'liatrio-otel-collector-release[bot]'
+    if: ${{ github.head_ref == 'refs/heads/main' }} && github.actor != 'liatrio-otel-collector-release[bot]'
     needs: [lint, build]
     runs-on:
       group: bigger

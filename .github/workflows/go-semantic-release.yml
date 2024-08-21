@@ -9,7 +9,7 @@ on:
 
 jobs:
   go-semantic-release:
-    if: ${{ github.ref == 'refs/heads/main' }} && github.actor == 'liatrio-otel-collector-release[bot]'
+    if: ${{ github.head_ref == 'refs/heads/main' }} && github.actor == 'liatrio-otel-collector-release[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Generate a token
