@@ -205,8 +205,8 @@ jobs:
       #   if: steps.get_next_version.outputs.hasNextVersion == 'true'
       #   uses: ./.github/workflows/go-semantic-release.yml
 
-  trigger-release:
-    if: ${{ github.ref == 'refs/heads/main' }}
-    needs: [multimod-prepare-release]
-    uses: ./.github/workflows/go-semantic-release.yml
-    secrets: inherit
+  # trigger-release:
+  #   if: ${{ github.ref == 'refs/heads/main' }}
+  #   needs: [multimod-prepare-release]
+  #   uses: ./.github/workflows/go-semantic-release.yml
+  #   secrets: inherit
