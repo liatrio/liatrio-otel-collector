@@ -209,3 +209,4 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: [multimod-prepare-release]
     uses: ./.github/workflows/go-semantic-release.yml
+    secrets: inherit
