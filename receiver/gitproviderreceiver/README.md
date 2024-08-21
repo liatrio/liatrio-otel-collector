@@ -88,17 +88,18 @@ service:
 ```
 
 ### Github PAT basic permissions
-* repo:All
-* read:packages
-* read:org
-* read:user
-* read:enterprise
-* read:project
-* read:security
 
 The queries under the hood are all read queries, there is no write. They read repos, orgs, branches, commits, metadata, issues, pull requests, and GHAS security events.
 
 It is recommend to use the [GitHub App Authentication Extension](https://github.com/liatrio/liatrio-otel-collector/tree/main/extension/githubappauthextension) for authentication. GitHub Apps offer better security through OAUTH, provide more granular control over permissions, and increase rate limits.
+
+However, if you do decide to use a PAT, we recommend you use a [Fine Grained Token](https://github.blog/security/application-security/introducing-fine-grained-personal-access-tokens-for-github/) because these tokens allow you to set read only permissions.
+
+Give your token the permissions below...
+
+![perms-1](./docs/repo-perms-1.png)
+![perms-2](./docs/repo-perms-2.png)
+![perms-3](./docs/repo-perms-3.png)
 
 This receiver is developed upstream in the [liatrio-otel-collector distribution](https://github.com/liatrio/liatrio-otel-collector)
 where a quick start exists with an [example config](https://github.com/liatrio/liatrio-otel-collector/blob/main/config/config.yaml)
