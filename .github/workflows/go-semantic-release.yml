@@ -7,10 +7,13 @@ on:
 
 jobs:
   go-semantic-release:
-    if: ${{ github.ref == 'refs/heads/main' && github.actor == 'liatrio-otel-collector-release[bot]' && startsWith(github.events.head_commit.message, 'Prepare liatrio-otel for version') }}
     runs-on: ubuntu-latest
     steps:
+      - name: Debug
+        run: echo "${{ toJSON(github) }}"
       - name: Generate a token
+        if: ${{ github.ref == 'refs/heads/main' && github.actor == 'liatrio-otel-collector-release[bot]' && startsWith(github.events.head_commit.message,
+          'Prepare liatrio-otel for version') }}
         id: generate_token
         uses: actions/create-github-app-token@31c86eb3b33c9b601a1f60f98dcbfd1d70f379b4 # v1.10.3
         with:
@@ -19,16 +22,22 @@ jobs:
           owner: ${{ github.repository_owner }}
 
       - name: Clone repository
+        if: ${{ github.ref == 'refs/heads/main' && github.actor == 'liatrio-otel-collector-release[bot]' && startsWith(github.events.head_commit.message,
+          'Prepare liatrio-otel for version') }}
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           token: ${{ steps.generate_token.outputs.token }}
           fetch-depth: 0
 
       - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        if: ${{ github.ref == 'refs/heads/main' && github.actor == 'liatrio-otel-collector-release[bot]' && startsWith(github.events.head_commit.message,
+          'Prepare liatrio-otel for version') }}
         with:
           go-version: 1.22
 
       - name: Run go-semantic-release
+        if: ${{ github.ref == 'refs/heads/main' && github.actor == 'liatrio-otel-collector-release[bot]' && startsWith(github.events.head_commit.message,
+          'Prepare liatrio-otel for version') }}
         uses: go-semantic-release/action@48d83acd958dae62e73701aad20a5b5844a3bf45 # v1.23.0
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
