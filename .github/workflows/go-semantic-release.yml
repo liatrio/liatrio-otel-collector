@@ -11,6 +11,7 @@ jobs:
     steps:
       - name: Debug
         run: echo "${{ toJSON(github) }}"
+
       - name: Generate a token
         if: ${{ github.ref == 'refs/heads/main' && github.actor == 'liatrio-otel-collector-release[bot]' && startsWith(github.events.head_commit.message, 'Prepare liatrio-otel for version') }}
         id: generate_token
