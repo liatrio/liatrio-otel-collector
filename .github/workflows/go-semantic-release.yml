@@ -1,11 +1,7 @@
 ---
 name: Go Semantic Release
 
-on:
-  workflow_run:
-    workflows: [build-and-test]
-    types:
-      - completed
+on: workflow_call
 
 jobs:
   go-semantic-release:

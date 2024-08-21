@@ -196,3 +196,11 @@ jobs:
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
           make multimod-prerelease
           git push
+
+      - name: Print Debugging FTW
+        run: |
+          echo "${{ toJSON(github) }}"
+
+      - name: Trigger Go Semantic Release
+        if: steps.get_next_version.outputs.hasNextVersion == 'true' && github.actor == 'liatrio-otel-collector-release[bot]'
+        uses: ./.github/workflows/go-semantic-release.yml
