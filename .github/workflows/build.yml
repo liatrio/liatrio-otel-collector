@@ -1,5 +1,5 @@
 ---
-name: Build and Test
+name: build-and-test
 
 on:
   pull_request:
@@ -22,6 +22,7 @@ on:
 
 jobs:
   lint:
+    if: github.actor != 'liatrio-otel-collector-release[bot]'
     strategy:
       matrix:
         go: ['1.22']
@@ -61,6 +62,7 @@ jobs:
 
   build:
     name: build
+    if: github.actor != 'liatrio-otel-collector-release[bot]'
     strategy:
       matrix:
         GOOS: [darwin, linux, windows]
@@ -117,6 +119,7 @@ jobs:
           GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
 
   test:
+    if: github.actor != 'liatrio-otel-collector-release[bot]'
     strategy:
       matrix:
         go: ['1.22']
@@ -139,8 +142,8 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
 
-  go-semantic-release:
-    if: ${{ github.ref == 'refs/heads/main' }}
+  multimod-prepare-release:
+    if: ${{ github.ref == 'refs/heads/main' }} && github.actor != 'liatrio-otel-collector-release[bot]'
     needs: [lint, build]
     runs-on:
       group: bigger
@@ -176,7 +179,6 @@ jobs:
           echo ${{ steps.get_next_version.outputs.version }}
           echo ${{ steps.get_next_version.outputs.hasNextVersion }}
 
-
       - name: Get GitHub App User ID
         id: get-user-id
         run: echo "user-id=$(gh api "/users/${{ steps.generate_token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
@@ -189,17 +191,8 @@ jobs:
           set -eo pipefail
           git config --global user.name '${{ steps.generate_token.outputs.app-slug }}[bot]'
           git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate_token.outputs.app-slug }}[bot]@users.noreply.github.com'
-          # gh auth login --hostname github.com --git-protocol https --with-token <<< "${{ steps.generate_token.outputs.token }}"
           yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
           git add .
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
           make multimod-prerelease
           git push
-
-      - name: Run go-semantic-release
-        if: steps.get_next_version.outputs.hasNextVersion == 'true'
-        uses: go-semantic-release/action@48d83acd958dae62e73701aad20a5b5844a3bf45 # v1.23.0
-        with:
-          github-token: ${{ steps.generate_token.outputs.token }}
-          changelog-generator-opt: emojis=true
-          allow-initial-development-versions: true
