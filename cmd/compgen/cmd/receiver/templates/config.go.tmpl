@@ -14,10 +14,10 @@ import (
 const configKey = "sample"
 
 var (
-	ErrMustString    = errors.New("sample.configuration must be a string")
-	ErrMustNotNil    = errors.New("sample interface must not be nil")
-	ErrSampleConfig  = errors.New("sample config data is required")
-	ErrMustLowercase = errors.New("sample config data must be lowercase")
+	ErrMustString    = "'sample' expected type 'string'"
+	ErrMustNotNil    = "sample interface must not be nil"
+	ErrSampleConfig  = "sample config data is required"
+	ErrMustLowercase = "sample config data must be lowercase"
 )
 
 // Config that is exposed to this receiver through the OTEL config.yaml
@@ -44,9 +44,9 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 		value, ok := componentParser.Get(configKey).(string)
 		if !ok {
 			if componentParser.Get(configKey) == nil {
-				return ErrMustNotNil
+				return errors.New(ErrMustNotNil)
 			} else {
-				return ErrMustString
+				return errors.New(ErrMustString)
 			}
 		}
 		cfg.Sample = value
@@ -60,17 +60,15 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 
 // Validate the configuration passed through the OTEL config.yaml
 func (cfg *Config) Validate() error {
-	var err error = nil
 
 	if cfg.Sample == "" {
-		// err = multierr.Append(err, errors.New("sample config data is required"))
-		err = ErrSampleConfig
-	} else {
-		if cfg.Sample != strings.ToLower(cfg.Sample) {
-			// err = multierr.Append(err, errors.New("sample config data must be lowercase"))
-			err = ErrMustLowercase
-		}
+		return errors.New(ErrSampleConfig)
 	}
 
-	return err
+	if cfg.Sample != strings.ToLower(cfg.Sample) {
+		return errors.New(ErrMustLowercase)
+	}
+
+	return nil
 }
+
