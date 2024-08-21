@@ -23,7 +23,7 @@ var (
 // Config that is exposed to this receiver through the OTEL config.yaml
 type Config struct {
 	scraperhelper.ControllerConfig `mapstructure:",squash"`
-	sample                         string
+	Sample                         string  `mapstructure:"sample"`
 }
 
 // Unmarshal a config.Parser into the config struct.
@@ -49,10 +49,10 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 				return ErrMustString
 			}
 		}
-		cfg.sample = value
+		cfg.Sample = value
 	} else {
 		// default value
-		cfg.sample = "data"
+		cfg.Sample = "data"
 	}
 
 	return nil
@@ -62,11 +62,11 @@ func (cfg *Config) Unmarshal(componentParser *confmap.Conf) error {
 func (cfg *Config) Validate() error {
 	var err error = nil
 
-	if cfg.sample == "" {
+	if cfg.Sample == "" {
 		// err = multierr.Append(err, errors.New("sample config data is required"))
 		err = ErrSampleConfig
 	} else {
-		if cfg.sample != strings.ToLower(cfg.sample) {
+		if cfg.Sample != strings.ToLower(cfg.Sample) {
 			// err = multierr.Append(err, errors.New("sample config data must be lowercase"))
 			err = ErrMustLowercase
 		}
