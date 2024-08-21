@@ -2,15 +2,14 @@
 name: Go Semantic Release
 
 on:
-  workflow_run:
-    workflows: [build-and-test]
-    types:
-      - completed
+  push:
+    branches: [main]
 
 jobs:
   go-semantic-release:
-    if: ${{ github.ref == 'refs/heads/main' }} && github.actor == 'liatrio-otel-collector-release[bot]'
     runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' && github.actor == 'liatrio-otel-collector-release[bot]' && startsWith(github.event.head_commit.message, 'Prepare liatrio-otel for version') }}
+
     steps:
       - name: Generate a token
         id: generate_token
