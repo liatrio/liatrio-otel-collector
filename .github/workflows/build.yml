@@ -105,18 +105,24 @@ jobs:
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        if: steps.cache.outputs.cache-hit != 'true'
-        with:
-          distribution: goreleaser-pro
-          version: latest
-          args: release --clean --snapshot --split
+      - name: Build
         env:
           GGOOS: ${{ matrix.GOOS }}
           GGOARCH: ${{ matrix.GOARCH }}
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-          GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+        run: make build
+
+      # - name: Run GoReleaser
+      #   uses: goreleaser/goreleaser-action@v6
+      #   if: steps.cache.outputs.cache-hit != 'true'
+      #   with:
+      #     distribution: goreleaser-pro
+      #     version: latest
+      #     args: release --clean --snapshot --split
+      #   env:
+      #     GGOOS: ${{ matrix.GOOS }}
+      #     GGOARCH: ${{ matrix.GOARCH }}
+      #     GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+      #     GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
 
   test:
     if: github.actor != 'liatrio-otel-collector-release[bot]'
