@@ -97,9 +97,7 @@ However, if you do decide to use a PAT, we recommend you use a [Fine Grained Tok
 
 Give your token the permissions below...
 
-![perms-1](./docs/repo-perms-1.png)
-![perms-2](./docs/repo-perms-2.png)
-![perms-3](./docs/repo-perms-3.png)
+![perms](./docs/gh_pat_perms.png "Fine Grained Token Permissions")
 
 This receiver is developed upstream in the [liatrio-otel-collector distribution](https://github.com/liatrio/liatrio-otel-collector)
 where a quick start exists with an [example config](https://github.com/liatrio/liatrio-otel-collector/blob/main/config/config.yaml)
