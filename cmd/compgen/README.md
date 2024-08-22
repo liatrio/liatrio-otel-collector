@@ -68,7 +68,7 @@ See the [README](https://github.com/open-telemetry/opentelemetry-collector-contr
 for details on how to use mdatagen.
 
 Assuming you have uncommented the include of Makefile.Common in the generated
-receiver, you can run mdatagen by with `make mdatagen`.
+receiver, you can run mdatagen via the `make gen` command.
 
 ### Build Component Logic
 

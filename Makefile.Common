@@ -73,7 +73,3 @@ fmt:
 .PHONY: scan
 scan:
 	$(OSV) -r .
-
-.PHONY: mdatagen
-mdatagen:
-	$(MDATAGEN) metadata.yaml
