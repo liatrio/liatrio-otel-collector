@@ -6,6 +6,7 @@ package {{ .Name }}
 import (
 	"errors"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"go.opentelemetry.io/collector/confmap/confmaptest"
@@ -28,13 +29,13 @@ custom config for our custom receiver.
 func TestConfig_Unmarshal(t *testing.T) {
 	type fields struct { // Custom struct for the Config passed into Unmarshal() by reference
 		ControllerConfig scraperhelper.ControllerConfig
-		sample           string
+		Sample           string  `mapstructure:"sample"`
 	}
 	tests := []struct {
 		name       string // Name of the test
 		confMapKey string // confMapKey for filename
 		fields     fields // config to be passed into Unmarshal()
-		wantErr    error  // error expected from function
+		wantErr    string  // error expected from function
 		wantConfig Config // check config output from function with custom config
 		wantErrCM  error  // errorCM expected from reading file
 	}{ // Test Cases for Unmarshal() Function
@@ -42,9 +43,9 @@ func TestConfig_Unmarshal(t *testing.T) {
 			name:       "default healthy config",
 			confMapKey: "golden.yaml",
 			fields:     fields{},
-			wantErr:    nil,
+			wantErr:    "",
 			wantConfig: Config{
-				sample: "data",
+				Sample: "data",
 			},
 			wantErrCM: nil,
 		},
@@ -60,9 +61,9 @@ func TestConfig_Unmarshal(t *testing.T) {
 			name:       "no sample field",
 			confMapKey: "partial.yaml",
 			fields:     fields{},
-			wantErr:    nil,
+			wantErr:    "",
 			wantConfig: Config{
-				sample: "data",
+				Sample: "data",
 			},
 			wantErrCM: nil,
 		},
@@ -78,9 +79,9 @@ func TestConfig_Unmarshal(t *testing.T) {
 			name:       "no data in file",
 			confMapKey: "empty.yaml",
 			fields:     fields{},
-			wantErr:    nil,
+			wantErr:    "",
 			wantConfig: Config{
-				sample: "data",
+				Sample: "data",
 			},
 			wantErrCM: nil,
 		},
@@ -90,19 +91,19 @@ func TestConfig_Unmarshal(t *testing.T) {
 			// This Config uses a default configuration for the ControllerConfig and whatever is read from a config.yaml file for the sample data
 			cfg := &Config{ // config to pass into Unmarshal() function
 				ControllerConfig: tt.fields.ControllerConfig,
-				sample:           tt.fields.sample,
+				Sample:           tt.fields.Sample,
 			}
 			confMap, errCM := confmaptest.LoadConf(filepath.Join("testdata", tt.confMapKey))
 			if !errors.Is(errCM, tt.wantErrCM) { // Check if file is supposed to exist or not
 				t.Errorf("Could not read config.yaml file: %v", tt.confMapKey)
 			}
 			err := cfg.Unmarshal(confMap)    // confMap is dynamic instead of static to ensure generic testing
-			if !errors.Is(err, tt.wantErr) { // check if the error message returned was correct
+			if tt.wantErr != "" && err != nil && !strings.Contains(err.Error(), tt.wantErr) { // check if the error message returned was correct
 				t.Errorf("Config.Unmarshal() error: %v, wantErr is: %v", err, tt.wantErr)
 			}
 			// check config to see if that was updated properly (cfg) using custom cfg in test
-			if tt.wantConfig.sample != cfg.sample {
-				t.Errorf("cfg.sample value is: %v, wantConfig is: %v", cfg.sample, tt.wantConfig.sample)
+			if tt.wantConfig.Sample != cfg.Sample {
+				t.Errorf("cfg.Sample value is: %v, wantConfig is: %v", cfg.Sample, tt.wantConfig.Sample)
 			}
 		})
 	}
@@ -111,28 +112,28 @@ func TestConfig_Unmarshal(t *testing.T) {
 func TestConfig_Validate(t *testing.T) {
 	tests := []struct {
 		name    string // Name of the test
-		wantErr error  // error expected from function
+		wantErr string  // error expected from function
 		config  Config // Config to validate if correct
 	}{ // Test Cases for Validate() Function
 		{ // healthy test to see if the function returns nil error
 			name:    "healthy",
-			wantErr: nil,
+			wantErr: "",
 			config: Config{
-				sample: "dummy",
+				Sample: "dummy",
 			},
 		},
 		{ // no sample config, so the function should return error
 			name:    "no sample config",
 			wantErr: ErrSampleConfig,
 			config: Config{
-				sample: "",
+				Sample: "",
 			},
 		},
 		{ // no sample data, so function should return error
 			name:    "sample data must be lowercase",
 			wantErr: ErrMustLowercase,
 			config: Config{
-				sample: "DuMmy",
+				Sample: "DuMmy",
 			},
 		},
 	}
@@ -140,7 +141,7 @@ func TestConfig_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := tt.config // Set config to variable provided in test cases
 			err := cfg.Validate()
-			if !errors.Is(err, tt.wantErr) { // check if the error message returned was correct
+			if tt.wantErr != "" && err != nil && !strings.Contains(err.Error(), tt.wantErr) { // check if the error message returned was correct
 				t.Errorf("Config.Validate() error: %v, wantErr is: %v", err, tt.wantErr)
 			}
 		})

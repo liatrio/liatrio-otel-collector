@@ -17,7 +17,7 @@ type ScraperFactory struct{}
 
 func (f *ScraperFactory) CreateMetricsScraper(
 	ctx context.Context,
-	params receiver.CreateSettings,
+	params receiver.Settings,
 	cfg ScraperConfig,
 ) (scraperhelper.Scraper, error) {
 	s := &scraper{

@@ -12,7 +12,7 @@ import (
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
-var creationSet = receivertest.NewNopCreateSettings()
+var creationSet = receivertest.NewNopSettings()
 
 func TestScraperFactory_CreateMetricsScraper(t *testing.T) {
 	factory := ScraperFactory{}

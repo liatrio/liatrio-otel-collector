@@ -38,7 +38,7 @@ func createDefaultConfig() component.Config {
 // context, receiver params, configuration from the component, and consumer (process or exporter)
 func createMetricsReceiver(
 	ctx context.Context,
-	params receiver.CreateSettings,
+	params receiver.Settings,
 	cfg component.Config,
 	consumer consumer.Metrics,
 ) (receiver.Metrics, error) {
@@ -66,7 +66,7 @@ func createMetricsReceiver(
 
 func createAddScraperOpts(
 	ctx context.Context,
-	params receiver.CreateSettings,
+	params receiver.Settings,
 	cfg internal.ScraperConfig,
 ) (scraperhelper.ScraperControllerOption, error) {
 
