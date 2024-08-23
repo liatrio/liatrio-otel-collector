@@ -15,6 +15,14 @@ types are currently supported:
 - [ ] [Processors](https://opentelemetry.io/docs/collector/configuration/#processors)
 - [ ] [Exporters](https://opentelemetry.io/docs/collector/configuration/#exporters)
 
+## Installing `compgen`
+
+From within `cmd/compgen` run `go install .`. This will make build the `compgen`
+utility and add it to your `GOBIN` for use everywhere.
+
+Note: If you make changes to the `tmpl` files you need to recompile compgen as
+the files are stored in the binary.
+
 ## Usage
 
 ```sh
@@ -49,7 +57,7 @@ then supply this string to the receiver subcommand: `github.com/liatrio/liatrio-
 
 Components are expected to pass a series of tests defined by Makefile.Common.
 Your component's Makefile must import Makefile.common. An example is provided
-as a commment.
+as a comment.
 
 ### Metadata.yaml
 
@@ -59,7 +67,8 @@ to generate aditional code for the component.
 See the [README](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/cmd/mdatagen/README.md)
 for details on how to use mdatagen.
 
-You can run mdatagen by running `make gen`.
+Assuming you have uncommented the include of Makefile.Common in the generated
+receiver, you can run mdatagen via the `make gen` command.
 
 ### Build Component Logic
 
