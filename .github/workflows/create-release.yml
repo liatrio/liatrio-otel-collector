@@ -42,6 +42,7 @@ jobs:
         uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          custom_release_rules: "chore:patch:🧹 Chores,fix:patch:🐛 Bug Fixes,feat:minor:✨ Features"
           dry_run: true
           default_bump: false
 
