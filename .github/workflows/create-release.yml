@@ -37,11 +37,13 @@ jobs:
       - name: Install tools
         run: make install-tools
 
-      - name: Get next version
-        id: get_next_version
-        uses: thenativeweb/get-next-version@f9202b1ab94b345e7ca86da624762a5e17d4cd3e # v2.6.2
+      - name: Get changelog
+        id: get_tag
+        uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
         with:
-          prefix: v # optional, defaults to ''
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dry_run: true
+          default_bump: false
 
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
@@ -63,7 +65,6 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
-          gh release create '${{ steps.get_next_version.outputs.version }}' \
-            --generate-notes \
+          gh release create '${{  steps.get_tag.outputs.new_tag }}' \
+            --notes "${{ steps.get_tag.outputs.changelog }}" \
             --target "$(git rev-parse HEAD)"
-
