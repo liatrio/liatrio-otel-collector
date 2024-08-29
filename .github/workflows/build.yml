@@ -176,7 +176,7 @@ jobs:
 
       - name: Get next version
         id: get_next_version
-        uses: thenativeweb/get-next-version@f9202b1ab94b345e7ca86da624762a5e17d4cd3e # v2.6.2
+        uses: thenativeweb/get-next-version@29245d291b9f64a41d76f9b41683610bb4ffeccc # 2.6.3
         with:
           prefix: v # optional, defaults to ''
 
