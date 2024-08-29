@@ -1,8 +1,6 @@
 module github.com/liatrio/liatrio-otel-collector/internal/tools
 
-go 1.22.5
-
-toolchain go1.23.0
+go 1.23
 
 require (
 	github.com/Khan/genqlient v0.7.0
