@@ -1,6 +1,6 @@
 module github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver
 
-go 1.22.0
+go 1.22
 
 toolchain go1.22.4
 
