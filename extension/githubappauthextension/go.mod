@@ -6,7 +6,7 @@ require (
 	github.com/bradleyfalzon/ghinstallation/v2 v2.11.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector/component v0.107.0
-	go.opentelemetry.io/collector/confmap v0.107.0
+	go.opentelemetry.io/collector/confmap v1.14.1
 	go.opentelemetry.io/collector/extension v0.107.0
 	go.opentelemetry.io/collector/extension/auth v0.107.0
 	go.opentelemetry.io/otel/metric v1.29.0
