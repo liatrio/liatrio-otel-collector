@@ -2,8 +2,6 @@ module github.com/liatrio/liatrio-otel-collector/extension/githubappauthextensio
 
 go 1.22
 
-toolchain go1.22.4
-
 require (
 	github.com/bradleyfalzon/ghinstallation/v2 v2.11.0
 	github.com/stretchr/testify v1.9.0
