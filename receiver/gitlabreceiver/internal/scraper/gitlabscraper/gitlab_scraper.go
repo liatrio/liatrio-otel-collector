@@ -122,6 +122,8 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			// Create a mutual exclusion lock to prevent the recordDataPoint
 			// from having a nil pointer error passing in the SetStartTimestamp
 			mux.Lock()
+
+			refType := metadata.AttributeRefTypeBranch
 			gls.mb.RecordVcsRepositoryRefCountDataPoint(now, int64(len(branches.BranchNames)), path)
 
 			for _, branch := range branches.BranchNames {
@@ -136,7 +138,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 				if commit != nil {
 					branchAge := time.Since(*commit.CreatedAt).Seconds()
-					gls.mb.RecordVcsRepositoryRefTimeDataPoint(now, int64(branchAge), path, branch)
+					gls.mb.RecordVcsRepositoryRefTimeDataPoint(now, int64(branchAge), path, branch, refType)
 				}
 			}
 
@@ -156,18 +158,18 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			gls.mb.RecordVcsRepositoryContributorCountDataPoint(now, int64(contributorCount), path)
 
 			for _, mr := range mrs {
-				gls.mb.RecordVcsRepositoryRefLineAdditionCountDataPoint(now, int64(mr.DiffStatsSummary.Additions), path, mr.SourceBranch)
-				gls.mb.RecordGitRepositoryBranchLineDeletionCountDataPoint(now, int64(mr.DiffStatsSummary.Deletions), path, mr.SourceBranch)
+				gls.mb.RecordVcsRepositoryRefLinesAddedDataPoint(now, int64(mr.DiffStatsSummary.Additions), path, mr.SourceBranch, refType)
+				gls.mb.RecordVcsRepositoryRefLinesDeletedDataPoint(now, int64(mr.DiffStatsSummary.Deletions), path, mr.SourceBranch, refType)
 
 				// Checks if the merge request has been merged. This is done with IsZero() which tells us if the
 				// time is or isn't  January 1, year 1, 00:00:00 UTC, which is what null in graphql date values
 				// get returned as in Go.
 				if mr.MergedAt.IsZero() {
 					mrAge := int64(time.Since(mr.CreatedAt).Seconds())
-					gls.mb.RecordGitRepositoryPullRequestTimeOpenDataPoint(now, mrAge, path, mr.SourceBranch)
+					gls.mb.RecordVcsRepositoryChangeTimeToMergeDataPoint(now, mrAge, path, mr.SourceBranch)
 				} else {
 					mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Seconds())
-					gls.mb.RecordGitRepositoryPullRequestTimeToMergeDataPoint(now, mergedAge, path, mr.SourceBranch)
+					gls.mb.RecordVcsRepositoryChangeTimeToApprovalDataPoint(now, mergedAge, path, mr.SourceBranch)
 				}
 			}
 
