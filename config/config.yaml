@@ -2,17 +2,17 @@
 extensions:
   health_check:
 
-  pprof:
-    endpoint: 0.0.0.0:1777
+  # pprof:
+  #   endpoint: 0.0.0.0:1777
 
-  zpages:
-    endpoint: 0.0.0.0:55679
+  # zpages:
+  #   endpoint: 0.0.0.0:55679
 
-  bearertokenauth/github:
-    token: ${env:GH_PAT}
+  # bearertokenauth/github:
+  #   token: ${env:GH_PAT}
 
-  #bearertokenauth/gitlab:
-  #token: ${env:GL_PAT}
+  bearertokenauth/gitlab:
+    token: ${env:GL_PAT}
 
   ## Uncomment below if you want to enable authentication to GitLab
   ## Presume that GL_PAT is set as env variables.
@@ -41,32 +41,32 @@ receivers:
           static_configs:
             - targets: [0.0.0.0:8888]
 
-  github:
-    initial_delay: 10s
-    collection_interval: 60s
-    scrapers:
-      github:
-        metrics:
-          vcs.repository.count:
-            enabled: true
-        github_org: engaging-finches
-        #search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<github_org>"
-        #endpoint: "https://selfmanagedenterpriseserver.com"
-        auth:
-          authenticator: bearertokenauth/github
-  # gitlab:
+  # github:
   #   initial_delay: 10s
   #   collection_interval: 60s
   #   scrapers:
-  #     gitlab:
+  #     github:
   #       metrics:
   #         vcs.repository.count:
   #           enabled: true
-  #       gitlab_org: engaging-finches
-  #       #search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<gitlab_org>"
+  #       github_org: engaging-finches
+  #       #search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<github_org>"
   #       #endpoint: "https://selfmanagedenterpriseserver.com"
   #       auth:
-  #         authenticator: bearertokenauth/gitlab
+  #         authenticator: bearertokenauth/github
+  gitlab:
+    initial_delay: 10s
+    collection_interval: 60s
+    scrapers:
+      gitlab:
+        metrics:
+          vcs.repository.count:
+            enabled: true
+        gitlab_org: liatrioinc
+        #search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<gitlab_org>"
+        #endpoint: "https://selfmanagedenterpriseserver.com"
+        auth:
+          authenticator: bearertokenauth/gitlab
   # # gitprovider:
   #   initial_delay: 1s
   #   collection_interval: 60s
@@ -104,9 +104,11 @@ exporters:
 
 service:
   ## Add bearertokenauth/* if you want to use bearer token auth extensions
-  extensions: [health_check, pprof, zpages, bearertokenauth/github]
+  #  extensions: [health_check, pprof, zpages, bearertokenauth/gitlab]
+  extensions: [bearertokenauth/gitlab]
+
   pipelines:
     metrics:
-      receivers: [github, prometheus]
+      receivers: [gitlab]
       processors: []
       exporters: [debug]

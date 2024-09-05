@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	Type      = component.MustNewType("github")
+	Type      = component.MustNewType("gitlab")
 	ScopeName = "github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver"
 )
 

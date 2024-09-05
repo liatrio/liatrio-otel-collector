@@ -124,7 +124,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			mux.Lock()
 
 			refType := metadata.AttributeRefTypeBranch
-			gls.mb.RecordVcsRepositoryRefCountDataPoint(now, int64(len(branches.BranchNames)), path)
+			gls.mb.RecordVcsRepositoryRefCountDataPoint(now, int64(len(branches.BranchNames)), path, refType)
 
 			for _, branch := range branches.BranchNames {
 				if branch == branches.RootRef {
@@ -166,10 +166,10 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				// get returned as in Go.
 				if mr.MergedAt.IsZero() {
 					mrAge := int64(time.Since(mr.CreatedAt).Seconds())
-					gls.mb.RecordVcsRepositoryChangeTimeToMergeDataPoint(now, mrAge, path, mr.SourceBranch)
+					gls.mb.RecordVcsRepositoryChangeTimeOpenDataPoint(now, mrAge, path, mr.SourceBranch)
 				} else {
 					mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Seconds())
-					gls.mb.RecordVcsRepositoryChangeTimeToApprovalDataPoint(now, mergedAge, path, mr.SourceBranch)
+					gls.mb.RecordVcsRepositoryChangeTimeToMergeDataPoint(now, mergedAge, path, mr.SourceBranch)
 				}
 			}
 
@@ -179,7 +179,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 	wg.Wait()
 
-	gls.rb.SetGitVendorName("gitlab")
+	gls.rb.SetVcsVendorName("gitlab")
 	gls.rb.SetOrganizationName(gls.cfg.GitLabOrg)
 
 	res := gls.rb.Emit()

@@ -25,7 +25,7 @@ var (
 		gitlabscraper.TypeStr: &gitlabscraper.Factory{},
 	}
 
-	errConfigNotValid = errors.New("configuration is not valid for the github receiver")
+	errConfigNotValid = errors.New("configuration is not valid for the gitlab receiver")
 )
 
 // NewFactory creates a factory for the github receiver
