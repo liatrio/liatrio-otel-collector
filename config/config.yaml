@@ -11,6 +11,9 @@ extensions:
   bearertokenauth/github:
     token: ${env:GH_PAT}
 
+  #bearertokenauth/gitlab:
+  #token: ${env:GL_PAT}
+
   ## Uncomment below if you want to enable authentication to GitLab
   ## Presume that GL_PAT is set as env variables.
   # basicauth/gitlab:
@@ -38,20 +41,46 @@ receivers:
           static_configs:
             - targets: [0.0.0.0:8888]
 
-  gitprovider:
-    initial_delay: 1s
+  github:
+    initial_delay: 10s
     collection_interval: 60s
     scrapers:
       github:
-        github_org: ${env:GH_ORG}
-        search_query: ${env:SEARCH_QUERY}
         metrics:
-          git.repository.contributor.count:
+          vcs.repository.count:
             enabled: true
-        ## You can specify a custom endpoint URL full list of client settings: https://github.com/open-telemetry/opentelemetry-collector/tree/main/config/confighttp#client-configuration
-        #endpoint: "https://mygitlabenterprise.com"
+        github_org: engaging-finches
+        #search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<github_org>"
+        #endpoint: "https://selfmanagedenterpriseserver.com"
         auth:
-            authenticator: bearertokenauth/github
+          authenticator: bearertokenauth/github
+  # gitlab:
+  #   initial_delay: 10s
+  #   collection_interval: 60s
+  #   scrapers:
+  #     gitlab:
+  #       metrics:
+  #         vcs.repository.count:
+  #           enabled: true
+  #       gitlab_org: engaging-finches
+  #       #search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<gitlab_org>"
+  #       #endpoint: "https://selfmanagedenterpriseserver.com"
+  #       auth:
+  #         authenticator: bearertokenauth/gitlab
+  # # gitprovider:
+  #   initial_delay: 1s
+  #   collection_interval: 60s
+  #   scrapers:
+  #     github:
+  #       github_org: ${env:GH_ORG}
+  #       search_query: ${env:SEARCH_QUERY}
+  #       metrics:
+  #         git.repository.contributor.count:
+  #           enabled: true
+  #       ## You can specify a custom endpoint URL full list of client settings: https://github.com/open-telemetry/opentelemetry-collector/tree/main/config/confighttp#client-configuration
+  #       #endpoint: "https://mygitlabenterprise.com"
+  #       auth:
+  #           authenticator: bearertokenauth/github
 
 processors:
   batch:
@@ -62,7 +91,7 @@ processors:
 
 exporters:
   debug:
-    verbosity: basic
+    verbosity: normal
     sampling_initial: 2
     sampling_thereafter: 500
 
@@ -78,6 +107,6 @@ service:
   extensions: [health_check, pprof, zpages, bearertokenauth/github]
   pipelines:
     metrics:
-      receivers: [gitprovider, prometheus]
+      receivers: [github, prometheus]
       processors: []
       exporters: [debug]
