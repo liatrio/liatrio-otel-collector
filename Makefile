@@ -26,7 +26,7 @@ build-debug: install-tools
 	$(OCB) --config config/manifest-debug.yaml
 
 # TODO: fix this release through goreleaser. Goreleaser installed through tools.go
-# is the OSS version and doesn't support the `partial:` option in the 
+# is the OSS version and doesn't support the `partial:` option in the
 # .goreleaser.yaml. This option is needed for CI builds but isn't available locally.
 .PHONY: release
 release:
@@ -44,7 +44,7 @@ for-all:
 	  	echo "running $${CMD} in $${dir}" && \
 	 	$${CMD} ); \
 	done
-	
+
 .PHONY: lint-all
 lint-all:
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) lint"
@@ -63,8 +63,8 @@ cibuild: install-tools
 
 .PHONY: dockerbuild
 dockerbuild:
-	$(MAKE) build OS=linux ARCH=amd64
-	docker build . -t liatrio/liatrio-otel-collector:localdev --build-arg BIN_PATH="./build/otelcol-custom"
+	$(MAKE) build OS=linux ARCH=arm64
+	docker build . -t gmeyer1/liatrio-otel-collector:localdev --build-arg BIN_PATH="./build/otelcol-custom"
 
 .PHONY: scan-all
 scan-all:
@@ -81,7 +81,7 @@ fmt-all:
 
 # Setting the paralellism to 1 to improve output readability. Reevaluate later as needed for performance
 .PHONY: checks
-checks: install-tools 
+checks: install-tools
 	$(MAKE) -j 1 $(CHECKS)
 	@if [ -n "$$(git diff --name-only)" ]; then \
 		echo "Some files have changed. Please commit them."; \

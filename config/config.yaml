@@ -67,7 +67,7 @@ receivers:
         #endpoint: "https://selfmanagedenterpriseserver.com"
         auth:
           authenticator: bearertokenauth/gitlab
-  # # gitprovider:
+  # gitprovider:
   #   initial_delay: 1s
   #   collection_interval: 60s
   #   scrapers:

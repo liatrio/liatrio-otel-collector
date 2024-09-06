@@ -1,4 +1,3 @@
----
 default:
 all_set:
   metrics:
@@ -67,18 +66,18 @@ filter_set_include:
     organization.name:
       enabled: true
       metrics_include:
-        - regexp: .*
+        - regexp: ".*"
     vcs.vendor.name:
       enabled: true
       metrics_include:
-        - regexp: .*
+        - regexp: ".*"
 filter_set_exclude:
   resource_attributes:
     organization.name:
       enabled: true
       metrics_exclude:
-        - strict: organization.name-val
+        - strict: "organization.name-val"
     vcs.vendor.name:
       enabled: true
       metrics_exclude:
-        - strict: vcs.vendor.name-val
+        - strict: "vcs.vendor.name-val"

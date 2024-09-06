@@ -1,16 +1,16 @@
 ---
 receivers:
-  github:
+  gitlab:
     initial_delay: 1s
     collection_interval: 60s
     scrapers:
-      github:
+      gitlab:
 
-  github/customname:
+  gitlab/customname:
     initial_delay: 1s
     collection_interval: 30s
     scrapers:
-      github:
+      gitlab:
 
 processors:
   nop:
@@ -21,7 +21,6 @@ exporters:
 service:
   pipelines:
     metrics:
-      receivers: [github, github/customname]
+      receivers: [gitlab, gitlab/customname]
       processors: [nop]
       exporters: [nop]
-
