@@ -44,13 +44,13 @@ receivers:
         metrics:
           #Default Metrics (enabled by default)
           vcs.repository.count:
-            enabled: false
+            enabled: true
           vcs.repository.change.count:
             enabled: false
           vcs.repository.change.time_open:
             enabled: false
           vcs.repository.change.time_to_approval:
-            enabled: true
+            enabled: false
           vcs.repository.change.time_to_merge:
             enabled: false
           vcs.repository.ref.count:
@@ -73,43 +73,43 @@ receivers:
         #endpoint: "https://selfmanagedenterpriseserver.com"
         auth:
           authenticator: bearertokenauth/github
-  # gitlab:
-  #   initial_delay: 10s
-  #   collection_interval: 60s
-  #   scrapers:
-  #     gitlab:
-  #       metrics:
-  #         #Default Metrics (enabled by default)
-  #         vcs.repository.count:
-  #           enabled: true
-  #         vcs.repository.change.count:
-  #           enabled: false
-  #         vcs.repository.change.time_open:
-  #           enabled: false
-  #         vcs.repository.change.time_to_approval:
-  #           enabled: false
-  #         vcs.repository.change.time_to_merge:
-  #           enabled: false
-  #         vcs.repository.ref.count:
-  #           enabled: false
-  #         vcs.repository.ref.lines_added:
-  #           enabled: false
-  #         vcs.repository.ref.lines_deleted:
-  #           enabled: false
-  #         vcs.repository.ref.revisions_ahead:
-  #           enabled: false
-  #         vcs.repository.ref.revisions_behind:
-  #           enabled: false
-  #         vcs.repository.ref.time:
-  #           enabled: false
-  #         #Optional Metrics
-  #         vcs.repository.contributor.count:
-  #           enabled: false
-  #       gitlab_org: liatrioinc
-  #       #search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<gitlab_org>"
-  #       #endpoint: "https://selfmanagedenterpriseserver.com"
-  #       auth:
-  #         authenticator: bearertokenauth/gitlab
+  gitlab:
+    initial_delay: 10s
+    collection_interval: 60s
+    scrapers:
+      gitlab:
+        metrics:
+          #Default Metrics (enabled by default)
+          vcs.repository.count:
+            enabled: true
+          vcs.repository.change.count:
+            enabled: false
+          vcs.repository.change.time_open:
+            enabled: false
+          vcs.repository.change.time_to_approval:
+            enabled: false
+          vcs.repository.change.time_to_merge:
+            enabled: false
+          vcs.repository.ref.count:
+            enabled: false
+          vcs.repository.ref.lines_added:
+            enabled: false
+          vcs.repository.ref.lines_deleted:
+            enabled: false
+          vcs.repository.ref.revisions_ahead:
+            enabled: false
+          vcs.repository.ref.revisions_behind:
+            enabled: false
+          vcs.repository.ref.time:
+            enabled: false
+          #Optional Metrics
+          vcs.repository.contributor.count:
+            enabled: false
+        gitlab_org: liatrioinc
+        #search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<gitlab_org>"
+        #endpoint: "https://selfmanagedenterpriseserver.com"
+        auth:
+          authenticator: bearertokenauth/gitlab
   # gitprovider:
   #   initial_delay: 1s
   #   collection_interval: 60s
