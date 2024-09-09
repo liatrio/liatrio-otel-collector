@@ -91,7 +91,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
 	github.com/tklauser/numcpus v0.7.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.16 // indirect
-	github.com/xanzy/go-gitlab v0.108.0
+	github.com/xanzy/go-gitlab v0.109.0
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/collector/config/configauth v0.108.1 // indirect
 	go.opentelemetry.io/collector/config/configcompression v1.14.1 // indirect
