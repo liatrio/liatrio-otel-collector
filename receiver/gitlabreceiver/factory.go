@@ -96,7 +96,7 @@ func createAddScraperOpts(
 	scraperControllerOptions := make([]scraperhelper.ScraperControllerOption, 0, len(cfg.Scrapers))
 
 	for key, cfg := range cfg.Scrapers {
-		gitlabscraper, err := creategitlabscraper(ctx, params, key, cfg, factories)
+		gitlabscraper, err := createGitLabScraper(ctx, params, key, cfg, factories)
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to create scraper %q: %w", key, err)
@@ -108,7 +108,7 @@ func createAddScraperOpts(
 	return scraperControllerOptions, nil
 }
 
-func creategitlabscraper(
+func createGitLabScraper(
 	ctx context.Context,
 	params receiver.Settings,
 	key string,
