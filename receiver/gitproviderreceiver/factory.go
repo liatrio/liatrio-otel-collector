@@ -21,15 +21,11 @@ import (
 
 // This file implements a factory for the git provider receiver
 
-//const (
-//	defaultInterval = 30 * time.Second
-//	defaultTimeout  = 15 * time.Second
-//)
-
 var (
 	scraperFactories = map[string]internal.ScraperFactory{
+		// TODO: update the key to be metadata.Type.String() once we have
+		// gitlab and github into their own scrapers. Clean up the TypeStr constants
 		githubscraper.TypeStr: &githubscraper.Factory{},
-		// githubscraper.TypeStr: &githubscraper.Factory{},
 		gitlabscraper.TypeStr: &gitlabscraper.Factory{},
 	}
 

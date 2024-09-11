@@ -9,8 +9,8 @@ require (
 	github.com/securego/gosec/v2 v2.21.2
 	go.opentelemetry.io/build-tools/crosslink v0.14.0
 	go.opentelemetry.io/build-tools/multimod v0.14.0
-	go.opentelemetry.io/collector/cmd/builder v0.108.1
-	go.opentelemetry.io/collector/cmd/mdatagen v0.108.1
+	go.opentelemetry.io/collector/cmd/builder v0.109.0
+	go.opentelemetry.io/collector/cmd/mdatagen v0.109.0
 	golang.org/x/tools v0.25.0
 	golang.org/x/vuln v1.1.3
 	honnef.co/go/tools v0.5.1
@@ -213,9 +213,9 @@ require (
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/polyfloyd/go-errorlint v1.6.0 // indirect
-	github.com/prometheus/client_golang v1.20.1 // indirect
+	github.com/prometheus/client_golang v1.20.2 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.55.0 // indirect
+	github.com/prometheus/common v0.57.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/quasilyte/go-ruleguard v0.4.3-0.20240823090925-0fe6f58b47b1 // indirect
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22 // indirect
@@ -284,12 +284,12 @@ require (
 	go-simpler.org/sloglint v0.7.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/build-tools v0.14.0 // indirect
-	go.opentelemetry.io/collector/component v0.108.1 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.108.1 // indirect
-	go.opentelemetry.io/collector/confmap v1.14.1 // indirect
-	go.opentelemetry.io/collector/confmap/provider/fileprovider v0.108.1 // indirect
-	go.opentelemetry.io/collector/filter v0.108.1 // indirect
-	go.opentelemetry.io/collector/pdata v1.14.1 // indirect
+	go.opentelemetry.io/collector/component v0.109.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.109.0 // indirect
+	go.opentelemetry.io/collector/confmap v1.15.0 // indirect
+	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.15.0 // indirect
+	go.opentelemetry.io/collector/filter v0.109.0 // indirect
+	go.opentelemetry.io/collector/pdata v1.15.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.54.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0 // indirect
 	go.opentelemetry.io/otel v1.29.0 // indirect
