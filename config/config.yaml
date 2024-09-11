@@ -38,7 +38,7 @@ receivers:
 
   github:
     initial_delay: 10s
-    collection_interval: 30s
+    collection_interval: 60s
     scrapers:
       github:
         metrics:
@@ -68,9 +68,9 @@ receivers:
           #Optional Metrics
           vcs.repository.contributor.count:
             enabled: false
-        github_org: engaging-finches
-        #search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<github_org>"
-        #endpoint: "https://selfmanagedenterpriseserver.com"
+        github_org: myfancyorg
+        search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<github_org>"
+        endpoint: "https://selfmanagedenterpriseserver.com"
         auth:
           authenticator: bearertokenauth/github
   gitlab:
@@ -105,9 +105,9 @@ receivers:
           #Optional Metrics
           vcs.repository.contributor.count:
             enabled: false
-        gitlab_org: liatrioinc
-        #search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<gitlab_org>"
-        #endpoint: "https://selfmanagedenterpriseserver.com"
+        gitlab_org: myfancyorg
+        search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<gitlab_org>"
+        endpoint: "https://selfmanagedenterpriseserver.com"
         auth:
           authenticator: bearertokenauth/gitlab
   # gitprovider:
@@ -125,12 +125,12 @@ receivers:
   #       auth:
   #         authenticator: bearertokenauth/gitlab
 
-processors:
-  batch:
-  resourcedetection:
-    detectors: [env]
-    timeout: 2s
-    override: false
+# processors:
+#   batch:
+#   resourcedetection:
+#     detectors: [env]
+#     timeout: 2s
+#     override: false
 
 exporters:
   debug:
@@ -148,10 +148,10 @@ exporters:
 service:
   ## Add bearertokenauth/* if you want to use bearer token auth extensions
   #  extensions: [health_check, pprof, zpages, bearertokenauth/gitlab]
-  extensions: [bearertokenauth/gitlab]
+  extensions: [bearertokenauth/gitlab, bearertokenauth/github, health_check]
 
   pipelines:
     metrics:
-      receivers: [gitlab]
+      receivers: [gitlab,github]
       processors: []
       exporters: [debug]
