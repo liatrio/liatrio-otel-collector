@@ -38,7 +38,7 @@ receivers:
 
   github:
     initial_delay: 10s
-    collection_interval: 60s
+    collection_interval: 30s
     scrapers:
       github:
         metrics:
@@ -75,7 +75,7 @@ receivers:
           authenticator: bearertokenauth/github
   gitlab:
     initial_delay: 10s
-    collection_interval: 60s
+    collection_interval: 30s
     scrapers:
       gitlab:
         metrics:
