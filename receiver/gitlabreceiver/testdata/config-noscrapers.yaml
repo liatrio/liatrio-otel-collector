@@ -1,0 +1,16 @@
+---
+receivers:
+  github:
+
+processors:
+  nop:
+
+exporters:
+  nop:
+
+service:
+  pipelines:
+    metrics:
+      receivers: [gitlab]
+      processors: [nop]
+      exporters: [nop]
