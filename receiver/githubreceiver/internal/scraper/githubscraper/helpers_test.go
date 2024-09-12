@@ -713,7 +713,7 @@ func TestGetContributors(t *testing.T) {
 
 			client := github.NewClient(nil)
 			url, err := url.Parse(server.URL + "/api-v3" + "/")
-			assert.NoError(t, err) //what does this do?
+			assert.NoError(t, err)
 			client.BaseURL = url
 			client.UploadURL = url
 
