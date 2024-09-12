@@ -712,7 +712,8 @@ func TestGetContributors(t *testing.T) {
 			defer func() { server.Close() }()
 
 			client := github.NewClient(nil)
-			url, _ := url.Parse(server.URL + "/api-v3" + "/")
+			url, err := url.Parse(server.URL + "/api-v3" + "/")
+			assert.NoError(t, err) //what does this do?
 			client.BaseURL = url
 			client.UploadURL = url
 

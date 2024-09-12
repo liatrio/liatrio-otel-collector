@@ -7,12 +7,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal"
+	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
-
-	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal"
-	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 )
 
 // This file implements factory for the GitHub Scraper as part of the  GitHub Receiver
@@ -42,8 +42,12 @@ func (f *Factory) CreateMetricsScraper(
 	conf := cfg.(*Config)
 	s := newGitHubScraper(ctx, params, conf)
 
-	return scraperhelper.NewScraper(
-		TypeStr,
+	scrapeType, err := component.NewType(TypeStr)
+	if err != nil {
+		return nil, err
+	}
+	return scraperhelper.NewScraperWithComponentType(
+		scrapeType,
 		s.scrape,
 		scraperhelper.WithStart(s.start),
 	)
