@@ -1,6 +1,6 @@
 ---
 receivers:
-  github:
+  gitlab:
 
 processors:
   nop:

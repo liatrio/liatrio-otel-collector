@@ -1,6 +1,6 @@
 ---
 receivers:
-  github:
+  gitlab:
     initial_delay: 1s
     collection_interval: 60s
     scrapers:

@@ -18,7 +18,7 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/scraper/gitlabscraper"
 )
 
-// This file implements a factory for the github receiver
+// This file implements a factory for the gitlab receiver
 
 var (
 	scraperFactories = map[string]internal.ScraperFactory{
@@ -28,7 +28,7 @@ var (
 	errConfigNotValid = errors.New("configuration is not valid for the gitlab receiver")
 )
 
-// NewFactory creates a factory for the github receiver
+// NewFactory creates a factory for the gitlab receiver
 func NewFactory() receiver.Factory {
 	return receiver.NewFactory(
 		metadata.Type,
@@ -52,7 +52,7 @@ func createDefaultConfig() component.Config {
 		ControllerConfig: scraperhelper.NewDefaultControllerConfig(),
 		// TODO: metrics builder configuration may need to be in each sub scraper,
 		// TODO: for right now setting here because the metrics in this receiver will apply to all
-		// TODO: scrapers defined as a common set of github
+		// TODO: scrapers defined as a common set of gitlab
 		// TODO: aqp completely remove these comments if the metrics build config
 		// needs to be defined in each scraper
 		// MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),

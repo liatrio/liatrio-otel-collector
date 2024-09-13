@@ -80,7 +80,7 @@ func TestLoadInvalidConfig_InvalidScraperKey(t *testing.T) {
 	// nolint:staticcheck
 	_, err = otelcoltest.LoadConfigAndValidate(filepath.Join("testdata", "config-invalidscraperkey.yaml"), factories)
 
-	require.Contains(t, err.Error(), "error reading configuration for \"github\": invalid scraper key: \"invalidscraperkey\"")
+	require.Contains(t, err.Error(), "error reading configuration for \"gitlab\": invalid scraper key: \"invalidscraperkey\"")
 }
 
 func TestConfig_Unmarshal(t *testing.T) {
