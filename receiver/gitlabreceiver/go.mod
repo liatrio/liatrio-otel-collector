@@ -5,7 +5,6 @@ go 1.23
 require (
 	github.com/Khan/genqlient v0.7.0
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-github/v64 v64.0.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.108.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.108.0
 	github.com/stretchr/testify v1.9.0
@@ -116,10 +115,10 @@ require (
 	go.opentelemetry.io/otel/exporters/prometheus v0.50.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.28.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.28.0 // indirect
-	go.opentelemetry.io/otel/metric v1.29.0
+	go.opentelemetry.io/otel/metric v1.29.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.28.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.28.0 // indirect
-	go.opentelemetry.io/otel/trace v1.29.0
+	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.28.0 // indirect
