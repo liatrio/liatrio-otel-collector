@@ -15,7 +15,7 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/metadata"
 )
 
-// This file implements factory for the GitLab Scraper 
+// This file implements factory for the GitLab Scraper
 
 const (
 	// TypeStr is the value of "type" key in configuration.
