@@ -1,4 +1,7 @@
-package githubscraper
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+package githubscraper // import "github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/scraper/githubscraper"
 
 import (
 	"context"
@@ -6,76 +9,50 @@ import (
 	"fmt"
 	"math"
 	"net/url"
-	"strings"
 	"time"
 
-	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
-
 	"github.com/Khan/genqlient/graphql"
-	"github.com/google/go-github/v65/github"
-
-	"go.uber.org/zap"
+	"github.com/google/go-github/v63/github"
 )
 
 const (
 	// The default public GitHub GraphQL Endpoint
 	defaultGraphURL = "https://api.github.com/graphql"
-	// The default maximum number of items to be returned in a GraphQL or REST
-	// API query.
+	// The default maximum number of items to be returned in a GraphQL query.
 	defaultReturnItems = 100
 )
 
-// Current GraphQL cost 1
-// See genqlient.graphql getRepoDataBySearch for more information
 func (ghs *githubScraper) getRepos(
 	ctx context.Context,
 	client graphql.Client,
 	searchQuery string,
-) ([]Repo, int, error) {
+) ([]SearchNodeRepository, int, error) {
 	// here we use a pointer to a string so that graphql will receive null if the
 	// value is not set since the after: $repoCursor is optional to graphql
 	var cursor *string
-	var repos []Repo
+	var repos []SearchNodeRepository
 	var count int
 
-	switch {
-	case ghs.cfg.GitHubTeam != "":
-		for next := true; next; {
-			r, err := getRepoDataByTeam(ctx, client, ghs.cfg.GitHubOrg, ghs.cfg.GitHubTeam, cursor)
-			if err != nil {
-				ghs.logger.Sugar().Errorf("error getting repo data by team", zap.Error(err))
-				return nil, 0, err
-			}
-			for _, repo := range r.Organization.Team.Repositories.Nodes {
-				repos = append(repos, repo.Repo)
-			}
-			count = r.Organization.Team.Repositories.TotalCount
-			cursor = &r.Organization.Team.Repositories.PageInfo.EndCursor
-			next = r.Organization.Team.Repositories.PageInfo.HasNextPage
+	for next := true; next; {
+		r, err := getRepoDataBySearch(ctx, client, searchQuery, cursor)
+		if err != nil {
+			return nil, 0, err
 		}
-	default:
-		for next := true; next; {
-			r, err := getRepoDataBySearch(ctx, client, searchQuery, cursor)
-			if err != nil {
-				ghs.logger.Sugar().Errorf("error getting repo data by search", zap.Error(err))
-				return nil, 0, err
+
+		for _, repo := range r.Search.Nodes {
+			if r, ok := repo.(*SearchNodeRepository); ok {
+				repos = append(repos, *r)
 			}
-			for _, repo := range r.Search.Nodes {
-				if r, ok := repo.(*SearchNodeRepository); ok {
-					repos = append(repos, r.Repo)
-				}
-			}
-			count = r.Search.RepositoryCount
-			cursor = &r.Search.PageInfo.EndCursor
-			next = r.Search.PageInfo.HasNextPage
 		}
+
+		count = r.Search.RepositoryCount
+		cursor = &r.Search.PageInfo.EndCursor
+		next = r.Search.PageInfo.HasNextPage
 	}
 
 	return repos, count, nil
 }
 
-// Current GraphQL cost 1
-// See genqlient.graphql getBranchData for more information
 func (ghs *githubScraper) getBranches(
 	ctx context.Context,
 	client graphql.Client,
@@ -93,7 +70,6 @@ func (ghs *githubScraper) getBranches(
 		items := 50
 		r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, items, defaultBranch, cursor)
 		if err != nil {
-			ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
 			return nil, 0, err
 		}
 		count = r.Repository.Refs.TotalCount
@@ -185,13 +161,12 @@ func (ghs *githubScraper) getContributorCount(
 	// Options for Pagination support, default from GitHub was 30
 	// https://docs.github.com/en/rest/repos/repos#list-repository-contributors
 	opt := &github.ListContributorsOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
+		ListOptions: github.ListOptions{PerPage: defaultReturnItems},
 	}
 
 	for {
 		contribs, resp, err := client.Repositories.ListContributors(ctx, ghs.cfg.GitHubOrg, repoName, opt)
 		if err != nil {
-			ghs.logger.Sugar().Errorf("error getting contributor count", zap.Error(err))
 			return 0, err
 		}
 
@@ -206,14 +181,13 @@ func (ghs *githubScraper) getContributorCount(
 	return len(all), nil
 }
 
-// Current GraphQL cost 2
-// See genqlient.graphql getPullRequestData for more information
+// Get the pull request data from the GraphQL API.
 func (ghs *githubScraper) getPullRequests(
 	ctx context.Context,
 	client graphql.Client,
 	repoName string,
 ) ([]PullRequestNode, error) {
-	var prCursor *string
+	var cursor *string
 	var pullRequests []PullRequestNode
 
 	for hasNextPage := true; hasNextPage; {
@@ -222,8 +196,8 @@ func (ghs *githubScraper) getPullRequests(
 			client,
 			repoName,
 			ghs.cfg.GitHubOrg,
-			100,
-			prCursor,
+			defaultReturnItems,
+			cursor,
 			[]PullRequestState{"OPEN", "MERGED"},
 		)
 		if err != nil {
@@ -231,7 +205,7 @@ func (ghs *githubScraper) getPullRequests(
 		}
 
 		pullRequests = append(pullRequests, prs.Repository.PullRequests.Nodes...)
-		prCursor = &prs.Repository.PullRequests.PageInfo.EndCursor
+		cursor = &prs.Repository.PullRequests.PageInfo.EndCursor
 		hasNextPage = prs.Repository.PullRequests.PageInfo.HasNextPage
 	}
 
@@ -247,7 +221,7 @@ func (ghs *githubScraper) evalCommits(
 	var cursor *string
 	items := defaultReturnItems
 
-	// See https://github.com/liatrio/liatrio-otel-collector/blob/main/receiver/gitproviderreceiver/internal/scraper/githubscraper/README.md#github-limitations
+	// See https://github.com/liatrio/liatrio-otel-collector/blob/main/receiver/githubreceiver/internal/scraper/githubscraper/README.md#github-limitations
 	// for more information as to why `BehindBy` and `AheadBy` are
 	// swapped.
 	pages := getNumPages(float64(defaultReturnItems), float64(branch.Compare.BehindBy))
@@ -265,7 +239,6 @@ func (ghs *githubScraper) evalCommits(
 		}
 		c, err := ghs.getCommitData(ctx, client, repoName, items, cursor, branch.Name)
 		if err != nil {
-			ghs.logger.Sugar().Errorf("error making graphql query to get commit data", zap.Error(err))
 			return 0, 0, 0, err
 		}
 
@@ -292,8 +265,6 @@ func (ghs *githubScraper) evalCommits(
 	return additions, deletions, age, nil
 }
 
-// Current GraphQL cost 1
-// See genqlient.graphql getCommitData for more information
 func (ghs *githubScraper) getCommitData(
 	ctx context.Context,
 	client graphql.Client,
@@ -339,110 +310,4 @@ func getNumPages(p float64, n float64) int {
 // Get the age/duration between two times in seconds.
 func getAge(start time.Time, end time.Time) int64 {
 	return int64(end.Sub(start).Seconds())
-}
-
-func (ghs *githubScraper) getCVEs(
-	ctx context.Context,
-	gClient graphql.Client,
-	rClient *github.Client,
-	repo string,
-) (map[metadata.AttributeCveSeverity]int64, error) {
-	d := ghs.getDepBotAlerts(ctx, gClient, repo)
-	c := ghs.getCodeScanAlerts(ctx, rClient, repo)
-
-	return mapSeverities(d, c), nil
-}
-
-func (ghs *githubScraper) getDepBotAlerts(
-	ctx context.Context,
-	gClient graphql.Client,
-	repo string,
-) []CVENode {
-
-	var alerts []CVENode
-	var cursor *string
-
-	for hasNextPage := true; hasNextPage; {
-		a, err := getRepoCVEs(ctx, gClient, ghs.cfg.GitHubOrg, repo, cursor)
-
-		if err != nil {
-			ghs.logger.Sugar().Errorf("error %v getting dependabot alerts from repo %s", zap.Error(err), repo)
-			return nil
-		}
-
-		hasNextPage = a.Repository.VulnerabilityAlerts.PageInfo.HasNextPage
-		cursor = &a.Repository.VulnerabilityAlerts.PageInfo.EndCursor
-		alerts = append(alerts, a.Repository.VulnerabilityAlerts.Nodes...)
-
-	}
-
-	return alerts
-}
-
-// Get the Code Scanning Alerts count for a repository via the REST API
-func (ghs *githubScraper) getCodeScanAlerts(
-	ctx context.Context,
-	rClient *github.Client,
-	repo string,
-) []*github.Alert {
-	var alerts []*github.Alert
-
-	// Options for Pagination support, default from GitHub was 30. Max is 100
-	// https://docs.github.com/en/rest/code-scanning/code-scanning?apiVersion=2022-11-28
-	opt := &github.AlertListOptions{
-		ListOptions: github.ListOptions{PerPage: 50},
-		State:       "open",
-	}
-
-	for {
-		a, resp, err := rClient.CodeScanning.ListAlertsForRepo(ctx, ghs.cfg.GitHubOrg, repo, opt)
-		if err != nil {
-			if resp.StatusCode == 404 || resp.StatusCode == 403 {
-				ghs.logger.Sugar().Debugf("%s repo does not have any alerts or does not have alerts enabled", repo)
-				break
-			}
-			ghs.logger.Sugar().Errorf("error getting code scanning alerts from repo", zap.Error(err))
-			return nil
-		}
-
-		alerts = append(alerts, a...)
-		if resp.NextPage == 0 {
-			break
-		}
-
-		opt.ListOptions.Page = resp.NextPage
-	}
-
-	return alerts
-}
-
-func mapSeverities(
-	nodes []CVENode,
-	alerts []*github.Alert,
-) map[metadata.AttributeCveSeverity]int64 {
-
-	// Allows us to map the "MODERATE" to the conventional "medium" and support
-	// the capital cased values that are returned from GitHub's API.
-	mapping := map[string]metadata.AttributeCveSeverity{
-		"CRITICAL": metadata.AttributeCveSeverityCritical,
-		"HIGH":     metadata.AttributeCveSeverityHigh,
-		"MODERATE": metadata.AttributeCveSeverityMedium,
-		"MEDIUM":   metadata.AttributeCveSeverityMedium,
-		"LOW":      metadata.AttributeCveSeverityLow,
-	}
-	m := make(map[metadata.AttributeCveSeverity]int64)
-
-	for _, node := range nodes {
-		if val, found := mapping[strings.ToUpper(string(node.SecurityVulnerability.Severity))]; found {
-			m[val]++
-		}
-	}
-
-	for _, alert := range alerts {
-		if val, found := mapping[strings.ToUpper(*alert.Rule.SecuritySeverityLevel)]; found {
-			m[val]++
-		}
-	}
-
-	return m
 }
