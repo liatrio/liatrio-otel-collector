@@ -12,7 +12,7 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver/internal/metadata"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/google/go-github/v64/github"
+	"github.com/google/go-github/v65/github"
 
 	"go.uber.org/zap"
 )
