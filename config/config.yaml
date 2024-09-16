@@ -38,6 +38,44 @@ receivers:
           static_configs:
             - targets: [0.0.0.0:8888]
 
+  github:
+    initial_delay: 10s
+    collection_interval: 60s
+    scrapers:
+      github:
+        metrics:
+          #Default Metrics (enabled by default)
+          vcs.repository.count:
+            enabled: true
+          vcs.repository.change.count:
+            enabled: false
+          vcs.repository.change.time_open:
+            enabled: false
+          vcs.repository.change.time_to_approval:
+            enabled: false
+          vcs.repository.change.time_to_merge:
+            enabled: false
+          vcs.repository.ref.count:
+            enabled: false
+          vcs.repository.ref.lines_added:
+            enabled: false
+          vcs.repository.ref.lines_deleted:
+            enabled: false
+          vcs.repository.ref.revisions_ahead:
+            enabled: false
+          vcs.repository.ref.revisions_behind:
+            enabled: false
+          vcs.repository.ref.time:
+            enabled: false
+          #Optional Metrics
+          vcs.repository.contributor.count:
+            enabled: false
+        github_org: ${env:GH_ORG}
+        search_query: ${env:SEARCH_QUERY}  #Recommended optional query override, defaults to "{org,user}:<github_org>"
+        #endpoint: https://selfmanagedenterpriseserver.com
+        auth:
+          authenticator: bearertokenauth/github
+
   gitprovider:
     initial_delay: 1s
     collection_interval: 60s
@@ -78,6 +116,6 @@ service:
   extensions: [health_check, pprof, zpages, bearertokenauth/github]
   pipelines:
     metrics:
-      receivers: [gitprovider, prometheus]
+      receivers: [github, gitprovider, prometheus]
       processors: []
       exporters: [debug]
