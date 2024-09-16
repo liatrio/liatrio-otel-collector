@@ -61,7 +61,7 @@ follows:
     make run
     ```
 
-### Configure GitHub Scraper
+### Configure GitHub Scraper (using Github Auth Extension)
 
 To configure the GitHub Scraper you will need to make the following changes to
 [config/config.yaml][2]:
@@ -90,6 +90,34 @@ To configure the GitHub Scraper you will need to make the following changes to
 
 4) Set environment variables: `GITHUB_ORG`, `GITHUB_USER`, and `GITHUB_PAT`
 
+
+### Configure GitHub Scraper
+
+To configure the GitHub Scraper you will need to make the following changes to
+[config/config.yaml][2]:
+
+1) Uncomment/add `extensions.bearertokenauth/github` section
+
+    ```yaml
+    bearertokenauth/github:
+        token: ${env:GH_PAT}
+    ```
+
+2) Uncomment/add `receivers.github.scrapers.github.auth` section
+
+    ```yaml
+    auth:
+        authenticator: bearertokenauth/github
+    ```
+
+3) Add `basicauth/github` to the `service.extensions` list
+
+    ```yaml
+    extensions: [basicauth/github]
+    ```
+
+4) Set environment variables: `GH_ORG`, and `GH_PAT`
+
 ### Configure GitLab Scraper
 
 To configure the GitLab Scraper you will need to make the following changes to
@@ -102,7 +130,7 @@ To configure the GitLab Scraper you will need to make the following changes to
         token: ${env:GITLAB_PAT}
     ```
 
-2) Uncomment/add `receivers.gitprovider.scrapers.gitlab.auth` section
+2) Uncomment/add `receivers.gitlab.scrapers.gitlab.auth` section
 
     ```yaml
     auth:
@@ -112,7 +140,7 @@ To configure the GitLab Scraper you will need to make the following changes to
 3) Add `bearertokenauth/gitlab` to the `service.extensions` list
 
     ```yaml
-    extensions: [health_check, pprof, zpages, bearertokenauth/gitlab]
+    extensions: [bearertokenauth/gitlab]
     ```
 
 4) Set environment variables: `GL_ORG` and `GITLAB_PAT`
