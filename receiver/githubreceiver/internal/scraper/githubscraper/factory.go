@@ -46,7 +46,7 @@ func (f *Factory) CreateMetricsScraper(
 	if err != nil {
 		return nil, err
 	}
-	return scraperhelper.NewScraperWithComponentType(
+	return scraperhelper.NewScraper(
 		scrapeType,
 		s.scrape,
 		scraperhelper.WithStart(s.start),
