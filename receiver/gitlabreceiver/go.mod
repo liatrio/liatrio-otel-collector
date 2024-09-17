@@ -37,6 +37,7 @@ require (
 	go.opentelemetry.io/collector/confmap/provider/httpprovider v0.108.1 // indirect
 	go.opentelemetry.io/collector/confmap/provider/yamlprovider v0.108.1 // indirect
 	go.opentelemetry.io/collector/consumer/consumerprofiles v0.109.0 // indirect
+	go.opentelemetry.io/collector/extension/experimental/storage v0.109.0 // indirect
 	go.opentelemetry.io/collector/internal/globalgates v0.108.1 // indirect
 	go.opentelemetry.io/collector/otelcol v0.108.1 // indirect
 	go.opentelemetry.io/collector/pdata/pprofile v0.109.0 // indirect
