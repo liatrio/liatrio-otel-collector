@@ -7,7 +7,8 @@ module-sets:
     version: v0.70.0
     modules:
       - github.com/liatrio/liatrio-otel-collector
-      - github.com/liatrio/liatrio-otel-collector/receiver/gitproviderreceiver
+      - github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver
+      - github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver
       - github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension
 excluded-modules:
   - github.com/liatrio/liatrio-otel-collector/internal/tools
