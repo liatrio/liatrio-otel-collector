@@ -1,12 +1,5 @@
 ---
 extensions:
-  health_check:
-
-  pprof:
-    endpoint: 0.0.0.0:1777
-
-  zpages:
-    endpoint: 0.0.0.0:55679
 
   bearertokenauth/github:
     token: ${env:GH_PAT}
@@ -14,36 +7,49 @@ extensions:
   bearertokenauth/gitlab:
     token: ${env:GL_PAT}
 
-  ## Uncomment below if you want to enable authentication to GitLab
-  ## Presume that GL_PAT is set as env variables.
-  # basicauth/gitlab:
-  #     token: ${env:GL_PAT}
-
-  ## Uncomment below if you want to enable authentication to Grafana
-  # basicauth/grafana:
-  #     client_auth:
-  #         username: ${env:GRAF_USER}
-  #         password: ${env:GRAF_PAT}
-
 receivers:
   otlp:
     protocols:
       grpc:
       http:
 
-  ## Collect own metrics based on example from OTEL Contrib Dockerfile
-  ## https://github.com/open-telemetry/opentelemetry-collector-releases/blob/main/configs/otelcol-contrib.yaml
-  prometheus:
-    config:
-      scrape_configs:
-        - job_name: liatrio-otel-collector
-          scrape_interval: 10s
-          static_configs:
-            - targets: [0.0.0.0:8888]
-
   gitlab:
     initial_delay: 10s
-    collection_interval: 30s
+    collection_interval: 60s
+    scrapers:
+      gitlab:
+        metrics:
+          #Default Metrics (enabled by default)
+          vcs.repository.count:
+            enabled: true
+          vcs.repository.change.count:
+            enabled: false
+          vcs.repository.change.time_open:
+            enabled: false
+          vcs.repository.change.time_to_approval:
+            enabled: false
+          vcs.repository.change.time_to_merge:
+            enabled: false
+          vcs.repository.ref.count:
+            enabled: false
+          vcs.repository.ref.lines_added:
+            enabled: false
+          vcs.repository.ref.lines_deleted:
+            enabled: false
+          vcs.repository.ref.revisions_ahead:
+            enabled: false
+          vcs.repository.ref.revisions_behind:
+            enabled: false
+          vcs.repository.ref.time:
+            enabled: false
+          #Optional Metrics
+          vcs.repository.contributor.count:
+            enabled: false
+        gitlab_org: ${env:GL_ORG}
+        #search_query: ${env:SEARCH_QUERY}  #Recommended optional query override, defaults to "{org,user}:<github_org>"
+        #endpoint: https://selfmanagedenterpriseserver.com
+        auth:
+          authenticator: bearertokenauth/gitlab
 
   github:
     initial_delay: 10s
@@ -78,69 +84,12 @@ receivers:
           vcs.repository.contributor.count:
             enabled: false
         github_org: ${env:GH_ORG}
-        search_query: ${env:SEARCH_QUERY}  #Recommended optional query override, defaults to "{org,user}:<github_org>"
+        #search_query: ${env:SEARCH_QUERY}  #Recommended optional query override, defaults to "{org,user}:<github_org>"
         #endpoint: https://selfmanagedenterpriseserver.com
         auth:
           authenticator: bearertokenauth/github
 
-  gitprovider:
-    initial_delay: 1s
-    collection_interval: 60s
-    scrapers:
-      gitlab:
-        metrics:
-          #Default Metrics (enabled by default)
-          vcs.repository.count:
-            enabled: true
-          vcs.repository.change.count:
-            enabled: false
-          vcs.repository.change.time_open:
-            enabled: false
-          vcs.repository.change.time_to_approval:
-            enabled: false
-          vcs.repository.change.time_to_merge:
-            enabled: false
-          vcs.repository.ref.count:
-            enabled: false
-          vcs.repository.ref.lines_added:
-            enabled: false
-          vcs.repository.ref.lines_deleted:
-            enabled: false
-          vcs.repository.ref.revisions_ahead:
-            enabled: false
-          vcs.repository.ref.revisions_behind:
-            enabled: false
-          vcs.repository.ref.time:
-            enabled: false
-          #Optional Metrics
-          vcs.repository.contributor.count:
-            enabled: false
-        gitlab_org: myfancyorg
-        search_query: org:myfancyorg topic:o11yalltheway   #Recommended optional query override, defaults to "{org,user}:<gitlab_org>"
-        endpoint: https://selfmanagedenterpriseserver.com
-        auth:
-          authenticator: bearertokenauth/gitlab
-  # gitprovider:
-  #   initial_delay: 1s
-  #   collection_interval: 60s
-  #   scrapers:
-  #     github:
-  #       github_org: ${env:GH_ORG}
-  #       search_query: ${env:SEARCH_QUERY}
-  #       metrics:
-  #         git.repository.contributor.count:
-  #           enabled: true
-  #       ## You can specify a custom endpoint URL full list of client settings: https://github.com/open-telemetry/opentelemetry-collector/tree/main/config/confighttp#client-configuration
-  #       #endpoint: "https://mygitlabenterprise.com"
-  #       auth:
-  #           authenticator: bearertokenauth/github
-
 processors:
-  batch:
-  resourcedetection:
-    detectors: [env]
-    timeout: 2s
-    override: false
 
 exporters:
   debug:
@@ -148,18 +97,11 @@ exporters:
     sampling_initial: 2
     sampling_thereafter: 500
 
-  ## Uncomment if you want to use OTLP exportation to Grafana cloud
-  ## and update with your region
-  #otlphttp:
-  #  auth:
-  #    authenticator: basicauth/grafana
-  #  endpoint: https://otlp-gateway-prod-us-central-0.grafana.net/otlp
-
 service:
   ## Add bearertokenauth/* if you want to use bearer token auth extensions
-  extensions: [health_check, pprof, zpages, bearertokenauth/github, bearertokenauth/gitlab]
+  extensions: [bearertokenauth/github, bearertokenauth/gitlab]
   pipelines:
     metrics:
-      receivers: [github, gitlab, gitprovider, prometheus]
+      receivers: [gitlab]
       processors: []
       exporters: [debug]
