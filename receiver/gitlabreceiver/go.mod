@@ -8,6 +8,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.109.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.109.0
 	github.com/stretchr/testify v1.9.0
+	github.com/xanzy/go-gitlab v0.109.0
 	go.opentelemetry.io/collector/component v0.109.0
 	go.opentelemetry.io/collector/config/confighttp v0.109.0
 	go.opentelemetry.io/collector/confmap v1.15.0
@@ -96,7 +97,6 @@ require (
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
 	github.com/tklauser/numcpus v0.7.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.16 // indirect
-	github.com/xanzy/go-gitlab v0.109.0
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/collector/config/configauth v0.109.0 // indirect
 	go.opentelemetry.io/collector/config/configcompression v1.15.0 // indirect
