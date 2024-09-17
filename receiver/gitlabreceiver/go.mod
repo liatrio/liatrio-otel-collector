@@ -13,7 +13,7 @@ require (
 	go.opentelemetry.io/collector/confmap v1.15.0
 	go.opentelemetry.io/collector/consumer v0.109.0
 	go.opentelemetry.io/collector/consumer/consumertest v0.109.0
-	go.opentelemetry.io/collector/filter v0.108.1
+	go.opentelemetry.io/collector/filter v0.109.0
 	go.opentelemetry.io/collector/otelcol/otelcoltest v0.108.1
 	go.opentelemetry.io/collector/pdata v1.15.0
 	go.opentelemetry.io/collector/receiver v0.108.1
