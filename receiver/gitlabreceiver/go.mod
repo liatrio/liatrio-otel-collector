@@ -17,7 +17,7 @@ require (
 	go.opentelemetry.io/collector/otelcol/otelcoltest v0.108.1
 	go.opentelemetry.io/collector/pdata v1.15.0
 	go.opentelemetry.io/collector/receiver v0.108.1
-	go.opentelemetry.io/collector/semconv v0.108.1
+	go.opentelemetry.io/collector/semconv v0.109.0
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.0
 )
