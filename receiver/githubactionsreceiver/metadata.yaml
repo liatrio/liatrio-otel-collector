@@ -1,0 +1,10 @@
+type: githubactions
+
+status:
+  class: receiver
+  stability:
+    development: [traces]
+  distributions:
+  codeowners:
+    active: []
+    emeritus:
