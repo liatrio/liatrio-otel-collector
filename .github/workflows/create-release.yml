@@ -64,8 +64,8 @@ jobs:
 
       - name: Create GitHub Release
         env:
-          GH_TOKEN: ${{ secrets.TEST_PAT_TRIGGER }}
-          # GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          # GH_TOKEN: ${{ secrets.TEST_PAT_TRIGGER }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
           gh release create '${{  steps.get_tag.outputs.new_tag }}' \
             --notes "${{ steps.get_tag.outputs.changelog }}" \
