@@ -103,6 +103,8 @@ go.opentelemetry.io/collector/config/internal v0.109.0 h1:uAlmO9Gu4Ff5wXXWWn+7XR
 go.opentelemetry.io/collector/config/internal v0.109.0/go.mod h1:JJJGJTz1hILaaT+01FxbCFcDvPf2otXqMcWk/s2KvlA=
 go.opentelemetry.io/collector/confmap v1.15.0 h1:KaNVG6fBJXNqEI+/MgZasH0+aShAU1yAkSYunk6xC4E=
 go.opentelemetry.io/collector/confmap v1.15.0/go.mod h1:GrIZ12P/9DPOuTpe2PIS51a0P/ZM6iKtByVee1Uf3+k=
+go.opentelemetry.io/collector/confmap v1.16.0 h1:0bWw/XSosX6xoE1sGsaD3glzRtSxanrF4sgib3jAYr4=
+go.opentelemetry.io/collector/confmap v1.16.0/go.mod h1:GrIZ12P/9DPOuTpe2PIS51a0P/ZM6iKtByVee1Uf3+k=
 go.opentelemetry.io/collector/consumer v0.109.0 h1:fdXlJi5Rat/poHPiznM2mLiXjcv1gPy3fyqqeirri58=
 go.opentelemetry.io/collector/consumer v0.109.0/go.mod h1:E7PZHnVe1DY9hYy37toNxr9/hnsO7+LmnsixW8akLQI=
 go.opentelemetry.io/collector/consumer/consumerprofiles v0.109.0 h1:+WZ6MEWQRC6so3IRrW916XK58rI9NnrFHKW/P19jQvc=
