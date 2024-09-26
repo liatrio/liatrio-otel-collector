@@ -77,14 +77,10 @@ github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9G
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.109.0 h1:9mStsYv/9nnav/mftmHxEA6fp7c7mfd5CgU2802frjE=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.109.0/go.mod h1:P7e6ch+uoSfxK+lMwfcndkHE6gWUqvWKpr7mD04KIAA=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.110.0 h1:07mGeb5o9W6DcT1xlXBX5pHamVO9bcro0pFct/z0Ivs=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.110.0/go.mod h1:eazQnU3D7Xwyctq8Yfig4ws5HcnD3G+ygWrG9H03JjE=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.109.0 h1:Mi0qKcH4VjyyZsbaWYG038drk5FCFL7igVM8abEL4ZY=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.109.0/go.mod h1:KvJWxR0bDk9Qh0ktw4gOFsd/ZrJ7p5KTAQueEJsaK9Q=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.109.0 h1:3kXFgdEEKw37ftdRC7SmXAiZuLahVavqOYRhlJVMLc8=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.109.0/go.mod h1:HtaWI5WJKJkBhHz2R7Xb2n7R3fdBPhfKieYcQajNCTo=
+github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.110.0 h1:/kMxDplBmo99UQwkpnCkHO3mwBD6/YcX/ldwlZSURFw=
+github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.110.0/go.mod h1:nn/ktwLdZ6O9mtnRuak8NQEfGRow3VI3l+YqAroJX7g=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.110.0 h1:KYBzbgQyCz4i5zjzs0iBOFuNh2vagaw2seqvZ7Lftxk=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.110.0/go.mod h1:zLtbGLswPAKzTHM4C1Pcxb+PgNHgo6aGVZQtQaeBtec=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
