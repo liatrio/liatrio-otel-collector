@@ -28,6 +28,13 @@ func (rb *ResourceBuilder) SetOrganizationName(val string) {
 	}
 }
 
+// SetTeamName sets provided value as "team.name" attribute.
+func (rb *ResourceBuilder) SetTeamName(val string) {
+	if rb.config.TeamName.Enabled {
+		rb.res.Attributes().PutStr("team.name", val)
+	}
+}
+
 // SetVcsVendorName sets provided value as "vcs.vendor.name" attribute.
 func (rb *ResourceBuilder) SetVcsVendorName(val string) {
 	if rb.config.VcsVendorName.Enabled {

@@ -39,6 +39,44 @@ var MapAttributeChangeState = map[string]AttributeChangeState{
 	"merged": AttributeChangeStateMerged,
 }
 
+// AttributeCveSeverity specifies the a value cve.severity attribute.
+type AttributeCveSeverity int
+
+const (
+	_ AttributeCveSeverity = iota
+	AttributeCveSeverityCritical
+	AttributeCveSeverityHigh
+	AttributeCveSeverityMedium
+	AttributeCveSeverityLow
+	AttributeCveSeverityNone
+)
+
+// String returns the string representation of the AttributeCveSeverity.
+func (av AttributeCveSeverity) String() string {
+	switch av {
+	case AttributeCveSeverityCritical:
+		return "critical"
+	case AttributeCveSeverityHigh:
+		return "high"
+	case AttributeCveSeverityMedium:
+		return "medium"
+	case AttributeCveSeverityLow:
+		return "low"
+	case AttributeCveSeverityNone:
+		return "none"
+	}
+	return ""
+}
+
+// MapAttributeCveSeverity is a helper map of string to AttributeCveSeverity attribute value.
+var MapAttributeCveSeverity = map[string]AttributeCveSeverity{
+	"critical": AttributeCveSeverityCritical,
+	"high":     AttributeCveSeverityHigh,
+	"medium":   AttributeCveSeverityMedium,
+	"low":      AttributeCveSeverityLow,
+	"none":     AttributeCveSeverityNone,
+}
+
 // AttributeRefType specifies the a value ref.type attribute.
 type AttributeRefType int
 
@@ -366,6 +404,58 @@ func (m *metricVcsRepositoryCount) emit(metrics pmetric.MetricSlice) {
 
 func newMetricVcsRepositoryCount(cfg MetricConfig) metricVcsRepositoryCount {
 	m := metricVcsRepositoryCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricVcsRepositoryCveCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills vcs.repository.cve.count metric with initial data.
+func (m *metricVcsRepositoryCveCount) init() {
+	m.data.SetName("vcs.repository.cve.count")
+	m.data.SetDescription("The number of Common Vulnerabilities and Exposures (CVEs) in the repository.")
+	m.data.SetUnit("{cve}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricVcsRepositoryCveCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, cveSeverityAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("repository.name", repositoryNameAttributeValue)
+	dp.Attributes().PutStr("cve.severity", cveSeverityAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricVcsRepositoryCveCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricVcsRepositoryCveCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricVcsRepositoryCveCount(cfg MetricConfig) metricVcsRepositoryCveCount {
+	m := metricVcsRepositoryCveCount{config: cfg}
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -706,6 +796,7 @@ type MetricsBuilder struct {
 	metricVcsRepositoryChangeTimeToMerge    metricVcsRepositoryChangeTimeToMerge
 	metricVcsRepositoryContributorCount     metricVcsRepositoryContributorCount
 	metricVcsRepositoryCount                metricVcsRepositoryCount
+	metricVcsRepositoryCveCount             metricVcsRepositoryCveCount
 	metricVcsRepositoryRefCount             metricVcsRepositoryRefCount
 	metricVcsRepositoryRefLinesAdded        metricVcsRepositoryRefLinesAdded
 	metricVcsRepositoryRefLinesDeleted      metricVcsRepositoryRefLinesDeleted
@@ -714,25 +805,17 @@ type MetricsBuilder struct {
 	metricVcsRepositoryRefTime              metricVcsRepositoryRefTime
 }
 
-// MetricBuilderOption applies changes to default metrics builder.
-type MetricBuilderOption interface {
-	apply(*MetricsBuilder)
-}
-
-type metricBuilderOptionFunc func(mb *MetricsBuilder)
-
-func (mbof metricBuilderOptionFunc) apply(mb *MetricsBuilder) {
-	mbof(mb)
-}
+// metricBuilderOption applies changes to default metrics builder.
+type metricBuilderOption func(*MetricsBuilder)
 
 // WithStartTime sets startTime on the metrics builder.
-func WithStartTime(startTime pcommon.Timestamp) MetricBuilderOption {
-	return metricBuilderOptionFunc(func(mb *MetricsBuilder) {
+func WithStartTime(startTime pcommon.Timestamp) metricBuilderOption {
+	return func(mb *MetricsBuilder) {
 		mb.startTime = startTime
-	})
+	}
 }
 
-func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, options ...MetricBuilderOption) *MetricsBuilder {
+func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, options ...metricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
 		config:                                  mbc,
 		startTime:                               pcommon.NewTimestampFromTime(time.Now()),
@@ -744,6 +827,7 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, opt
 		metricVcsRepositoryChangeTimeToMerge:    newMetricVcsRepositoryChangeTimeToMerge(mbc.Metrics.VcsRepositoryChangeTimeToMerge),
 		metricVcsRepositoryContributorCount:     newMetricVcsRepositoryContributorCount(mbc.Metrics.VcsRepositoryContributorCount),
 		metricVcsRepositoryCount:                newMetricVcsRepositoryCount(mbc.Metrics.VcsRepositoryCount),
+		metricVcsRepositoryCveCount:             newMetricVcsRepositoryCveCount(mbc.Metrics.VcsRepositoryCveCount),
 		metricVcsRepositoryRefCount:             newMetricVcsRepositoryRefCount(mbc.Metrics.VcsRepositoryRefCount),
 		metricVcsRepositoryRefLinesAdded:        newMetricVcsRepositoryRefLinesAdded(mbc.Metrics.VcsRepositoryRefLinesAdded),
 		metricVcsRepositoryRefLinesDeleted:      newMetricVcsRepositoryRefLinesDeleted(mbc.Metrics.VcsRepositoryRefLinesDeleted),
@@ -759,6 +843,12 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, opt
 	if mbc.ResourceAttributes.OrganizationName.MetricsExclude != nil {
 		mb.resourceAttributeExcludeFilter["organization.name"] = filter.CreateFilter(mbc.ResourceAttributes.OrganizationName.MetricsExclude)
 	}
+	if mbc.ResourceAttributes.TeamName.MetricsInclude != nil {
+		mb.resourceAttributeIncludeFilter["team.name"] = filter.CreateFilter(mbc.ResourceAttributes.TeamName.MetricsInclude)
+	}
+	if mbc.ResourceAttributes.TeamName.MetricsExclude != nil {
+		mb.resourceAttributeExcludeFilter["team.name"] = filter.CreateFilter(mbc.ResourceAttributes.TeamName.MetricsExclude)
+	}
 	if mbc.ResourceAttributes.VcsVendorName.MetricsInclude != nil {
 		mb.resourceAttributeIncludeFilter["vcs.vendor.name"] = filter.CreateFilter(mbc.ResourceAttributes.VcsVendorName.MetricsInclude)
 	}
@@ -767,7 +857,7 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, opt
 	}
 
 	for _, op := range options {
-		op.apply(mb)
+		op(mb)
 	}
 	return mb
 }
@@ -785,28 +875,20 @@ func (mb *MetricsBuilder) updateCapacity(rm pmetric.ResourceMetrics) {
 }
 
 // ResourceMetricsOption applies changes to provided resource metrics.
-type ResourceMetricsOption interface {
-	apply(pmetric.ResourceMetrics)
-}
-
-type resourceMetricsOptionFunc func(pmetric.ResourceMetrics)
-
-func (rmof resourceMetricsOptionFunc) apply(rm pmetric.ResourceMetrics) {
-	rmof(rm)
-}
+type ResourceMetricsOption func(pmetric.ResourceMetrics)
 
 // WithResource sets the provided resource on the emitted ResourceMetrics.
 // It's recommended to use ResourceBuilder to create the resource.
 func WithResource(res pcommon.Resource) ResourceMetricsOption {
-	return resourceMetricsOptionFunc(func(rm pmetric.ResourceMetrics) {
+	return func(rm pmetric.ResourceMetrics) {
 		res.CopyTo(rm.Resource())
-	})
+	}
 }
 
 // WithStartTimeOverride overrides start time for all the resource metrics data points.
 // This option should be only used if different start time has to be set on metrics coming from different resources.
 func WithStartTimeOverride(start pcommon.Timestamp) ResourceMetricsOption {
-	return resourceMetricsOptionFunc(func(rm pmetric.ResourceMetrics) {
+	return func(rm pmetric.ResourceMetrics) {
 		var dps pmetric.NumberDataPointSlice
 		metrics := rm.ScopeMetrics().At(0).Metrics()
 		for i := 0; i < metrics.Len(); i++ {
@@ -820,7 +902,7 @@ func WithStartTimeOverride(start pcommon.Timestamp) ResourceMetricsOption {
 				dps.At(j).SetStartTimestamp(start)
 			}
 		}
-	})
+	}
 }
 
 // EmitForResource saves all the generated metrics under a new resource and updates the internal state to be ready for
@@ -828,7 +910,7 @@ func WithStartTimeOverride(start pcommon.Timestamp) ResourceMetricsOption {
 // needs to emit metrics from several resources. Otherwise calling this function is not required,
 // just `Emit` function can be called instead.
 // Resource attributes should be provided as ResourceMetricsOption arguments.
-func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
+func (mb *MetricsBuilder) EmitForResource(rmo ...ResourceMetricsOption) {
 	rm := pmetric.NewResourceMetrics()
 	rm.SetSchemaUrl(conventions.SchemaURL)
 	ils := rm.ScopeMetrics().AppendEmpty()
@@ -841,6 +923,7 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	mb.metricVcsRepositoryChangeTimeToMerge.emit(ils.Metrics())
 	mb.metricVcsRepositoryContributorCount.emit(ils.Metrics())
 	mb.metricVcsRepositoryCount.emit(ils.Metrics())
+	mb.metricVcsRepositoryCveCount.emit(ils.Metrics())
 	mb.metricVcsRepositoryRefCount.emit(ils.Metrics())
 	mb.metricVcsRepositoryRefLinesAdded.emit(ils.Metrics())
 	mb.metricVcsRepositoryRefLinesDeleted.emit(ils.Metrics())
@@ -848,8 +931,8 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	mb.metricVcsRepositoryRefRevisionsBehind.emit(ils.Metrics())
 	mb.metricVcsRepositoryRefTime.emit(ils.Metrics())
 
-	for _, op := range options {
-		op.apply(rm)
+	for _, op := range rmo {
+		op(rm)
 	}
 	for attr, filter := range mb.resourceAttributeIncludeFilter {
 		if val, ok := rm.Resource().Attributes().Get(attr); ok && !filter.Matches(val.AsString()) {
@@ -871,8 +954,8 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 // Emit returns all the metrics accumulated by the metrics builder and updates the internal state to be ready for
 // recording another set of metrics. This function will be responsible for applying all the transformations required to
 // produce metric representation defined in metadata and user config, e.g. delta or cumulative.
-func (mb *MetricsBuilder) Emit(options ...ResourceMetricsOption) pmetric.Metrics {
-	mb.EmitForResource(options...)
+func (mb *MetricsBuilder) Emit(rmo ...ResourceMetricsOption) pmetric.Metrics {
+	mb.EmitForResource(rmo...)
 	metrics := mb.metricsBuffer
 	mb.metricsBuffer = pmetric.NewMetrics()
 	return metrics
@@ -908,6 +991,11 @@ func (mb *MetricsBuilder) RecordVcsRepositoryCountDataPoint(ts pcommon.Timestamp
 	mb.metricVcsRepositoryCount.recordDataPoint(mb.startTime, ts, val)
 }
 
+// RecordVcsRepositoryCveCountDataPoint adds a data point to vcs.repository.cve.count metric.
+func (mb *MetricsBuilder) RecordVcsRepositoryCveCountDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, cveSeverityAttributeValue AttributeCveSeverity) {
+	mb.metricVcsRepositoryCveCount.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, cveSeverityAttributeValue.String())
+}
+
 // RecordVcsRepositoryRefCountDataPoint adds a data point to vcs.repository.ref.count metric.
 func (mb *MetricsBuilder) RecordVcsRepositoryRefCountDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, refTypeAttributeValue AttributeRefType) {
 	mb.metricVcsRepositoryRefCount.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, refTypeAttributeValue.String())
@@ -940,9 +1028,9 @@ func (mb *MetricsBuilder) RecordVcsRepositoryRefTimeDataPoint(ts pcommon.Timesta
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,
 // and metrics builder should update its startTime and reset it's internal state accordingly.
-func (mb *MetricsBuilder) Reset(options ...MetricBuilderOption) {
+func (mb *MetricsBuilder) Reset(options ...metricBuilderOption) {
 	mb.startTime = pcommon.NewTimestampFromTime(time.Now())
 	for _, op := range options {
-		op.apply(mb)
+		op(mb)
 	}
 }

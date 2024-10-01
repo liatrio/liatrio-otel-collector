@@ -169,6 +169,17 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				ghs.logger.Sugar().Errorf("error getting pull requests: %v", zap.Error(err))
 			}
 
+			// When enabled, process any CVEs for the repository
+			if ghs.cfg.Metrics.VcsRepositoryCveCount.Enabled {
+				cves, err := ghs.getCVEs(ctx, genClient, restClient, name)
+				if err != nil {
+					ghs.logger.Sugar().Errorf("error getting cves: %v", zap.Error(err))
+				}
+				for s, c := range cves {
+					ghs.mb.RecordGitRepositoryCveCountDataPoint(now, c, name, s)
+				}
+			}
+
 			var merged int
 			var open int
 
@@ -206,6 +217,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	// Set the resource attributes and emit metrics with those resources
 	ghs.rb.SetVcsVendorName("github")
 	ghs.rb.SetOrganizationName(ghs.cfg.GitHubOrg)
+	ghs.rb.SetTeamName(ghs.cfg.GitHubTeam)
 
 	res := ghs.rb.Emit()
 	return ghs.mb.Emit(metadata.WithResource(res)), nil
