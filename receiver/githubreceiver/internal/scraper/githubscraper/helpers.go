@@ -45,7 +45,9 @@ func (ghs *githubScraper) getRepos(
 				return nil, 0, err
 			}
 			for _, repo := range r.Organization.Team.Repositories.Nodes {
-				repos = append(repos, repo.Repo)
+
+				repos = append(repos, repo)
+
 			}
 			count = r.Organization.Team.Repositories.TotalCount
 			cursor = &r.Organization.Team.Repositories.PageInfo.EndCursor

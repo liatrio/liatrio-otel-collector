@@ -176,7 +176,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					ghs.logger.Sugar().Errorf("error getting cves: %v", zap.Error(err))
 				}
 				for s, c := range cves {
-					ghs.mb.RecordGitRepositoryCveCountDataPoint(now, c, name, s)
+					ghs.mb.RecordVcsRepositoryCveCountDataPoint(now, c, name, s)
 				}
 			}
 
