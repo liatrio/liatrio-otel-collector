@@ -29,11 +29,11 @@ func (ghs *githubScraper) getRepos(
 	ctx context.Context,
 	client graphql.Client,
 	searchQuery string,
-) ([]SearchNodeRepository, int, error) {
+) ([]Repo, int, error) {
 	// here we use a pointer to a string so that graphql will receive null if the
 	// value is not set since the after: $repoCursor is optional to graphql
 	var cursor *string
-	var repos []SearchNodeRepository
+	var repos []Repo
 	var count int
 
 	switch {
@@ -46,7 +46,7 @@ func (ghs *githubScraper) getRepos(
 			}
 			for _, repo := range r.Organization.Team.Repositories.Nodes {
 
-				repos = append(repos, repo)
+				repos = append(repos, repo.Repo)
 
 			}
 			count = r.Organization.Team.Repositories.TotalCount
@@ -63,7 +63,7 @@ func (ghs *githubScraper) getRepos(
 
 			for _, repo := range r.Search.Nodes {
 				if r, ok := repo.(*SearchNodeRepository); ok {
-					repos = append(repos, *r)
+					repos = append(repos, r.Repo)
 				}
 			}
 
@@ -122,8 +122,10 @@ func (ghs *githubScraper) login(
 	// and thus must match the convention for user: and org: searches in GitHub
 	switch {
 	case resp.User.Login == owner:
+		ghs.logger.Sugar().Errorf("helpers.go got 'user'", zap.Error(err))
 		loginType = "user"
 	case resp.Organization.Login == owner:
+		ghs.logger.Sugar().Errorf("helpers.go got 'org'", zap.Error(err))
 		loginType = "org"
 	default:
 		return "", err
