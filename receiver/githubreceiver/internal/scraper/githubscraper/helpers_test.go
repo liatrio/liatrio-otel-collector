@@ -479,7 +479,7 @@ func TestGetRepos(t *testing.T) {
 							RepositoryCount: 1,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo1",
+									Typename: "repo1",
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -502,10 +502,10 @@ func TestGetRepos(t *testing.T) {
 							RepositoryCount: 4,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo1",
+									Typename: "repo1",
 								},
 								&SearchNodeRepository{
-									Name: "repo2",
+									Typename: "repo2",
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
@@ -516,10 +516,10 @@ func TestGetRepos(t *testing.T) {
 							RepositoryCount: 4,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo3",
+									Typename: "repo3",
 								},
 								&SearchNodeRepository{
-									Name: "repo4",
+									Typename: "repo4",
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{

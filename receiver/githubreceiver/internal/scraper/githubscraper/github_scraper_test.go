@@ -80,7 +80,7 @@ func TestScrape(t *testing.T) {
 							RepositoryCount: 1,
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
-									Name: "repo1",
+									Typename: "repo1",
 								},
 							},
 							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
