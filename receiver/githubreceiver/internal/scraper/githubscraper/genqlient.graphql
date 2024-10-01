@@ -1,3 +1,12 @@
+# @genqlient(typename: "Repo")
+fragment Repo on Repository{
+  id
+  name
+  defaultBranchRef {
+    name
+  }
+}
+
 query getRepoDataBySearch(
   $searchQuery: String!
   # @genqlient(pointer: true)
@@ -13,16 +22,35 @@ query getRepoDataBySearch(
     # @genqlient(typename: "SearchNode")
     nodes {
       ... on Repository {
-        id
-        name
-        defaultBranchRef {
-          name
-        }
+        ...Repo
       }
     }
     pageInfo {
       hasNextPage
       endCursor
+    }
+  }
+}
+
+query getRepoDataByTeam(
+  $org: String!
+  $team: String!
+  # @genqlient(pointer: true)
+  $repoCursor: String
+) {
+  organization(login: $org) {
+    team(slug: $team) {
+      repositories(first: 100, after: $repoCursor) {
+        totalCount
+        # @genqlient(typename: "TeamNode")
+        nodes {
+          ...Repo
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
     }
   }
 }
@@ -142,6 +170,30 @@ query getPullRequestData(
       pageInfo {
         hasNextPage
         endCursor
+      }
+    }
+  }
+}
+
+query getRepoCVEs(
+$owner: String!, 
+$repo: String!, 
+# @genqlient(pointer: true)
+$alertCursor: String
+) {
+  repository(owner: $owner, name: $repo, ) {
+    # @genqlient(typename: "VulnerabilityAlerts")
+    vulnerabilityAlerts(first: 100, states: OPEN, after: $alertCursor) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      # @genqlient(typename: "CVENode")
+      nodes {
+        id
+        securityVulnerability {
+          severity
+        }
       }
     }
   }

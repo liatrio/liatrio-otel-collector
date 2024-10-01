@@ -353,6 +353,36 @@ type BranchNodeRepositoryDefaultBranchRef struct {
 // GetName returns BranchNodeRepositoryDefaultBranchRef.Name, and is useful for accessing the field via an interface.
 func (v *BranchNodeRepositoryDefaultBranchRef) GetName() string { return v.Name }
 
+// CVENode includes the requested fields of the GraphQL type RepositoryVulnerabilityAlert.
+// The GraphQL type's documentation follows.
+//
+// A Dependabot alert for a repository with a dependency affected by a security vulnerability.
+type CVENode struct {
+	Id string `json:"id"`
+	// The associated security vulnerability
+	SecurityVulnerability CVENodeSecurityVulnerability `json:"securityVulnerability"`
+}
+
+// GetId returns CVENode.Id, and is useful for accessing the field via an interface.
+func (v *CVENode) GetId() string { return v.Id }
+
+// GetSecurityVulnerability returns CVENode.SecurityVulnerability, and is useful for accessing the field via an interface.
+func (v *CVENode) GetSecurityVulnerability() CVENodeSecurityVulnerability {
+	return v.SecurityVulnerability
+}
+
+// CVENodeSecurityVulnerability includes the requested fields of the GraphQL type SecurityVulnerability.
+// The GraphQL type's documentation follows.
+//
+// An individual vulnerability within an Advisory
+type CVENodeSecurityVulnerability struct {
+	// The severity of the vulnerability within this package
+	Severity SecurityAdvisorySeverity `json:"severity"`
+}
+
+// GetSeverity returns CVENodeSecurityVulnerability.Severity, and is useful for accessing the field via an interface.
+func (v *CVENodeSecurityVulnerability) GetSeverity() SecurityAdvisorySeverity { return v.Severity }
+
 // CommitNode includes the requested fields of the GraphQL type Commit.
 // The GraphQL type's documentation follows.
 //
@@ -508,6 +538,39 @@ const (
 	PullRequestStateMerged PullRequestState = "MERGED"
 )
 
+// Repo includes the GraphQL fields of Repository requested by the fragment Repo.
+// The GraphQL type's documentation follows.
+//
+// A repository contains the content for a project.
+type Repo struct {
+	Id string `json:"id"`
+	// The name of the repository.
+	Name string `json:"name"`
+	// The Ref associated with the repository's default branch.
+	DefaultBranchRef RepoDefaultBranchRef `json:"defaultBranchRef"`
+}
+
+// GetId returns Repo.Id, and is useful for accessing the field via an interface.
+func (v *Repo) GetId() string { return v.Id }
+
+// GetName returns Repo.Name, and is useful for accessing the field via an interface.
+func (v *Repo) GetName() string { return v.Name }
+
+// GetDefaultBranchRef returns Repo.DefaultBranchRef, and is useful for accessing the field via an interface.
+func (v *Repo) GetDefaultBranchRef() RepoDefaultBranchRef { return v.DefaultBranchRef }
+
+// RepoDefaultBranchRef includes the requested fields of the GraphQL type Ref.
+// The GraphQL type's documentation follows.
+//
+// Represents a Git reference.
+type RepoDefaultBranchRef struct {
+	// The ref name.
+	Name string `json:"name"`
+}
+
+// GetName returns RepoDefaultBranchRef.Name, and is useful for accessing the field via an interface.
+func (v *RepoDefaultBranchRef) GetName() string { return v.Name }
+
 // SearchNode includes the requested fields of the GraphQL interface SearchResultItem.
 //
 // SearchNode is implemented by the following types:
@@ -639,10 +702,14 @@ func __marshalSearchNode(v *SearchNode) ([]byte, error) {
 	case *SearchNodeRepository:
 		typename = "Repository"
 
+		premarshaled, err := v.__premarshalJSON()
+		if err != nil {
+			return nil, err
+		}
 		result := struct {
 			TypeName string `json:"__typename"`
-			*SearchNodeRepository
-		}{typename, v}
+			*__premarshalSearchNodeRepository
+		}{typename, premarshaled}
 		return json.Marshal(result)
 	case *SearchNodeUser:
 		typename = "User"
@@ -670,18 +737,6 @@ type SearchNodeApp struct {
 
 // GetTypename returns SearchNodeApp.Typename, and is useful for accessing the field via an interface.
 func (v *SearchNodeApp) GetTypename() string { return v.Typename }
-
-// SearchNodeDefaultBranchRef includes the requested fields of the GraphQL type Ref.
-// The GraphQL type's documentation follows.
-//
-// Represents a Git reference.
-type SearchNodeDefaultBranchRef struct {
-	// The ref name.
-	Name string `json:"name"`
-}
-
-// GetName returns SearchNodeDefaultBranchRef.Name, and is useful for accessing the field via an interface.
-func (v *SearchNodeDefaultBranchRef) GetName() string { return v.Name }
 
 // SearchNodeDiscussion includes the requested fields of the GraphQL type Discussion.
 // The GraphQL type's documentation follows.
@@ -744,25 +799,74 @@ func (v *SearchNodePullRequest) GetTypename() string { return v.Typename }
 // A repository contains the content for a project.
 type SearchNodeRepository struct {
 	Typename string `json:"__typename"`
-	Id       string `json:"id"`
-	// The name of the repository.
-	Name string `json:"name"`
-	// The Ref associated with the repository's default branch.
-	DefaultBranchRef SearchNodeDefaultBranchRef `json:"defaultBranchRef"`
+	Repo     `json:"-"`
 }
 
 // GetTypename returns SearchNodeRepository.Typename, and is useful for accessing the field via an interface.
 func (v *SearchNodeRepository) GetTypename() string { return v.Typename }
 
 // GetId returns SearchNodeRepository.Id, and is useful for accessing the field via an interface.
-func (v *SearchNodeRepository) GetId() string { return v.Id }
+func (v *SearchNodeRepository) GetId() string { return v.Repo.Id }
 
 // GetName returns SearchNodeRepository.Name, and is useful for accessing the field via an interface.
-func (v *SearchNodeRepository) GetName() string { return v.Name }
+func (v *SearchNodeRepository) GetName() string { return v.Repo.Name }
 
 // GetDefaultBranchRef returns SearchNodeRepository.DefaultBranchRef, and is useful for accessing the field via an interface.
-func (v *SearchNodeRepository) GetDefaultBranchRef() SearchNodeDefaultBranchRef {
-	return v.DefaultBranchRef
+func (v *SearchNodeRepository) GetDefaultBranchRef() RepoDefaultBranchRef {
+	return v.Repo.DefaultBranchRef
+}
+
+func (v *SearchNodeRepository) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*SearchNodeRepository
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.SearchNodeRepository = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.Repo)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalSearchNodeRepository struct {
+	Typename string `json:"__typename"`
+
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	DefaultBranchRef RepoDefaultBranchRef `json:"defaultBranchRef"`
+}
+
+func (v *SearchNodeRepository) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *SearchNodeRepository) __premarshalJSON() (*__premarshalSearchNodeRepository, error) {
+	var retval __premarshalSearchNodeRepository
+
+	retval.Typename = v.Typename
+	retval.Id = v.Repo.Id
+	retval.Name = v.Repo.Name
+	retval.DefaultBranchRef = v.Repo.DefaultBranchRef
+	return &retval, nil
 }
 
 // SearchNodeUser includes the requested fields of the GraphQL type User.
@@ -775,6 +879,121 @@ type SearchNodeUser struct {
 
 // GetTypename returns SearchNodeUser.Typename, and is useful for accessing the field via an interface.
 func (v *SearchNodeUser) GetTypename() string { return v.Typename }
+
+// Severity of the vulnerability.
+type SecurityAdvisorySeverity string
+
+const (
+	// Low.
+	SecurityAdvisorySeverityLow SecurityAdvisorySeverity = "LOW"
+	// Moderate.
+	SecurityAdvisorySeverityModerate SecurityAdvisorySeverity = "MODERATE"
+	// High.
+	SecurityAdvisorySeverityHigh SecurityAdvisorySeverity = "HIGH"
+	// Critical.
+	SecurityAdvisorySeverityCritical SecurityAdvisorySeverity = "CRITICAL"
+)
+
+// TeamNode includes the requested fields of the GraphQL type Repository.
+// The GraphQL type's documentation follows.
+//
+// A repository contains the content for a project.
+type TeamNode struct {
+	Repo `json:"-"`
+}
+
+// GetId returns TeamNode.Id, and is useful for accessing the field via an interface.
+func (v *TeamNode) GetId() string { return v.Repo.Id }
+
+// GetName returns TeamNode.Name, and is useful for accessing the field via an interface.
+func (v *TeamNode) GetName() string { return v.Repo.Name }
+
+// GetDefaultBranchRef returns TeamNode.DefaultBranchRef, and is useful for accessing the field via an interface.
+func (v *TeamNode) GetDefaultBranchRef() RepoDefaultBranchRef { return v.Repo.DefaultBranchRef }
+
+func (v *TeamNode) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*TeamNode
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.TeamNode = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.Repo)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalTeamNode struct {
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	DefaultBranchRef RepoDefaultBranchRef `json:"defaultBranchRef"`
+}
+
+func (v *TeamNode) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *TeamNode) __premarshalJSON() (*__premarshalTeamNode, error) {
+	var retval __premarshalTeamNode
+
+	retval.Id = v.Repo.Id
+	retval.Name = v.Repo.Name
+	retval.DefaultBranchRef = v.Repo.DefaultBranchRef
+	return &retval, nil
+}
+
+// VulnerabilityAlerts includes the requested fields of the GraphQL type RepositoryVulnerabilityAlertConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for RepositoryVulnerabilityAlert.
+type VulnerabilityAlerts struct {
+	// Information to aid in pagination.
+	PageInfo VulnerabilityAlertsPageInfo `json:"pageInfo"`
+	// A list of nodes.
+	Nodes []CVENode `json:"nodes"`
+}
+
+// GetPageInfo returns VulnerabilityAlerts.PageInfo, and is useful for accessing the field via an interface.
+func (v *VulnerabilityAlerts) GetPageInfo() VulnerabilityAlertsPageInfo { return v.PageInfo }
+
+// GetNodes returns VulnerabilityAlerts.Nodes, and is useful for accessing the field via an interface.
+func (v *VulnerabilityAlerts) GetNodes() []CVENode { return v.Nodes }
+
+// VulnerabilityAlertsPageInfo includes the requested fields of the GraphQL type PageInfo.
+// The GraphQL type's documentation follows.
+//
+// Information about pagination in a connection.
+type VulnerabilityAlertsPageInfo struct {
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
+}
+
+// GetHasNextPage returns VulnerabilityAlertsPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *VulnerabilityAlertsPageInfo) GetHasNextPage() bool { return v.HasNextPage }
+
+// GetEndCursor returns VulnerabilityAlertsPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *VulnerabilityAlertsPageInfo) GetEndCursor() string { return v.EndCursor }
 
 // __checkLoginInput is used internally by genqlient
 type __checkLoginInput struct {
@@ -860,6 +1079,22 @@ func (v *__getPullRequestDataInput) GetPrCursor() *string { return v.PrCursor }
 // GetPrStates returns __getPullRequestDataInput.PrStates, and is useful for accessing the field via an interface.
 func (v *__getPullRequestDataInput) GetPrStates() []PullRequestState { return v.PrStates }
 
+// __getRepoCVEsInput is used internally by genqlient
+type __getRepoCVEsInput struct {
+	Owner       string  `json:"owner"`
+	Repo        string  `json:"repo"`
+	AlertCursor *string `json:"alertCursor"`
+}
+
+// GetOwner returns __getRepoCVEsInput.Owner, and is useful for accessing the field via an interface.
+func (v *__getRepoCVEsInput) GetOwner() string { return v.Owner }
+
+// GetRepo returns __getRepoCVEsInput.Repo, and is useful for accessing the field via an interface.
+func (v *__getRepoCVEsInput) GetRepo() string { return v.Repo }
+
+// GetAlertCursor returns __getRepoCVEsInput.AlertCursor, and is useful for accessing the field via an interface.
+func (v *__getRepoCVEsInput) GetAlertCursor() *string { return v.AlertCursor }
+
 // __getRepoDataBySearchInput is used internally by genqlient
 type __getRepoDataBySearchInput struct {
 	SearchQuery string  `json:"searchQuery"`
@@ -871,6 +1106,22 @@ func (v *__getRepoDataBySearchInput) GetSearchQuery() string { return v.SearchQu
 
 // GetRepoCursor returns __getRepoDataBySearchInput.RepoCursor, and is useful for accessing the field via an interface.
 func (v *__getRepoDataBySearchInput) GetRepoCursor() *string { return v.RepoCursor }
+
+// __getRepoDataByTeamInput is used internally by genqlient
+type __getRepoDataByTeamInput struct {
+	Org        string  `json:"org"`
+	Team       string  `json:"team"`
+	RepoCursor *string `json:"repoCursor"`
+}
+
+// GetOrg returns __getRepoDataByTeamInput.Org, and is useful for accessing the field via an interface.
+func (v *__getRepoDataByTeamInput) GetOrg() string { return v.Org }
+
+// GetTeam returns __getRepoDataByTeamInput.Team, and is useful for accessing the field via an interface.
+func (v *__getRepoDataByTeamInput) GetTeam() string { return v.Team }
+
+// GetRepoCursor returns __getRepoDataByTeamInput.RepoCursor, and is useful for accessing the field via an interface.
+func (v *__getRepoDataByTeamInput) GetRepoCursor() *string { return v.RepoCursor }
 
 // checkLoginOrganization includes the requested fields of the GraphQL type Organization.
 // The GraphQL type's documentation follows.
@@ -1074,6 +1325,29 @@ func (v *getPullRequestDataResponse) GetRepository() getPullRequestDataRepositor
 	return v.Repository
 }
 
+// getRepoCVEsRepository includes the requested fields of the GraphQL type Repository.
+// The GraphQL type's documentation follows.
+//
+// A repository contains the content for a project.
+type getRepoCVEsRepository struct {
+	// A list of vulnerability alerts that are on this repository.
+	VulnerabilityAlerts VulnerabilityAlerts `json:"vulnerabilityAlerts"`
+}
+
+// GetVulnerabilityAlerts returns getRepoCVEsRepository.VulnerabilityAlerts, and is useful for accessing the field via an interface.
+func (v *getRepoCVEsRepository) GetVulnerabilityAlerts() VulnerabilityAlerts {
+	return v.VulnerabilityAlerts
+}
+
+// getRepoCVEsResponse is returned by getRepoCVEs on success.
+type getRepoCVEsResponse struct {
+	// Lookup a given repository by the owner and repository name.
+	Repository getRepoCVEsRepository `json:"repository"`
+}
+
+// GetRepository returns getRepoCVEsResponse.Repository, and is useful for accessing the field via an interface.
+func (v *getRepoCVEsResponse) GetRepository() getRepoCVEsRepository { return v.Repository }
+
 // getRepoDataBySearchResponse is returned by getRepoDataBySearch on success.
 type getRepoDataBySearchResponse struct {
 	// Perform a search across resources, returning a maximum of 1,000 results.
@@ -1211,6 +1485,92 @@ func (v *getRepoDataBySearchSearchSearchResultItemConnectionPageInfo) GetHasNext
 // GetEndCursor returns getRepoDataBySearchSearchSearchResultItemConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
 func (v *getRepoDataBySearchSearchSearchResultItemConnectionPageInfo) GetEndCursor() string {
 	return v.EndCursor
+}
+
+// getRepoDataByTeamOrganization includes the requested fields of the GraphQL type Organization.
+// The GraphQL type's documentation follows.
+//
+// An account on GitHub, with one or more owners, that has repositories, members and teams.
+type getRepoDataByTeamOrganization struct {
+	// Find an organization's team by its slug.
+	Team getRepoDataByTeamOrganizationTeam `json:"team"`
+}
+
+// GetTeam returns getRepoDataByTeamOrganization.Team, and is useful for accessing the field via an interface.
+func (v *getRepoDataByTeamOrganization) GetTeam() getRepoDataByTeamOrganizationTeam { return v.Team }
+
+// getRepoDataByTeamOrganizationTeam includes the requested fields of the GraphQL type Team.
+// The GraphQL type's documentation follows.
+//
+// A team of users in an organization.
+type getRepoDataByTeamOrganizationTeam struct {
+	// A list of repositories this team has access to.
+	Repositories getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection `json:"repositories"`
+}
+
+// GetRepositories returns getRepoDataByTeamOrganizationTeam.Repositories, and is useful for accessing the field via an interface.
+func (v *getRepoDataByTeamOrganizationTeam) GetRepositories() getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection {
+	return v.Repositories
+}
+
+// getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection includes the requested fields of the GraphQL type TeamRepositoryConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Repository.
+type getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection struct {
+	// Identifies the total count of items in the connection.
+	TotalCount int `json:"totalCount"`
+	// A list of nodes.
+	Nodes []TeamNode `json:"nodes"`
+	// Information to aid in pagination.
+	PageInfo getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo `json:"pageInfo"`
+}
+
+// GetTotalCount returns getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection.TotalCount, and is useful for accessing the field via an interface.
+func (v *getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection) GetTotalCount() int {
+	return v.TotalCount
+}
+
+// GetNodes returns getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection) GetNodes() []TeamNode {
+	return v.Nodes
+}
+
+// GetPageInfo returns getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection) GetPageInfo() getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo {
+	return v.PageInfo
+}
+
+// getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+// The GraphQL type's documentation follows.
+//
+// Information about pagination in a connection.
+type getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo struct {
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating forwards, the cursor to continue.
+	EndCursor string `json:"endCursor"`
+}
+
+// GetHasNextPage returns getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo) GetHasNextPage() bool {
+	return v.HasNextPage
+}
+
+// GetEndCursor returns getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnectionPageInfo) GetEndCursor() string {
+	return v.EndCursor
+}
+
+// getRepoDataByTeamResponse is returned by getRepoDataByTeam on success.
+type getRepoDataByTeamResponse struct {
+	// Lookup a organization by login.
+	Organization getRepoDataByTeamOrganization `json:"organization"`
+}
+
+// GetOrganization returns getRepoDataByTeamResponse.Organization, and is useful for accessing the field via an interface.
+func (v *getRepoDataByTeamResponse) GetOrganization() getRepoDataByTeamOrganization {
+	return v.Organization
 }
 
 // The query or mutation executed by checkLogin.
@@ -1450,6 +1810,56 @@ func getPullRequestData(
 	return &data_, err_
 }
 
+// The query or mutation executed by getRepoCVEs.
+const getRepoCVEs_Operation = `
+query getRepoCVEs ($owner: String!, $repo: String!, $alertCursor: String) {
+	repository(owner: $owner, name: $repo) {
+		vulnerabilityAlerts(first: 100, states: OPEN, after: $alertCursor) {
+			pageInfo {
+				hasNextPage
+				endCursor
+			}
+			nodes {
+				id
+				securityVulnerability {
+					severity
+				}
+			}
+		}
+	}
+}
+`
+
+func getRepoCVEs(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	owner string,
+	repo string,
+	alertCursor *string,
+) (*getRepoCVEsResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "getRepoCVEs",
+		Query:  getRepoCVEs_Operation,
+		Variables: &__getRepoCVEsInput{
+			Owner:       owner,
+			Repo:        repo,
+			AlertCursor: alertCursor,
+		},
+	}
+	var err_ error
+
+	var data_ getRepoCVEsResponse
+	resp_ := &graphql.Response{Data: &data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return &data_, err_
+}
+
 // The query or mutation executed by getRepoDataBySearch.
 const getRepoDataBySearch_Operation = `
 query getRepoDataBySearch ($searchQuery: String!, $repoCursor: String) {
@@ -1458,17 +1868,20 @@ query getRepoDataBySearch ($searchQuery: String!, $repoCursor: String) {
 		nodes {
 			__typename
 			... on Repository {
-				id
-				name
-				defaultBranchRef {
-					name
-				}
+				... Repo
 			}
 		}
 		pageInfo {
 			hasNextPage
 			endCursor
 		}
+	}
+}
+fragment Repo on Repository {
+	id
+	name
+	defaultBranchRef {
+		name
 	}
 }
 `
@@ -1490,6 +1903,63 @@ func getRepoDataBySearch(
 	var err_ error
 
 	var data_ getRepoDataBySearchResponse
+	resp_ := &graphql.Response{Data: &data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return &data_, err_
+}
+
+// The query or mutation executed by getRepoDataByTeam.
+const getRepoDataByTeam_Operation = `
+query getRepoDataByTeam ($org: String!, $team: String!, $repoCursor: String) {
+	organization(login: $org) {
+		team(slug: $team) {
+			repositories(first: 100, after: $repoCursor) {
+				totalCount
+				nodes {
+					... Repo
+				}
+				pageInfo {
+					hasNextPage
+					endCursor
+				}
+			}
+		}
+	}
+}
+fragment Repo on Repository {
+	id
+	name
+	defaultBranchRef {
+		name
+	}
+}
+`
+
+func getRepoDataByTeam(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	org string,
+	team string,
+	repoCursor *string,
+) (*getRepoDataByTeamResponse, error) {
+	req_ := &graphql.Request{
+		OpName: "getRepoDataByTeam",
+		Query:  getRepoDataByTeam_Operation,
+		Variables: &__getRepoDataByTeamInput{
+			Org:        org,
+			Team:       team,
+			RepoCursor: repoCursor,
+		},
+	}
+	var err_ error
+
+	var data_ getRepoDataByTeamResponse
 	resp_ := &graphql.Response{Data: &data_}
 
 	err_ = client_.MakeRequest(
