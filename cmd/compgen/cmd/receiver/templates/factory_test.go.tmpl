@@ -27,15 +27,15 @@ func TestCreateReceiver(t *testing.T) {
 	factory := NewFactory()
 	cfg := factory.CreateDefaultConfig()
 
-	tReceiver, err := factory.CreateTracesReceiver(context.Background(), creationSet, cfg, consumertest.NewNop())
+	tReceiver, err := factory.CreateTraces(context.Background(), creationSet, cfg, consumertest.NewNop())
 	assert.Equal(t, err, pipeline.ErrSignalNotSupported)
 	assert.Nil(t, tReceiver)
 
-	mReceiver, err := factory.CreateMetricsReceiver(context.Background(), creationSet, cfg, consumertest.NewNop())
+	mReceiver, err := factory.CreateMetrics(context.Background(), creationSet, cfg, consumertest.NewNop())
 	assert.NoError(t, err)
 	assert.NotNil(t, mReceiver)
 
-	tLogs, err := factory.CreateLogsReceiver(context.Background(), creationSet, cfg, consumertest.NewNop())
+	tLogs, err := factory.CreateLogs(context.Background(), creationSet, cfg, consumertest.NewNop())
 	assert.Equal(t, err, pipeline.ErrSignalNotSupported)
 	assert.Nil(t, tLogs)
 }
@@ -43,6 +43,6 @@ func TestCreateReceiver(t *testing.T) {
 func TestCreateReceiver_ScraperConfigError(t *testing.T) {
 	factory := NewFactory()
 
-	_, err := factory.CreateMetricsReceiver(context.Background(), creationSet, "dummy", consumertest.NewNop())
+	_, err := factory.CreateMetrics(context.Background(), creationSet, "dummy", consumertest.NewNop())
 	assert.EqualError(t, err, ErrConfigNotValid.Error())
 }
