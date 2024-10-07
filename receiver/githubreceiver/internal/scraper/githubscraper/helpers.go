@@ -122,10 +122,8 @@ func (ghs *githubScraper) login(
 	// and thus must match the convention for user: and org: searches in GitHub
 	switch {
 	case resp.User.Login == owner:
-		ghs.logger.Sugar().Errorf("helpers.go got 'user'", zap.Error(err))
 		loginType = "user"
 	case resp.Organization.Login == owner:
-		ghs.logger.Sugar().Errorf("helpers.go got 'org'", zap.Error(err))
 		loginType = "org"
 	default:
 		return "", err

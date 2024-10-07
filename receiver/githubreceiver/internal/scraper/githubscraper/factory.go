@@ -40,7 +40,7 @@ func (f *Factory) CreateMetricsScraper(
 	cfg internal.Config,
 ) (scraperhelper.Scraper, error) {
 	conf := cfg.(*Config)
-	s := newGitHubScraper(ctx, params, conf)
+	s := newGitHubScraper(params, conf)
 
 	scrapeType, err := component.NewType(TypeStr)
 	if err != nil {
