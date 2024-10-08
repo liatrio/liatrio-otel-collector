@@ -91,8 +91,8 @@ github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.111.0 h1:0MJmp4O7KUQOUmQYJEGNgtf30Nhx/3nLMn0jnU4Klhw=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.111.0/go.mod h1:4PYgwpscyZUUdQVLsd7dh+LXtm1QbWCvU47P3G/7tLg=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.110.0 h1:/kMxDplBmo99UQwkpnCkHO3mwBD6/YcX/ldwlZSURFw=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.110.0/go.mod h1:nn/ktwLdZ6O9mtnRuak8NQEfGRow3VI3l+YqAroJX7g=
+github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.111.0 h1:Ld/1EUAQ6z3CirSyf4A8waHzUAZbMPrDOno+7tb0vKM=
+github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.111.0/go.mod h1:wAOT1iGOOTPTw2ysr0DW2Wrfi0/TECVgiGByRQfFiV4=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.111.0 h1:kUUO8VNv/d9Tpx0NvOsRnUsz/JvZ8SWRnK+vT0cNjuU=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.111.0/go.mod h1:SstR8PglIFBVGCZHS69bwJGl6TaCQQ5aLSEoas/8SRA=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

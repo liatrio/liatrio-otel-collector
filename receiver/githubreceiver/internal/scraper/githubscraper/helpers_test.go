@@ -14,7 +14,7 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/google/go-github/v65/github"
+	"github.com/google/go-github/v66/github"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )

@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/google/go-github/v65/github"
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 	"go.uber.org/zap"
+	"github.com/google/go-github/v66/github"
 )
 
 const (
