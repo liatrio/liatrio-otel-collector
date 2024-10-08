@@ -4,7 +4,7 @@ resourceMetrics:
       attributes:
         - key: organization.name
           value:
-            stringValue: open-telemetry
+            stringValue: liatrio
         - key: vcs.vendor.name
           value:
             stringValue: github

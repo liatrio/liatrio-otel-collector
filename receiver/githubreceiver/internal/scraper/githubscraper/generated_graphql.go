@@ -103,7 +103,8 @@ func (v *BranchHistoryTargetBlob) GetTypename() string { return v.Typename }
 // Represents a Git commit.
 type BranchHistoryTargetCommit struct {
 	Typename string `json:"__typename"`
-	Id       string `json:"id"`
+	// The Node ID of the Commit object
+	Id string `json:"id"`
 	// The linear commit history starting from (and including) this commit, in the same order as `git log`.
 	History BranchHistoryTargetCommitHistoryCommitHistoryConnection `json:"history"`
 }
@@ -358,6 +359,7 @@ func (v *BranchNodeRepositoryDefaultBranchRef) GetName() string { return v.Name 
 //
 // A Dependabot alert for a repository with a dependency affected by a security vulnerability.
 type CVENode struct {
+	// The Node ID of the RepositoryVulnerabilityAlert object
 	Id string `json:"id"`
 	// The associated security vulnerability
 	SecurityVulnerability CVENodeSecurityVulnerability `json:"securityVulnerability"`
@@ -530,12 +532,12 @@ func (v *PullRequestNodeReviewsPullRequestReviewConnectionNodesPullRequestReview
 type PullRequestState string
 
 const (
-	// A pull request that is still open.
-	PullRequestStateOpen PullRequestState = "OPEN"
 	// A pull request that has been closed without being merged.
 	PullRequestStateClosed PullRequestState = "CLOSED"
 	// A pull request that has been closed by being merged.
 	PullRequestStateMerged PullRequestState = "MERGED"
+	// A pull request that is still open.
+	PullRequestStateOpen PullRequestState = "OPEN"
 )
 
 // Repo includes the GraphQL fields of Repository requested by the fragment Repo.
@@ -543,6 +545,7 @@ const (
 //
 // A repository contains the content for a project.
 type Repo struct {
+	// The Node ID of the Repository object
 	Id string `json:"id"`
 	// The name of the repository.
 	Name string `json:"name"`
@@ -884,14 +887,14 @@ func (v *SearchNodeUser) GetTypename() string { return v.Typename }
 type SecurityAdvisorySeverity string
 
 const (
+	// Critical.
+	SecurityAdvisorySeverityCritical SecurityAdvisorySeverity = "CRITICAL"
+	// High.
+	SecurityAdvisorySeverityHigh SecurityAdvisorySeverity = "HIGH"
 	// Low.
 	SecurityAdvisorySeverityLow SecurityAdvisorySeverity = "LOW"
 	// Moderate.
 	SecurityAdvisorySeverityModerate SecurityAdvisorySeverity = "MODERATE"
-	// High.
-	SecurityAdvisorySeverityHigh SecurityAdvisorySeverity = "HIGH"
-	// Critical.
-	SecurityAdvisorySeverityCritical SecurityAdvisorySeverity = "CRITICAL"
 )
 
 // TeamNode includes the requested fields of the GraphQL type Repository.
@@ -1362,9 +1365,13 @@ func (v *getRepoDataBySearchResponse) GetSearch() getRepoDataBySearchSearchSearc
 // getRepoDataBySearchSearchSearchResultItemConnection includes the requested fields of the GraphQL type SearchResultItemConnection.
 // The GraphQL type's documentation follows.
 //
-// A list of results that matched against a search query. Regardless of the number of matches, a maximum of 1,000 results will be available across all types, potentially split across many pages.
+// A list of results that matched against a search query. Regardless of the number
+// of matches, a maximum of 1,000 results will be available across all types,
+// potentially split across many pages.
 type getRepoDataBySearchSearchSearchResultItemConnection struct {
-	// The total number of repositories that matched the search query. Regardless of the total number of matches, a maximum of 1,000 results will be available across all types.
+	// The total number of repositories that matched the search query. Regardless of
+	// the total number of matches, a maximum of 1,000 results will be available
+	// across all types.
 	RepositoryCount int `json:"repositoryCount"`
 	// A list of nodes.
 	Nodes []SearchNode `json:"-"`
