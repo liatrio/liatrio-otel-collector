@@ -1,6 +1,3 @@
-// Copyright The OpenTelemetry Authors
-// SPDX-License-Identifier: Apache-2.0
-
 package githubscraper
 
 import (
@@ -14,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
+
 	"github.com/Khan/genqlient/graphql"
 	"github.com/google/go-github/v66/github"
 	"github.com/stretchr/testify/assert"
@@ -21,17 +20,26 @@ import (
 )
 
 type responses struct {
-	repoResponse       repoResponse
-	prResponse         prResponse
-	branchResponse     branchResponse
-	checkLoginResponse loginResponse
-	contribResponse    contribResponse
-	commitResponse     commitResponse
-	scrape             bool
+	searchRepoResponse    searchRepoResponse
+	teamRepoResponse      teamRepoResponse
+	prResponse            prResponse
+	branchResponse        branchResponse
+	commitResponse        commitResponse
+	checkLoginResponse    loginResponse
+	contribResponse       contribResponse
+	depBotAlertResponse   depBotAlertResponse
+	codeScanAlertResponse codeScanAlertResponse
+	scrape                bool
 }
 
-type repoResponse struct {
+type searchRepoResponse struct {
 	repos        []getRepoDataBySearchSearchSearchResultItemConnection
+	responseCode int
+	page         int
+}
+
+type teamRepoResponse struct {
+	repos        []getRepoDataByTeamOrganizationTeamRepositoriesTeamRepositoryConnection
 	responseCode int
 	page         int
 }
@@ -65,13 +73,28 @@ type contribResponse struct {
 	page         int
 }
 
+type depBotAlertResponse struct {
+	depBotsAlerts []VulnerabilityAlerts
+	responseCode  int
+	page          int
+}
+
+type codeScanAlertResponse struct {
+	codeScanAlerts [][]*github.Alert
+	responseCode   int
+	page           int
+}
+
 func MockServer(responses *responses) *http.ServeMux {
 	var mux http.ServeMux
-	restEndpoint := "/api-v3/repos/o/r/contributors"
+	contribRestEndpoint := "/api-v3/repos/o/r/contributors"
+	codeScanRestEndpoint := "/api-v3/repos/o/r/code-scanning/alerts"
+
 	graphEndpoint := "/"
 	if responses.scrape {
 		graphEndpoint = "/api/graphql"
-		restEndpoint = "/api/v3/repos/open-telemetry/repo1/contributors"
+		contribRestEndpoint = "/api/v3/repos/liatrio/repo1/contributors"
+		codeScanRestEndpoint = "/api/v3/repos/liatrio/repo1/code-scanning/alerts"
 	}
 	mux.HandleFunc(graphEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		var reqBody graphql.Request
@@ -90,8 +113,25 @@ func MockServer(responses *responses) *http.ServeMux {
 					return
 				}
 			}
+		case reqBody.OpName == "getRepoDataByTeam":
+			repoResp := &responses.teamRepoResponse
+			w.WriteHeader(repoResp.responseCode)
+			if repoResp.responseCode == http.StatusOK {
+				repos := getRepoDataByTeamResponse{
+					Organization: getRepoDataByTeamOrganization{
+						Team: getRepoDataByTeamOrganizationTeam{
+							Repositories: repoResp.repos[repoResp.page],
+						},
+					},
+				}
+				graphqlResponse := graphql.Response{Data: &repos}
+				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
+					return
+				}
+				repoResp.page++
+			}
 		case reqBody.OpName == "getRepoDataBySearch":
-			repoResp := &responses.repoResponse
+			repoResp := &responses.searchRepoResponse
 			w.WriteHeader(repoResp.responseCode)
 			if repoResp.responseCode == http.StatusOK {
 				repos := getRepoDataBySearchResponse{
@@ -133,6 +173,7 @@ func MockServer(responses *responses) *http.ServeMux {
 				}
 				prResp.page++
 			}
+
 		case reqBody.OpName == "getCommitData":
 			commitResp := &responses.commitResponse
 			w.WriteHeader(commitResp.responseCode)
@@ -153,14 +194,30 @@ func MockServer(responses *responses) *http.ServeMux {
 				}
 				commitResp.page++
 			}
+
+		case reqBody.OpName == "getRepoCVEs":
+			depBotAlertResp := &responses.depBotAlertResponse
+			w.WriteHeader(depBotAlertResp.responseCode)
+			if depBotAlertResp.responseCode == http.StatusOK {
+				cves := getRepoCVEsResponse{
+					Repository: getRepoCVEsRepository{
+						VulnerabilityAlerts: depBotAlertResp.depBotsAlerts[depBotAlertResp.page],
+					},
+				}
+				graphqlResponse := graphql.Response{Data: &cves}
+				if err := json.NewEncoder(w).Encode(graphqlResponse); err != nil {
+					return
+				}
+				depBotAlertResp.page++
+			}
 		}
 	})
-	mux.HandleFunc(restEndpoint, func(w http.ResponseWriter, _ *http.Request) {
+	mux.HandleFunc(contribRestEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		contribResp := &responses.contribResponse
 		if contribResp.responseCode == http.StatusOK {
 			contribs, err := json.Marshal(contribResp.contribs[contribResp.page])
 			if err != nil {
-				fmt.Printf("error marshaling response: %v", err)
+				fmt.Printf("error marshalling response: %v", err)
 			}
 			link := fmt.Sprintf(
 				"<https://api.github.com/repositories/placeholder/contributors?per_page=100&page=%d>; rel=\"next\"",
@@ -173,6 +230,26 @@ func MockServer(responses *responses) *http.ServeMux {
 				fmt.Printf("error writing response: %v", err)
 			}
 			contribResp.page++
+		}
+	})
+	mux.HandleFunc(codeScanRestEndpoint, func(w http.ResponseWriter, r *http.Request) {
+		codeScanAlertResp := &responses.codeScanAlertResponse
+		if codeScanAlertResp.responseCode == http.StatusOK {
+			codeScanAlerts, err := json.Marshal(codeScanAlertResp.codeScanAlerts[codeScanAlertResp.page])
+			if err != nil {
+				fmt.Printf("error marshalling response: %v", err)
+			}
+			link := fmt.Sprintf(
+				"<https://api.github.com/repositories/placeholder/code-scanning/alerts?per_page=50&page=%d>; rel=\"next\"",
+				len(codeScanAlertResp.codeScanAlerts)-codeScanAlertResp.page-1,
+			)
+			w.Header().Set("Link", link)
+			// Attempt to write data to the response writer.
+			_, err = w.Write(codeScanAlerts)
+			if err != nil {
+				fmt.Printf("error writing response: %v", err)
+			}
+			codeScanAlertResp.page++
 		}
 	})
 	return &mux
@@ -272,6 +349,200 @@ func TestGetAge(t *testing.T) {
 	}
 }
 
+func TestGetSearchRepos(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		server                  *http.ServeMux
+		expectedErr             error
+		expectedRepos           int
+		expectedVulnerabilities int
+	}{
+		{
+			desc: "TestSinglePageResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				searchRepoResponse: searchRepoResponse{
+					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
+						{
+							RepositoryCount: 1,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Repo: Repo{
+										Name: "repo1",
+									}},
+							},
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:             nil,
+			expectedRepos:           1,
+			expectedVulnerabilities: 0,
+		},
+		{
+			desc: "TestMultiPageResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				searchRepoResponse: searchRepoResponse{
+					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
+						{
+							RepositoryCount: 4,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Repo: Repo{
+										Name: "repo1",
+									},
+								},
+								&SearchNodeRepository{
+									Repo: Repo{
+										Name: "repo2",
+									},
+								},
+							},
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: true,
+							},
+						},
+						{
+							RepositoryCount: 4,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Repo: Repo{
+										Name: "repo3",
+									},
+								},
+								&SearchNodeRepository{
+									Repo: Repo{
+										Name: "repo4",
+									},
+								},
+							},
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:             nil,
+			expectedRepos:           4,
+			expectedVulnerabilities: 0,
+		},
+		{
+			desc: "TestSinglePageWithVulnerabilitiesResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				searchRepoResponse: searchRepoResponse{
+					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
+						{
+							RepositoryCount: 1,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Repo: Repo{
+										Name: "repo1",
+									},
+								},
+							},
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:             nil,
+			expectedRepos:           1,
+			expectedVulnerabilities: 2,
+		},
+		{
+			desc: "TestMultiPageWithVulnerabilitieResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				searchRepoResponse: searchRepoResponse{
+					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
+						{
+							RepositoryCount: 4,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Repo: Repo{
+										Name: "repo1",
+									},
+								},
+								&SearchNodeRepository{
+									Repo: Repo{
+										Name: "repo2",
+									},
+								},
+							},
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: true,
+							},
+						},
+						{
+							RepositoryCount: 4,
+							Nodes: []SearchNode{
+								&SearchNodeRepository{
+									Repo: Repo{
+										Name: "repo1",
+									},
+								},
+								&SearchNodeRepository{
+									Repo: Repo{
+										Name: "repo4",
+									},
+								},
+							},
+							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:   nil,
+			expectedRepos: 4,
+			//expectedVulnerabilities: 8,
+		},
+		{
+			desc: "Test404Response",
+			server: MockServer(&responses{
+				scrape: false,
+				searchRepoResponse: searchRepoResponse{
+					responseCode: http.StatusNotFound,
+				},
+			}),
+			expectedErr:   errors.New("returned error 404 Not Found: "),
+			expectedRepos: 0,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopSettings()
+			ghs := newGitHubScraper(settings, defaultConfig.(*Config))
+			server := httptest.NewServer(tc.server)
+			defer func() { server.Close() }()
+			client := graphql.NewClient(server.URL, ghs.client)
+
+			_, count, err := ghs.getRepos(context.Background(), client, "fake query")
+			assert.Equal(t, tc.expectedRepos, count)
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+		})
+	}
+}
+
 func TestCheckOwnerExists(t *testing.T) {
 	testCases := []struct {
 		desc              string
@@ -282,12 +553,12 @@ func TestCheckOwnerExists(t *testing.T) {
 	}{
 		{
 			desc:  "TestOrgOwnerExists",
-			login: "open-telemetry",
+			login: "liatrio",
 			server: MockServer(&responses{
 				checkLoginResponse: loginResponse{
 					checkLogin: checkLoginResponse{
 						Organization: checkLoginOrganization{
-							Login: "open-telemetry",
+							Login: "liatrio",
 						},
 					},
 					responseCode: http.StatusOK,
@@ -297,12 +568,12 @@ func TestCheckOwnerExists(t *testing.T) {
 		},
 		{
 			desc:  "TestUserOwnerExists",
-			login: "open-telemetry",
+			login: "liatrio",
 			server: MockServer(&responses{
 				checkLoginResponse: loginResponse{
 					checkLogin: checkLoginResponse{
 						User: checkLoginUser{
-							Login: "open-telemetry",
+							Login: "liatrio",
 						},
 					},
 					responseCode: http.StatusOK,
@@ -312,12 +583,12 @@ func TestCheckOwnerExists(t *testing.T) {
 		},
 		{
 			desc:  "TestLoginError",
-			login: "open-telemetry",
+			login: "liatrio",
 			server: MockServer(&responses{
 				checkLoginResponse: loginResponse{
 					checkLogin: checkLoginResponse{
 						Organization: checkLoginOrganization{
-							Login: "open-telemetry",
+							Login: "liatrio",
 						},
 					},
 					responseCode: http.StatusNotFound,
@@ -332,7 +603,7 @@ func TestCheckOwnerExists(t *testing.T) {
 			factory := Factory{}
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			ghs := newGitHubScraper(settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
 
@@ -343,6 +614,199 @@ func TestCheckOwnerExists(t *testing.T) {
 			if !tc.expectedError {
 				assert.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestGetBranches(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		server      *http.ServeMux
+		expectedErr error
+		expected    int
+	}{
+		{
+			desc: "TestSinglePageResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				branchResponse: branchResponse{
+					branches: []getBranchDataRepositoryRefsRefConnection{
+						{
+							TotalCount: 1,
+							Nodes: []BranchNode{
+								{
+									Name: "main",
+								},
+							},
+							PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr: nil,
+			expected:    1,
+		},
+		{
+			desc: "TestMultiPageResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				branchResponse: branchResponse{
+					branches: []getBranchDataRepositoryRefsRefConnection{
+						{
+							TotalCount: 4,
+							Nodes: []BranchNode{
+								{
+									Name: "main",
+								},
+								{
+									Name: "vader",
+								},
+							},
+							PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+								HasNextPage: true,
+							},
+						},
+						{
+							TotalCount: 4,
+							Nodes: []BranchNode{
+								{
+									Name: "skywalker",
+								},
+								{
+									Name: "rebelalliance",
+								},
+							},
+							PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+								HasNextPage: false,
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr: nil,
+			expected:    4,
+		},
+		{
+			desc: "Test404Response",
+			server: MockServer(&responses{
+				scrape: false,
+				branchResponse: branchResponse{
+					responseCode: http.StatusNotFound,
+				},
+			}),
+			expectedErr: errors.New("returned error 404 Not Found: "),
+			expected:    0,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopSettings()
+			ghs := newGitHubScraper(settings, defaultConfig.(*Config))
+			server := httptest.NewServer(tc.server)
+			defer server.Close()
+			client := graphql.NewClient(server.URL, ghs.client)
+
+			_, count, err := ghs.getBranches(context.Background(), client, "deathstarrepo", "main")
+
+			assert.Equal(t, tc.expected, count)
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+		})
+	}
+}
+
+func TestGetContributors(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		server        *http.ServeMux
+		repo          string
+		org           string
+		expectedErr   error
+		expectedCount int
+	}{
+		{
+			desc: "TestSingleListContributorsResponse",
+			server: MockServer(&responses{
+				scrape: false,
+				contribResponse: contribResponse{
+					contribs: [][]*github.Contributor{
+						{
+							{
+								ID: github.Int64(1),
+							},
+							{
+								ID: github.Int64(2),
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			repo:          "r",
+			org:           "o",
+			expectedErr:   nil,
+			expectedCount: 2,
+		},
+		{
+			desc: "TestMultipleListContributorsResponse",
+			server: MockServer(&responses{
+				contribResponse: contribResponse{
+					contribs: [][]*github.Contributor{
+						{
+							{
+								ID: github.Int64(1),
+							},
+							{
+								ID: github.Int64(2),
+							},
+						},
+						{
+							{
+								ID: github.Int64(3),
+							},
+							{
+								ID: github.Int64(4),
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			repo:          "r",
+			org:           "o",
+			expectedErr:   nil,
+			expectedCount: 4,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopSettings()
+			ghs := newGitHubScraper(settings, defaultConfig.(*Config))
+			ghs.cfg.GitHubOrg = tc.org
+
+			server := httptest.NewServer(tc.server)
+			defer func() { server.Close() }()
+
+			client := github.NewClient(nil)
+			url, err := url.Parse(server.URL + "/api-v3" + "/")
+			assert.NoError(t, err)
+			client.BaseURL = url
+			client.UploadURL = url
+
+			contribs, err := ghs.getContributorCount(context.Background(), client, tc.repo)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectedCount, contribs)
 		})
 	}
 }
@@ -440,286 +904,24 @@ func TestGetPullRequests(t *testing.T) {
 			expectedPrCount: 0,
 		},
 	}
-
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			factory := Factory{}
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			ghs := newGitHubScraper(settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
 			client := graphql.NewClient(server.URL, ghs.client)
 
 			prs, err := ghs.getPullRequests(context.Background(), client, "repo name")
 
-			assert.Len(t, prs, tc.expectedPrCount)
+			assert.Equal(t, tc.expectedPrCount, len(prs))
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.EqualError(t, err, tc.expectedErr.Error())
 			}
-		})
-	}
-}
-
-func TestGetRepos(t *testing.T) {
-	testCases := []struct {
-		desc        string
-		server      *http.ServeMux
-		expectedErr error
-		expected    int
-	}{
-		{
-			desc: "TestSinglePageResponse",
-			server: MockServer(&responses{
-				repoResponse: repoResponse{
-					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
-						{
-							RepositoryCount: 1,
-							Nodes: []SearchNode{
-								&SearchNodeRepository{
-									Name: "repo1",
-								},
-							},
-							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
-								HasNextPage: false,
-							},
-						},
-					},
-					responseCode: http.StatusOK,
-				},
-			}),
-			expectedErr: nil,
-			expected:    1,
-		},
-		{
-			desc: "TestMultiPageResponse",
-			server: MockServer(&responses{
-				repoResponse: repoResponse{
-					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
-						{
-							RepositoryCount: 4,
-							Nodes: []SearchNode{
-								&SearchNodeRepository{
-									Name: "repo1",
-								},
-								&SearchNodeRepository{
-									Name: "repo2",
-								},
-							},
-							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
-								HasNextPage: true,
-							},
-						},
-						{
-							RepositoryCount: 4,
-							Nodes: []SearchNode{
-								&SearchNodeRepository{
-									Name: "repo3",
-								},
-								&SearchNodeRepository{
-									Name: "repo4",
-								},
-							},
-							PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
-								HasNextPage: false,
-							},
-						},
-					},
-					responseCode: http.StatusOK,
-				},
-			}),
-			expectedErr: nil,
-			expected:    4,
-		},
-		{
-			desc: "Test404Response",
-			server: MockServer(&responses{
-				repoResponse: repoResponse{
-					responseCode: http.StatusNotFound,
-				},
-			}),
-			expectedErr: errors.New("returned error 404 Not Found: "),
-			expected:    0,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			server := httptest.NewServer(tc.server)
-			defer server.Close()
-			client := graphql.NewClient(server.URL, ghs.client)
-
-			_, count, err := ghs.getRepos(context.Background(), client, "fake query")
-
-			assert.Equal(t, tc.expected, count)
-			if tc.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-			}
-		})
-	}
-}
-
-func TestGetBranches(t *testing.T) {
-	testCases := []struct {
-		desc        string
-		server      *http.ServeMux
-		expectedErr error
-		expected    int
-	}{
-		{
-			desc: "TestSinglePageResponse",
-			server: MockServer(&responses{
-				branchResponse: branchResponse{
-					branches: []getBranchDataRepositoryRefsRefConnection{
-						{
-							TotalCount: 1,
-							Nodes: []BranchNode{
-								{
-									Name: "main",
-								},
-							},
-							PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-								HasNextPage: false,
-							},
-						},
-					},
-					responseCode: http.StatusOK,
-				},
-			}),
-			expectedErr: nil,
-			expected:    1,
-		},
-		{
-			desc: "TestMultiPageResponse",
-			server: MockServer(&responses{
-				branchResponse: branchResponse{
-					branches: []getBranchDataRepositoryRefsRefConnection{
-						{
-							TotalCount: 4,
-							Nodes: []BranchNode{
-								{
-									Name: "main",
-								},
-								{
-									Name: "vader",
-								},
-							},
-							PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-								HasNextPage: true,
-							},
-						},
-						{
-							TotalCount: 4,
-							Nodes: []BranchNode{
-								{
-									Name: "skywalker",
-								},
-								{
-									Name: "rebelalliance",
-								},
-							},
-							PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
-								HasNextPage: false,
-							},
-						},
-					},
-					responseCode: http.StatusOK,
-				},
-			}),
-			expectedErr: nil,
-			expected:    4,
-		},
-		{
-			desc: "Test404Response",
-			server: MockServer(&responses{
-				branchResponse: branchResponse{
-					responseCode: http.StatusNotFound,
-				},
-			}),
-			expectedErr: errors.New("returned error 404 Not Found: "),
-			expected:    0,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			server := httptest.NewServer(tc.server)
-			defer server.Close()
-			client := graphql.NewClient(server.URL, ghs.client)
-
-			_, count, err := ghs.getBranches(context.Background(), client, "deathstarrepo", "main")
-
-			assert.Equal(t, tc.expected, count)
-			if tc.expectedErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-			}
-		})
-	}
-}
-
-func TestGetContributors(t *testing.T) {
-	testCases := []struct {
-		desc          string
-		server        *http.ServeMux
-		repo          string
-		org           string
-		expectedErr   error
-		expectedCount int
-	}{
-		{
-			desc: "TestListContributorsResponse",
-			server: MockServer(&responses{
-				contribResponse: contribResponse{
-					contribs: [][]*github.Contributor{{
-						{
-							ID: github.Int64(1),
-						},
-						{
-							ID: github.Int64(2),
-						},
-					}},
-					responseCode: http.StatusOK,
-				},
-			}),
-			repo:          "r",
-			org:           "o",
-			expectedErr:   nil,
-			expectedCount: 2,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			factory := Factory{}
-			defaultConfig := factory.CreateDefaultConfig()
-			settings := receivertest.NewNopSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
-			ghs.cfg.GitHubOrg = tc.org
-
-			server := httptest.NewServer(tc.server)
-			defer func() { server.Close() }()
-
-			client := github.NewClient(nil)
-			url, err := url.Parse(server.URL + "/api-v3" + "/")
-			assert.NoError(t, err)
-			client.BaseURL = url
-			client.UploadURL = url
-
-			contribs, err := ghs.getContributorCount(context.Background(), client, tc.repo)
-			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedCount, contribs)
 		})
 	}
 }
@@ -894,7 +1096,7 @@ func TestEvalCommits(t *testing.T) {
 			factory := Factory{}
 			defaultConfig := factory.CreateDefaultConfig()
 			settings := receivertest.NewNopSettings()
-			ghs := newGitHubScraper(context.Background(), settings, defaultConfig.(*Config))
+			ghs := newGitHubScraper(settings, defaultConfig.(*Config))
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
 			client := graphql.NewClient(server.URL, ghs.client)
@@ -903,6 +1105,354 @@ func TestEvalCommits(t *testing.T) {
 			assert.Equal(t, tc.expectedAge, age)
 			assert.Equal(t, tc.expectedDeletions, dels)
 			assert.Equal(t, tc.expectedAdditions, adds)
+
+			if tc.expectedErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			}
+		})
+	}
+}
+
+func TestGetCVEs(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		server           *http.ServeMux
+		repo             string
+		org              string
+		expectedErr      error
+		expectedCVECount int64
+		expectedMap      map[metadata.AttributeCveSeverity]int64
+	}{
+		{
+			desc: "TestSinglePageRespDepBotAlert",
+			server: MockServer(&responses{
+				scrape: false,
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{
+						{
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "HIGH",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "MODERATE",
+									},
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:      nil,
+			expectedCVECount: 2,
+			expectedMap: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh:   1,
+				metadata.AttributeCveSeverityMedium: 1,
+			},
+		},
+		{
+			desc: "TestMultiPageRespDepBotAlert",
+			server: MockServer(&responses{
+				scrape: false,
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{
+						{
+							PageInfo: VulnerabilityAlertsPageInfo{
+								HasNextPage: true,
+							},
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "HIGH",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "MODERATE",
+									},
+								},
+							},
+						},
+						{
+							PageInfo: VulnerabilityAlertsPageInfo{
+								HasNextPage: false,
+							},
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "HIGH",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "MODERATE",
+									},
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedErr:      nil,
+			expectedCVECount: 4,
+			expectedMap: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh:   2,
+				metadata.AttributeCveSeverityMedium: 2,
+			},
+		},
+		{
+			desc: "TestSinglePageRespCodeScanningAlert",
+			server: MockServer(&responses{
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{{}},
+					responseCode:  http.StatusOK,
+				},
+				codeScanAlertResponse: codeScanAlertResponse{
+					codeScanAlerts: [][]*github.Alert{
+						{
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("HIGH"),
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedMap: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh: 1,
+			},
+			repo:             "r",
+			org:              "o",
+			expectedCVECount: 1,
+			expectedErr:      nil,
+		},
+		{
+			desc: "TestMultiPageRespCodeScanningAlert",
+			server: MockServer(&responses{
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{{}},
+					responseCode:  http.StatusOK,
+				},
+				codeScanAlertResponse: codeScanAlertResponse{
+					codeScanAlerts: [][]*github.Alert{
+						{
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("HIGH"),
+								},
+							},
+						},
+						{
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("HIGH"),
+								},
+							},
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("MEDIUM"),
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedMap: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh:   2,
+				metadata.AttributeCveSeverityMedium: 1,
+			},
+			repo:             "r",
+			org:              "o",
+			expectedCVECount: 3,
+			expectedErr:      nil,
+		},
+		{
+			desc: "TestSinglePageDepBotAndCodeScanningAlert",
+			server: MockServer(&responses{
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{
+						{
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "HIGH",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "MODERATE",
+									},
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				codeScanAlertResponse: codeScanAlertResponse{
+					codeScanAlerts: [][]*github.Alert{
+						{
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("HIGH"),
+								},
+							},
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("MEDIUM"),
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedMap: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh:   2,
+				metadata.AttributeCveSeverityMedium: 2,
+			},
+			repo:             "r",
+			org:              "o",
+			expectedCVECount: 4,
+			expectedErr:      nil,
+		},
+		{
+			desc: "TestMultiPageDepBotAndCodeScanningAlert",
+			server: MockServer(&responses{
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{
+						{
+							PageInfo: VulnerabilityAlertsPageInfo{
+								HasNextPage: true,
+							},
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "CRITICAL",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "MODERATE",
+									},
+								},
+							},
+						},
+						{
+							PageInfo: VulnerabilityAlertsPageInfo{
+								HasNextPage: false,
+							},
+							Nodes: []CVENode{
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "HIGH",
+									},
+								},
+								{
+									SecurityVulnerability: CVENodeSecurityVulnerability{
+										Severity: "LOW",
+									},
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+				codeScanAlertResponse: codeScanAlertResponse{
+					codeScanAlerts: [][]*github.Alert{
+						{
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("CRITICAL"),
+								},
+							},
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("LOW"),
+								},
+							},
+						},
+						{
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("HIGH"),
+								},
+							},
+							{
+								Rule: &github.Rule{
+									SecuritySeverityLevel: github.String("MEDIUM"),
+								},
+							},
+						},
+					},
+					responseCode: http.StatusOK,
+				},
+			}),
+			expectedMap: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh:     2,
+				metadata.AttributeCveSeverityMedium:   2,
+				metadata.AttributeCveSeverityLow:      2,
+				metadata.AttributeCveSeverityCritical: 2,
+			},
+			repo:             "r",
+			org:              "o",
+			expectedCVECount: 8,
+			expectedErr:      nil,
+		},
+		{
+			desc: "TestEmptyInputDepBotAndCodeScanningAlert",
+			server: MockServer(&responses{
+				depBotAlertResponse: depBotAlertResponse{
+					depBotsAlerts: []VulnerabilityAlerts{{}},
+					responseCode:  http.StatusOK,
+				},
+				codeScanAlertResponse: codeScanAlertResponse{
+					codeScanAlerts: [][]*github.Alert{{}},
+					responseCode:   http.StatusOK,
+				},
+			}),
+			expectedMap:      map[metadata.AttributeCveSeverity]int64{},
+			repo:             "r",
+			org:              "o",
+			expectedCVECount: 0,
+			expectedErr:      nil,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopSettings()
+			ghs := newGitHubScraper(settings, defaultConfig.(*Config))
+			server := httptest.NewServer(tc.server)
+			defer func() { server.Close() }()
+			ghs.cfg.GitHubOrg = tc.org
+
+			gClient := graphql.NewClient(server.URL, ghs.client)
+			rClient := github.NewClient(nil)
+
+			url, err := url.Parse(server.URL + "/api-v3" + "/")
+			assert.NoError(t, err)
+			rClient.BaseURL = url
+			rClient.UploadURL = url
+
+			cves, err := ghs.getCVEs(context.Background(), gClient, rClient, tc.repo)
+			totalCVEs := int64(0)
+
+			for _, sevCount := range cves {
+				totalCVEs += sevCount // Assuming 'cves' is a slice of VulnerabilityAlerts
+			}
+
+			assert.Equal(t, tc.expectedCVECount, totalCVEs)
 
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)

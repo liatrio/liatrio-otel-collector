@@ -18,4 +18,5 @@ type Config struct {
 	GitHubOrg string `mapstructure:"github_org"`
 	// SearchQuery is the query to use when defining a custom search for repository data
 	SearchQuery string `mapstructure:"search_query"`
+	GitHubTeam  string `mapstructure:"github_team"`
 }

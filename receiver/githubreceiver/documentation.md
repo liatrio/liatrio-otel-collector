@@ -199,9 +199,25 @@ The number of unique contributors to a repository.
 | ---- | ----------- | ------ |
 | repository.name | The name of a VCS repository | Any Str |
 
+### vcs.repository.cve.count
+
+The number of Common Vulnerabilities and Exposures (CVEs) in the repository.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| {cve} | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values |
+| ---- | ----------- | ------ |
+| repository.name | The name of a VCS repository | Any Str |
+| cve.severity | The severity of a CVE. | Str: ``critical``, ``high``, ``medium``, ``low``, ``none`` |
+
 ## Resource Attributes
 
 | Name | Description | Values | Enabled |
 | ---- | ----------- | ------ | ------- |
 | organization.name | VCS Organization | Any Str | true |
+| team.name | The name of the team in the organization | Any Str | false |
 | vcs.vendor.name | The name of the VCS vendor/provider (ie. GitHub) | Any Str | true |

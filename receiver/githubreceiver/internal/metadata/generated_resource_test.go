@@ -14,6 +14,7 @@ func TestResourceBuilder(t *testing.T) {
 			cfg := loadResourceAttributesConfig(t, tt)
 			rb := NewResourceBuilder(cfg)
 			rb.SetOrganizationName("organization.name-val")
+			rb.SetTeamName("team.name-val")
 			rb.SetVcsVendorName("vcs.vendor.name-val")
 
 			res := rb.Emit()
@@ -23,7 +24,7 @@ func TestResourceBuilder(t *testing.T) {
 			case "default":
 				assert.Equal(t, 2, res.Attributes().Len())
 			case "all_set":
-				assert.Equal(t, 2, res.Attributes().Len())
+				assert.Equal(t, 3, res.Attributes().Len())
 			case "none_set":
 				assert.Equal(t, 0, res.Attributes().Len())
 				return
@@ -35,6 +36,11 @@ func TestResourceBuilder(t *testing.T) {
 			assert.True(t, ok)
 			if ok {
 				assert.EqualValues(t, "organization.name-val", val.Str())
+			}
+			val, ok = res.Attributes().Get("team.name")
+			assert.Equal(t, tt == "all_set", ok)
+			if ok {
+				assert.EqualValues(t, "team.name-val", val.Str())
 			}
 			val, ok = res.Attributes().Get("vcs.vendor.name")
 			assert.True(t, ok)

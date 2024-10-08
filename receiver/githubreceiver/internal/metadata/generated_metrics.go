@@ -39,6 +39,44 @@ var MapAttributeChangeState = map[string]AttributeChangeState{
 	"merged": AttributeChangeStateMerged,
 }
 
+// AttributeCveSeverity specifies the a value cve.severity attribute.
+type AttributeCveSeverity int
+
+const (
+	_ AttributeCveSeverity = iota
+	AttributeCveSeverityCritical
+	AttributeCveSeverityHigh
+	AttributeCveSeverityMedium
+	AttributeCveSeverityLow
+	AttributeCveSeverityNone
+)
+
+// String returns the string representation of the AttributeCveSeverity.
+func (av AttributeCveSeverity) String() string {
+	switch av {
+	case AttributeCveSeverityCritical:
+		return "critical"
+	case AttributeCveSeverityHigh:
+		return "high"
+	case AttributeCveSeverityMedium:
+		return "medium"
+	case AttributeCveSeverityLow:
+		return "low"
+	case AttributeCveSeverityNone:
+		return "none"
+	}
+	return ""
+}
+
+// MapAttributeCveSeverity is a helper map of string to AttributeCveSeverity attribute value.
+var MapAttributeCveSeverity = map[string]AttributeCveSeverity{
+	"critical": AttributeCveSeverityCritical,
+	"high":     AttributeCveSeverityHigh,
+	"medium":   AttributeCveSeverityMedium,
+	"low":      AttributeCveSeverityLow,
+	"none":     AttributeCveSeverityNone,
+}
+
 // AttributeRefType specifies the a value ref.type attribute.
 type AttributeRefType int
 
@@ -366,6 +404,58 @@ func (m *metricVcsRepositoryCount) emit(metrics pmetric.MetricSlice) {
 
 func newMetricVcsRepositoryCount(cfg MetricConfig) metricVcsRepositoryCount {
 	m := metricVcsRepositoryCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricVcsRepositoryCveCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills vcs.repository.cve.count metric with initial data.
+func (m *metricVcsRepositoryCveCount) init() {
+	m.data.SetName("vcs.repository.cve.count")
+	m.data.SetDescription("The number of Common Vulnerabilities and Exposures (CVEs) in the repository.")
+	m.data.SetUnit("{cve}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricVcsRepositoryCveCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, cveSeverityAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("repository.name", repositoryNameAttributeValue)
+	dp.Attributes().PutStr("cve.severity", cveSeverityAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricVcsRepositoryCveCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricVcsRepositoryCveCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricVcsRepositoryCveCount(cfg MetricConfig) metricVcsRepositoryCveCount {
+	m := metricVcsRepositoryCveCount{config: cfg}
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -706,6 +796,7 @@ type MetricsBuilder struct {
 	metricVcsRepositoryChangeTimeToMerge    metricVcsRepositoryChangeTimeToMerge
 	metricVcsRepositoryContributorCount     metricVcsRepositoryContributorCount
 	metricVcsRepositoryCount                metricVcsRepositoryCount
+	metricVcsRepositoryCveCount             metricVcsRepositoryCveCount
 	metricVcsRepositoryRefCount             metricVcsRepositoryRefCount
 	metricVcsRepositoryRefLinesAdded        metricVcsRepositoryRefLinesAdded
 	metricVcsRepositoryRefLinesDeleted      metricVcsRepositoryRefLinesDeleted
@@ -744,6 +835,7 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, opt
 		metricVcsRepositoryChangeTimeToMerge:    newMetricVcsRepositoryChangeTimeToMerge(mbc.Metrics.VcsRepositoryChangeTimeToMerge),
 		metricVcsRepositoryContributorCount:     newMetricVcsRepositoryContributorCount(mbc.Metrics.VcsRepositoryContributorCount),
 		metricVcsRepositoryCount:                newMetricVcsRepositoryCount(mbc.Metrics.VcsRepositoryCount),
+		metricVcsRepositoryCveCount:             newMetricVcsRepositoryCveCount(mbc.Metrics.VcsRepositoryCveCount),
 		metricVcsRepositoryRefCount:             newMetricVcsRepositoryRefCount(mbc.Metrics.VcsRepositoryRefCount),
 		metricVcsRepositoryRefLinesAdded:        newMetricVcsRepositoryRefLinesAdded(mbc.Metrics.VcsRepositoryRefLinesAdded),
 		metricVcsRepositoryRefLinesDeleted:      newMetricVcsRepositoryRefLinesDeleted(mbc.Metrics.VcsRepositoryRefLinesDeleted),
@@ -758,6 +850,12 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, opt
 	}
 	if mbc.ResourceAttributes.OrganizationName.MetricsExclude != nil {
 		mb.resourceAttributeExcludeFilter["organization.name"] = filter.CreateFilter(mbc.ResourceAttributes.OrganizationName.MetricsExclude)
+	}
+	if mbc.ResourceAttributes.TeamName.MetricsInclude != nil {
+		mb.resourceAttributeIncludeFilter["team.name"] = filter.CreateFilter(mbc.ResourceAttributes.TeamName.MetricsInclude)
+	}
+	if mbc.ResourceAttributes.TeamName.MetricsExclude != nil {
+		mb.resourceAttributeExcludeFilter["team.name"] = filter.CreateFilter(mbc.ResourceAttributes.TeamName.MetricsExclude)
 	}
 	if mbc.ResourceAttributes.VcsVendorName.MetricsInclude != nil {
 		mb.resourceAttributeIncludeFilter["vcs.vendor.name"] = filter.CreateFilter(mbc.ResourceAttributes.VcsVendorName.MetricsInclude)
@@ -841,6 +939,7 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	mb.metricVcsRepositoryChangeTimeToMerge.emit(ils.Metrics())
 	mb.metricVcsRepositoryContributorCount.emit(ils.Metrics())
 	mb.metricVcsRepositoryCount.emit(ils.Metrics())
+	mb.metricVcsRepositoryCveCount.emit(ils.Metrics())
 	mb.metricVcsRepositoryRefCount.emit(ils.Metrics())
 	mb.metricVcsRepositoryRefLinesAdded.emit(ils.Metrics())
 	mb.metricVcsRepositoryRefLinesDeleted.emit(ils.Metrics())
@@ -906,6 +1005,11 @@ func (mb *MetricsBuilder) RecordVcsRepositoryContributorCountDataPoint(ts pcommo
 // RecordVcsRepositoryCountDataPoint adds a data point to vcs.repository.count metric.
 func (mb *MetricsBuilder) RecordVcsRepositoryCountDataPoint(ts pcommon.Timestamp, val int64) {
 	mb.metricVcsRepositoryCount.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordVcsRepositoryCveCountDataPoint adds a data point to vcs.repository.cve.count metric.
+func (mb *MetricsBuilder) RecordVcsRepositoryCveCountDataPoint(ts pcommon.Timestamp, val int64, repositoryNameAttributeValue string, cveSeverityAttributeValue AttributeCveSeverity) {
+	mb.metricVcsRepositoryCveCount.recordDataPoint(mb.startTime, ts, val, repositoryNameAttributeValue, cveSeverityAttributeValue.String())
 }
 
 // RecordVcsRepositoryRefCountDataPoint adds a data point to vcs.repository.ref.count metric.

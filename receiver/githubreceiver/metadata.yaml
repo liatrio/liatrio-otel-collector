@@ -18,6 +18,10 @@ resource_attributes:
     enabled: true
     description: The name of the VCS vendor/provider (ie. GitHub)
     type: string
+  team.name:
+    enabled: false
+    description: The name of the team in the organization
+    type: string
 
 attributes:
   repository.name:
@@ -38,6 +42,15 @@ attributes:
     enum:
       - open
       - merged
+  cve.severity:
+    description: The severity of a CVE.
+    type: string
+    enum:
+      - critical
+      - high
+      - medium
+      - low
+      - none
 
 metrics:
   vcs.repository.count:
@@ -124,6 +137,13 @@ metrics:
       value_type: int
     unit: '{change}'
     attributes: [change.state, repository.name]
+  vcs.repository.cve.count:
+    enabled: false
+    description: The number of Common Vulnerabilities and Exposures (CVEs) in the repository.
+    unit: '{cve}'
+    gauge:
+      value_type: int
+    attributes: [repository.name, cve.severity]
 
 tests:
   config:

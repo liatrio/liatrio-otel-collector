@@ -91,6 +91,9 @@ func TestMetricsBuilder(t *testing.T) {
 			allMetricsCount++
 			mb.RecordVcsRepositoryCountDataPoint(ts, 1)
 
+			allMetricsCount++
+			mb.RecordVcsRepositoryCveCountDataPoint(ts, 1, "repository.name-val", AttributeCveSeverityCritical)
+
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordVcsRepositoryRefCountDataPoint(ts, 1, "repository.name-val", AttributeRefTypeBranch)
@@ -117,6 +120,7 @@ func TestMetricsBuilder(t *testing.T) {
 
 			rb := mb.NewResourceBuilder()
 			rb.SetOrganizationName("organization.name-val")
+			rb.SetTeamName("team.name-val")
 			rb.SetVcsVendorName("vcs.vendor.name-val")
 			res := rb.Emit()
 			metrics := mb.Emit(WithResource(res))
@@ -239,6 +243,24 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
+				case "vcs.repository.cve.count":
+					assert.False(t, validatedMetrics["vcs.repository.cve.count"], "Found a duplicate in the metrics slice: vcs.repository.cve.count")
+					validatedMetrics["vcs.repository.cve.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The number of Common Vulnerabilities and Exposures (CVEs) in the repository.", ms.At(i).Description())
+					assert.Equal(t, "{cve}", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("repository.name")
+					assert.True(t, ok)
+					assert.EqualValues(t, "repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("cve.severity")
+					assert.True(t, ok)
+					assert.EqualValues(t, "critical", attrVal.Str())
 				case "vcs.repository.ref.count":
 					assert.False(t, validatedMetrics["vcs.repository.ref.count"], "Found a duplicate in the metrics slice: vcs.repository.ref.count")
 					validatedMetrics["vcs.repository.ref.count"] = true

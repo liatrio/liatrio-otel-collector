@@ -13,6 +13,8 @@ all_set:
       enabled: true
     vcs.repository.count:
       enabled: true
+    vcs.repository.cve.count:
+      enabled: true
     vcs.repository.ref.count:
       enabled: true
     vcs.repository.ref.lines_added:
@@ -27,6 +29,8 @@ all_set:
       enabled: true
   resource_attributes:
     organization.name:
+      enabled: true
+    team.name:
       enabled: true
     vcs.vendor.name:
       enabled: true
@@ -44,6 +48,8 @@ none_set:
       enabled: false
     vcs.repository.count:
       enabled: false
+    vcs.repository.cve.count:
+      enabled: false
     vcs.repository.ref.count:
       enabled: false
     vcs.repository.ref.lines_added:
@@ -59,11 +65,17 @@ none_set:
   resource_attributes:
     organization.name:
       enabled: false
+    team.name:
+      enabled: false
     vcs.vendor.name:
       enabled: false
 filter_set_include:
   resource_attributes:
     organization.name:
+      enabled: true
+      metrics_include:
+        - regexp: ".*"
+    team.name:
       enabled: true
       metrics_include:
         - regexp: ".*"
@@ -77,6 +89,10 @@ filter_set_exclude:
       enabled: true
       metrics_exclude:
         - strict: "organization.name-val"
+    team.name:
+      enabled: true
+      metrics_exclude:
+        - strict: "team.name-val"
     vcs.vendor.name:
       enabled: true
       metrics_exclude:

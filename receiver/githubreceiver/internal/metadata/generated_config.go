@@ -34,6 +34,7 @@ type MetricsConfig struct {
 	VcsRepositoryChangeTimeToMerge    MetricConfig `mapstructure:"vcs.repository.change.time_to_merge"`
 	VcsRepositoryContributorCount     MetricConfig `mapstructure:"vcs.repository.contributor.count"`
 	VcsRepositoryCount                MetricConfig `mapstructure:"vcs.repository.count"`
+	VcsRepositoryCveCount             MetricConfig `mapstructure:"vcs.repository.cve.count"`
 	VcsRepositoryRefCount             MetricConfig `mapstructure:"vcs.repository.ref.count"`
 	VcsRepositoryRefLinesAdded        MetricConfig `mapstructure:"vcs.repository.ref.lines_added"`
 	VcsRepositoryRefLinesDeleted      MetricConfig `mapstructure:"vcs.repository.ref.lines_deleted"`
@@ -61,6 +62,9 @@ func DefaultMetricsConfig() MetricsConfig {
 		},
 		VcsRepositoryCount: MetricConfig{
 			Enabled: true,
+		},
+		VcsRepositoryCveCount: MetricConfig{
+			Enabled: false,
 		},
 		VcsRepositoryRefCount: MetricConfig{
 			Enabled: true,
@@ -112,6 +116,7 @@ func (rac *ResourceAttributeConfig) Unmarshal(parser *confmap.Conf) error {
 // ResourceAttributesConfig provides config for github resource attributes.
 type ResourceAttributesConfig struct {
 	OrganizationName ResourceAttributeConfig `mapstructure:"organization.name"`
+	TeamName         ResourceAttributeConfig `mapstructure:"team.name"`
 	VcsVendorName    ResourceAttributeConfig `mapstructure:"vcs.vendor.name"`
 }
 
@@ -119,6 +124,9 @@ func DefaultResourceAttributesConfig() ResourceAttributesConfig {
 	return ResourceAttributesConfig{
 		OrganizationName: ResourceAttributeConfig{
 			Enabled: true,
+		},
+		TeamName: ResourceAttributeConfig{
+			Enabled: false,
 		},
 		VcsVendorName: ResourceAttributeConfig{
 			Enabled: true,

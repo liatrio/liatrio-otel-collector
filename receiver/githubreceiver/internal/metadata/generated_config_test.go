@@ -31,6 +31,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					VcsRepositoryChangeTimeToMerge:    MetricConfig{Enabled: true},
 					VcsRepositoryContributorCount:     MetricConfig{Enabled: true},
 					VcsRepositoryCount:                MetricConfig{Enabled: true},
+					VcsRepositoryCveCount:             MetricConfig{Enabled: true},
 					VcsRepositoryRefCount:             MetricConfig{Enabled: true},
 					VcsRepositoryRefLinesAdded:        MetricConfig{Enabled: true},
 					VcsRepositoryRefLinesDeleted:      MetricConfig{Enabled: true},
@@ -40,6 +41,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					OrganizationName: ResourceAttributeConfig{Enabled: true},
+					TeamName:         ResourceAttributeConfig{Enabled: true},
 					VcsVendorName:    ResourceAttributeConfig{Enabled: true},
 				},
 			},
@@ -54,6 +56,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					VcsRepositoryChangeTimeToMerge:    MetricConfig{Enabled: false},
 					VcsRepositoryContributorCount:     MetricConfig{Enabled: false},
 					VcsRepositoryCount:                MetricConfig{Enabled: false},
+					VcsRepositoryCveCount:             MetricConfig{Enabled: false},
 					VcsRepositoryRefCount:             MetricConfig{Enabled: false},
 					VcsRepositoryRefLinesAdded:        MetricConfig{Enabled: false},
 					VcsRepositoryRefLinesDeleted:      MetricConfig{Enabled: false},
@@ -63,6 +66,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					OrganizationName: ResourceAttributeConfig{Enabled: false},
+					TeamName:         ResourceAttributeConfig{Enabled: false},
 					VcsVendorName:    ResourceAttributeConfig{Enabled: false},
 				},
 			},
@@ -101,6 +105,7 @@ func TestResourceAttributesConfig(t *testing.T) {
 			name: "all_set",
 			want: ResourceAttributesConfig{
 				OrganizationName: ResourceAttributeConfig{Enabled: true},
+				TeamName:         ResourceAttributeConfig{Enabled: true},
 				VcsVendorName:    ResourceAttributeConfig{Enabled: true},
 			},
 		},
@@ -108,6 +113,7 @@ func TestResourceAttributesConfig(t *testing.T) {
 			name: "none_set",
 			want: ResourceAttributesConfig{
 				OrganizationName: ResourceAttributeConfig{Enabled: false},
+				TeamName:         ResourceAttributeConfig{Enabled: false},
 				VcsVendorName:    ResourceAttributeConfig{Enabled: false},
 			},
 		},
