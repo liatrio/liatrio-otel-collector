@@ -17,7 +17,7 @@ extensions:
   - gomod: github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension v0.52.0
 
 exporters:
-  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.111.0
+  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.112.0
   - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.111.0
   - gomod: go.opentelemetry.io/collector/exporter/otlphttpexporter v0.111.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awsxrayexporter v0.111.0
