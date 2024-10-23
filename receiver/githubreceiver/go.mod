@@ -6,7 +6,7 @@ require (
 	github.com/Khan/genqlient v0.7.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-github/v66 v66.0.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.111.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.112.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.111.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector/component v0.112.0
@@ -28,7 +28,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.111.0 // indirect
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.112.0 // indirect
 	github.com/shirou/gopsutil/v4 v4.24.9 // indirect
 	go.opentelemetry.io/collector v0.112.0 // indirect
 	go.opentelemetry.io/collector/client v1.18.0 // indirect
