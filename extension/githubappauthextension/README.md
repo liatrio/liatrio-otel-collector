@@ -75,7 +75,7 @@ receivers:
     initial_delay: 1s
     collection_interval: 60s
     scrapers:
-      github:
+      scraper:
         metrics:
           git.repository.contributor.count:
             enabled: true

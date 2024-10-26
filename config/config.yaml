@@ -18,36 +18,15 @@ receivers:
     collection_interval: 60s
     scrapers:
       gitlab:
-        metrics:
-          #Default Metrics (enabled by default)
-          vcs.repository.count:
-            enabled: true
-          vcs.repository.change.count:
-            enabled: false
-          vcs.repository.change.time_open:
-            enabled: false
-          vcs.repository.change.time_to_approval:
-            enabled: false
-          vcs.repository.change.time_to_merge:
-            enabled: false
-          vcs.repository.ref.count:
-            enabled: false
-          vcs.repository.ref.lines_added:
-            enabled: false
-          vcs.repository.ref.lines_deleted:
-            enabled: false
-          vcs.repository.ref.revisions_ahead:
-            enabled: false
-          vcs.repository.ref.revisions_behind:
-            enabled: false
-          vcs.repository.ref.time:
-            enabled: false
-          #Optional Metrics
-          vcs.repository.contributor.count:
-            enabled: false
+        # Optionally enable or disable metrics
+        # metrics:
+          # Example
+          # vcs.repository.count:
+          #   enabled: true
+          #   ...
         gitlab_org: ${env:GL_ORG}
-        #search_query: ${env:SEARCH_QUERY}  #Recommended optional query override, defaults to "{org,user}:<github_org>"
-        #endpoint: https://selfmanagedenterpriseserver.com
+        # search_query: ${env:SEARCH_QUERY}  #Recommended optional query override, defaults to "{org,user}:<github_org>"
+        # endpoint: https://selfmanagedenterpriseserver.com
         auth:
           authenticator: bearertokenauth/gitlab
 
@@ -55,37 +34,16 @@ receivers:
     initial_delay: 10s
     collection_interval: 60s
     scrapers:
-      github:
-        metrics:
-          #Default Metrics (enabled by default)
-          vcs.repository.count:
-            enabled: true
-          vcs.repository.change.count:
-            enabled: false
-          vcs.repository.change.time_open:
-            enabled: false
-          vcs.repository.change.time_to_approval:
-            enabled: false
-          vcs.repository.change.time_to_merge:
-            enabled: false
-          vcs.repository.ref.count:
-            enabled: false
-          vcs.repository.ref.lines_added:
-            enabled: false
-          vcs.repository.ref.lines_deleted:
-            enabled: false
-          vcs.repository.ref.revisions_ahead:
-            enabled: false
-          vcs.repository.ref.revisions_behind:
-            enabled: false
-          vcs.repository.ref.time:
-            enabled: false
-          #Optional Metrics
-          vcs.repository.contributor.count:
-            enabled: false
+      scraper:
+        # Optionally enable or disable metrics
+        # metrics:
+          # Example
+          # vcs.repository.count:
+          #   enabled: true
+          #   ...
         github_org: ${env:GH_ORG}
-        #search_query: ${env:SEARCH_QUERY}  #Recommended optional query override, defaults to "{org,user}:<github_org>"
-        #endpoint: https://selfmanagedenterpriseserver.com
+        # search_query: ${env:SEARCH_QUERY}  #Recommended optional query override, defaults to "{org,user}:<github_org>"
+        # endpoint: https://selfmanagedenterpriseserver.com
         auth:
           authenticator: bearertokenauth/github
 
@@ -102,6 +60,6 @@ service:
   extensions: [bearertokenauth/github, bearertokenauth/gitlab]
   pipelines:
     metrics:
-      receivers: [gitlab]
+      receivers: [gitlab, github]
       processors: []
       exporters: [debug]
