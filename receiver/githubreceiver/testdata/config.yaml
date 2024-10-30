@@ -4,13 +4,13 @@ receivers:
     initial_delay: 1s
     collection_interval: 60s
     scrapers:
-      github:
+      scraper:
 
   github/customname:
     initial_delay: 1s
     collection_interval: 30s
     scrapers:
-      github:
+      scraper:
 
 processors:
   nop:
