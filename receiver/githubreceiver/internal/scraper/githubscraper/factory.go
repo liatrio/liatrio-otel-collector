@@ -9,7 +9,6 @@ import (
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal"
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
-	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
@@ -42,12 +41,7 @@ func (f *Factory) CreateMetricsScraper(
 	conf := cfg.(*Config)
 	s := newGitHubScraper(params, conf)
 
-	scrapeType, err := component.NewType(TypeStr)
-	if err != nil {
-		return nil, err
-	}
-	return scraperhelper.NewScraper(
-		scrapeType,
+	return scraperhelper.NewScraperWithoutType(
 		s.scrape,
 		scraperhelper.WithStart(s.start),
 	)
