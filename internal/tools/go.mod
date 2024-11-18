@@ -4,13 +4,13 @@ go 1.23
 
 require (
 	github.com/Khan/genqlient v0.7.0
-	github.com/golangci/golangci-lint v1.61.0
+	github.com/golangci/golangci-lint v1.62.0
 	github.com/google/osv-scanner v1.9.1
 	github.com/securego/gosec/v2 v2.21.4
 	go.opentelemetry.io/build-tools/crosslink v0.15.0
 	go.opentelemetry.io/build-tools/multimod v0.15.0
-	go.opentelemetry.io/collector/cmd/builder v0.113.0
-	go.opentelemetry.io/collector/cmd/mdatagen v0.113.0
+	go.opentelemetry.io/collector/cmd/builder v0.114.0
+	go.opentelemetry.io/collector/cmd/mdatagen v0.114.0
 	golang.org/x/tools v0.27.0
 	golang.org/x/vuln v1.1.3
 	honnef.co/go/tools v0.5.1
@@ -31,10 +31,10 @@ require (
 	deps.dev/util/resolve v0.0.0-20241010035105-b3ba03369df1 // indirect
 	deps.dev/util/semver v0.0.0-20241010035105-b3ba03369df1 // indirect
 	github.com/4meepo/tagalign v1.3.4 // indirect
-	github.com/Abirdcfly/dupword v0.1.1 // indirect
-	github.com/Antonboom/errname v0.1.13 // indirect
-	github.com/Antonboom/nilnil v0.1.9 // indirect
-	github.com/Antonboom/testifylint v1.4.3 // indirect
+	github.com/Abirdcfly/dupword v0.1.3 // indirect
+	github.com/Antonboom/errname v1.0.0 // indirect
+	github.com/Antonboom/nilnil v1.0.0 // indirect
+	github.com/Antonboom/testifylint v1.5.0 // indirect
 	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // indirect
 	github.com/Crocmagnon/fatcontext v0.5.2 // indirect
 	github.com/CycloneDX/cyclonedx-go v0.9.1 // indirect
@@ -46,10 +46,10 @@ require (
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
-	github.com/alecthomas/go-check-sumtype v0.1.4 // indirect
+	github.com/alecthomas/go-check-sumtype v0.2.0 // indirect
 	github.com/alexflint/go-arg v1.5.1 // indirect
 	github.com/alexflint/go-scalar v1.2.0 // indirect
-	github.com/alexkohler/nakedret/v2 v2.0.4 // indirect
+	github.com/alexkohler/nakedret/v2 v2.0.5 // indirect
 	github.com/alexkohler/prealloc v1.0.0 // indirect
 	github.com/alingse/asasalint v0.0.11 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20230627203149-c72ef8859ca9 // indirect
@@ -59,11 +59,11 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bkielbasa/cyclop v1.2.1 // indirect
+	github.com/bkielbasa/cyclop v1.2.3 // indirect
 	github.com/blizzy78/varnamelen v0.8.0 // indirect
 	github.com/bombsimon/wsl/v4 v4.4.1 // indirect
-	github.com/breml/bidichk v0.2.7 // indirect
-	github.com/breml/errchkjson v0.3.6 // indirect
+	github.com/breml/bidichk v0.3.2 // indirect
+	github.com/breml/errchkjson v0.4.0 // indirect
 	github.com/butuzov/ireturn v0.3.0 // indirect
 	github.com/butuzov/mirror v1.2.0 // indirect
 	github.com/catenacyber/perfsprint v0.7.1 // indirect
@@ -77,7 +77,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.2.3 // indirect
 	github.com/charmbracelet/x/term v0.2.0 // indirect
 	github.com/chavacava/garif v0.1.0 // indirect
-	github.com/ckaznocha/intrange v0.2.0 // indirect
+	github.com/ckaznocha/intrange v0.2.1 // indirect
 	github.com/cloudflare/circl v1.3.9 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
@@ -93,14 +93,14 @@ require (
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/ettle/strcase v0.2.0 // indirect
-	github.com/fatih/color v1.17.0 // indirect
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/firefart/nonamedreturns v1.0.5 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect
-	github.com/ghostiam/protogetter v0.3.6 // indirect
-	github.com/go-critic/go-critic v0.11.4 // indirect
+	github.com/ghostiam/protogetter v0.3.8 // indirect
+	github.com/go-critic/go-critic v0.11.5 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.5.0 // indirect
 	github.com/go-git/go-git/v5 v5.12.0 // indirect
@@ -120,6 +120,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golangci/dupl v0.0.0-20180902072040-3e9179ac440a // indirect
+	github.com/golangci/go-printf-func-name v0.1.0 // indirect
 	github.com/golangci/gofmt v0.0.0-20240816233607-d8596aa466a9 // indirect
 	github.com/golangci/misspell v0.6.0 // indirect
 	github.com/golangci/modinfo v0.3.4 // indirect
@@ -155,7 +156,7 @@ require (
 	github.com/julz/importas v0.1.0 // indirect
 	github.com/karamaru-alpha/copyloopvar v1.1.0 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/kisielk/errcheck v1.7.0 // indirect
+	github.com/kisielk/errcheck v1.8.0 // indirect
 	github.com/kkHAIKE/contextcheck v1.1.5 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
@@ -164,11 +165,11 @@ require (
 	github.com/knadh/koanf/providers/env v1.0.0 // indirect
 	github.com/knadh/koanf/providers/file v1.1.2 // indirect
 	github.com/knadh/koanf/providers/fs v0.1.0 // indirect
-	github.com/knadh/koanf/v2 v2.1.1 // indirect
+	github.com/knadh/koanf/v2 v2.1.2 // indirect
 	github.com/kulti/thelper v0.6.3 // indirect
 	github.com/kunwardeep/paralleltest v1.0.10 // indirect
 	github.com/kyoh86/exportloopref v0.1.11 // indirect
-	github.com/lasiar/canonicalheader v1.1.1 // indirect
+	github.com/lasiar/canonicalheader v1.1.2 // indirect
 	github.com/ldez/gomoddirectives v0.2.4 // indirect
 	github.com/ldez/tagliatelle v0.5.0 // indirect
 	github.com/leonklingele/grouper v1.1.2 // indirect
@@ -183,7 +184,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.2-0.20220822084749-2491eb6c1c75 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/mgechev/revive v1.3.9 // indirect
+	github.com/mgechev/revive v1.5.0 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -200,7 +201,7 @@ require (
 	github.com/nakabonne/nestif v0.3.1 // indirect
 	github.com/nishanths/exhaustive v0.12.0 // indirect
 	github.com/nishanths/predeclared v0.2.2 // indirect
-	github.com/nunnatsa/ginkgolinter v0.16.2 // indirect
+	github.com/nunnatsa/ginkgolinter v0.18.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
@@ -220,7 +221,9 @@ require (
 	github.com/quasilyte/gogrep v0.5.0 // indirect
 	github.com/quasilyte/regex/syntax v0.0.0-20210819130434-b3f0c404a727 // indirect
 	github.com/quasilyte/stdinfo v0.0.0-20220114132959-f7386bf02567 // indirect
+	github.com/raeperd/recvcheck v0.1.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryancurrah/gomodguard v1.3.5 // indirect
 	github.com/ryanrolds/sqlclosecheck v0.5.1 // indirect
@@ -235,9 +238,9 @@ require (
 	github.com/shazow/go-diff v0.0.0-20160112020656-b6b7b6733b8c // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect
-	github.com/sivchari/tenv v1.10.0 // indirect
+	github.com/sivchari/tenv v1.12.1 // indirect
 	github.com/skeema/knownhosts v1.3.0 // indirect
-	github.com/sonatard/noctx v0.0.2 // indirect
+	github.com/sonatard/noctx v0.1.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/sourcegraph/go-diff v0.7.0 // indirect
 	github.com/spdx/gordf v0.0.0-20221230105357-b735bd5aac89 // indirect
@@ -253,19 +256,20 @@ require (
 	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tdakkota/asciicheck v0.2.0 // indirect
-	github.com/tetafro/godot v1.4.17 // indirect
+	github.com/tetafro/godot v1.4.18 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/timakin/bodyclose v0.0.0-20240125160201-f835fa56326a // indirect
-	github.com/timonwong/loggercheck v0.9.4 // indirect
+	github.com/timonwong/loggercheck v0.10.1 // indirect
 	github.com/tomarrell/wrapcheck/v2 v2.9.0 // indirect
 	github.com/tommy-muehle/go-mnd/v2 v2.5.1 // indirect
 	github.com/ultraware/funlen v0.1.0 // indirect
 	github.com/ultraware/whitespace v0.1.1 // indirect
 	github.com/urfave/cli/v2 v2.27.5 // indirect
 	github.com/uudashr/gocognit v1.1.3 // indirect
+	github.com/uudashr/iface v1.2.0 // indirect
 	github.com/vbatts/tar-split v0.11.5 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.16 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
@@ -278,27 +282,27 @@ require (
 	github.com/yuin/goldmark v1.7.4 // indirect
 	github.com/yuin/goldmark-emoji v1.0.3 // indirect
 	gitlab.com/bosi/decorder v0.4.2 // indirect
-	go-simpler.org/musttag v0.12.2 // indirect
+	go-simpler.org/musttag v0.13.0 // indirect
 	go-simpler.org/sloglint v0.7.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/build-tools v0.15.0 // indirect
-	go.opentelemetry.io/collector/component v0.113.0 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.113.0 // indirect
-	go.opentelemetry.io/collector/confmap v1.19.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.19.0 // indirect
-	go.opentelemetry.io/collector/filter v0.113.0 // indirect
-	go.opentelemetry.io/collector/pdata v1.19.0 // indirect
+	go.opentelemetry.io/collector/component v0.114.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.114.0 // indirect
+	go.opentelemetry.io/collector/confmap v1.20.0 // indirect
+	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.20.0 // indirect
+	go.opentelemetry.io/collector/filter v0.114.0 // indirect
+	go.opentelemetry.io/collector/pdata v1.20.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.54.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0 // indirect
-	go.opentelemetry.io/otel v1.31.0 // indirect
-	go.opentelemetry.io/otel/metric v1.31.0 // indirect
-	go.opentelemetry.io/otel/trace v1.31.0 // indirect
-	go.uber.org/automaxprocs v1.5.3 // indirect
+	go.opentelemetry.io/otel v1.32.0 // indirect
+	go.opentelemetry.io/otel/metric v1.32.0 // indirect
+	go.opentelemetry.io/otel/trace v1.32.0 // indirect
+	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.29.0 // indirect
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
-	golang.org/x/exp/typeparams v0.0.0-20240808152545-0cdaa3abc0fa // indirect
+	golang.org/x/exp/typeparams v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.31.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
