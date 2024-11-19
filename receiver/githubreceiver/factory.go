@@ -95,6 +95,11 @@ func createAddScraperOpts(
 ) ([]scraperhelper.ScraperControllerOption, error) {
 	scraperControllerOptions := make([]scraperhelper.ScraperControllerOption, 0, len(cfg.Scrapers))
 
+	scrapeType, err := component.NewType(githubscraper.TypeStr)
+	if err != nil {
+		return nil, err
+	}
+
 	for key, cfg := range cfg.Scrapers {
 		githubScraper, err := createGitHubScraper(ctx, params, key, cfg, factories)
 
@@ -102,7 +107,7 @@ func createAddScraperOpts(
 			return nil, fmt.Errorf("failed to create scraper %q: %w", key, err)
 		}
 
-		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddScraper(githubScraper))
+		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddScraperWithType(scrapeType, githubScraper))
 	}
 
 	return scraperControllerOptions, nil
