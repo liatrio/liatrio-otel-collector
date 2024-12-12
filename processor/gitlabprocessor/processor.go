@@ -2,6 +2,7 @@ package gitlabprocessor
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	// "github.com/aerospike/aerospike-client-go/v7/logger"
 	// "github.com/xanzy/go-gitlab"
+	// "go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
 	// "github.com/open-telemetry/opentelemetry-collector-contrib/internal/filter/expr"
@@ -18,17 +20,18 @@ import (
 type logProcessor struct {
 	logger *zap.Logger
 	cfg    *Config
-	client *http.Client
+	// client *http.Client
 	// skipExpr expr.BoolExpr[ottllog.TransformContext]
 }
 
 // newLogAttributesProcessor returns a processor that modifies attributes of a
 // log record. To construct the attributes processors, the use of the factory
 // methods are required in order to validate the inputs.
-func newLogProcessor(logger *zap.Logger, cfg Config) *logProcessor {
+func newLogProcessor(_ context.Context, logger *zap.Logger, cfg *Config) *logProcessor {
 	return &logProcessor{
 		logger: logger,
-		cfg:    &cfg,
+		cfg:    cfg,
+		// client: &http.Client{},
 	}
 }
 
@@ -54,36 +57,48 @@ func (a *logProcessor) processLogs(ctx context.Context, ld plog.Logs) (plog.Logs
 					continue
 				}
 
-				attrs, err := a.getPipeCompAttrs(ctx, fullPath.AsString(), revision.AsString())
+				comps, err := a.getPipeCompAttrs(ctx, fullPath.AsString(), revision.AsString())
 				if err != nil {
 					a.logger.Sugar().Errorf("error: %v", err)
+					continue
 				}
 
-				a.logger.Sugar().Infof("attrs: %v", attrs)
+				// Process each component and add as attributes
+				for compPath, version := range comps {
+					// Split the path and get the last component
+					parts := strings.Split(compPath, "/")
+					if len(parts) > 0 {
+						// Get the last part and transform it
+						componentName := parts[len(parts)-1]
+						// Convert hyphens to underscores and ensure lowercase
+						componentName = strings.ToLower(strings.ReplaceAll(componentName, "-", "_"))
+						// Create the attribute name
+						attrName := "component." + componentName + ".version"
 
-				// if a.skipExpr != nil {
-				// 	skip, err := a.skipExpr.Eval(ctx, ottllog.NewTransformContext(lr, library, resource, ils, rs))
-				// 	if err != nil {
-				// 		return ld, err
-				// 	}
-				// 	if skip {
-				// 		continue
-				// 	}
-				// }
-				//
-				// a.attrProc.Process(ctx, a.logger, lr.Attributes())
+						// Add the attribute to the log record
+						lr.Attributes().PutStr(attrName, version)
+					}
+				}
 			}
 		}
 
 	}
-
-	// for i := 0; i < rls.Len(); i++ {
 	return ld, nil
+}
+
+type authedTransport struct {
+	key     string
+	wrapped http.RoundTripper
+}
+
+func (t *authedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("Authorization", "bearer "+t.key)
+	return t.wrapped.RoundTrip(req)
 }
 
 // func (a *logProcessor) getPipeCompAttrs(ctx context.Context, fullPath string, revision string) (attrs []string, err error) {
 func (a *logProcessor) getPipeCompAttrs(ctx context.Context, fullPath string, revision string) (comps map[string]string, err error) {
-	// a.client, err = a.cfg.ToClient(ctx, host, a.settings)
+	// a.client, err = a.cfg.ToClient(ctx, component.Host, component.TelemetrySettings)
 
 	// Enable the ability to override the endpoint for self-hosted gitlab instances
 	graphCURL := "https://gitlab.com/api/graphql"
@@ -96,59 +111,82 @@ func (a *logProcessor) getPipeCompAttrs(ctx context.Context, fullPath string, re
 		if err != nil {
 			a.logger.Sugar().Errorf("error: %v", err)
 		}
-
-		// restCURL, err = url.JoinPath(a.cfg.ClientConfig.Endpoint, "/")
-		// if err != nil {
-		// 	a.logger.Sugar().Errorf("error: %v", err)
-		// }
 	}
 
-	graphClient := graphql.NewClient(graphCURL, a.client)
-	// restClient, err := gitlab.NewClient("", gitlab.WithHTTPClient(a.client), gitlab.WithBaseURL(restCURL))
-	// if err != nil {
-	// 	a.logger.Sugar().Errorf("error: %v", err)
+	// key := os.Getenv("GITHUB_TOKEN")
+	// if key == "" {
+	// 	err = fmt.Errorf("must set GITHUB_TOKEN=<github token>")
+	// 	return
 	// }
 
-	blob, err := getBlobContent(ctx, graphClient, "projectPath", "path", "sha")
+	// key := a.cfg.Token
+	// ac := a.cfg.Auth.GetClientAuthenticator()
+
+	httpClient := http.Client{
+		Transport: &authedTransport{
+			key:     a.cfg.Token,
+			wrapped: http.DefaultTransport,
+		},
+	}
+
+	graphClient := graphql.NewClient(graphCURL, &httpClient)
+	components := make(map[string]string)
+
+	blob, err := getBlobContent(context.Background(), graphClient, fullPath, ".gitlab-ci.yml", revision)
 	if err != nil {
-		a.logger.Sugar().Errorf("error: %v", err)
+		a.logger.Sugar().Errorf("error getting blob content: %v", err)
+		return nil, err
+	}
+
+	// Check if response was 200
+	// if blob.GetProject() == "" {
+	if blob.Project.Id == "" {
+		return nil, fmt.Errorf("no project found")
+	}
+
+	if len(blob.Project.Repository.Blobs.GetNodes()) == 0 {
+		return nil, fmt.Errorf("no blob content found")
 	}
 
 	raw := blob.Project.Repository.Blobs.GetNodes()[0].RawBlob
-
-	lines := string.Split(raw, "\n")
+	lines := strings.Split(raw, "\n")
 
 	inIncludes := false
+	currentIndent := 0
 
-	for _, line := range lines {
-		// Trim spaces from the line
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
 		trimmedLine := strings.TrimSpace(line)
+		indent := len(line) - len(strings.TrimLeft(line, " "))
 
-		// Check if we're entering the includes section
+		// Start of includes section
 		if strings.HasPrefix(trimmedLine, "include:") {
 			inIncludes = true
+			currentIndent = indent
 			continue
 		}
 
-		// If we're in the includes section and the line starts with a dash
-		if inIncludes && strings.HasPrefix(trimmedLine, "-") {
-			// Remove the dash and trim spaces
-			componentStr := strings.TrimSpace(strings.TrimPrefix(trimmedLine, "-"))
-
-			// Split by @ to separate component name and version
-			parts := strings.Split(componentStr, "@")
-			if len(parts) == 2 {
-				componentName := strings.TrimSpace(parts[0])
-				componentVersion := strings.TrimSpace(parts[1])
-				components[componentName] = componentVersion
-			}
-		} else if inIncludes && !strings.HasPrefix(trimmedLine, "-") && trimmedLine != "" {
-			// If we hit a non-empty line that doesn't start with a dash,
-			// we're out of the includes section
+		// Exit includes section if we're back to the original indent level or less
+		if inIncludes && indent <= currentIndent && trimmedLine != "" {
 			inIncludes = false
+			continue
+		}
+
+		// Process component lines
+		if inIncludes && strings.Contains(trimmedLine, "component:") {
+			componentParts := strings.Split(trimmedLine, "component:")
+			if len(componentParts) == 2 {
+				componentStr := strings.TrimSpace(componentParts[1])
+				parts := strings.Split(componentStr, "@")
+				if len(parts) == 2 {
+					componentName := strings.TrimSpace(parts[0])
+					componentVersion := strings.TrimSpace(parts[1])
+					components[componentName] = componentVersion
+				}
+			}
 		}
 	}
 
 	a.logger.Sugar().Infof("blob content: %v", blob)
-	return nil
+	return components, nil
 }

@@ -1,0 +1,18 @@
+{
+  "data": {
+    "project": {
+      "id": "gid://gitlab/Project/65179971",
+      "repository": {
+        "blobs": {
+          "nodes": [
+            {
+              "id": "gid://gitlab/Blob/b8da8c6394bb5e25e8480f1159550491f74c7e96",
+              "rawBlob": "include:\n  - component: gitlab.com/liatrio2/components/general-util/lint-markdown@v0.0.2\n    inputs:\n      stage: lint\n  - component: gitlab.com/liatrio2/components/general-util/SAST-snyk@v0.0.2\n    inputs:\n      stage: test\n  - component: gitlab.com/liatrio2/components/maven-build/unit-test@v0.0.2\n    inputs:\n      stage: test\n  - component: gitlab.com/liatrio2/components/maven-build/docker-build-publish@v0.0.2\n    inputs:\n      stage: build\n      image_name: $CI_PROJECT_PATH\n\nstages:\n  - lint\n  - test\n  - build\n#  - package\n#  - deploy-npd\n#  - validate-npd\n#  - destroy-npd\n  - release\n#  - publish\n#  - deploy-prod\n#  - validate-prod\n\n"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "correlationId": "d3e24ebcea19578aa30dde7172db2abe"
+}

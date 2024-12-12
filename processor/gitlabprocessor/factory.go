@@ -3,8 +3,10 @@ package gitlabprocessor
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/processor/processorhelper"
@@ -15,6 +17,10 @@ import (
 var (
 	processorCapabilities = consumer.Capabilities{MutatesData: true}
 	errConfigNotValid     = errors.New("configuration is not valid for the gitlab receiver")
+)
+
+const (
+	defaultHTTPTimeout = 15 * time.Second
 )
 
 // NewFactory returns a new factory for the GitLab Pipelines processor.
@@ -28,7 +34,11 @@ func NewFactory() processor.Factory {
 // Note: This isn't a valid configuration because the processor would do no
 // work.
 func createDefaultConfig() component.Config {
-	return &Config{}
+	return &Config{
+        ClientConfig: confighttp.ClientConfig{
+            Timeout: defaultHTTPTimeout,
+        },
+    }
 }
 
 func createLogsProcessor(
@@ -47,6 +57,6 @@ func createLogsProcessor(
 		set,
 		cfg,
 		nextConsumer,
-		newLogProcessor(set.Logger, *conf).processLogs,
+		newLogProcessor(ctx, set.Logger, conf).processLogs,
 		processorhelper.WithCapabilities(processorCapabilities))
 }
