@@ -33,7 +33,7 @@ $(TOOLS_BIN_DIR):
 	mkdir -p $@
 
 $(TOOLS_BIN_NAMES): $(TOOLS_BIN_DIR) $(TOOLS_MOD_DIR)/go.mod
-		cd $(TOOLS_MOD_DIR) && go build -o $@ -trimpath $(filter %/$(notdir $@),$(TOOLS_PKG_NAMES))
+		cd $(TOOLS_MOD_DIR) && go1.22.8 build -o $@ -trimpath $(filter %/$(notdir $@),$(TOOLS_PKG_NAMES))
 
 LINT := $(TOOLS_BIN_DIR)/golangci-lint
 GOIMPORTS := $(TOOLS_BIN_DIR)/goimports
@@ -56,7 +56,7 @@ lint:
 .PHONY: tidy
 tidy:
 	-rm go.sum
-	go mod tidy -compat=1.23
+	go mod tidy -compat=1.22
 
 .PHONY: gen
 gen:

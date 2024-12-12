@@ -1,0 +1,14 @@
+---
+type: gitlab
+
+sem_conv_version: 1.27.0
+
+status:
+  class: processor
+  stability:
+    development: [logs]
+  distributions: [liatrio]
+
+tests:
+  config:
+

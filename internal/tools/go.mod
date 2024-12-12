@@ -9,8 +9,8 @@ require (
 	github.com/securego/gosec/v2 v2.21.4
 	go.opentelemetry.io/build-tools/crosslink v0.15.0
 	go.opentelemetry.io/build-tools/multimod v0.15.0
-	go.opentelemetry.io/collector/cmd/builder v0.114.0
-	go.opentelemetry.io/collector/cmd/mdatagen v0.114.0
+	go.opentelemetry.io/collector/cmd/builder v0.115.0
+	go.opentelemetry.io/collector/cmd/mdatagen v0.115.0
 	golang.org/x/tools v0.27.0
 	golang.org/x/vuln v1.1.3
 	honnef.co/go/tools v0.5.1
@@ -251,7 +251,7 @@ require (
 	github.com/ssgreg/nlreturn/v2 v2.2.1 // indirect
 	github.com/stbenjam/no-sprintf-host-port v0.1.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tdakkota/asciicheck v0.2.0 // indirect
 	github.com/tetafro/godot v1.4.18 // indirect
@@ -284,12 +284,12 @@ require (
 	go-simpler.org/sloglint v0.7.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/build-tools v0.15.0 // indirect
-	go.opentelemetry.io/collector/component v0.114.0 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.114.0 // indirect
-	go.opentelemetry.io/collector/confmap v1.20.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.20.0 // indirect
-	go.opentelemetry.io/collector/filter v0.114.0 // indirect
-	go.opentelemetry.io/collector/pdata v1.20.0 // indirect
+	go.opentelemetry.io/collector/component v0.115.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.115.0 // indirect
+	go.opentelemetry.io/collector/confmap v1.21.0 // indirect
+	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.21.0 // indirect
+	go.opentelemetry.io/collector/filter v0.115.0 // indirect
+	go.opentelemetry.io/collector/pdata v1.21.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.54.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0 // indirect
 	go.opentelemetry.io/otel v1.32.0 // indirect
@@ -314,7 +314,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20241007155032-5fefd90f89a9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241007155032-5fefd90f89a9 // indirect
 	google.golang.org/grpc v1.67.1 // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
+	google.golang.org/protobuf v1.35.2 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
