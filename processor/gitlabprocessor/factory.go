@@ -9,11 +9,6 @@ import (
 	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/processor/processorhelper"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal/attraction"
-	// "github.com/open-telemetry/opentelemetry-collector-contrib/internal/filter/filterconfig"
-	// "github.com/open-telemetry/opentelemetry-collector-contrib/internal/filter/filterlog"
-	// "github.com/open-telemetry/opentelemetry-collector-contrib/internal/filter/filtermetric"
-	// "github.com/open-telemetry/opentelemetry-collector-contrib/internal/filter/filterspan"
 	"github.com/liatrio/liatrio-otel-collector/processor/gitlabprocessor/internal/metadata"
 )
 
@@ -47,18 +42,11 @@ func createLogsProcessor(
 		return nil, errConfigNotValid
 	}
 
-    // attrProc, err := attraction.NewAttrProc()
-    attrProc, err := attraction.NewAttrProc()
-	if err != nil {
-		return nil, err
-	}
-    
-
 	return processorhelper.NewLogs(
 		ctx,
 		set,
 		cfg,
 		nextConsumer,
-		newLogProcessor(set.Logger, attrProc, *conf).processLogs,
+		newLogProcessor(set.Logger, *conf).processLogs,
 		processorhelper.WithCapabilities(processorCapabilities))
 }
