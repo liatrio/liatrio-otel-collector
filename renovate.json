@@ -77,10 +77,10 @@
         "gomod"
       ],
       "matchFileNames": [
-        "cmd/compgen/**"
+        "cmd/otel-compgen/**"
       ],
-      "groupName": "compgen cmd deps",
-      "description": "Groups together all dependencies of the compgen utility"
+      "groupName": "otel-compgen cmd deps",
+      "description": "Groups together all dependencies of the otel-compgen utility"
     }
   ],
   "prConcurrentLimit": 10,
