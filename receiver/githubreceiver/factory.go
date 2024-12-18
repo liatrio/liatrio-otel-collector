@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/scraperhelper"
+	"go.opentelemetry.io/collector/scraper"
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal"
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
@@ -107,7 +108,7 @@ func createAddScraperOpts(
 			return nil, fmt.Errorf("failed to create scraper %q: %w", key, err)
 		}
 
-		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddScraperWithType(scrapeType, githubScraper))
+		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddScraper(scrapeType, githubScraper))
 	}
 
 	return scraperControllerOptions, nil
@@ -119,7 +120,7 @@ func createGitHubScraper(
 	key string,
 	cfg internal.Config,
 	factories map[string]internal.ScraperFactory,
-) (scraper scraperhelper.Scraper, err error) {
+) (scraper scraper.Metrics, err error) {
 	factory := factories[key]
 	if factory == nil {
 		return nil, fmt.Errorf("factory not found for scraper %q", key)
