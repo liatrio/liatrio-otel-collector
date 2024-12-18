@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xanzy/go-gitlab"
+	"gitlab.com/gitlab-org/api/client-go"
 	"go.uber.org/zap"
 
 	"github.com/Khan/genqlient/graphql"
