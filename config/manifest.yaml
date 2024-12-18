@@ -7,7 +7,7 @@ dist:
   debug_compilation: false
 
 extensions:
-  - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.114.0
+  - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.116.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension v0.116.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.116.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.116.0
@@ -16,9 +16,9 @@ extensions:
   - gomod: github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension v0.52.0
 
 exporters:
-  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.114.0
-  - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.114.0
-  - gomod: go.opentelemetry.io/collector/exporter/otlphttpexporter v0.114.0
+  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.116.0
+  - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.116.0
+  - gomod: go.opentelemetry.io/collector/exporter/otlphttpexporter v0.116.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awsxrayexporter v0.116.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awscloudwatchlogsexporter v0.116.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/influxdbexporter v0.116.0
@@ -29,8 +29,8 @@ exporters:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/opensearchexporter v0.116.0
 
 processors:
-  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.114.0
-  - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.114.0
+  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.116.0
+  - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.116.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.116.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.116.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.116.0
@@ -43,7 +43,7 @@ processors:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbytraceprocessor v0.116.0
 
 receivers:
-  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.114.0
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.116.0
   - gomod: github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver v0.72.0
   - gomod: github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver v0.72.0
   - gomod: github.com/liatrio/liatrio-otel-collector/receiver/githubactionsreceiver v0.72.0
