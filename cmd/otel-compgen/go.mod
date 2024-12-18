@@ -1,4 +1,4 @@
-module github.com/liatrio/compgen
+module github.com/liatrio/otel-compgen
 
 go 1.23
 

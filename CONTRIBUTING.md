@@ -67,8 +67,8 @@ code is formatted, tested, etc. successfully:
 
 ## Adding New Components
 
-New components can be created by running compgen. See compgen's
-[README](./cmd/compgen/README.md) for instructions and guidance.
+New components can be created by running otel-compgen. See otel-compgen's
+[README](./cmd/otel-compgen/README.md) for instructions and guidance.
 
 ## License
 

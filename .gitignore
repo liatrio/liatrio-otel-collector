@@ -6,7 +6,7 @@
 *.dylib
 __debug_bin*
 
-# Temp directory for debugging compgen
+# Temp directory for debugging otel-compgen
 .debug
 
 # Test binary, built with `go test -c`

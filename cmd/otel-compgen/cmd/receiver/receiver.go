@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	common "github.com/liatrio/compgen/cmd/common"
+	common "github.com/liatrio/otel-compgen/cmd/common"
 	"github.com/spf13/cobra"
 )
 

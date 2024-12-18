@@ -4,15 +4,15 @@ import (
 	"log"
 	"os"
 
-	receiver "github.com/liatrio/compgen/cmd/receiver"
+	receiver "github.com/liatrio/otel-compgen/cmd/receiver"
 	"github.com/spf13/cobra"
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "compgen",
-	Short: "A tool for building new otel components.",
-	Long:  `Compgen is a tool for building new receivers, processors, and exporters for Open Telemetry.`,
+	Use:   "otel-compgen",
+	Short: "A tool for building new OTel components.",
+	Long:  `OTel compgen is a tool for building new receivers, processors, and exporters for Open Telemetry.`,
 	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
