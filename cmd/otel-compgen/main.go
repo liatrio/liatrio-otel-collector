@@ -1,7 +1,7 @@
 package main
 
 import (
-	cmd "github.com/liatrio/compgen/cmd"
+	cmd "github.com/liatrio/otel-compgen/cmd"
 )
 
 func main() {

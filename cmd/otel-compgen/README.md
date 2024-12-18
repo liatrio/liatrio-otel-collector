@@ -1,6 +1,6 @@
-# Compgen
+# OTel Compgen
 
-Compgen is a tool for building new otel components. The following component
+OTel compgen is a tool for building new OTel components. The following component
 types are currently supported:
 
 - [Receivers](https://opentelemetry.io/docs/collector/configuration/#receivers)
@@ -15,21 +15,21 @@ types are currently supported:
 - [ ] [Processors](https://opentelemetry.io/docs/collector/configuration/#processors)
 - [ ] [Exporters](https://opentelemetry.io/docs/collector/configuration/#exporters)
 
-## Installing `compgen`
+## Installing `otel-compgen`
 
-From within `cmd/compgen` run `go install .`. This will make build the `compgen`
+From within `cmd/otel-compgen` run `go install .`. This will make build the `otel-compgen`
 utility and add it to your `GOBIN` for use everywhere.
 
-Note: If you make changes to the `tmpl` files you need to recompile compgen as
+Note: If you make changes to the `tmpl` files you need to recompile otel-compgen as
 the files are stored in the binary.
 
 ## Usage
 
 ```sh
-Compgen is a tool for building new receivers, processors, and exporters for OpenTelemetry.
+OTel Compgen is a tool for building new receivers, processors, and exporters for OpenTelemetry.
 
 Usage:
-  compgen [command]
+  otel-compgen [command]
 
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
@@ -37,21 +37,21 @@ Available Commands:
   receiver    Build a new Open Telemetry receiver component
 
 Flags:
-  -h, --help   help for compgen
+  -h, --help   help for otel-compgen
 
-Use "compgen [command] --help" for more information about a command.
+Use "otel-compgen [command] --help" for more information about a command.
 ```
 
 ## Naming Conventions for Open Telemetry Components
 
-New component names are passed to compgen via command line arguments. These are
+New component names are passed to otel-compgen via command line arguments. These are
 expected to be a full [module paths](https://go.dev/ref/mod#glos-module-path)
-from which compgen will extract a short name to use in code generation.
+from which otel-compgen will extract a short name to use in code generation.
 
 For example, if you wish to build a new receiver with a short name of `myreceiver`,
 then supply this string to the receiver subcommand: `github.com/liatrio/liatrio-otel-collector/receiver/myreceiver`
 
-## After Running Compgen
+## After Running OTel Compgen
 
 ### Makefile
 
@@ -61,9 +61,9 @@ as a comment.
 
 ### Metadata.yaml
 
-Compgen's includes templates for metadata.yaml. This file is used by
+OTel compgen includes templates for metadata.yaml. This file is used by
 [mdatagen](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/cmd/mdatagen)
-to generate aditional code for the component.
+to generate additional code for the component.
 See the [README](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/cmd/mdatagen/README.md)
 for details on how to use mdatagen.
 
@@ -72,7 +72,7 @@ receiver, you can run mdatagen via the `make gen` command.
 
 ### Build Component Logic
 
-Compgen's component template are very limited by design. They are intended to
+OTel compgen's component template are very limited by design. They are intended to
 supply the minimum amount of code required to compile, start, and run the
 component in a collector. Component developers are required to add all
 functionality to fulfill the component's purpose. See
@@ -112,24 +112,24 @@ with bare minimum functionality as a starting point.
 When ready, please add your module name to [components.go](../../../internal/components/components.go)
 then run `make checks`.
 
-## Contributing to Compgen
+## Contributing to OTel Compgen
 
-### Adding Commands to Compgen
+### Adding Commands to OTel Compgen
 
-Compgen is built on the [Cobra](https://github.com/spf13/cobra) library.
+OTel compgen is built on the [Cobra](https://github.com/spf13/cobra) library.
 While new commands can be added manually, it may be easier to use the [cobra-cli](https://github.com/spf13/cobra-cli/blob/main/README.md)
-instead. New commands can be added to compgen by running the following shell commands:
+instead. New commands can be added to otel-compgen by running the following shell commands:
 
 ```sh
-cd cmd/compgen
+cd cmd/otel-compgen
 cobra-cli add [command-name]
 cobra-cli add [command-name] -p [parent-command-name]
 ```
 
-### Adding Templates to Compgen
+### Adding Templates to OTel Compgen
 
-New compgen commands are expected to be paired with new templates for OpenTelemetry
-compnents. These templates should include the minimum functionality required to compile,
+New otel-compgen commands are expected to be paired with new templates for OpenTelemetry
+components. These templates should include the minimum functionality required to compile,
 start, and run the component in a collector. Conversely, these templates should
 include the maximum supporting code expected for the component, such as README
 and Makefile templates.
