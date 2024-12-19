@@ -5,7 +5,6 @@ go 1.23
 require (
 	github.com/Khan/genqlient v0.7.0
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-github/v66 v66.0.0
 	github.com/google/go-github/v67 v67.0.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.116.0

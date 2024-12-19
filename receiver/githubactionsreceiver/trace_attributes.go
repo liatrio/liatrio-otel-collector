@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v66/github"
+	"github.com/google/go-github/v67/github"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.uber.org/zap"
 )
