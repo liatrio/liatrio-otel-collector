@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 
 	"github.com/Khan/genqlient/graphql"
