@@ -289,11 +289,11 @@ func generateParentSpanID(runID int64, runAttempt int) (pcommon.SpanID, error) {
 	return spanID, nil
 }
 
-func generateServiceName(config *Config, fullName string) string {
+func generateServiceName(config *Config, name string) string {
 	if config.CustomServiceName != "" {
 		return config.CustomServiceName
 	}
-	formattedName := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(fullName, "/", "-"), "_", "-"))
+	formattedName := strings.ToLower(strings.ReplaceAll(name, "_", "-"))
 	return fmt.Sprintf("%s%s%s", config.ServiceNamePrefix, formattedName, config.ServiceNameSuffix)
 }
 
