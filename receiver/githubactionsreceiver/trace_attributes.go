@@ -18,18 +18,23 @@ func createResourceAttributes(resource pcommon.Resource, event interface{}, conf
 
 	switch e := event.(type) {
 	case *github.WorkflowJobEvent:
-		serviceName := generateServiceName(config, e.GetRepo().GetFullName())
-		attrs.PutStr("service.name", serviceName)
+		var sn string
+		if e.GetRepo().CustomProperties["service_name"] != nil {
+			sn = e.GetRepo().CustomProperties["service_name"].(string)
+		} else {
+			sn = generateServiceName(config, e.GetRepo().GetName())
+		}
 
-		attrs.PutStr("ci.github.workflow.name", e.GetWorkflowJob().GetWorkflowName())
+		attrs.PutStr("service.name", sn)
 
-		attrs.PutStr("ci.github.workflow.job.created_at", e.GetWorkflowJob().GetCreatedAt().Format(time.RFC3339))
-		attrs.PutStr("ci.github.workflow.job.completed_at", e.GetWorkflowJob().GetCompletedAt().Format(time.RFC3339))
-		attrs.PutStr("ci.github.workflow.job.conclusion", e.GetWorkflowJob().GetConclusion())
-		attrs.PutStr("ci.github.workflow.job.head_branch", e.GetWorkflowJob().GetHeadBranch())
-		attrs.PutStr("ci.github.workflow.job.head_sha", e.GetWorkflowJob().GetHeadSHA())
-		attrs.PutStr("ci.github.workflow.job.html_url", e.GetWorkflowJob().GetHTMLURL())
-		attrs.PutInt("ci.github.workflow.job.id", e.GetWorkflowJob().GetID())
+		attrs.PutStr("cicd.pipeline.name", e.GetWorkflowJob().GetWorkflowName())
+
+		attrs.PutStr("cicd.pipeline.task.created_at", e.GetWorkflowJob().GetCreatedAt().Format(time.RFC3339))
+		attrs.PutStr("cicd.pipeline.task.completed_at", e.GetWorkflowJob().GetCompletedAt().Format(time.RFC3339))
+		attrs.PutStr("cicd.pipeline.task.conclusion", e.GetWorkflowJob().GetConclusion())
+		attrs.PutStr("cicd.pipeline.task.head_branch", e.GetWorkflowJob().GetHeadBranch())
+		attrs.PutStr("cicd.pipeline.task.head_sha", e.GetWorkflowJob().GetHeadSHA())
+		attrs.PutStr("cicd.pipeline.task.html_url", e.GetWorkflowJob().GetHTMLURL())
 
 		if len(e.WorkflowJob.Labels) > 0 {
 			labels := e.GetWorkflowJob().Labels
@@ -38,45 +43,51 @@ func createResourceAttributes(resource pcommon.Resource, event interface{}, conf
 			}
 			sort.Strings(labels)
 			joinedLabels := strings.Join(labels, ",")
-			attrs.PutStr("ci.github.workflow.job.labels", joinedLabels)
+			attrs.PutStr("cicd.pipeline.task.labels", joinedLabels)
 		} else {
-			attrs.PutStr("ci.github.workflow.job.labels", "no labels")
+			attrs.PutStr("cicd.pipeline.task.labels", "no labels")
 		}
 
-		attrs.PutStr("ci.github.workflow.job.name", e.GetWorkflowJob().GetName())
-		attrs.PutInt("ci.github.workflow.job.run_attempt", e.GetWorkflowJob().GetRunAttempt())
-		attrs.PutInt("ci.github.workflow.job.run_id", e.GetWorkflowJob().GetRunID())
-		attrs.PutStr("ci.github.workflow.job.runner.group_name", e.GetWorkflowJob().GetRunnerGroupName())
-		attrs.PutStr("ci.github.workflow.job.runner.name", e.GetWorkflowJob().GetRunnerName())
-		attrs.PutStr("ci.github.workflow.job.sender.login", e.GetSender().GetLogin())
-		attrs.PutStr("ci.github.workflow.job.started_at", e.GetWorkflowJob().GetStartedAt().Format(time.RFC3339))
-		attrs.PutStr("ci.github.workflow.job.status", e.GetWorkflowJob().GetStatus())
+		attrs.PutStr("cicd.pipeline.task.name", e.GetWorkflowJob().GetName())
+		attrs.PutInt("cicd.pipeline.task.run.id", e.GetWorkflowJob().GetRunID())
+		attrs.PutStr("cicd.pipeline.task.runner.group.name", e.GetWorkflowJob().GetRunnerGroupName())
+		attrs.PutStr("cicd.pipeline.task.runner.name", e.GetWorkflowJob().GetRunnerName())
+		attrs.PutStr("cicd.pipeline.task.sender.login", e.GetSender().GetLogin())
+		attrs.PutStr("cicd.pipeline.task.started_at", e.GetWorkflowJob().GetStartedAt().Format(time.RFC3339))
+		attrs.PutStr("cicd.pipeline.task.status", e.GetWorkflowJob().GetStatus())
 
-		attrs.PutStr("ci.system", "github")
+		attrs.PutStr("vcs.vendor.name", "github")
 
-		attrs.PutStr("scm.git.repo.owner.login", e.GetRepo().GetOwner().GetLogin())
-		attrs.PutStr("scm.git.repo", e.GetRepo().GetFullName())
+		attrs.PutStr("vcs.repository.owner.login", e.GetRepo().GetOwner().GetLogin())
+		attrs.PutStr("vcs.repository.name", e.GetRepo().GetName())
+		attrs.PutStr("vcs.repository.url.full", e.GetRepo().GetURL())
 
 	case *github.WorkflowRunEvent:
-		serviceName := generateServiceName(config, e.GetRepo().GetFullName())
-		attrs.PutStr("service.name", serviceName)
+		var sn string
+		if e.GetRepo().CustomProperties["service_name"] != nil {
+			sn = e.GetRepo().CustomProperties["service_name"].(string)
+		} else {
+			sn = generateServiceName(config, e.GetRepo().GetName())
+		}
 
-		attrs.PutStr("ci.github.workflow.run.actor.login", e.GetWorkflowRun().GetActor().GetLogin())
+		attrs.PutStr("service.name", sn)
 
-		attrs.PutStr("ci.github.workflow.run.conclusion", e.GetWorkflowRun().GetConclusion())
-		attrs.PutStr("ci.github.workflow.run.created_at", e.GetWorkflowRun().GetCreatedAt().Format(time.RFC3339))
-		attrs.PutStr("ci.github.workflow.run.display_title", e.GetWorkflowRun().GetDisplayTitle())
-		attrs.PutStr("ci.github.workflow.run.event", e.GetWorkflowRun().GetEvent())
-		attrs.PutStr("ci.github.workflow.run.head_branch", e.GetWorkflowRun().GetHeadBranch())
-		attrs.PutStr("ci.github.workflow.run.head_sha", e.GetWorkflowRun().GetHeadSHA())
-		attrs.PutStr("ci.github.workflow.run.html_url", e.GetWorkflowRun().GetHTMLURL())
-		attrs.PutInt("ci.github.workflow.run.id", e.GetWorkflowRun().GetID())
-		attrs.PutStr("ci.github.workflow.run.name", e.GetWorkflowRun().GetName())
-		attrs.PutStr("ci.github.workflow.run.path", e.GetWorkflow().GetPath())
+		attrs.PutStr("cicd.pipeline.run.actor.login", e.GetWorkflowRun().GetActor().GetLogin())
+
+		attrs.PutStr("cicd.pipeline.run.conclusion", e.GetWorkflowRun().GetConclusion())
+		attrs.PutStr("cicd.pipeline.run.created_at", e.GetWorkflowRun().GetCreatedAt().Format(time.RFC3339))
+		attrs.PutStr("cicd.pipeline.run.display_title", e.GetWorkflowRun().GetDisplayTitle())
+		attrs.PutStr("cicd.pipeline.run.event", e.GetWorkflowRun().GetEvent())
+		attrs.PutStr("cicd.pipeline.run.head_branch", e.GetWorkflowRun().GetHeadBranch())
+		attrs.PutStr("cicd.pipeline.run.head_sha", e.GetWorkflowRun().GetHeadSHA())
+		attrs.PutStr("cicd.pipeline.run.html_url", e.GetWorkflowRun().GetHTMLURL())
+		attrs.PutInt("cicd.pipeline.run.id", e.GetWorkflowRun().GetID())
+		attrs.PutStr("cicd.pipeline.run.name", e.GetWorkflowRun().GetName())
+		attrs.PutStr("cicd.pipeline.run.path", e.GetWorkflow().GetPath())
 
 		if e.GetWorkflowRun().GetPreviousAttemptURL() != "" {
 			htmlURL := transformGitHubAPIURL(e.GetWorkflowRun().GetPreviousAttemptURL())
-			attrs.PutStr("ci.github.workflow.run.previous_attempt_url", htmlURL)
+			attrs.PutStr("cicd.pipeline.run.previous_attempt_url", htmlURL)
 		}
 
 		if len(e.GetWorkflowRun().ReferencedWorkflows) > 0 {
@@ -84,38 +95,36 @@ func createResourceAttributes(resource pcommon.Resource, event interface{}, conf
 			for _, workflow := range e.GetWorkflowRun().ReferencedWorkflows {
 				referencedWorkflows = append(referencedWorkflows, workflow.GetPath())
 			}
-			attrs.PutStr("ci.github.workflow.run.referenced_workflows", strings.Join(referencedWorkflows, ";"))
+			attrs.PutStr("cicd.pipeline.run.referenced_workflows", strings.Join(referencedWorkflows, ";"))
 		}
 
-		attrs.PutInt("ci.github.workflow.run.run_attempt", int64(e.GetWorkflowRun().GetRunAttempt()))
-		attrs.PutStr("ci.github.workflow.run.run_started_at", e.GetWorkflowRun().RunStartedAt.Format(time.RFC3339))
-		attrs.PutStr("ci.github.workflow.run.status", e.GetWorkflowRun().GetStatus())
-		attrs.PutStr("ci.github.workflow.run.sender.login", e.GetSender().GetLogin())
-		attrs.PutStr("ci.github.workflow.run.triggering_actor.login", e.GetWorkflowRun().GetTriggeringActor().GetLogin())
-		attrs.PutStr("ci.github.workflow.run.updated_at", e.GetWorkflowRun().GetUpdatedAt().Format(time.RFC3339))
+		attrs.PutInt("cicd.pipeline.run.run_attempt", int64(e.GetWorkflowRun().GetRunAttempt()))
+		attrs.PutStr("cicd.pipeline.run.run_started_at", e.GetWorkflowRun().RunStartedAt.Format(time.RFC3339))
+		attrs.PutStr("cicd.pipeline.run.status", e.GetWorkflowRun().GetStatus())
+		attrs.PutStr("cicd.pipeline.run.sender.login", e.GetSender().GetLogin())
+		attrs.PutStr("cicd.pipeline.run.triggering_actor.login", e.GetWorkflowRun().GetTriggeringActor().GetLogin())
+		attrs.PutStr("cicd.pipeline.run.updated_at", e.GetWorkflowRun().GetUpdatedAt().Format(time.RFC3339))
 
-		attrs.PutStr("ci.system", "github")
+		attrs.PutStr("vcs.vendor.name", "github")
 
-		attrs.PutStr("scm.system", "git")
-
-		attrs.PutStr("scm.git.head_branch", e.GetWorkflowRun().GetHeadBranch())
-		attrs.PutStr("scm.git.head_commit.author.email", e.GetWorkflowRun().GetHeadCommit().GetAuthor().GetEmail())
-		attrs.PutStr("scm.git.head_commit.author.name", e.GetWorkflowRun().GetHeadCommit().GetAuthor().GetName())
-		attrs.PutStr("scm.git.head_commit.committer.email", e.GetWorkflowRun().GetHeadCommit().GetCommitter().GetEmail())
-		attrs.PutStr("scm.git.head_commit.committer.name", e.GetWorkflowRun().GetHeadCommit().GetCommitter().GetName())
-		attrs.PutStr("scm.git.head_commit.message", e.GetWorkflowRun().GetHeadCommit().GetMessage())
-		attrs.PutStr("scm.git.head_commit.timestamp", e.GetWorkflowRun().GetHeadCommit().GetTimestamp().Format(time.RFC3339))
-		attrs.PutStr("scm.git.head_sha", e.GetWorkflowRun().GetHeadSHA())
+		attrs.PutStr("vcs.ref.head_branch", e.GetWorkflowRun().GetHeadBranch())
+		attrs.PutStr("vcs.ref.head_commit.author.email", e.GetWorkflowRun().GetHeadCommit().GetAuthor().GetEmail())
+		attrs.PutStr("vcs.ref.head_commit.author.name", e.GetWorkflowRun().GetHeadCommit().GetAuthor().GetName())
+		attrs.PutStr("vcs.ref.head_commit.committer.email", e.GetWorkflowRun().GetHeadCommit().GetCommitter().GetEmail())
+		attrs.PutStr("vcs.ref.head_commit.committer.name", e.GetWorkflowRun().GetHeadCommit().GetCommitter().GetName())
+		attrs.PutStr("vcs.ref.head_commit.message", e.GetWorkflowRun().GetHeadCommit().GetMessage())
+		attrs.PutStr("vcs.ref.head_commit.timestamp", e.GetWorkflowRun().GetHeadCommit().GetTimestamp().Format(time.RFC3339))
+		attrs.PutStr("vcs.ref.head_sha", e.GetWorkflowRun().GetHeadSHA())
 
 		if len(e.GetWorkflowRun().PullRequests) > 0 {
 			var prUrls []string
 			for _, pr := range e.GetWorkflowRun().PullRequests {
 				prUrls = append(prUrls, convertPRURL(pr.GetURL()))
 			}
-			attrs.PutStr("scm.git.pull_requests.url", strings.Join(prUrls, ";"))
+			attrs.PutStr("vcs.change.url", strings.Join(prUrls, ";"))
 		}
 
-		attrs.PutStr("scm.git.repo", e.GetRepo().GetFullName())
+		attrs.PutStr("vcs.repository.name", e.GetRepo().GetName())
 
 	default:
 		logger.Error("unknown event type")
