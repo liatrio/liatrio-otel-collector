@@ -8,7 +8,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.116.0
 	github.com/stretchr/testify v1.10.0
-	gitlab.com/gitlab-org/api/client-go v0.117.0
+	gitlab.com/gitlab-org/api/client-go v0.120.0
 	go.opentelemetry.io/collector/component v0.116.0
 	go.opentelemetry.io/collector/component/componenttest v0.116.0
 	go.opentelemetry.io/collector/config/confighttp v0.116.0
@@ -141,7 +141,7 @@ require (
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/time v0.6.0 // indirect
+	golang.org/x/time v0.8.0 // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241104194629-dd2ea8efbc28 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28 // indirect

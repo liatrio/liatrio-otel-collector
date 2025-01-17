@@ -140,6 +140,8 @@ github.com/yusufpapurcu/wmi v1.2.4 h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo
 github.com/yusufpapurcu/wmi v1.2.4/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
 gitlab.com/gitlab-org/api/client-go v0.117.0 h1:HsbKxlTjVgfYmyCU+NRQk2G42RlMOKs6gF+/o0DL+TI=
 gitlab.com/gitlab-org/api/client-go v0.117.0/go.mod h1:E+X2dndIYDuUfKVP0C3jhkWvTSE00BkLbCsXTY3edDo=
+gitlab.com/gitlab-org/api/client-go v0.120.0 h1:geCJjojDXxWVmUcTxPcOUCenAWElWB5dVfX3HJGeAMc=
+gitlab.com/gitlab-org/api/client-go v0.120.0/go.mod h1:ygHmS3AU3TpvK+AC6DYO1QuAxLlv6yxYK+/Votr/WFQ=
 go.opentelemetry.io/collector v0.116.0 h1:Dscd6Nsnc7hjFQosO0SofcPQsXRfcj5N5PjQAslnmj4=
 go.opentelemetry.io/collector v0.116.0/go.mod h1:Ug2hpW0SINPmJAGVEALRlux78NTZc3YXSuh5/Q/hFrA=
 go.opentelemetry.io/collector/client v1.22.0 h1:AAUzHuqYQqxoNqacw1WXgGF/MxtBTwNZuhBvJIorgA0=
@@ -332,6 +334,8 @@ golang.org/x/text v0.21.0 h1:zyQAAkrwaneQ066sspRyJaG9VNi/YJ1NfzcGB3hZ/qo=
 golang.org/x/text v0.21.0/go.mod h1:4IBbMaMmOPCJ8SecivzSH54+73PCFmPWxNTLm+vZkEQ=
 golang.org/x/time v0.6.0 h1:eTDhh4ZXt5Qf0augr54TN6suAUudPcawVZeIAPU7D4U=
 golang.org/x/time v0.6.0/go.mod h1:3BpzKBy/shNhVucY/MWOyx10tF3SFh9QdLuxbVysPQM=
+golang.org/x/time v0.8.0 h1:9i3RxcPv3PZnitoVGMPDKZSq1xW1gK1Xy3ArNOGZfEg=
+golang.org/x/time v0.8.0/go.mod h1:3BpzKBy/shNhVucY/MWOyx10tF3SFh9QdLuxbVysPQM=
 golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
 golang.org/x/tools v0.0.0-20191119224855-298f0cb1881e/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
 golang.org/x/tools v0.0.0-20200619180055-7c47624df98f/go.mod h1:EkVYQZoAsY45+roYkvgYkIh4xh/qjgUK9TdY2XT94GE=
