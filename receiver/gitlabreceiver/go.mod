@@ -19,7 +19,7 @@ require (
 	go.opentelemetry.io/collector/otelcol/otelcoltest v0.116.0
 	go.opentelemetry.io/collector/pdata v1.22.0
 	go.opentelemetry.io/collector/pipeline v0.116.0
-	go.opentelemetry.io/collector/receiver v0.116.0
+	go.opentelemetry.io/collector/receiver v0.118.0
 	go.opentelemetry.io/collector/receiver/receivertest v0.116.0
 	go.opentelemetry.io/collector/scraper v0.116.0
 	go.opentelemetry.io/collector/semconv v0.116.0
