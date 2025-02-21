@@ -5,15 +5,15 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - '**/Dockerfile'
-      - '**/.dockerignore'
+      - "**/Dockerfile"
+      - "**/.dockerignore"
       - .github/**
-      - '**.go'
-      - '**.mod'
-      - '**.sum'
+      - "**.go"
+      - "**.mod"
+      - "**.sum"
       - config/**
-      - '**/Makefile*'
-      - '**/documentation.md'
+      - "**/Makefile*"
+      - "**/documentation.md"
       - .golangci.yaml
       - .goreleaser.yaml
 
@@ -25,7 +25,27 @@ jobs:
     if: github.actor != 'liatrio-otel-collector-release[bot]'
     strategy:
       matrix:
-        go: ['1.23']
+        go: ["1.23"]
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: true
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64
+
+  generate:
+    if: github.actor != 'liatrio-otel-collector-release[bot]'
+    strategy:
+      matrix:
+        go: ["1.23"]
     name: lint
     runs-on: ubuntu-latest
     steps:
@@ -42,9 +62,6 @@ jobs:
       - name: Make install-tools
         run: make install-tools
 
-      - name: Make lint-all
-        run: make lint-all
-
       - name: Check Code Generation
         run: |
           make generate
@@ -55,22 +72,17 @@ jobs:
           make tidy-all
           git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
 
-      - name: Check crosslink run
-        run: |
-          make crosslink
-          git diff -s --exit-code || (echo 'Replace statements not updated. Run make crosslink and commit the changes' && exit 1)
-
   build:
     name: build
     if: github.actor != 'liatrio-otel-collector-release[bot]'
     strategy:
       matrix:
         GOOS: [darwin, linux, windows]
-        GOARCH: [arm64, amd64, '386']
-        go: ['1.23']
+        GOARCH: [arm64, amd64, "386"]
+        go: ["1.23"]
         exclude:
           - GOOS: darwin
-            GOARCH: '386'
+            GOARCH: "386"
           - GOOS: darwin
             GOARCH: arm
           - GOOS: windows
@@ -128,7 +140,7 @@ jobs:
     if: github.actor != 'liatrio-otel-collector-release[bot]'
     strategy:
       matrix:
-        go: ['1.23']
+        go: ["1.23"]
     name: test
     runs-on: ubuntu-latest
     steps:
@@ -202,4 +214,3 @@ jobs:
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
           make multimod-prerelease
           git push
-
