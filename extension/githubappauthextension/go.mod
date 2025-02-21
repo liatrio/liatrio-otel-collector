@@ -1,13 +1,15 @@
 module github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension
 
-go 1.23
+go 1.23.0
+
+toolchain go1.23.6
 
 require (
 	github.com/bradleyfalzon/ghinstallation/v2 v2.13.0
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v0.116.0
 	go.opentelemetry.io/collector/component/componenttest v0.116.0
-	go.opentelemetry.io/collector/confmap v1.22.0
+	go.opentelemetry.io/collector/confmap v1.26.0
 	go.opentelemetry.io/collector/extension v0.116.0
 	go.opentelemetry.io/collector/extension/auth v0.116.0
 	go.opentelemetry.io/collector/extension/extensiontest v0.116.0

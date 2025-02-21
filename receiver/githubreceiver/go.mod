@@ -1,6 +1,8 @@
 module github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver
 
-go 1.23
+go 1.23.0
+
+toolchain go1.23.6
 
 require (
 	github.com/Khan/genqlient v0.7.0
@@ -12,7 +14,7 @@ require (
 	go.opentelemetry.io/collector/component v0.118.0
 	go.opentelemetry.io/collector/component/componenttest v0.118.0
 	go.opentelemetry.io/collector/config/confighttp v0.116.0
-	go.opentelemetry.io/collector/confmap v1.22.0
+	go.opentelemetry.io/collector/confmap v1.26.0
 	go.opentelemetry.io/collector/consumer v1.24.0
 	go.opentelemetry.io/collector/consumer/consumertest v0.118.0
 	go.opentelemetry.io/collector/filter v0.116.0
