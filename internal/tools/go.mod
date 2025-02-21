@@ -10,7 +10,7 @@ require (
 	go.opentelemetry.io/build-tools/crosslink v0.15.0
 	go.opentelemetry.io/build-tools/multimod v0.15.0
 	go.opentelemetry.io/collector/cmd/builder v0.119.0
-	go.opentelemetry.io/collector/cmd/mdatagen v0.119.0
+	go.opentelemetry.io/collector/cmd/mdatagen v0.116.0
 	golang.org/x/tools v0.28.0
 	golang.org/x/vuln v1.1.3
 	honnef.co/go/tools v0.5.1
