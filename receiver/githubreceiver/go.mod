@@ -2,7 +2,7 @@ module github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver
 
 go 1.23.0
 
-toolchain go1.23.6
+toolchain go1.24.0
 
 require (
 	github.com/Khan/genqlient v0.7.0
