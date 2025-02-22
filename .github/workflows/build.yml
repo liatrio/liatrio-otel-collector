@@ -5,15 +5,15 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - '**/Dockerfile'
-      - '**/.dockerignore'
+      - "**/Dockerfile"
+      - "**/.dockerignore"
       - .github/**
-      - '**.go'
-      - '**.mod'
-      - '**.sum'
+      - "**.go"
+      - "**.mod"
+      - "**.sum"
       - config/**
-      - '**/Makefile*'
-      - '**/documentation.md'
+      - "**/Makefile*"
+      - "**/documentation.md"
       - .golangci.yaml
       - .goreleaser.yaml
 
@@ -21,12 +21,45 @@ on:
     branches: [main]
 
 jobs:
+  detect-modules:
+    runs-on: ubuntu-latest
+    outputs:
+      modules: ${{ steps.set-modules.outputs.modules }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - id: set-modules
+        run: echo "modules=$(find ./* -not -path \"./build/*\" -not -path \"./tmp/*\" -type f -name \"go.mod\" -exec dirname {} \; | sort | grep -E '^./')" >> $GITHUB_OUTPUT
   lint:
+    needs: detect-modules
     if: github.actor != 'liatrio-otel-collector-release[bot]'
     strategy:
       matrix:
-        go: ['1.23']
+        modules: ${{ fromJSON(needs.detect-modules.outputs.modules) }}
     name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache: true
+      - name: golangci-lint-${{ matrix.modules }}
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64
+          working-directory: ${{ matrix.modules }}
+
+  generate:
+    if: github.actor != 'liatrio-otel-collector-release[bot]'
+    strategy:
+      matrix:
+        go: ["1.23"]
+    name: generate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,9 +75,6 @@ jobs:
       - name: Make install-tools
         run: make install-tools
 
-      - name: Make lint-all
-        run: make lint-all
-
       - name: Check Code Generation
         run: |
           make generate
@@ -55,22 +85,17 @@ jobs:
           make tidy-all
           git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
 
-      - name: Check crosslink run
-        run: |
-          make crosslink
-          git diff -s --exit-code || (echo 'Replace statements not updated. Run make crosslink and commit the changes' && exit 1)
-
   build:
     name: build
     if: github.actor != 'liatrio-otel-collector-release[bot]'
     strategy:
       matrix:
         GOOS: [darwin, linux, windows]
-        GOARCH: [arm64, amd64, '386']
-        go: ['1.23']
+        GOARCH: [arm64, amd64, "386"]
+        go: ["1.23"]
         exclude:
           - GOOS: darwin
-            GOARCH: '386'
+            GOARCH: "386"
           - GOOS: darwin
             GOARCH: arm
           - GOOS: windows
@@ -128,7 +153,7 @@ jobs:
     if: github.actor != 'liatrio-otel-collector-release[bot]'
     strategy:
       matrix:
-        go: ['1.23']
+        go: ["1.23"]
     name: test
     runs-on: ubuntu-latest
     steps:
@@ -202,4 +227,3 @@ jobs:
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
           make multimod-prerelease
           git push
-

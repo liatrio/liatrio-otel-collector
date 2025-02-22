@@ -61,6 +61,7 @@ tidy:
 .PHONY: gen
 gen:
 	go generate ./...
+	$(MAKE) fmt
 
 .PHONY: test
 test:
@@ -68,7 +69,9 @@ test:
 
 .PHONY: fmt
 fmt:
+	$(GOIMPORTS) -w .
 	go fmt ./...
+	$(MAKE) tidy
 
 .PHONY: scan
 scan:
