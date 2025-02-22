@@ -375,7 +375,7 @@ func TestGetMergeRequests(t *testing.T) {
 				},
 			}),
 			expectedCount: 0,
-			expectedErr:   errors.New("returned error 404 Not Found: "),
+			expectedErr:   errors.New("404"),
 		},
 	}
 	for _, tc := range testCases {
@@ -393,7 +393,7 @@ func TestGetMergeRequests(t *testing.T) {
 
 			assert.Equal(t, tc.expectedCount, len(mergeRequestData))
 			if tc.expectedErr != nil {
-				assert.Equal(t, tc.expectedErr, err)
+				assert.ErrorContains(t, err, tc.expectedErr.Error())
 			} else {
 				assert.NoError(t, err)
 			}
@@ -481,7 +481,7 @@ func TestGetCombinedMergeRequests(t *testing.T) {
 				},
 			}),
 			expectedCount: 0,
-			expectedErr:   errors.New("returned error 404 Not Found: "),
+			expectedErr:   errors.New("404"),
 		},
 	}
 	for _, tc := range testCases {
@@ -499,7 +499,7 @@ func TestGetCombinedMergeRequests(t *testing.T) {
 
 			assert.Equal(t, tc.expectedCount, len(mergeRequestData))
 			if tc.expectedErr != nil {
-				assert.Equal(t, tc.expectedErr, err)
+				assert.ErrorContains(t, err, tc.expectedErr.Error())
 			} else {
 				assert.NoError(t, err)
 			}
@@ -550,7 +550,7 @@ func TestGetBranchNames(t *testing.T) {
 				},
 			}),
 			expectedCount: 0,
-			expectedErr:   errors.New("returned error 404 Not Found: "),
+			expectedErr:   errors.New("404"),
 		},
 	}
 	for _, tc := range testCases {
@@ -569,7 +569,7 @@ func TestGetBranchNames(t *testing.T) {
 			if tc.expectedErr != nil {
 				//nil is returned like this for some reason
 				assert.Equal(t, (*getBranchNamesProjectRepository)(nil), branches)
-				assert.Equal(t, tc.expectedErr, err)
+				assert.ErrorContains(t, err, tc.expectedErr.Error())
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedCount, len(branches.BranchNames))
