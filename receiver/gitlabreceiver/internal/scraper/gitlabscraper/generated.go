@@ -83,6 +83,14 @@ const (
 	MergeRequestStateAll MergeRequestState = "all"
 )
 
+var AllMergeRequestState = []MergeRequestState{
+	MergeRequestStateMerged,
+	MergeRequestStateOpened,
+	MergeRequestStateClosed,
+	MergeRequestStateLocked,
+	MergeRequestStateAll,
+}
+
 // __getAllGroupProjectsInput is used internally by genqlient
 type __getAllGroupProjectsInput struct {
 	FullPath string  `json:"fullPath"`
@@ -379,7 +387,7 @@ func (v *getProjectsByTopicResponse) GetProjects() getProjectsByTopicProjectsPro
 	return v.Projects
 }
 
-// The query or mutation executed by getAllGroupProjects.
+// The query executed by getAllGroupProjects.
 const getAllGroupProjects_Operation = `
 query getAllGroupProjects ($fullPath: ID!, $after: String) {
 	group(fullPath: $fullPath) {
@@ -405,7 +413,7 @@ func getAllGroupProjects(
 	client_ graphql.Client,
 	fullPath string,
 	after *string,
-) (*getAllGroupProjectsResponse, error) {
+) (data_ *getAllGroupProjectsResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "getAllGroupProjects",
 		Query:  getAllGroupProjects_Operation,
@@ -414,10 +422,9 @@ func getAllGroupProjects(
 			After:    after,
 		},
 	}
-	var err_ error
 
-	var data_ getAllGroupProjectsResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &getAllGroupProjectsResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -425,10 +432,10 @@ func getAllGroupProjects(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by getBranchNames.
+// The query executed by getBranchNames.
 const getBranchNames_Operation = `
 query getBranchNames ($fullPath: ID!) {
 	project(fullPath: $fullPath) {
@@ -444,7 +451,7 @@ func getBranchNames(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	fullPath string,
-) (*getBranchNamesResponse, error) {
+) (data_ *getBranchNamesResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "getBranchNames",
 		Query:  getBranchNames_Operation,
@@ -452,10 +459,9 @@ func getBranchNames(
 			FullPath: fullPath,
 		},
 	}
-	var err_ error
 
-	var data_ getBranchNamesResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &getBranchNamesResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -463,10 +469,10 @@ func getBranchNames(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by getMergeRequests.
+// The query executed by getMergeRequests.
 const getMergeRequests_Operation = `
 query getMergeRequests ($fullPath: ID!, $after: String, $state: MergeRequestState) {
 	project(fullPath: $fullPath) {
@@ -498,7 +504,7 @@ func getMergeRequests(
 	fullPath string,
 	after *string,
 	state MergeRequestState,
-) (*getMergeRequestsResponse, error) {
+) (data_ *getMergeRequestsResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "getMergeRequests",
 		Query:  getMergeRequests_Operation,
@@ -508,10 +514,9 @@ func getMergeRequests(
 			State:    state,
 		},
 	}
-	var err_ error
 
-	var data_ getMergeRequestsResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &getMergeRequestsResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -519,10 +524,10 @@ func getMergeRequests(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by getProjectsByTopic.
+// The query executed by getProjectsByTopic.
 const getProjectsByTopic_Operation = `
 query getProjectsByTopic ($org: String!, $topics: [String!]) {
 	projects(searchNamespaces: true, search: $org, topics: $topics) {
@@ -541,7 +546,7 @@ func getProjectsByTopic(
 	client_ graphql.Client,
 	org string,
 	topics []string,
-) (*getProjectsByTopicResponse, error) {
+) (data_ *getProjectsByTopicResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "getProjectsByTopic",
 		Query:  getProjectsByTopic_Operation,
@@ -550,10 +555,9 @@ func getProjectsByTopic(
 			Topics: topics,
 		},
 	}
-	var err_ error
 
-	var data_ getProjectsByTopicResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &getProjectsByTopicResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -561,5 +565,5 @@ func getProjectsByTopic(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
