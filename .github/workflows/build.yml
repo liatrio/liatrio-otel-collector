@@ -37,7 +37,7 @@ jobs:
     if: github.actor != 'liatrio-otel-collector-release[bot]'
     strategy:
       matrix:
-        modules: ${{ fromJSON(needs.detect-modules.outputs.modules) }}
+        modules: ${{ needs.detect-modules.outputs.modules }}
     name: lint
     runs-on: ubuntu-latest
     steps:
