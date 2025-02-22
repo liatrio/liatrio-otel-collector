@@ -10,8 +10,9 @@ require (
 	go.opentelemetry.io/collector/component v0.120.0
 	go.opentelemetry.io/collector/component/componenttest v0.120.0
 	go.opentelemetry.io/collector/confmap v1.26.0
+	go.opentelemetry.io/collector/confmap/xconfmap v0.120.0
 	go.opentelemetry.io/collector/extension v0.120.0
-	go.opentelemetry.io/collector/extension/auth v0.119.0
+	go.opentelemetry.io/collector/extension/auth v0.120.0
 	go.opentelemetry.io/collector/extension/extensiontest v0.120.0
 	go.opentelemetry.io/otel/metric v1.34.0
 	go.opentelemetry.io/otel/trace v1.34.0
