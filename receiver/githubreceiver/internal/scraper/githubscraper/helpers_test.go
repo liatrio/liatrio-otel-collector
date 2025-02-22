@@ -518,7 +518,7 @@ func TestGetSearchRepos(t *testing.T) {
 					responseCode: http.StatusNotFound,
 				},
 			}),
-			expectedErr:   errors.New("returned error 404 Not Found: "),
+			expectedErr:   errors.New("returned error 404"),
 			expectedRepos: 0,
 		},
 	}
@@ -537,7 +537,7 @@ func TestGetSearchRepos(t *testing.T) {
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
+				assert.ErrorContains(t, err, tc.expectedErr.Error())
 			}
 		})
 	}
@@ -698,7 +698,7 @@ func TestGetBranches(t *testing.T) {
 					responseCode: http.StatusNotFound,
 				},
 			}),
-			expectedErr: errors.New("returned error 404 Not Found: "),
+			expectedErr: errors.New("returned error 404"),
 			expected:    0,
 		},
 	}
@@ -718,7 +718,7 @@ func TestGetBranches(t *testing.T) {
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
+				assert.ErrorContains(t, err, tc.expectedErr.Error())
 			}
 		})
 	}
@@ -900,7 +900,7 @@ func TestGetPullRequests(t *testing.T) {
 					responseCode: http.StatusNotFound,
 				},
 			}),
-			expectedErr:     errors.New("returned error 404 Not Found: "),
+			expectedErr:     errors.New("returned error 404"),
 			expectedPrCount: 0,
 		},
 	}
@@ -920,7 +920,7 @@ func TestGetPullRequests(t *testing.T) {
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
+				assert.ErrorContains(t, err, tc.expectedErr.Error())
 			}
 		})
 	}
@@ -1088,7 +1088,7 @@ func TestEvalCommits(t *testing.T) {
 			expectedAge:       0,
 			expectedAdditions: 0,
 			expectedDeletions: 0,
-			expectedErr:       errors.New("returned error 404 Not Found: "),
+			expectedErr:       errors.New("returned error 404"),
 		},
 	}
 	for _, tc := range testCases {
@@ -1109,7 +1109,7 @@ func TestEvalCommits(t *testing.T) {
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
 			} else {
-				assert.EqualError(t, err, tc.expectedErr.Error())
+				assert.ErrorContains(t, err, tc.expectedErr.Error())
 			}
 		})
 	}

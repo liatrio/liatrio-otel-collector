@@ -15,8 +15,8 @@ require (
 	go.opentelemetry.io/collector/confmap v1.26.0
 	go.opentelemetry.io/collector/consumer v1.26.0
 	go.opentelemetry.io/collector/consumer/consumertest v0.120.0
-	go.opentelemetry.io/collector/filter v0.119.0
-	go.opentelemetry.io/collector/otelcol/otelcoltest v0.119.0
+	go.opentelemetry.io/collector/filter v0.120.0
+	go.opentelemetry.io/collector/otelcol/otelcoltest v0.120.0
 	go.opentelemetry.io/collector/pdata v1.26.0
 	go.opentelemetry.io/collector/pipeline v0.120.0
 	go.opentelemetry.io/collector/receiver v0.120.0
@@ -36,10 +36,10 @@ require (
 	github.com/shirou/gopsutil/v4 v4.25.1 // indirect
 	go.opentelemetry.io/collector/client v1.26.0 // indirect
 	go.opentelemetry.io/collector/component/componentstatus v0.120.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/envprovider v1.25.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.25.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/httpprovider v1.25.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/yamlprovider v1.25.0 // indirect
+	go.opentelemetry.io/collector/confmap/provider/envprovider v1.26.0 // indirect
+	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.26.0 // indirect
+	go.opentelemetry.io/collector/confmap/provider/httpprovider v1.26.0 // indirect
+	go.opentelemetry.io/collector/confmap/provider/yamlprovider v1.26.0 // indirect
 	go.opentelemetry.io/collector/extension/extensioncapabilities v0.120.0 // indirect
 	go.opentelemetry.io/collector/otelcol v0.120.0 // indirect
 	go.opentelemetry.io/collector/pdata/pprofile v0.120.0 // indirect
