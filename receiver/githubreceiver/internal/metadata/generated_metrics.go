@@ -13,7 +13,7 @@ import (
 	conventions "go.opentelemetry.io/collector/semconv/v1.27.0"
 )
 
-// AttributeChangeState specifies the a value change.state attribute.
+// AttributeChangeState specifies the value change.state attribute.
 type AttributeChangeState int
 
 const (
@@ -39,7 +39,7 @@ var MapAttributeChangeState = map[string]AttributeChangeState{
 	"merged": AttributeChangeStateMerged,
 }
 
-// AttributeCveSeverity specifies the a value cve.severity attribute.
+// AttributeCveSeverity specifies the value cve.severity attribute.
 type AttributeCveSeverity int
 
 const (
@@ -77,7 +77,7 @@ var MapAttributeCveSeverity = map[string]AttributeCveSeverity{
 	"none":     AttributeCveSeverityNone,
 }
 
-// AttributeRefType specifies the a value ref.type attribute.
+// AttributeRefType specifies the value ref.type attribute.
 type AttributeRefType int
 
 const (
@@ -822,7 +822,6 @@ func WithStartTime(startTime pcommon.Timestamp) MetricBuilderOption {
 		mb.startTime = startTime
 	})
 }
-
 func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, options ...MetricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
 		config:                                  mbc,
