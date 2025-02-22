@@ -3,7 +3,7 @@ module github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver
 go 1.23.4
 
 require (
-	github.com/Khan/genqlient v0.7.0
+	github.com/Khan/genqlient v0.8.0
 	github.com/google/go-cmp v0.6.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.120.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.120.1
@@ -94,7 +94,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
 	github.com/tklauser/numcpus v0.7.0 // indirect
-	github.com/vektah/gqlparser/v2 v2.5.16 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.19 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/collector/config/configauth v0.120.0 // indirect
