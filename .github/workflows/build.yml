@@ -22,9 +22,10 @@ on:
 
 jobs:
   detect-modules:
+    if: github.actor != 'liatrio-otel-collector-release[bot]'
     runs-on: ubuntu-latest
     outputs:
-      modules: ${{ steps.set-modules.outputs.modules }}
+      modules: ${{ steps.set-modules.outputs.list }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -33,19 +34,19 @@ jobs:
       - id: set-modules
         run: |
           # MODULES=$(find . -type f -name "go.mod" -exec dirname {} \; | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          MODULES=$(find . -type f -name "go.mod" -exec dirname {} \; | sort | jq -R -n '[inputs]' | jq -c .)
+          MODULES=$(find . -type f -name "go.mod" -exec dirname {} \; | jq -R -s -c 'split("\n") | map(select(length > 0 and . != "."))')
           echo "Found modules: $MODULES"  # Debug output
           echo "list=$MODULES" >> $GITHUB_OUTPUT
         # run: echo "modules=$(find ./* -not -path \"./build/*\" -not -path \"./tmp/*\" -type f -name \"go.mod\" -exec dirname {} \; | sort | grep -E '^./')" >> $GITHUB_OUTPUT
-      - name: Debug output
-        run: echo "${{ steps.set-modules.outputs.modules }}"
+      # - name: Debug output
+      #   run: echo "${{ steps.set-modules.outputs.modules }}"
 
   lint:
     needs: detect-modules
     if: github.actor != 'liatrio-otel-collector-release[bot]'
     strategy:
       matrix:
-        modules: ${{ fromJson(needs.detect-modules.outputs.modules) }}
+        modules: ${{ fromJson(needs.detect-modules.outputs.list) }}
         # modules: ${{ needs.detect-modules.outputs.modules }}
     name: lint
     runs-on: ubuntu-latest
