@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/google/go-github/v67/github"
+	"github.com/google/go-github/v69/github"
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 	"go.uber.org/zap"
 )
