@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          cat "${{ fromJson(needs.detect-modules.outputs.list) }}"
+          ${{ fromJson(needs.detect-modules.outputs.list) }}
 
   lint:
     needs: detect-modules
