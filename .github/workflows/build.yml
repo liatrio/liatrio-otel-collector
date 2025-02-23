@@ -41,19 +41,17 @@ jobs:
     needs: detect-modules
     if: github.actor != 'liatrio-otel-collector-release[bot]'
     runs-on: ubuntu-latest
-    outputs:
-      modules: ${{ steps.set-modules.outputs.list }}
     steps:
       - uses: actions/checkout@v4
       - run: |
-          ${{ needs.detect-modules.outputs.list }}
+          ${{ needs.detect-modules.outputs.modules }}
 
   lint:
     needs: detect-modules
     if: github.actor != 'liatrio-otel-collector-release[bot]'
     strategy:
       matrix:
-        modules: ${{ fromJson(needs.detect-modules.outputs.list) }}
+        modules: ${{ fromJson(needs.detect-modules.outputs.modules) }}
     name: lint
     runs-on: ubuntu-latest
     steps:
