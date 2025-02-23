@@ -32,7 +32,7 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
       - id: set-modules
         run: |
-          MODULES=$(find . -type f -name "go.mod" -exec dirname {} \; | sort | jq -R -s 'split("\n")[:-1]')
+          MODULES=$(find . -type f -name "go.mod" -exec dirname {} \; | jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "list=$MODULES" >> $GITHUB_OUTPUT
         # run: echo "modules=$(find ./* -not -path \"./build/*\" -not -path \"./tmp/*\" -type f -name \"go.mod\" -exec dirname {} \; | sort | grep -E '^./')" >> $GITHUB_OUTPUT
   lint:
