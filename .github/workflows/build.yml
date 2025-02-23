@@ -35,7 +35,7 @@ jobs:
         run: |
           MODULES=$(find $GITHUB_WORKSPACE -type f -name "go.mod" -exec dirname {} \; | jq -R -s -c 'split("\n") | map(select(length > 0 and . != ".")) | tostring')
           echo "Found modules: $MODULES"  # Debug output
-          echo "list=$MODULES" >> $GITHUB_OUTPUT
+          echo "list=env.MODULES" >> $GITHUB_OUTPUT
 
   troubleshot-detect:
     needs: detect-modules
