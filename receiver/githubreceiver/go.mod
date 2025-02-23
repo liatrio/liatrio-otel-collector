@@ -7,8 +7,7 @@ toolchain go1.23.6
 require (
 	github.com/Khan/genqlient v0.8.0
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-github/v67 v67.0.0
-	github.com/google/go-github/v69 v69.2.0
+	github.com/google/go-github/v69 v69.0.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.120.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.120.1
 	github.com/stretchr/testify v1.10.0

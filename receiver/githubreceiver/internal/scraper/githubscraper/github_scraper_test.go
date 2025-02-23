@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v67/github"
+	"github.com/google/go-github/v69/github"
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/pmetrictest"
@@ -150,7 +150,7 @@ func TestScrape(t *testing.T) {
 					contribs: [][]*github.Contributor{
 						{
 							{
-								ID: github.Int64(1),
+								ID: github.Ptr(int64(1)),
 							},
 						},
 					},
@@ -268,7 +268,7 @@ func TestScrape(t *testing.T) {
 					contribs: [][]*github.Contributor{
 						{
 							{
-								ID: github.Int64(1),
+								ID: github.Ptr(int64(1)),
 							},
 						},
 					},
