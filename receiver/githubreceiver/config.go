@@ -38,6 +38,7 @@ type Config struct {
 	WebHook                        WebHook `mapstructure:"webhook"`
 }
 
+//nolint:lll
 type WebHook struct {
 	confighttp.ServerConfig `mapstructure:",squash"`       // squash ensures fields are correctly decoded in embedded struct
 	Path                    string                         `mapstructure:"path"`             // path for data collection. Default is /events
@@ -75,7 +76,13 @@ func (cfg *Config) Validate() error {
 		errs = multierr.Append(errs, errRequireOneScraper)
 	}
 
-	maxReadWriteTimeout, _ := time.ParseDuration("10s")
+	maxReadWriteTimeout, err := time.ParseDuration("10s")
+	if err != nil {
+		errs = multierr.Append(errs, err)
+		// Return quickly because this is an error that shouldn't ever be
+		// triggered and if it does we've got problems.
+		return errs
+	}
 
 	if cfg.WebHook.ServerConfig.Endpoint == "" {
 		errs = multierr.Append(errs, errMissingEndpointFromConfig)

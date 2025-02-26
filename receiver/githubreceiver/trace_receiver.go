@@ -195,5 +195,5 @@ func (gtr *githubTracesReceiver) handleHealthCheck(w http.ResponseWriter, _ *htt
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	_, _ = w.Write([]byte(healthyResponse))
+	_, _ = w.Write([]byte(healthyResponse)) //nolint:all
 }

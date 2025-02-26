@@ -6,7 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
@@ -16,8 +15,10 @@ import (
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
+var typ = component.MustNewType("github")
+
 func TestComponentFactoryType(t *testing.T) {
-	require.Equal(t, "github", NewFactory().Type().String())
+	require.Equal(t, typ, NewFactory().Type())
 }
 
 func TestComponentConfigStruct(t *testing.T) {
@@ -28,8 +29,8 @@ func TestComponentLifecycle(t *testing.T) {
 	factory := NewFactory()
 
 	tests := []struct {
-		name     string
 		createFn func(ctx context.Context, set receiver.Settings, cfg component.Config) (component.Component, error)
+		name     string
 	}{
 
 		{
@@ -56,19 +57,19 @@ func TestComponentLifecycle(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name+"-shutdown", func(t *testing.T) {
-			c, err := tt.createFn(context.Background(), receivertest.NewNopSettings(metadata.Type), cfg)
+			c, err := tt.createFn(context.Background(), receivertest.NewNopSettingsWithType(typ), cfg)
 			require.NoError(t, err)
 			err = c.Shutdown(context.Background())
 			require.NoError(t, err)
 		})
 		t.Run(tt.name+"-lifecycle", func(t *testing.T) {
-			firstRcvr, err := tt.createFn(context.Background(), receivertest.NewNopSettings(metadata.Type), cfg)
+			firstRcvr, err := tt.createFn(context.Background(), receivertest.NewNopSettingsWithType(typ), cfg)
 			require.NoError(t, err)
 			host := componenttest.NewNopHost()
 			require.NoError(t, err)
 			require.NoError(t, firstRcvr.Start(context.Background(), host))
 			require.NoError(t, firstRcvr.Shutdown(context.Background()))
-			secondRcvr, err := tt.createFn(context.Background(), receivertest.NewNopSettings(metadata.Type), cfg)
+			secondRcvr, err := tt.createFn(context.Background(), receivertest.NewNopSettingsWithType(typ), cfg)
 			require.NoError(t, err)
 			require.NoError(t, secondRcvr.Start(context.Background(), host))
 			require.NoError(t, secondRcvr.Shutdown(context.Background()))
