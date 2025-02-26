@@ -9,8 +9,8 @@ require (
 	github.com/golangci/golangci-lint v1.64.5
 	github.com/google/osv-scanner v1.9.2
 	github.com/securego/gosec/v2 v2.22.1
-	go.opentelemetry.io/build-tools/crosslink v0.18.0
-	go.opentelemetry.io/build-tools/multimod v0.18.0
+	go.opentelemetry.io/build-tools/crosslink v0.19.0
+	go.opentelemetry.io/build-tools/multimod v0.19.0
 	go.opentelemetry.io/collector/cmd/builder v0.120.0
 	go.opentelemetry.io/collector/cmd/mdatagen v0.120.0
 	golang.org/x/tools v0.30.0
