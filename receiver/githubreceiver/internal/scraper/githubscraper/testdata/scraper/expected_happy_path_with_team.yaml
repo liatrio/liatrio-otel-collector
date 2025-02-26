@@ -1,4 +1,3 @@
----
 resourceMetrics:
   - resource:
       attributes:
@@ -14,196 +13,237 @@ resourceMetrics:
           - description: The number of changes (pull requests) in a repository, categorized by their state (either open or merged).
             gauge:
               dataPoints:
-                - asInt: '1'
+                - asInt: "1"
                   attributes:
-                    - key: change.state
+                    - key: vcs.change.state
                       value:
                         stringValue: merged
-                    - key: repository.name
+                    - key: vcs.repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '1'
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "1"
                   attributes:
-                    - key: change.state
+                    - key: vcs.change.state
                       value:
                         stringValue: open
-                    - key: repository.name
+                    - key: vcs.repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: vcs.repository.change.count
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: vcs.change.count
             unit: '{change}'
-          - description: The amount of time a change (pull request) has been open.
+          - description: The time duration a change (pull request/merge request/changelist) has been in an open state.
             gauge:
               dataPoints:
-                - asInt: '9223372036'
+                - asInt: "9223372036"
                   attributes:
-                    - key: ref.name
+                    - key: vcs.change.state
                       value:
-                        stringValue: ''
-                    - key: repository.name
+                        stringValue: open
+                    - key: vcs.ref.head.name
+                      value:
+                        stringValue: ""
+                    - key: vcs.repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: vcs.repository.change.time_open
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: vcs.change.duration
             unit: s
           - description: The amount of time it took a change (pull request) to go from open to merged.
             gauge:
               dataPoints:
-                - asInt: '0'
+                - asInt: "0"
                   attributes:
-                    - key: ref.name
+                    - key: vcs.ref.head.name
                       value:
-                        stringValue: ''
-                    - key: repository.name
+                        stringValue: ""
+                    - key: vcs.repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: vcs.repository.change.time_to_merge
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: vcs.change.time_to_merge
             unit: s
-          - description: The number of repositories in an organization.
-            gauge:
-              dataPoints:
-                - asInt: '1'
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: vcs.repository.count
-            unit: '{repository}'
           - description: The number of Common Vulnerabilities and Exposures (CVEs) in the repository.
             gauge:
               dataPoints:
-                - asInt: '1'
+                - asInt: "1"
                   attributes:
                     - key: cve.severity
                       value:
                         stringValue: high
-                    - key: repository.name
+                    - key: vcs.repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-                - asInt: '1'
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "1"
                   attributes:
                     - key: cve.severity
                       value:
                         stringValue: medium
-                    - key: repository.name
+                    - key: vcs.repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: vcs.repository.cve.count
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: vcs.cve.count
             unit: '{cve}'
           - description: The number of refs of type branch in a repository.
             gauge:
               dataPoints:
-                - asInt: '1'
+                - asInt: "1"
                   attributes:
-                    - key: ref.type
+                    - key: vcs.ref.head.type
                       value:
                         stringValue: branch
-                    - key: repository.name
+                    - key: vcs.repository.name
                       value:
                         stringValue: repo1
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: vcs.repository.ref.count
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: vcs.ref.count
             unit: '{ref}'
-          - description: The number of lines added in a ref (branch) relative to the default branch (trunk).
+          - description: The number of lines added/removed in a ref (branch) relative to the default branch (trunk).
             gauge:
               dataPoints:
-                - asInt: '10'
+                - asInt: "10"
                   attributes:
-                    - key: ref.name
+                    - key: vcs.line_change.type
+                      value:
+                        stringValue: added
+                    - key: vcs.ref.head.name
                       value:
                         stringValue: main
-                    - key: ref.type
+                    - key: vcs.ref.head.type
                       value:
                         stringValue: branch
-                    - key: repository.name
+                    - key: vcs.repository.name
                       value:
-                        stringValue: ''
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: vcs.repository.ref.lines_added
+                        stringValue: repo1
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "9"
+                  attributes:
+                    - key: vcs.line_change.type
+                      value:
+                        stringValue: removed
+                    - key: vcs.ref.head.name
+                      value:
+                        stringValue: main
+                    - key: vcs.ref.head.type
+                      value:
+                        stringValue: branch
+                    - key: vcs.repository.name
+                      value:
+                        stringValue: repo1
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: vcs.ref.lines_delta
             unit: '{line}'
-          - description: The number of lines deleted in a ref (branch) relative to the default branch (trunk).
+          - description: The number of revisions (commits) a ref (branch) is ahead/behind the branch from trunk (default).
             gauge:
               dataPoints:
-                - asInt: '9'
+                - asInt: "1"
                   attributes:
-                    - key: ref.name
+                    - key: vcs.ref.head.name
                       value:
                         stringValue: main
-                    - key: ref.type
+                    - key: vcs.ref.head.type
                       value:
                         stringValue: branch
-                    - key: repository.name
+                    - key: vcs.repository.name
                       value:
-                        stringValue: ''
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: vcs.repository.ref.lines_deleted
-            unit: '{line}'
-          - description: The number of revisions (commits) a ref (branch) is ahead of the default branch (trunk).
-            gauge:
-              dataPoints:
-                - asInt: '1'
+                        stringValue: repo1
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                    - key: vcs.revision_delta.direction
+                      value:
+                        stringValue: ahead
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "0"
                   attributes:
-                    - key: ref.name
+                    - key: vcs.ref.head.name
                       value:
                         stringValue: main
-                    - key: ref.type
+                    - key: vcs.ref.head.type
                       value:
                         stringValue: branch
-                    - key: repository.name
+                    - key: vcs.repository.name
                       value:
-                        stringValue: ''
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: vcs.repository.ref.revisions_ahead
+                        stringValue: repo1
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                    - key: vcs.revision_delta.direction
+                      value:
+                        stringValue: behind
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: vcs.ref.revisions_delta
             unit: '{revision}'
-          - description: The number of revisions (commits) a ref (branch) is behind the default branch (trunk).
+          - description: Time a ref (branch) created from the default branch (trunk) has existed. The `vcs.ref.head.type` attribute will always be `branch`.
             gauge:
               dataPoints:
-                - asInt: '0'
+                - asInt: "86400"
                   attributes:
-                    - key: ref.name
+                    - key: vcs.ref.head.name
                       value:
                         stringValue: main
-                    - key: ref.type
+                    - key: vcs.ref.head.type
                       value:
                         stringValue: branch
-                    - key: repository.name
+                    - key: vcs.repository.name
                       value:
-                        stringValue: ''
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: vcs.repository.ref.revisions_behind
-            unit: '{revision}'
-          - description: Time a ref (branch) created from the default branch (trunk) has existed. The `ref.type` attribute will always be `branch`.
-            gauge:
-              dataPoints:
-                - asInt: '86400'
-                  attributes:
-                    - key: ref.name
+                        stringValue: repo1
+                    - key: vcs.repository.url.full
                       value:
-                        stringValue: main
-                    - key: ref.type
-                      value:
-                        stringValue: branch
-                    - key: repository.name
-                      value:
-                        stringValue: ''
-                  startTimeUnixNano: '1000000'
-                  timeUnixNano: '2000000'
-            name: vcs.repository.ref.time
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: vcs.ref.time
             unit: s
+          - description: The number of repositories in an organization.
+            gauge:
+              dataPoints:
+                - asInt: "1"
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: vcs.repository.count
+            unit: '{repository}'
         scope:
           name: github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver
           version: latest
