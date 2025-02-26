@@ -557,6 +557,8 @@ type Repo struct {
 	Name string `json:"name"`
 	// The Ref associated with the repository's default branch.
 	DefaultBranchRef RepoDefaultBranchRef `json:"defaultBranchRef"`
+	// The HTTP URL for this repository
+	Url string `json:"url"`
 }
 
 // GetId returns Repo.Id, and is useful for accessing the field via an interface.
@@ -567,6 +569,9 @@ func (v *Repo) GetName() string { return v.Name }
 
 // GetDefaultBranchRef returns Repo.DefaultBranchRef, and is useful for accessing the field via an interface.
 func (v *Repo) GetDefaultBranchRef() RepoDefaultBranchRef { return v.DefaultBranchRef }
+
+// GetUrl returns Repo.Url, and is useful for accessing the field via an interface.
+func (v *Repo) GetUrl() string { return v.Url }
 
 // RepoDefaultBranchRef includes the requested fields of the GraphQL type Ref.
 // The GraphQL type's documentation follows.
@@ -825,6 +830,9 @@ func (v *SearchNodeRepository) GetDefaultBranchRef() RepoDefaultBranchRef {
 	return v.Repo.DefaultBranchRef
 }
 
+// GetUrl returns SearchNodeRepository.Url, and is useful for accessing the field via an interface.
+func (v *SearchNodeRepository) GetUrl() string { return v.Repo.Url }
+
 func (v *SearchNodeRepository) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
@@ -858,6 +866,8 @@ type __premarshalSearchNodeRepository struct {
 	Name string `json:"name"`
 
 	DefaultBranchRef RepoDefaultBranchRef `json:"defaultBranchRef"`
+
+	Url string `json:"url"`
 }
 
 func (v *SearchNodeRepository) MarshalJSON() ([]byte, error) {
@@ -875,6 +885,7 @@ func (v *SearchNodeRepository) __premarshalJSON() (*__premarshalSearchNodeReposi
 	retval.Id = v.Repo.Id
 	retval.Name = v.Repo.Name
 	retval.DefaultBranchRef = v.Repo.DefaultBranchRef
+	retval.Url = v.Repo.Url
 	return &retval, nil
 }
 
@@ -927,6 +938,9 @@ func (v *TeamNode) GetName() string { return v.Repo.Name }
 // GetDefaultBranchRef returns TeamNode.DefaultBranchRef, and is useful for accessing the field via an interface.
 func (v *TeamNode) GetDefaultBranchRef() RepoDefaultBranchRef { return v.Repo.DefaultBranchRef }
 
+// GetUrl returns TeamNode.Url, and is useful for accessing the field via an interface.
+func (v *TeamNode) GetUrl() string { return v.Repo.Url }
+
 func (v *TeamNode) UnmarshalJSON(b []byte) error {
 
 	if string(b) == "null" {
@@ -958,6 +972,8 @@ type __premarshalTeamNode struct {
 	Name string `json:"name"`
 
 	DefaultBranchRef RepoDefaultBranchRef `json:"defaultBranchRef"`
+
+	Url string `json:"url"`
 }
 
 func (v *TeamNode) MarshalJSON() ([]byte, error) {
@@ -974,6 +990,7 @@ func (v *TeamNode) __premarshalJSON() (*__premarshalTeamNode, error) {
 	retval.Id = v.Repo.Id
 	retval.Name = v.Repo.Name
 	retval.DefaultBranchRef = v.Repo.DefaultBranchRef
+	retval.Url = v.Repo.Url
 	return &retval, nil
 }
 
@@ -1898,6 +1915,7 @@ fragment Repo on Repository {
 	defaultBranchRef {
 		name
 	}
+	url
 }
 `
 
@@ -1952,6 +1970,7 @@ fragment Repo on Repository {
 	defaultBranchRef {
 		name
 	}
+	url
 }
 `
 
