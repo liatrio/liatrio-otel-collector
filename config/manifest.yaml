@@ -63,7 +63,7 @@ receivers:
 
 connectors:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/spanmetricsconnector v0.120.1
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/countconnector v0.120.1
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/countconnector v0.121.0
 
 providers:
   - gomod: go.opentelemetry.io/collector/confmap/provider/envprovider v1.26.0
