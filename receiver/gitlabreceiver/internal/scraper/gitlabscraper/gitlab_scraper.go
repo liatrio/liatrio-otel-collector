@@ -161,7 +161,9 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			// gls.mb.RecordVcsRepositoryContributorCountDataPoint(now, int64(contributorCount), path)
 
 			for _, mr := range mrs {
+				//nolint:lll
 				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Additions), url, path, mr.SourceBranch, refType, metadata.AttributeVcsLineChangeTypeAdded)
+				//nolint:lll
 				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Deletions), url, path, mr.SourceBranch, refType, metadata.AttributeVcsLineChangeTypeRemoved)
 
 				// Checks if the merge request has been merged. This is done with IsZero() which tells us if the
