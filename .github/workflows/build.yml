@@ -218,12 +218,18 @@ jobs:
           echo ${{ steps.get_next_version.outputs.version }}
           echo ${{ steps.get_next_version.outputs.hasNextVersion }}
 
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/octo-sts[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+
       - name: Multimod release #This is so multimod prerelease can get author info
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
           set -eo pipefail
-          git config --global user.email "octo-sts[bot]@users.noreply.github.com"
-          git config --global user.name "octo-sts[bot]"
+          git config --global user.name 'octo-sts[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
           yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
           git add .
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
