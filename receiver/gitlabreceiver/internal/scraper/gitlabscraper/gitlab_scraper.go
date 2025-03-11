@@ -111,6 +111,8 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		project := project
 		path := project.Path
 		now := now
+		url := project.URL
+
 		go func() {
 			defer wg.Done()
 
@@ -123,8 +125,8 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			// from having a nil pointer error passing in the SetStartTimestamp
 			mux.Lock()
 
-			refType := metadata.AttributeRefTypeBranch
-			gls.mb.RecordVcsRepositoryRefCountDataPoint(now, int64(len(branches.BranchNames)), path, refType)
+			refType := metadata.AttributeVcsRefHeadTypeBranch
+			gls.mb.RecordVcsRefCountDataPoint(now, int64(len(branches.BranchNames)), url, path, refType)
 
 			for _, branch := range branches.BranchNames {
 				if branch == branches.RootRef {
@@ -138,7 +140,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 				if commit != nil {
 					branchAge := time.Since(*commit.CreatedAt).Seconds()
-					gls.mb.RecordVcsRepositoryRefTimeDataPoint(now, int64(branchAge), path, branch, refType)
+					gls.mb.RecordVcsRefTimeDataPoint(now, int64(branchAge), url, path, branch, refType)
 				}
 			}
 
@@ -155,21 +157,24 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				gls.logger.Sugar().Errorf("error: %v", err)
 				return
 			}
-			gls.mb.RecordVcsRepositoryContributorCountDataPoint(now, int64(contributorCount), path)
+			gls.mb.RecordVcsContributorCountDataPoint(now, int64(contributorCount), url, path)
+			// gls.mb.RecordVcsRepositoryContributorCountDataPoint(now, int64(contributorCount), path)
 
 			for _, mr := range mrs {
-				gls.mb.RecordVcsRepositoryRefLinesAddedDataPoint(now, int64(mr.DiffStatsSummary.Additions), path, mr.SourceBranch, refType)
-				gls.mb.RecordVcsRepositoryRefLinesDeletedDataPoint(now, int64(mr.DiffStatsSummary.Deletions), path, mr.SourceBranch, refType)
+				//nolint:lll
+				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Additions), url, path, mr.SourceBranch, refType, metadata.AttributeVcsLineChangeTypeAdded)
+				//nolint:lll
+				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Deletions), url, path, mr.SourceBranch, refType, metadata.AttributeVcsLineChangeTypeRemoved)
 
 				// Checks if the merge request has been merged. This is done with IsZero() which tells us if the
 				// time is or isn't  January 1, year 1, 00:00:00 UTC, which is what null in graphql date values
 				// get returned as in Go.
 				if mr.MergedAt.IsZero() {
 					mrAge := int64(time.Since(mr.CreatedAt).Seconds())
-					gls.mb.RecordVcsRepositoryChangeTimeOpenDataPoint(now, mrAge, path, mr.SourceBranch)
+					gls.mb.RecordVcsChangeDurationDataPoint(now, mrAge, url, path, mr.SourceBranch, metadata.AttributeVcsChangeStateOpen)
 				} else {
 					mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Seconds())
-					gls.mb.RecordVcsRepositoryChangeTimeToMergeDataPoint(now, mergedAge, path, mr.SourceBranch)
+					gls.mb.RecordVcsChangeTimeToMergeDataPoint(now, mergedAge, url, path, mr.SourceBranch)
 				}
 			}
 
