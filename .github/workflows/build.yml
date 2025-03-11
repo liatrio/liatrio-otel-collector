@@ -222,8 +222,8 @@ jobs:
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
           set -eo pipefail
-          git config --global user.email "${GITHUB_ACTOR}"
-          git config --global user.name "${GITHUB_ACTOR}@users.noreply.github.com"
+          git config --global user.email "octo-sts[bot]@users.noreply.github.com"
+          git config --global user.name "octo-sts[bot]"
           yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
           git add .
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"

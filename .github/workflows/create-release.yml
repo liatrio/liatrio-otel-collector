@@ -53,8 +53,8 @@ jobs:
       - name: Multimod Push Tags
         run: |
           set -eo pipefail
-          git config --global user.email "${GITHUB_ACTOR}"
-          git config --global user.name "${GITHUB_ACTOR}@users.noreply.github.com"
+          git config --global user.email "octo-sts[bot]@users.noreply.github.com"
+          git config --global user.name "octo-sts[bot]"
           ./.tools/multimod tag --module-set-name liatrio-otel --commit-hash '${{ github.sha }}' --print-tags
           git push --tags
 
