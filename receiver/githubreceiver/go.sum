@@ -141,8 +141,6 @@ go.opentelemetry.io/collector/component v1.27.0 h1:6wk0K23YT9lSprX8BH9x5w8ssAORE
 go.opentelemetry.io/collector/component v1.27.0/go.mod h1:fIyBHoa7vDyZL3Pcidgy45cx24tBe7iHWne097blGgo=
 go.opentelemetry.io/collector/component/componentstatus v0.121.0 h1:G4KqBUuAqnQ1kB3fUxXPwspjwnhGZzdArlO7vc343og=
 go.opentelemetry.io/collector/component/componentstatus v0.121.0/go.mod h1:ufRv8q15XNdbr9nNzdepMHlLl2aC3NHQgecCzp5VRns=
-go.opentelemetry.io/collector/component/componenttest v0.120.1-0.20250224010654-18e18b21da7a h1:RLuvxLYz2sSwD2p8F1cOWYU/8vGYHB4apQHfguT2Wx4=
-go.opentelemetry.io/collector/component/componenttest v0.120.1-0.20250224010654-18e18b21da7a/go.mod h1:STkHntimFEYz+yFBxNXmZUIoUog7gW0PQpyzXMccTl8=
 go.opentelemetry.io/collector/component/componenttest v0.121.0 h1:4q1/7WnP9LPKaY4HAd8/OkzhllZpRACKAOlWsqbrzqc=
 go.opentelemetry.io/collector/component/componenttest v0.121.0/go.mod h1:H7bEXDPMYNeWcHal0xyKlVfRPByVxale7hCJ+Myjq3Q=
 go.opentelemetry.io/collector/config/configauth v0.120.0 h1:5yJd4fYAxdbMnuEkTyfnKtZKEqNJVPyt+roDYDPdWIk=
@@ -239,8 +237,6 @@ go.opentelemetry.io/collector/receiver/receivertest v0.120.1-0.20250224010654-18
 go.opentelemetry.io/collector/receiver/receivertest v0.120.1-0.20250224010654-18e18b21da7a/go.mod h1:lpFA4FzcHWki7rLzsNncYmDZ4f7Eik8JY1Mmsaw5uMw=
 go.opentelemetry.io/collector/receiver/xreceiver v0.120.0 h1:+gHYd9rTBRKSQfWsTzV2wlwfaVL/LZSz5wu4sygZH7w=
 go.opentelemetry.io/collector/receiver/xreceiver v0.120.0/go.mod h1:dkHpL1QqLi/G+60VZnfFpZQf9qoxDVnp6G9FuAcMgfk=
-go.opentelemetry.io/collector/scraper v0.120.1-0.20250224010654-18e18b21da7a h1:+ebotnhgNRKdq8aJzT4rNnR5rNBA4sOoQwjPLEn4zz8=
-go.opentelemetry.io/collector/scraper v0.120.1-0.20250224010654-18e18b21da7a/go.mod h1:7EMf0bDMUaxT/jYXQ5Sb50jtrGi1+GZMVsfDn0hTwSo=
 go.opentelemetry.io/collector/scraper v0.121.0 h1:IQVqf6qjodlZ8VKGvThZeakEURJkYinUPyskbnI+ASY=
 go.opentelemetry.io/collector/scraper v0.121.0/go.mod h1:ZZDKlFZMpySv2/O8ONmt1Br9gBEp0702L9KAMstJbAI=
 go.opentelemetry.io/collector/scraper/scraperhelper v0.120.1-0.20250224010654-18e18b21da7a h1:VKIOrSzh+aobCD9aTTvGvuw54Xk5NY8sUSsbOuJrCGg=
