@@ -26,7 +26,7 @@ require (
 	go.opentelemetry.io/collector/receiver/receivertest v0.121.0
 	go.opentelemetry.io/collector/scraper v0.121.0
 	go.opentelemetry.io/collector/scraper/scraperhelper v0.121.0
-	go.opentelemetry.io/collector/semconv v0.120.1-0.20250224010654-18e18b21da7a
+	go.opentelemetry.io/collector/semconv v0.121.0
 	go.uber.org/goleak v1.3.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
