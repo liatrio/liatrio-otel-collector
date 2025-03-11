@@ -22,7 +22,7 @@ on:
 
 jobs:
   lint:
-    if: github.actor != 'liatrio-otel-collector-release[bot]'
+    if: github.actor != 'octo-sts[bot]'
     strategy:
       matrix:
         go: ["1.23"]
@@ -61,7 +61,7 @@ jobs:
           git diff -s --exit-code || (echo 'Replace statements not updated. Run make crosslink and commit the changes' && exit 1)
 
   generate:
-    if: github.actor != 'liatrio-otel-collector-release[bot]'
+    if: github.actor != 'octo-sts[bot]'
     strategy:
       matrix:
         go: ["1.23"]
@@ -93,7 +93,7 @@ jobs:
 
   build:
     name: build
-    if: github.actor != 'liatrio-otel-collector-release[bot]'
+    if: github.actor != 'octo-sts[bot]'
     strategy:
       matrix:
         GOOS: [darwin, linux, windows]
@@ -111,9 +111,17 @@ jobs:
     runs-on:
       group: bigger
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
+      - name: Get Octo Sts Token
+        uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
+        id: octo-sts
         with:
+          scope: ${{ github.repository }}
+          identity: semantic-release
+
+      - name: Clone repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          token: ${{ steps.octo-sts.outputs.token }}
           fetch-depth: 0
 
       - name: Set up Go
@@ -127,14 +135,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Generate a token
-        id: generate_token
-        uses: actions/create-github-app-token@v1
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
 
       - name: Build
         env:
@@ -152,11 +152,11 @@ jobs:
       #   env:
       #     GGOOS: ${{ matrix.GOOS }}
       #     GGOARCH: ${{ matrix.GOARCH }}
-      #     GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+      #     GITHUB_TOKEN: ${{ steps.octo-sts.outputs.token }}
       #     GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
 
   test:
-    if: github.actor != 'liatrio-otel-collector-release[bot]'
+    if: github.actor != 'octo-sts[bot]'
     strategy:
       matrix:
         go: ["1.23"]
@@ -180,26 +180,24 @@ jobs:
         uses: codecov/codecov-action@v5
 
   multimod-prepare-release:
-    if: ${{ github.ref == 'refs/heads/main' && github.actor != 'liatrio-otel-collector-release[bot]' }}
+    if: ${{ github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]' }}
     needs: [lint, build]
     runs-on:
       group: bigger
     permissions:
       contents: write
     steps:
-      - name: Generate a token
-        # if: steps.get_next_version.outputs.hasNextVersion == 'true'
-        id: generate_token
-        uses: actions/create-github-app-token@0d564482f06ca65fa9e77e2510873638c82206f2 # v1.11.5
+      - name: Get Octo Sts Token
+        uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
+        id: octo-sts
         with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
+          scope: ${{ github.repository }}
+          identity: semantic-release
 
       - name: Clone repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.octo-sts.outputs.token }}
           fetch-depth: 0
 
       - name: Install tools
@@ -216,18 +214,12 @@ jobs:
           echo ${{ steps.get_next_version.outputs.version }}
           echo ${{ steps.get_next_version.outputs.hasNextVersion }}
 
-      - name: Get GitHub App User ID
-        id: get-user-id
-        run: echo "user-id=$(gh api "/users/${{ steps.generate_token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
-
       - name: Multimod release #This is so multimod prerelease can get author info
         if: steps.get_next_version.outputs.hasNextVersion == 'true'
         run: |
           set -eo pipefail
-          git config --global user.name '${{ steps.generate_token.outputs.app-slug }}[bot]'
-          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate_token.outputs.app-slug }}[bot]@users.noreply.github.com'
+          git config --global user.email "${GITHUB_ACTOR}"
+          git config --global user.name "${GITHUB_ACTOR}@users.noreply.github.com"
           yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
           git add .
           git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"

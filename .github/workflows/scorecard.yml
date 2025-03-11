@@ -20,7 +20,7 @@ permissions: read-all
 
 jobs:
   analysis:
-    if: github.actor != 'liatrio-otel-collector-release[bot]'
+    if: github.actor != 'octo-sts[bot]'
     name: Scorecard analysis
     runs-on: ubuntu-latest
     permissions:
