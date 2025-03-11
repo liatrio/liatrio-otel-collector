@@ -143,6 +143,8 @@ go.opentelemetry.io/collector/component/componentstatus v0.121.0 h1:G4KqBUuAqnQ1
 go.opentelemetry.io/collector/component/componentstatus v0.121.0/go.mod h1:ufRv8q15XNdbr9nNzdepMHlLl2aC3NHQgecCzp5VRns=
 go.opentelemetry.io/collector/component/componenttest v0.120.1-0.20250224010654-18e18b21da7a h1:RLuvxLYz2sSwD2p8F1cOWYU/8vGYHB4apQHfguT2Wx4=
 go.opentelemetry.io/collector/component/componenttest v0.120.1-0.20250224010654-18e18b21da7a/go.mod h1:STkHntimFEYz+yFBxNXmZUIoUog7gW0PQpyzXMccTl8=
+go.opentelemetry.io/collector/component/componenttest v0.121.0 h1:4q1/7WnP9LPKaY4HAd8/OkzhllZpRACKAOlWsqbrzqc=
+go.opentelemetry.io/collector/component/componenttest v0.121.0/go.mod h1:H7bEXDPMYNeWcHal0xyKlVfRPByVxale7hCJ+Myjq3Q=
 go.opentelemetry.io/collector/config/configauth v0.120.0 h1:5yJd4fYAxdbMnuEkTyfnKtZKEqNJVPyt+roDYDPdWIk=
 go.opentelemetry.io/collector/config/configauth v0.120.0/go.mod h1:n1rj/cJ+wi+4Cr7q9Z87sF2izYown4/ADDiPZMdLd6g=
 go.opentelemetry.io/collector/config/configcompression v1.26.0 h1:90J6ePTWwZbN6QRPawuGOmJG5H84KB4DzHdbd/kUZM4=
@@ -239,6 +241,8 @@ go.opentelemetry.io/collector/receiver/xreceiver v0.120.0 h1:+gHYd9rTBRKSQfWsTzV
 go.opentelemetry.io/collector/receiver/xreceiver v0.120.0/go.mod h1:dkHpL1QqLi/G+60VZnfFpZQf9qoxDVnp6G9FuAcMgfk=
 go.opentelemetry.io/collector/scraper v0.120.1-0.20250224010654-18e18b21da7a h1:+ebotnhgNRKdq8aJzT4rNnR5rNBA4sOoQwjPLEn4zz8=
 go.opentelemetry.io/collector/scraper v0.120.1-0.20250224010654-18e18b21da7a/go.mod h1:7EMf0bDMUaxT/jYXQ5Sb50jtrGi1+GZMVsfDn0hTwSo=
+go.opentelemetry.io/collector/scraper v0.121.0 h1:IQVqf6qjodlZ8VKGvThZeakEURJkYinUPyskbnI+ASY=
+go.opentelemetry.io/collector/scraper v0.121.0/go.mod h1:ZZDKlFZMpySv2/O8ONmt1Br9gBEp0702L9KAMstJbAI=
 go.opentelemetry.io/collector/scraper/scraperhelper v0.120.1-0.20250224010654-18e18b21da7a h1:VKIOrSzh+aobCD9aTTvGvuw54Xk5NY8sUSsbOuJrCGg=
 go.opentelemetry.io/collector/scraper/scraperhelper v0.120.1-0.20250224010654-18e18b21da7a/go.mod h1:762dmPH6IUMvb+nROo/hh9JfcwZozutX9Etrtpzc67g=
 go.opentelemetry.io/collector/semconv v0.120.1-0.20250224010654-18e18b21da7a h1:2uVHeDG3Ab4hfv6Uux6GX3TyG2fjToc7QfVHCxnhvg4=
