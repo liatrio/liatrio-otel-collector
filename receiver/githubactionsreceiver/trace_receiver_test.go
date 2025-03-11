@@ -19,6 +19,8 @@ import (
 	"go.opentelemetry.io/collector/receiver/receivertest"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
+
+	"github.com/liatrio/liatrio-otel-collector/receiver/githubactionsreceiver/internal/metadata"
 )
 
 func TestCreateNewTracesReceiver(t *testing.T) {
@@ -50,7 +52,7 @@ func TestCreateNewTracesReceiver(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			rec, err := newTracesReceiver(receivertest.NewNopSettings(), &test.config, test.consumer)
+			rec, err := newTracesReceiver(receivertest.NewNopSettings(metadata.Type), &test.config, test.consumer)
 			if test.err == nil {
 				require.NotNil(t, rec)
 			} else {
