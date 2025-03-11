@@ -34,7 +34,7 @@ func (f *Factory) CreateDefaultConfig() internal.Config {
 }
 
 func (f *Factory) CreateMetricsScraper(
-	_ context.Context,
+	ctx context.Context,
 	params receiver.Settings,
 	cfg internal.Config,
 ) (scraper.Metrics, error) {

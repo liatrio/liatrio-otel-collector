@@ -60,9 +60,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	now := pcommon.NewTimestampFromTime(time.Now())
 	ghs.logger.Sugar().Debug("current time", zap.Time("now", now.AsTime()))
 
-	currentDate := time.Now().Day()
-	ghs.logger.Sugar().Debugf("current date: %v", currentDate)
-
 	genClient, restClient, err := ghs.createClients()
 	if err != nil {
 		ghs.logger.Sugar().Errorf("unable to create clients", zap.Error(err))
@@ -101,6 +98,19 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	wg.Add(len(repos))
 	var mux sync.Mutex
 
+	max := 5
+	routineLimit := make(chan struct{}, max)
+
+	// Creating and filling a dummy structure to limit the amount of concurrent
+	// requests to GitHub to avoid secondary rate limits.
+	for range max {
+		routineLimit <- struct{}{}
+	}
+
+	done := make(chan bool)
+
+	waitForAll := make(chan bool)
+
 	for _, repo := range repos {
 		repo := repo
 		name := repo.Name
@@ -111,6 +121,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		go func() {
 			defer wg.Done()
 
+			routineLimit <- struct{}{}
 			branches, count, err := ghs.getBranches(ctx, genClient, name, trunk)
 			if err != nil {
 				ghs.logger.Sugar().Errorf("error getting branch count: %v", zap.Error(err))
@@ -211,6 +222,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			ghs.mb.RecordVcsChangeCountDataPoint(now, int64(open), url, metadata.AttributeVcsChangeStateOpen, name)
 			ghs.mb.RecordVcsChangeCountDataPoint(now, int64(merged), url, metadata.AttributeVcsChangeStateMerged, name)
 			mux.Unlock()
+
 		}()
 	}
 
