@@ -15,9 +15,10 @@ import (
 	"go.opentelemetry.io/collector/receiver/receivertest"
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/metadata"
 )
 
-var creationSet = receivertest.NewNopSettings()
+var creationSet = receivertest.NewNopSettings(metadata.Type)
 
 type mockConfig struct{}
 
