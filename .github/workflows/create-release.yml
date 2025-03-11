@@ -9,6 +9,9 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]' && startsWith(github.event.head_commit.message, 'Prepare liatrio-otel for version') }}
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - name: Get Octo Sts Token
         uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
