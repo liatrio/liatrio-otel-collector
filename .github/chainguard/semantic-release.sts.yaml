@@ -1,0 +1,6 @@
+issuer: https://token.actions.githubusercontent.com
+subject_pattern: "repo:liatrio/liatrio-otel-collector:ref:refs/heads/main"
+
+permissions:
+  contents: write
+  packages: write
