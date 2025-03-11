@@ -18,6 +18,7 @@ type gitlabProject struct {
 	Path           string
 	CreatedAt      time.Time
 	LastActivityAt time.Time
+	URL            string
 }
 
 func (gls *gitlabScraper) getProjects(restClient *gitlab.Client) ([]gitlabProject, error) {
@@ -53,6 +54,7 @@ func (gls *gitlabScraper) getProjects(restClient *gitlab.Client) ([]gitlabProjec
 				Path:           p.PathWithNamespace,
 				CreatedAt:      *p.CreatedAt,
 				LastActivityAt: *p.LastActivityAt,
+				URL:            p.WebURL,
 			})
 		}
 
