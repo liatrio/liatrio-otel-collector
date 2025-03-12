@@ -213,7 +213,8 @@ jobs:
         if: ${{ env.CHANGES_DETECTED == 'true' && github.event_name == 'pull_request' }}
         uses: actions/github-script@v7
         with:
-          github-token: ${{ steps.octo-sts.outputs.token }}
+          # github-token: ${{ steps.octo-sts.outputs.token }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             github.rest.issues.createComment({
               issue_number: context.issue.number,
