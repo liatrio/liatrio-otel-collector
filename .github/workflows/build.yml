@@ -32,6 +32,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
+      pull-requests: write
     steps:
       - name: Get Octo STS Token
         uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
@@ -141,6 +142,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
+      pull-requests: write
     steps:
       - name: Get Octo STS Token
         uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
