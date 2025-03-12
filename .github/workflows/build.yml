@@ -111,7 +111,7 @@ jobs:
           git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
           git add .
           git commit -m "chore: Auto-update generated files"
-          git push origin HEAD:${{ github.ref_name }}
+          git push origin HEAD:refs/heads/${{ github.head_ref }}
 
       - name: Comment on PR if there were changes
         if: ${{ env.CHANGES_DETECTED == 'true' && github.event_name == 'pull_request' }}
@@ -203,7 +203,7 @@ jobs:
           git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
           git add .
           git commit -m "chore: Auto-update generated files"
-          git push origin HEAD:${{ github.ref_name }}
+          git push origin HEAD:refs/heads/${{ github.head_ref }}
 
       - name: Comment on PR if there were changes
         if: ${{ env.CHANGES_DETECTED == 'true' && github.event_name == 'pull_request' }}
