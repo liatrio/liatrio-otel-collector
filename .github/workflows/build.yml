@@ -80,6 +80,7 @@ jobs:
               echo "CHANGES_DETECTED=true" >> $GITHUB_ENV
             else
               echo "Packages are out of date. Run make tidy-all and commit the changes."
+              exit 1
             fi
           fi
 
@@ -92,6 +93,7 @@ jobs:
               echo "CHANGES_DETECTED=true" >> $GITHUB_ENV
             else
               echo "Replace statements not updated. Run make crosslink and commit the changes."
+              exit 1
             fi
           fi
 
@@ -179,6 +181,7 @@ jobs:
               echo "CHANGES_DETECTED=true" >> $GITHUB_ENV
             else
               echo "Packages are out of date. Run make tidy-all and commit the changes."
+              exit 1
             fi
           fi
 
