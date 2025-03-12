@@ -38,7 +38,7 @@ func TestComponentLifecycle(t *testing.T) {
 		err = e.Shutdown(context.Background())
 		require.NoError(t, err)
 	})
-	t.Run("llifecycle", func(t *testing.T) {
+	t.Run("lifecycle", func(t *testing.T) {
 		firstExt, err := factory.Create(context.Background(), extensiontest.NewNopSettings(typ), cfg)
 		require.NoError(t, err)
 		require.NoError(t, firstExt.Start(context.Background(), componenttest.NewNopHost()))
