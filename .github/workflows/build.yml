@@ -22,16 +22,31 @@ on:
 
 jobs:
   lint:
-    if: github.actor != 'octo-sts[bot]'
+    # Always run 1) if the branch isn't main OR 2) if the branch is main and the actor isn't octo-sts[bot]
+    if: github.ref != 'refs/heads/main' || ( github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]')
     strategy:
       matrix:
         go: ["1.23"]
     name: lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Get Octo STS Token
+        uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
+        id: octo-sts
         with:
+          scope: ${{ github.repository }}
+          identity: pr-lint-format
+
+      - name: Clone repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          token: ${{ steps.octo-sts.outputs.token }}
           fetch-depth: 0
+          ref: ${{ github.head_ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -48,29 +63,100 @@ jobs:
       - name: Check Code Generation
         run: |
           make generate
-          git diff -s --exit-code || (echo 'Generated code is out of date. Run make generate and commit the changes' && exit 1)
+          if ! git diff --quiet; then
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              echo "Generated code is out of date. Changes detected."
+              echo "CHANGES_DETECTED=true" >> $GITHUB_ENV
+            else
+              echo "Generated code is out of date. Run make generate and commit the changes."
+              exit 1
+            fi
+          fi
 
-      - name: Check packages are up-to-date
+      - name: Check Packages Are Up-to-Date
         run: |
           make tidy-all
-          git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
+          if ! git diff --quiet; then
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              echo "Packages are out of date. Changes detected."
+              echo "CHANGES_DETECTED=true" >> $GITHUB_ENV
+            else
+              echo "Packages are out of date. Run make tidy-all and commit the changes."
+              exit 1
+            fi
+          fi
 
-      - name: Check crosslink run
+      - name: Check Crosslink Run
         run: |
           make crosslink
-          git diff -s --exit-code || (echo 'Replace statements not updated. Run make crosslink and commit the changes' && exit 1)
+          if ! git diff --quiet; then
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              echo "Replace statements not updated. Changes detected."
+              echo "CHANGES_DETECTED=true" >> $GITHUB_ENV
+            else
+              echo "Replace statements not updated. Run make crosslink and commit the changes."
+              exit 1
+            fi
+          fi
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/octo-sts[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+
+      - name: Commit changes
+        if: env.CHANGES_DETECTED == 'true' && github.event_name == 'pull_request'
+        run: |
+          set -eo pipefail
+          git config --global user.name 'octo-sts[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
+          git add .
+          git commit -m "chore: Auto-update generated files"
+          git push origin HEAD:refs/heads/${{ github.head_ref }}
+
+      - name: Comment on PR if there were changes
+        if: ${{ env.CHANGES_DETECTED == 'true' && github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.octo-sts.outputs.token }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: "✅ Code formatting and linting was applied automatically. Please pull down the latest changes."
+            });
+
+      - name: Exit with Error If Changes Detected
+        if: env.CHANGES_DETECTED == 'true'
+        run: exit 1
 
   generate:
-    if: github.actor != 'octo-sts[bot]'
+    if: github.ref != 'refs/heads/main' || ( github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]')
     strategy:
       matrix:
         go: ["1.23"]
     name: generate
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Get Octo STS Token
+        uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
+        id: octo-sts
         with:
+          scope: ${{ github.repository }}
+          identity: pr-lint-format
+
+      - name: Clone repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          token: ${{ steps.octo-sts.outputs.token }}
           fetch-depth: 0
+          ref: ${{ github.head_ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -84,16 +170,66 @@ jobs:
       - name: Check Code Generation
         run: |
           make generate
-          git diff -s --exit-code || (echo 'Generated code is out of date. Run make generate and commit the changes' && exit 1)
+          if ! git diff --quiet; then
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              echo "Generated code is out of date. Changes detected."
+              echo "CHANGES_DETECTED=true" >> $GITHUB_ENV
+            else
+              echo "Generated code is out of date. Run make generate and commit the changes."
+              exit 1
+            fi
+          fi
 
-      - name: Check packages are up-to-date
+      - name: Check Packages Are Up-to-Date
         run: |
           make tidy-all
-          git diff -s --exit-code || (echo 'Packages are out of date. Run make tidy-all and commit the changes' && exit 1)
+          if ! git diff --quiet; then
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              echo "Packages are out of date. Changes detected."
+              echo "CHANGES_DETECTED=true" >> $GITHUB_ENV
+            else
+              echo "Packages are out of date. Run make tidy-all and commit the changes."
+              exit 1
+            fi
+          fi
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/octo-sts[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+
+      - name: Commit changes
+        if: env.CHANGES_DETECTED == 'true' && github.event_name == 'pull_request'
+        run: |
+          set -eo pipefail
+          git config --global user.name 'octo-sts[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
+          git add .
+          git commit -m "chore: Auto-update generated files"
+          git push origin HEAD:refs/heads/${{ github.head_ref }}
+
+      - name: Comment on PR if there were changes
+        if: ${{ env.CHANGES_DETECTED == 'true' && github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          # github-token: ${{ steps.octo-sts.outputs.token }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: "✅ Code formatting and linting was applied automatically. Please pull down the latest changes."
+            });
+
+      - name: Exit with Error If Changes Detected
+        if: env.CHANGES_DETECTED == 'true'
+        run: exit 1
 
   build:
     name: build
-    if: github.actor != 'octo-sts[bot]'
+    if: github.ref != 'refs/heads/main' || ( github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]')
     strategy:
       matrix:
         GOOS: [darwin, linux, windows]
@@ -159,7 +295,7 @@ jobs:
       #     GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
 
   test:
-    if: github.actor != 'octo-sts[bot]'
+    if: github.ref != 'refs/heads/main' || ( github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]')
     strategy:
       matrix:
         go: ["1.23"]
