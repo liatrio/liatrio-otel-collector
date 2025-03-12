@@ -8,26 +8,22 @@ on:
 jobs:
   create-release:
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' && github.actor == 'liatrio-otel-collector-release[bot]' && startsWith(github.event.head_commit.message, 'Prepare liatrio-otel for version') }}
+    if: ${{ github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]' && startsWith(github.event.head_commit.message, 'Prepare liatrio-otel for version') }}
+    permissions:
+      contents: write
+      id-token: write
     steps:
-      - name: Generate a token
-        id: generate_token
-        uses: actions/create-github-app-token@0d564482f06ca65fa9e77e2510873638c82206f2 # v1.11.5
+      - name: Get Octo Sts Token
+        uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
+        id: octo-sts
         with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
-      - name: Get GitHub App User ID
-        id: get-user-id
-        run: echo "user-id=$(gh api "/users/${{ steps.generate_token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          scope: ${{ github.repository }}
+          identity: semantic-release
 
       - name: Clone repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.octo-sts.outputs.token }}
           fetch-depth: 0
 
       - uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
@@ -54,18 +50,24 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/octo-sts[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+
       - name: Multimod Push Tags
         run: |
           set -eo pipefail
-          git config --global user.name '${{ steps.generate_token.outputs.app-slug }}[bot]'
-          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate_token.outputs.app-slug }}@users.noreply.github.com'
+          git config --global user.name 'octo-sts[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
           ./.tools/multimod tag --module-set-name liatrio-otel --commit-hash '${{ github.sha }}' --print-tags
           git push --tags
 
       - name: Create GitHub Release
         env:
           # GH_TOKEN: ${{ secrets.TEST_PAT_TRIGGER }}
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
         run: |
           gh release create '${{  steps.get_tag.outputs.new_tag }}' \
             --notes "${{ steps.get_tag.outputs.changelog }}" \
