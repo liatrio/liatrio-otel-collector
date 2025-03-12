@@ -8,7 +8,7 @@ on:
 jobs:
   create-release:
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]' && startsWith(github.event.head_commit.message, 'Prepare liatrio-otel for version') }}
+    if: ${{ github.ref == 'refs/heads/main' && github.actor == 'octo-sts[bot]' && startsWith(github.event.head_commit.message, 'Prepare liatrio-otel for version') }}
     permissions:
       contents: write
       id-token: write
