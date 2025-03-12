@@ -103,7 +103,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
 
-      - name: Auto-update generated files
+      - name: Commit changes
         if: env.CHANGES_DETECTED == 'true' && github.event_name == 'pull_request'
         run: |
           set -eo pipefail
@@ -111,7 +111,7 @@ jobs:
           git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
           git add .
           git commit -m "chore: Auto-update generated files"
-          git push
+          git push origin HEAD:${{ github.ref_name }}
 
       - name: Comment on PR if there were changes
         if: ${{ env.CHANGES_DETECTED == 'true' && github.event_name == 'pull_request' }}
@@ -125,6 +125,10 @@ jobs:
               repo: context.repo.repo,
               body: "✅ Code formatting and linting was applied automatically. Please pull down the latest changes."
             });
+
+      - name: Exit with Error If Changes Detected
+        if: env.CHANGES_DETECTED == 'true'
+        run: exit 1
 
   generate:
     if: github.ref != 'refs/heads/main' || ( github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]')
@@ -191,7 +195,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
 
-      - name: Auto-update generated files
+      - name: Commit changes
         if: env.CHANGES_DETECTED == 'true' && github.event_name == 'pull_request'
         run: |
           set -eo pipefail
@@ -199,7 +203,7 @@ jobs:
           git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
           git add .
           git commit -m "chore: Auto-update generated files"
-          git push
+          git push origin HEAD:${{ github.ref_name }}
 
       - name: Comment on PR if there were changes
         if: ${{ env.CHANGES_DETECTED == 'true' && github.event_name == 'pull_request' }}
@@ -213,6 +217,10 @@ jobs:
               repo: context.repo.repo,
               body: "✅ Code formatting and linting was applied automatically. Please pull down the latest changes."
             });
+
+      - name: Exit with Error If Changes Detected
+        if: env.CHANGES_DETECTED == 'true'
+        run: exit 1
 
   build:
     name: build
