@@ -124,7 +124,7 @@ func TestScrape(t *testing.T) {
 
 			cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
 
-			gls := newGitLabScraper(context.Background(), receivertest.NewNopSettings(), cfg)
+			gls := newGitLabScraper(context.Background(), receivertest.NewNopSettings(metadata.Type), cfg)
 			gls.cfg.GitLabOrg = "project"
 			gls.cfg.ClientConfig.Endpoint = server.URL
 

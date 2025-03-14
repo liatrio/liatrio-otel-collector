@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/extension/extensiontest"
+
+	"github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension/internal/metadata"
 )
 
 func TestCreateDefaultConfig(t *testing.T) {
@@ -43,7 +45,7 @@ func TestCreateExtension(t *testing.T) {
 			cfg.GitHubAppInstId = testcase.settings.GitHubAppInstId
 			cfg.GitHubAppPrivateKeyFile = testcase.settings.GitHubAppPrivateKeyFile
 
-			ext, err := createExtension(context.Background(), extensiontest.NewNopSettings(), cfg)
+			ext, err := createExtension(context.Background(), extensiontest.NewNopSettings(metadata.Type), cfg)
 			if testcase.shouldError {
 				assert.Error(t, err)
 				assert.Nil(t, ext)
