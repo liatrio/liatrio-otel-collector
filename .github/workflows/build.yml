@@ -81,9 +81,6 @@ jobs:
       - name: Make install-tools
         run: make install-tools
 
-      - name: Make install-tools
-        run: make install-tools
-
       - name: Check Code Generation
         run: |
           make generate
