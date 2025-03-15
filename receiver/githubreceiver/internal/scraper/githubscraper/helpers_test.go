@@ -33,6 +33,7 @@ type responses struct {
 }
 
 type searchRepoResponse struct {
+	limit        rateVals
 	repos        []getRepoDataBySearchSearchSearchResultItemConnection
 	responseCode int
 	page         int
@@ -45,18 +46,21 @@ type teamRepoResponse struct {
 }
 
 type prResponse struct {
+	limit        rateVals
 	prs          []getPullRequestDataRepositoryPullRequestsPullRequestConnection
 	responseCode int
 	page         int
 }
 
 type branchResponse struct {
+	limit        rateVals
 	branches     []getBranchDataRepositoryRefsRefConnection
 	responseCode int
 	page         int
 }
 
 type commitResponse struct {
+	limit        rateVals
 	commits      []BranchHistoryTargetCommit
 	responseCode int
 	page         int
@@ -74,6 +78,7 @@ type contribResponse struct {
 }
 
 type depBotAlertResponse struct {
+	limit         rateVals
 	depBotsAlerts []VulnerabilityAlerts
 	responseCode  int
 	page          int
@@ -118,6 +123,14 @@ func MockServer(responses *responses) *http.ServeMux {
 			w.WriteHeader(repoResp.responseCode)
 			if repoResp.responseCode == http.StatusOK {
 				repos := getRepoDataByTeamResponse{
+					RateLimit: getRepoDataByTeamRateLimit{
+						rateVals{
+							Limit:     5000,
+							Remaining: 4999,
+							Cost:      1,
+							ResetAt:   time.Now().Add(1 * time.Hour),
+						},
+					},
 					Organization: getRepoDataByTeamOrganization{
 						Team: getRepoDataByTeamOrganizationTeam{
 							Repositories: repoResp.repos[repoResp.page],
@@ -135,6 +148,14 @@ func MockServer(responses *responses) *http.ServeMux {
 			w.WriteHeader(repoResp.responseCode)
 			if repoResp.responseCode == http.StatusOK {
 				repos := getRepoDataBySearchResponse{
+					RateLimit: getRepoDataBySearchRateLimit{
+						rateVals{
+							Limit:     5000,
+							Remaining: 4999,
+							Cost:      1,
+							ResetAt:   time.Now().Add(time.Hour),
+						},
+					},
 					Search: repoResp.repos[repoResp.page],
 				}
 				graphqlResponse := graphql.Response{Data: &repos}
@@ -148,6 +169,14 @@ func MockServer(responses *responses) *http.ServeMux {
 			w.WriteHeader(branchResp.responseCode)
 			if branchResp.responseCode == http.StatusOK {
 				branches := getBranchDataResponse{
+					RateLimit: getBranchDataRateLimit{
+						rateVals{
+							Limit:     5000,
+							Remaining: 4999,
+							Cost:      1,
+							ResetAt:   time.Now().Add(time.Hour),
+						},
+					},
 					Repository: getBranchDataRepository{
 						Refs: branchResp.branches[branchResp.page],
 					},
@@ -163,6 +192,14 @@ func MockServer(responses *responses) *http.ServeMux {
 			w.WriteHeader(prResp.responseCode)
 			if prResp.responseCode == http.StatusOK {
 				repos := getPullRequestDataResponse{
+					RateLimit: getPullRequestDataRateLimit{
+						rateVals{
+							Limit:     5000,
+							Remaining: 4999,
+							Cost:      1,
+							ResetAt:   time.Now().Add(time.Hour),
+						},
+					},
 					Repository: getPullRequestDataRepository{
 						PullRequests: prResp.prs[prResp.page],
 					},
@@ -182,6 +219,14 @@ func MockServer(responses *responses) *http.ServeMux {
 					{Target: &commitResp.commits[commitResp.page]},
 				}
 				commits := getCommitDataResponse{
+					RateLimit: getCommitDataRateLimit{
+						rateVals{
+							Limit:     5000,
+							Remaining: 4999,
+							Cost:      1,
+							ResetAt:   time.Now().Add(time.Hour),
+						},
+					},
 					Repository: getCommitDataRepository{
 						Refs: getCommitDataRepositoryRefsRefConnection{
 							Nodes: branchHistory,
@@ -200,6 +245,14 @@ func MockServer(responses *responses) *http.ServeMux {
 			w.WriteHeader(depBotAlertResp.responseCode)
 			if depBotAlertResp.responseCode == http.StatusOK {
 				cves := getRepoCVEsResponse{
+					RateLimit: getRepoCVEsRateLimit{
+						rateVals{
+							Limit:     5000,
+							Remaining: 4999,
+							Cost:      1,
+							ResetAt:   time.Now().Add(time.Hour),
+						},
+					},
 					Repository: getRepoCVEsRepository{
 						VulnerabilityAlerts: depBotAlertResp.depBotsAlerts[depBotAlertResp.page],
 					},
@@ -362,6 +415,12 @@ func TestGetSearchRepos(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				searchRepoResponse: searchRepoResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 1,
@@ -388,6 +447,12 @@ func TestGetSearchRepos(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				searchRepoResponse: searchRepoResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 4,
@@ -438,6 +503,12 @@ func TestGetSearchRepos(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				searchRepoResponse: searchRepoResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 1,
@@ -465,6 +536,12 @@ func TestGetSearchRepos(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				searchRepoResponse: searchRepoResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 4,
@@ -630,6 +707,12 @@ func TestGetBranches(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				branchResponse: branchResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					branches: []getBranchDataRepositoryRefsRefConnection{
 						{
 							TotalCount: 1,
@@ -654,6 +737,12 @@ func TestGetBranches(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				branchResponse: branchResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					branches: []getBranchDataRepositoryRefsRefConnection{
 						{
 							TotalCount: 4,
@@ -823,6 +912,12 @@ func TestGetPullRequests(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				prResponse: prResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
 						{
 							PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
@@ -852,6 +947,12 @@ func TestGetPullRequests(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				prResponse: prResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
 						{
 							PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
@@ -941,6 +1042,12 @@ func TestEvalCommits(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				commitResponse: commitResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					commits: []BranchHistoryTargetCommit{
 						{
 							History: BranchHistoryTargetCommitHistoryCommitHistoryConnection{
@@ -968,6 +1075,12 @@ func TestEvalCommits(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				commitResponse: commitResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					commits: []BranchHistoryTargetCommit{
 						{
 							History: BranchHistoryTargetCommitHistoryCommitHistoryConnection{
@@ -995,6 +1108,12 @@ func TestEvalCommits(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				commitResponse: commitResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					commits: []BranchHistoryTargetCommit{
 						{
 							History: BranchHistoryTargetCommitHistoryCommitHistoryConnection{
@@ -1029,6 +1148,12 @@ func TestEvalCommits(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				commitResponse: commitResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					commits: []BranchHistoryTargetCommit{
 						{
 							History: BranchHistoryTargetCommitHistoryCommitHistoryConnection{
@@ -1071,7 +1196,7 @@ func TestEvalCommits(t *testing.T) {
 			expectedErr:       nil,
 		},
 		{
-			desc: "Test404ErrorResponse",
+			desc: "TestNoCommitTargetErrorResponse",
 			server: MockServer(&responses{
 				scrape: false,
 				commitResponse: commitResponse{
@@ -1088,7 +1213,7 @@ func TestEvalCommits(t *testing.T) {
 			expectedAge:       0,
 			expectedAdditions: 0,
 			expectedDeletions: 0,
-			expectedErr:       errors.New("returned error 404"),
+			expectedErr:       errors.New("did not return the Commit Target"),
 		},
 	}
 	for _, tc := range testCases {
@@ -1130,6 +1255,12 @@ func TestGetCVEs(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				depBotAlertResponse: depBotAlertResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					depBotsAlerts: []VulnerabilityAlerts{
 						{
 							Nodes: []CVENode{
@@ -1161,6 +1292,12 @@ func TestGetCVEs(t *testing.T) {
 			server: MockServer(&responses{
 				scrape: false,
 				depBotAlertResponse: depBotAlertResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					depBotsAlerts: []VulnerabilityAlerts{
 						{
 							PageInfo: VulnerabilityAlertsPageInfo{
@@ -1211,6 +1348,12 @@ func TestGetCVEs(t *testing.T) {
 			desc: "TestSinglePageRespCodeScanningAlert",
 			server: MockServer(&responses{
 				depBotAlertResponse: depBotAlertResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					depBotsAlerts: []VulnerabilityAlerts{{}},
 					responseCode:  http.StatusOK,
 				},
@@ -1239,6 +1382,12 @@ func TestGetCVEs(t *testing.T) {
 			desc: "TestMultiPageRespCodeScanningAlert",
 			server: MockServer(&responses{
 				depBotAlertResponse: depBotAlertResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					depBotsAlerts: []VulnerabilityAlerts{{}},
 					responseCode:  http.StatusOK,
 				},
@@ -1280,6 +1429,12 @@ func TestGetCVEs(t *testing.T) {
 			desc: "TestSinglePageDepBotAndCodeScanningAlert",
 			server: MockServer(&responses{
 				depBotAlertResponse: depBotAlertResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					depBotsAlerts: []VulnerabilityAlerts{
 						{
 							Nodes: []CVENode{
@@ -1329,6 +1484,12 @@ func TestGetCVEs(t *testing.T) {
 			desc: "TestMultiPageDepBotAndCodeScanningAlert",
 			server: MockServer(&responses{
 				depBotAlertResponse: depBotAlertResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					depBotsAlerts: []VulnerabilityAlerts{
 						{
 							PageInfo: VulnerabilityAlertsPageInfo{
@@ -1412,6 +1573,12 @@ func TestGetCVEs(t *testing.T) {
 			desc: "TestEmptyInputDepBotAndCodeScanningAlert",
 			server: MockServer(&responses{
 				depBotAlertResponse: depBotAlertResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					depBotsAlerts: []VulnerabilityAlerts{{}},
 					responseCode:  http.StatusOK,
 				},

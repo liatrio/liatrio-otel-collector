@@ -74,6 +74,12 @@ func TestScrape(t *testing.T) {
 					responseCode: http.StatusOK,
 				},
 				searchRepoResponse: searchRepoResponse{
+					limit: rateVals{
+						Limit:     5000,
+						Remaining: 4999,
+						Cost:      1,
+						ResetAt:   time.Now().Add(1 * time.Hour),
+					},
 					repos: []getRepoDataBySearchSearchSearchResultItemConnection{
 						{
 							RepositoryCount: 1,
@@ -299,6 +305,8 @@ func TestScrape(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
 
@@ -309,15 +317,16 @@ func TestScrape(t *testing.T) {
 			ghs := newGitHubScraper(receivertest.NewNopSettings(metadata.Type), cfg)
 			ghs.cfg.GitHubOrg = "liatrio"
 			ghs.cfg.ClientConfig.Endpoint = server.URL
+			ghs.cfg.ConcurrencyLimit = 1000
 
 			// TestHappyPathWithTeam is a special case where we need to set the team name
 			if tc.desc == "TestHappyPathWithTeam" {
 				cfg.ResourceAttributes.TeamName.Enabled = true
 				ghs.cfg.GitHubTeam = "tag-o11y"
-				err := ghs.start(context.Background(), componenttest.NewNopHost())
+				err := ghs.start(ctx, componenttest.NewNopHost())
 				require.NoError(t, err)
 
-				actualMetrics, err := ghs.scrape(context.Background())
+				actualMetrics, err := ghs.scrape(ctx)
 				require.NoError(t, err)
 
 				expectedFile := filepath.Join("testdata", "scraper", tc.testFile)
@@ -338,10 +347,10 @@ func TestScrape(t *testing.T) {
 					pmetrictest.IgnoreStartTimestamp(),
 				))
 			} else {
-				err := ghs.start(context.Background(), componenttest.NewNopHost())
+				err := ghs.start(ctx, componenttest.NewNopHost())
 				require.NoError(t, err)
 
-				actualMetrics, err := ghs.scrape(context.Background())
+				actualMetrics, err := ghs.scrape(ctx)
 				require.NoError(t, err)
 
 				expectedFile := filepath.Join("testdata", "scraper", tc.testFile)

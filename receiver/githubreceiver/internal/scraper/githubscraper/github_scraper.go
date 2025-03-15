@@ -60,9 +60,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	now := pcommon.NewTimestampFromTime(time.Now())
 	ghs.logger.Sugar().Debug("current time", zap.Time("now", now.AsTime()))
 
-	currentDate := time.Now().Day()
-	ghs.logger.Sugar().Debugf("current date: %v", currentDate)
-
 	genClient, restClient, err := ghs.createClients()
 	if err != nil {
 		ghs.logger.Sugar().Errorf("unable to create clients", zap.Error(err))
@@ -101,6 +98,16 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	wg.Add(len(repos))
 	var mux sync.Mutex
 
+	var max int
+	switch {
+	case ghs.cfg.ConcurrencyLimit > 0:
+		max = ghs.cfg.ConcurrencyLimit
+	default:
+		max = len(repos)
+	}
+
+	limiter := make(chan struct{}, max)
+
 	for _, repo := range repos {
 		repo := repo
 		name := repo.Name
@@ -108,8 +115,13 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		trunk := repo.DefaultBranchRef.Name
 		now := now
 
+		limiter <- struct{}{}
+
 		go func() {
-			defer wg.Done()
+			defer func() {
+				<-limiter
+				wg.Done()
+			}()
 
 			branches, count, err := ghs.getBranches(ctx, genClient, name, trunk)
 			if err != nil {
@@ -159,6 +171,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 
 			// Get the contributor count for each of the repositories
+			// if ghs.cfg.Metrics.VcsContributorCount.Enabled {
+			// }
 			contribs, err := ghs.getContributorCount(ctx, restClient, name)
 			if err != nil {
 				ghs.logger.Sugar().Errorf("error getting contributor count: %v", zap.Error(err))

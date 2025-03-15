@@ -8,11 +8,21 @@ fragment Repo on Repository {
     url
 }
 
+fragment rateVals on RateLimit {
+    limit
+    cost
+    remaining
+    resetAt
+}
+
 query getRepoDataBySearch(
     $searchQuery: String!
     # @genqlient(pointer: true)
     $repoCursor: String
 ) {
+    rateLimit {
+        ...rateVals
+    }
     search(
         query: $searchQuery
         type: REPOSITORY
@@ -39,6 +49,9 @@ query getRepoDataByTeam(
     # @genqlient(pointer: true)
     $repoCursor: String
 ) {
+    rateLimit {
+        ...rateVals
+    }
     organization(login: $org) {
         team(slug: $team) {
             repositories(first: 100, after: $repoCursor) {
@@ -57,6 +70,9 @@ query getRepoDataByTeam(
 }
 
 query checkLogin($login: String!) {
+    rateLimit {
+        ...rateVals
+    }
     user(login: $login) {
         login
     }
@@ -74,6 +90,9 @@ query getCommitData(
     $commitCursor: String
     $branchName: String!
 ) {
+    rateLimit {
+        ...rateVals
+    }
     repository(name: $name, owner: $owner) {
         refs(
             refPrefix: "refs/heads/"
@@ -112,6 +131,9 @@ query getBranchData(
     # @genqlient(pointer: true)
     $branchCursor: String
 ) {
+    rateLimit {
+        ...rateVals
+    }
     repository(name: $name, owner: $owner) {
         refs(
             refPrefix: "refs/heads/"
@@ -149,6 +171,9 @@ query getPullRequestData(
     $prCursor: String
     $prStates: [PullRequestState!]
 ) {
+    rateLimit {
+        ...rateVals
+    }
     repository(name: $name, owner: $owner) {
         pullRequests(first: $prFirst, after: $prCursor, states: $prStates) {
             # @genqlient(typename: "PullRequestNode")
@@ -193,6 +218,9 @@ query getRepoCVEs(
     # @genqlient(pointer: true)
     $alertCursor: String
 ) {
+    rateLimit {
+        ...rateVals
+    }
     repository(owner: $owner, name: $repo) {
         # @genqlient(typename: "VulnerabilityAlerts")
         vulnerabilityAlerts(first: 100, states: OPEN, after: $alertCursor) {
