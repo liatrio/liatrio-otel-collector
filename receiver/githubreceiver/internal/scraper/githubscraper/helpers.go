@@ -83,7 +83,6 @@ func (ghs *githubScraper) getBranches(
 	repoName string,
 	defaultBranch string,
 ) ([]BranchNode, int, error) {
-	// op := func() ([]BranchNode, int, error) {
 	var cursor *string
 	var count int
 	var branches []BranchNode
@@ -97,7 +96,6 @@ func (ghs *githubScraper) getBranches(
 			r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, items, defaultBranch, cursor)
 			if err != nil {
 				if !strings.Contains(err.Error(), "403") || !strings.Contains(err.Error(), "secondary") {
-					ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
 					ghs.logger.Sugar().Debug("inside error getting branch data")
 					ghs.logger.Sugar().Debugf("limit: %v", r.GetRateLimit().Limit)
 					ghs.logger.Sugar().Debugf("remaining: %v", r.GetRateLimit().Remaining)
@@ -111,11 +109,6 @@ func (ghs *githubScraper) getBranches(
 
 				if cost >= remaining {
 					reset := time.Until(reset).Seconds()
-					ghs.logger.Sugar().Debug("inside cost >= remaining")
-					ghs.logger.Sugar().Debugf("limit: %v", r.GetRateLimit().Limit)
-					ghs.logger.Sugar().Debugf("remaining: %v", r.GetRateLimit().Remaining)
-					ghs.logger.Sugar().Debugf("cost: %v", r.GetRateLimit().Cost)
-					ghs.logger.Sugar().Debugf("resetAt: %v", r.GetRateLimit().ResetAt)
 					return "", backoff.RetryAfter(int(reset))
 				}
 			}
