@@ -21,6 +21,8 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 )
 
+// const defaultConcurrencyLimit = 5
+
 var errClientNotInitErr = errors.New("http client not initialized")
 
 type githubScraper struct {
@@ -98,18 +100,39 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	wg.Add(len(repos))
 	var mux sync.Mutex
 
-	max := 5
-	routineLimit := make(chan struct{}, max)
-
-	// Creating and filling a dummy structure to limit the amount of concurrent
-	// requests to GitHub to avoid secondary rate limits.
-	for range max {
-		routineLimit <- struct{}{}
+	// TODO: Cleanup
+	// max := defaultConcurrencyLimit
+	// if ghs.cfg.ConcurrencyLimit >= 0 {
+	// 	max = ghs.cfg.ConcurrencyLimit
+	// }
+	var max int
+	switch {
+	case ghs.cfg.ConcurrencyLimit > 0:
+		max = ghs.cfg.ConcurrencyLimit
+	default:
+		max = len(repos)
 	}
 
-	done := make(chan bool)
+	limiter := make(chan struct{}, max)
 
-	waitForAll := make(chan bool)
+	// TODO: cleanup
+	// Creating and filling a dummy structure to limit the amount of concurrent
+	// requests to GitHub to avoid secondary rate limits.
+	// for range max {
+	// 	limiter <- struct{}{}
+	// }
+
+	// done := make(chan struct{})
+	// go func() {
+	// 	wg.Wait()
+	// 	close(done)
+	// }()
+	// select {
+	// case <-done:
+	// case <-ctx.Done():
+	// }
+
+	// waitForAll := make(chan bool)
 
 	for _, repo := range repos {
 		repo := repo
@@ -118,10 +141,17 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		trunk := repo.DefaultBranchRef.Name
 		now := now
 
-		go func() {
-			defer wg.Done()
+		limiter <- struct{}{}
 
-			routineLimit <- struct{}{}
+		go func() {
+			defer func() {
+				<-limiter
+				wg.Done()
+			}()
+			// TODO: cleanup
+			// defer wg.Done()
+
+			// limiter <- struct{}{}
 			branches, count, err := ghs.getBranches(ctx, genClient, name, trunk)
 			if err != nil {
 				ghs.logger.Sugar().Errorf("error getting branch count: %v", zap.Error(err))
@@ -170,6 +200,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 
 			// Get the contributor count for each of the repositories
+			// if ghs.cfg.Metrics.VcsContributorCount.Enabled {
+			// }
 			contribs, err := ghs.getContributorCount(ctx, restClient, name)
 			if err != nil {
 				ghs.logger.Sugar().Errorf("error getting contributor count: %v", zap.Error(err))
@@ -222,7 +254,8 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			ghs.mb.RecordVcsChangeCountDataPoint(now, int64(open), url, metadata.AttributeVcsChangeStateOpen, name)
 			ghs.mb.RecordVcsChangeCountDataPoint(now, int64(merged), url, metadata.AttributeVcsChangeStateMerged, name)
 			mux.Unlock()
-
+			// TODO: cleanup
+			// <-limiter
 		}()
 	}
 
