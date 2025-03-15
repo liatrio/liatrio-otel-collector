@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/google/go-github/v69/github"
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 	"go.uber.org/zap"
@@ -82,26 +83,69 @@ func (ghs *githubScraper) getBranches(
 	repoName string,
 	defaultBranch string,
 ) ([]BranchNode, int, error) {
+	// op := func() ([]BranchNode, int, error) {
 	var cursor *string
 	var count int
 	var branches []BranchNode
-
 	for next := true; next; {
 		// Instead of using the defaultReturnItems (100) we chose to set it to
 		// 50 because GitHub has been known to kill the connection server side
 		// when trying to get items over 80 on the getBranchData query.
 		items := 50
-		r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, items, defaultBranch, cursor)
-		if err != nil {
-			ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
-			return nil, 0, err
+
+		operation := func() (string, error) {
+			r, err := getBranchData(ctx, client, repoName, ghs.cfg.GitHubOrg, items, defaultBranch, cursor)
+			if err != nil {
+				if !strings.Contains(err.Error(), "403") || !strings.Contains(err.Error(), "secondary") {
+					// ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err), zap.String("response", r))
+					ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err))
+					ghs.logger.Sugar().Debug("inside error getting branch data")
+					ghs.logger.Sugar().Debugf("limit: %v", r.GetRateLimit().Limit)
+					ghs.logger.Sugar().Debugf("remaining: %v", r.GetRateLimit().Remaining)
+					ghs.logger.Sugar().Debugf("cost: %v", r.GetRateLimit().Cost)
+					ghs.logger.Sugar().Debugf("resetAt: %v", r.GetRateLimit().ResetAt)
+					return "", backoff.Permanent(err)
+				}
+				remaining := r.GetRateLimit().Remaining
+				reset := r.GetRateLimit().ResetAt
+				cost := r.GetRateLimit().Cost
+				// limit := r.GetRateLimit().Limit
+
+				if cost >= remaining {
+					reset := time.Until(reset).Seconds()
+					ghs.logger.Sugar().Debug("inside cost >= remaining")
+					ghs.logger.Sugar().Debugf("limit: %v", r.GetRateLimit().Limit)
+					ghs.logger.Sugar().Debugf("remaining: %v", r.GetRateLimit().Remaining)
+					ghs.logger.Sugar().Debugf("cost: %v", r.GetRateLimit().Cost)
+					ghs.logger.Sugar().Debugf("resetAt: %v", r.GetRateLimit().ResetAt)
+					return "", backoff.RetryAfter(int(reset))
+				}
+				// convert response to string value
+				// resp := fmt.Sprintf("%+v", r)
+			}
+
+			count = r.Repository.Refs.TotalCount
+			cursor = &r.Repository.Refs.PageInfo.EndCursor
+			next = r.Repository.Refs.PageInfo.HasNextPage
+			branches = append(branches, r.Repository.Refs.Nodes...)
+			ghs.logger.Sugar().Debug("inside getBranches loop")
+			ghs.logger.Sugar().Debugf("limit: %v", r.GetRateLimit().Limit)
+			ghs.logger.Sugar().Debugf("remaining: %v", r.GetRateLimit().Remaining)
+			ghs.logger.Sugar().Debugf("cost: %v", r.GetRateLimit().Cost)
+			ghs.logger.Sugar().Debugf("resetAt: %v", r.GetRateLimit().ResetAt)
+			return "success", nil
 		}
-		count = r.Repository.Refs.TotalCount
-		cursor = &r.Repository.Refs.PageInfo.EndCursor
-		next = r.Repository.Refs.PageInfo.HasNextPage
-		branches = append(branches, r.Repository.Refs.Nodes...)
+
+		_, err := backoff.Retry(ctx, operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+		// err := backoff.Retry(context.TODO(), operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+		if err != nil {
+			return branches, count, err
+		}
 	}
+
 	return branches, count, nil
+	// branches, count, err := op()
+	// return branches, count, err
 }
 
 // Login via the GraphQL checkLogin query in order to ensure that the user
@@ -110,8 +154,8 @@ func (ghs *githubScraper) login(
 	ctx context.Context,
 	client graphql.Client,
 	owner string,
-) (string, error) {
-	var loginType string
+) (loginType string, err error) {
+	// var loginType string
 
 	// The checkLogin GraphQL query will always return an error. We only return
 	// the error if the login response for User and Organization are both nil.
@@ -216,22 +260,53 @@ func (ghs *githubScraper) getPullRequests(
 	var pullRequests []PullRequestNode
 
 	for hasNextPage := true; hasNextPage; {
-		prs, err := getPullRequestData(
-			ctx,
-			client,
-			repoName,
-			ghs.cfg.GitHubOrg,
-			defaultReturnItems,
-			cursor,
-			[]PullRequestState{"OPEN", "MERGED"},
-		)
-		if err != nil {
-			return nil, err
+		operation := func() (string, error) {
+			prs, err := getPullRequestData(
+				ctx,
+				client,
+				repoName,
+				ghs.cfg.GitHubOrg,
+				defaultReturnItems,
+				cursor,
+				[]PullRequestState{"OPEN", "MERGED"},
+			)
+			if err != nil {
+				if !strings.Contains(err.Error(), "403") || !strings.Contains(err.Error(), "secondary") {
+					// ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err), zap.String("response", r))
+					ghs.logger.Sugar().Debugf("limit: %v", prs.GetRateLimit().Limit)
+					ghs.logger.Sugar().Debugf("remaining: %v", prs.GetRateLimit().Remaining)
+					ghs.logger.Sugar().Debugf("cost: %v", prs.GetRateLimit().Cost)
+					ghs.logger.Sugar().Debugf("resetAt: %v", prs.GetRateLimit().ResetAt)
+					return "", backoff.Permanent(err)
+				}
+				remaining := prs.GetRateLimit().Remaining
+				reset := prs.GetRateLimit().ResetAt
+				cost := prs.GetRateLimit().Cost
+
+				if cost >= remaining {
+					reset := time.Until(reset).Seconds()
+					ghs.logger.Sugar().Debug("inside cost >= remaining")
+					ghs.logger.Sugar().Debugf("limit: %v", prs.GetRateLimit().Limit)
+					ghs.logger.Sugar().Debugf("remaining: %v", prs.GetRateLimit().Remaining)
+					ghs.logger.Sugar().Debugf("cost: %v", prs.GetRateLimit().Cost)
+					ghs.logger.Sugar().Debugf("resetAt: %v", prs.GetRateLimit().ResetAt)
+					return "", backoff.RetryAfter(int(reset))
+				}
+
+				return "", err
+			}
+
+			pullRequests = append(pullRequests, prs.Repository.PullRequests.Nodes...)
+			cursor = &prs.Repository.PullRequests.PageInfo.EndCursor
+			hasNextPage = prs.Repository.PullRequests.PageInfo.HasNextPage
+			return "success", nil
 		}
 
-		pullRequests = append(pullRequests, prs.Repository.PullRequests.Nodes...)
-		cursor = &prs.Repository.PullRequests.PageInfo.EndCursor
-		hasNextPage = prs.Repository.PullRequests.PageInfo.HasNextPage
+		_, err := backoff.Retry(ctx, operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+		// err := backoff.Retry(context.TODO(), operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+		if err != nil {
+			return pullRequests, err
+		}
 	}
 
 	return pullRequests, nil
@@ -286,7 +361,6 @@ func (ghs *githubScraper) evalCommits(
 			additions += c.Nodes[b].Additions
 			deletions += c.Nodes[b].Deletions
 		}
-
 	}
 	return additions, deletions, age, nil
 }
@@ -299,32 +373,61 @@ func (ghs *githubScraper) getCommitData(
 	cursor *string,
 	branchName string,
 ) (*BranchHistoryTargetCommitHistoryCommitHistoryConnection, error) {
-	data, err := getCommitData(ctx, client, repoName, ghs.cfg.GitHubOrg, 1, items, cursor, branchName)
-	if err != nil {
+
+	operation := func() (*BranchHistoryTargetCommitHistoryCommitHistoryConnection, error) {
+		data, err := getCommitData(ctx, client, repoName, ghs.cfg.GitHubOrg, 1, items, cursor, branchName)
+		if err != nil {
+			if !strings.Contains(err.Error(), "403") || !strings.Contains(err.Error(), "secondary") {
+				// ghs.logger.Sugar().Errorf("error getting branch data", zap.Error(err), zap.String("response", r))
+				ghs.logger.Sugar().Debugf("limit: %v", data.GetRateLimit().Limit)
+				ghs.logger.Sugar().Debugf("remaining: %v", data.GetRateLimit().Remaining)
+				ghs.logger.Sugar().Debugf("cost: %v", data.GetRateLimit().Cost)
+				ghs.logger.Sugar().Debugf("resetAt: %v", data.GetRateLimit().ResetAt)
+				return nil, backoff.Permanent(err)
+			}
+			remaining := data.GetRateLimit().Remaining
+			reset := data.GetRateLimit().ResetAt
+			cost := data.GetRateLimit().Cost
+
+			if cost >= remaining {
+				reset := time.Until(reset).Seconds()
+				ghs.logger.Sugar().Debug("inside cost >= remaining")
+				ghs.logger.Sugar().Debugf("limit: %v", data.GetRateLimit().Limit)
+				ghs.logger.Sugar().Debugf("remaining: %v", data.GetRateLimit().Remaining)
+				ghs.logger.Sugar().Debugf("cost: %v", data.GetRateLimit().Cost)
+				ghs.logger.Sugar().Debugf("resetAt: %v", data.GetRateLimit().ResetAt)
+				return nil, backoff.RetryAfter(int(reset))
+			}
+		}
+
+		// This checks to ensure that the query returned a BranchHistory Node. The
+		// way the GraphQL query functions allows for a successful query to take
+		// place, but have an empty set of branches. The only time this query would
+		// return an empty BranchHistory Node is if the branch was deleted between
+		// the time the list of branches was retrieved, and the query for the
+		// commits on the branch.
+		if len(data.Repository.Refs.Nodes) == 0 {
+			return nil, errors.New("no branch history returned from the commit data request")
+		}
+
+		tar := data.Repository.Refs.Nodes[0].GetTarget()
+
+		// We do a sanity type check just to make sure the GraphQL response
+		// was indead for commits. This is a byproduct of the `... on
+		// Commit` syntax within the GraphQL query. We then return the
+		// actual history if the returned Target is indeed of type Commit.
+		if ct, ok := tar.(*BranchHistoryTargetCommit); ok {
+			return &ct.History, nil
+		}
 		return nil, err
 	}
 
-	// This checks to ensure that the query returned a BranchHistory Node. The
-	// way the GraphQL query functions allows for a successful query to take
-	// place, but have an empty set of branches. The only time this query would
-	// return an empty BranchHistory Node is if the branch was deleted between
-	// the time the list of branches was retrieved, and the query for the
-	// commits on the branch.
-	if len(data.Repository.Refs.Nodes) == 0 {
-		return nil, errors.New("no branch history returned from the commit data request")
+	tar, err := backoff.Retry(ctx, operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+	if err != nil {
+		return nil, errors.New("GraphQL query did not return the Commit Target")
 	}
 
-	tar := data.Repository.Refs.Nodes[0].GetTarget()
-
-	// We do a sanity type check just to make sure the GraphQL response was
-	// indead for commits. This is a byproduct of the `... on Commit` syntax
-	// within the GraphQL query and then return the actual history if the
-	// returned Target is inded of type Commit.
-	if ct, ok := tar.(*BranchHistoryTargetCommit); ok {
-		return &ct.History, nil
-	}
-
-	return nil, errors.New("GraphQL query did not return the Commit Target")
+	return tar, nil
 }
 
 func getNumPages(p float64, n float64) int {
