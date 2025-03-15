@@ -312,7 +312,7 @@ func TestScrape(t *testing.T) {
 
 			cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
 
-			// cfg.Metrics.VcsCveCount.Enabled = true
+			cfg.Metrics.VcsCveCount.Enabled = true
 
 			ghs := newGitHubScraper(receivertest.NewNopSettings(metadata.Type), cfg)
 			ghs.cfg.GitHubOrg = "liatrio"

@@ -80,6 +80,37 @@ resourceMetrics:
                   timeUnixNano: "2000000"
             name: vcs.change.time_to_merge
             unit: s
+          - description: The number of Common Vulnerabilities and Exposures (CVEs) in the repository.
+            gauge:
+              dataPoints:
+                - asInt: "1"
+                  attributes:
+                    - key: cve.severity
+                      value:
+                        stringValue: high
+                    - key: vcs.repository.name
+                      value:
+                        stringValue: repo1
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "1"
+                  attributes:
+                    - key: cve.severity
+                      value:
+                        stringValue: medium
+                    - key: vcs.repository.name
+                      value:
+                        stringValue: repo1
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: vcs.cve.count
+            unit: '{cve}'
           - description: The number of refs of type branch in a repository.
             gauge:
               dataPoints:
