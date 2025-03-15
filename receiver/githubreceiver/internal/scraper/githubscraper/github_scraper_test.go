@@ -73,7 +73,6 @@ func TestScrape(t *testing.T) {
 					},
 					responseCode: http.StatusOK,
 				},
-				// TODO: This test is breaking
 				searchRepoResponse: searchRepoResponse{
 					limit: rateVals{
 						Limit:     5000,

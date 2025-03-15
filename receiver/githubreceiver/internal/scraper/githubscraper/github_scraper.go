@@ -21,8 +21,6 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 )
 
-// const defaultConcurrencyLimit = 5
-
 var errClientNotInitErr = errors.New("http client not initialized")
 
 type githubScraper struct {
@@ -100,11 +98,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	wg.Add(len(repos))
 	var mux sync.Mutex
 
-	// TODO: Cleanup
-	// max := defaultConcurrencyLimit
-	// if ghs.cfg.ConcurrencyLimit >= 0 {
-	// 	max = ghs.cfg.ConcurrencyLimit
-	// }
 	var max int
 	switch {
 	case ghs.cfg.ConcurrencyLimit > 0:
@@ -114,25 +107,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	}
 
 	limiter := make(chan struct{}, max)
-
-	// TODO: cleanup
-	// Creating and filling a dummy structure to limit the amount of concurrent
-	// requests to GitHub to avoid secondary rate limits.
-	// for range max {
-	// 	limiter <- struct{}{}
-	// }
-
-	// done := make(chan struct{})
-	// go func() {
-	// 	wg.Wait()
-	// 	close(done)
-	// }()
-	// select {
-	// case <-done:
-	// case <-ctx.Done():
-	// }
-
-	// waitForAll := make(chan bool)
 
 	for _, repo := range repos {
 		repo := repo
@@ -148,10 +122,7 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				<-limiter
 				wg.Done()
 			}()
-			// TODO: cleanup
-			// defer wg.Done()
 
-			// limiter <- struct{}{}
 			branches, count, err := ghs.getBranches(ctx, genClient, name, trunk)
 			if err != nil {
 				ghs.logger.Sugar().Errorf("error getting branch count: %v", zap.Error(err))
@@ -254,8 +225,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			ghs.mb.RecordVcsChangeCountDataPoint(now, int64(open), url, metadata.AttributeVcsChangeStateOpen, name)
 			ghs.mb.RecordVcsChangeCountDataPoint(now, int64(merged), url, metadata.AttributeVcsChangeStateMerged, name)
 			mux.Unlock()
-			// TODO: cleanup
-			// <-limiter
 		}()
 	}
 
