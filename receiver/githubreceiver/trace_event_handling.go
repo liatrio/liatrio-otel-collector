@@ -349,10 +349,7 @@ func (gtr *githubTracesReceiver) createStepSpan(
 // newStepSpanID creates a deterministic Step Span ID based on the provided
 // inputs.
 func newStepSpanID(runID int64, runAttempt int, jobName string, stepName string, number int) (pcommon.SpanID, error) {
-	input := fmt.Sprintf("%d%d%s%s", runID, runAttempt, jobName, stepName)
-	if number > 0 {
-		input = fmt.Sprintf("%d%d%s%s%d", runID, runAttempt, jobName, stepName, number)
-	}
+	input := fmt.Sprintf("%d%d%s%s%d", runID, runAttempt, jobName, stepName, number)
 	hash := sha256.Sum256([]byte(input))
 	spanIDHex := hex.EncodeToString(hash[:])
 
