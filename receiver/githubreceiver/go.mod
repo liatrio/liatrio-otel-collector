@@ -12,7 +12,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.121.0
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.28.1
-	go.opentelemetry.io/collector/component/componentstatus v0.121.0
+	go.opentelemetry.io/collector/component/componentstatus v0.122.1
 	go.opentelemetry.io/collector/component/componenttest v0.122.1
 	go.opentelemetry.io/collector/config/confighttp v0.122.1
 	go.opentelemetry.io/collector/config/configopaque v1.28.1
@@ -22,7 +22,7 @@ require (
 	go.opentelemetry.io/collector/filter v0.121.0
 	go.opentelemetry.io/collector/otelcol/otelcoltest v0.121.0
 	go.opentelemetry.io/collector/pdata v1.28.1
-	go.opentelemetry.io/collector/pipeline v0.121.0
+	go.opentelemetry.io/collector/pipeline v0.122.1
 	go.opentelemetry.io/collector/receiver v0.121.0
 	go.opentelemetry.io/collector/receiver/receivertest v0.121.0
 	go.opentelemetry.io/collector/scraper v0.121.0
