@@ -60,6 +60,7 @@ receivers:
                         enabled: true
                 gitlab_org: myfancyorg
                 search_query: "org:myfancyorg topic:o11yalltheway" #Recommended optional query override, defaults to "{org,user}:<gitlab_org>"
+                limit_merge_requests: 30 #Limit querying merged MRs to the last 30 days, defaults to querying all historical merged MRs
                 endpoint: "https://selfmanagedenterpriseserver.com"
                 auth:
                     authenticator: bearertokenauth/gitlab

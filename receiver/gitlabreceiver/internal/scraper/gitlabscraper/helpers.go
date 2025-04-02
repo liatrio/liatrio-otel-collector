@@ -111,13 +111,14 @@ func (gls *gitlabScraper) getMergeRequests(
 	graphClient graphql.Client,
 	projectPath string,
 	state MergeRequestState,
+	createdAfter time.Time,
 ) ([]MergeRequestNode, error) {
 	var mergeRequestData []MergeRequestNode
 	var mrCursor *string
 
 	for hasNextPage := true; hasNextPage; {
 		// Get the next page of data
-		mr, err := getMergeRequests(ctx, graphClient, projectPath, mrCursor, state)
+		mr, err := getMergeRequests(ctx, graphClient, projectPath, mrCursor, state, createdAfter)
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
 			return nil, err
@@ -138,13 +139,22 @@ func (gls *gitlabScraper) getCombinedMergeRequests(
 	ctx context.Context,
 	graphClient graphql.Client,
 	projectPath string,
+	limit int,
 ) ([]MergeRequestNode, error) {
-	openMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateOpened)
+	createdAfter := time.Time{}
+
+	// If a limit is specified, only retrieve merged MRs from the last X days
+	if limit > 0 {
+		createdAfter = time.Now().AddDate(0, 0, (-1 * limit))
+	}
+
+	// always grab all open MRs
+	openMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateOpened, time.Time{})
 	if err != nil {
 		gls.logger.Sugar().Errorf("error getting open merge requests: %v", zap.Error(err))
 		return nil, err
 	}
-	mergedMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateMerged)
+	mergedMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateMerged, createdAfter)
 	if err != nil {
 		gls.logger.Sugar().Errorf("error getting merged merge requests: %v", zap.Error(err))
 		return nil, err

@@ -113,9 +113,10 @@ func (v *__getBranchNamesInput) GetFullPath() string { return v.FullPath }
 
 // __getMergeRequestsInput is used internally by genqlient
 type __getMergeRequestsInput struct {
-	FullPath string            `json:"fullPath"`
-	After    *string           `json:"after"`
-	State    MergeRequestState `json:"state"`
+	FullPath     string            `json:"fullPath"`
+	After        *string           `json:"after"`
+	State        MergeRequestState `json:"state"`
+	CreatedAfter time.Time         `json:"createdAfter"`
 }
 
 // GetFullPath returns __getMergeRequestsInput.FullPath, and is useful for accessing the field via an interface.
@@ -126,6 +127,9 @@ func (v *__getMergeRequestsInput) GetAfter() *string { return v.After }
 
 // GetState returns __getMergeRequestsInput.State, and is useful for accessing the field via an interface.
 func (v *__getMergeRequestsInput) GetState() MergeRequestState { return v.State }
+
+// GetCreatedAfter returns __getMergeRequestsInput.CreatedAfter, and is useful for accessing the field via an interface.
+func (v *__getMergeRequestsInput) GetCreatedAfter() time.Time { return v.CreatedAfter }
 
 // __getProjectsByTopicInput is used internally by genqlient
 type __getProjectsByTopicInput struct {
@@ -474,9 +478,9 @@ func getBranchNames(
 
 // The query executed by getMergeRequests.
 const getMergeRequests_Operation = `
-query getMergeRequests ($fullPath: ID!, $after: String, $state: MergeRequestState) {
+query getMergeRequests ($fullPath: ID!, $after: String, $state: MergeRequestState, $createdAfter: Time!) {
 	project(fullPath: $fullPath) {
-		mergeRequests(state: $state, after: $after) {
+		mergeRequests(state: $state, createdAfter: $createdAfter, after: $after) {
 			pageInfo {
 				hasNextPage
 				endCursor
@@ -504,14 +508,16 @@ func getMergeRequests(
 	fullPath string,
 	after *string,
 	state MergeRequestState,
+	createdAfter time.Time,
 ) (data_ *getMergeRequestsResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "getMergeRequests",
 		Query:  getMergeRequests_Operation,
 		Variables: &__getMergeRequestsInput{
-			FullPath: fullPath,
-			After:    after,
-			State:    state,
+			FullPath:     fullPath,
+			After:        after,
+			State:        state,
+			CreatedAfter: createdAfter,
 		},
 	}
 
