@@ -496,7 +496,7 @@ func TestGetCombinedMergeRequests(t *testing.T) {
 
 			client := graphql.NewClient(server.URL, gls.client)
 
-			mergeRequestData, err := gls.getCombinedMergeRequests(context.Background(), client, "projectPath")
+			mergeRequestData, err := gls.getCombinedMergeRequests(context.Background(), client, "projectPath", 0)
 
 			assert.Equal(t, tc.expectedCount, len(mergeRequestData))
 			if tc.expectedErr != nil {
