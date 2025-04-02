@@ -390,7 +390,7 @@ func TestGetMergeRequests(t *testing.T) {
 
 			client := graphql.NewClient(server.URL, gls.client)
 
-			mergeRequestData, err := gls.getMergeRequests(context.Background(), client, "projectPath", MergeRequestState("opened"))
+			mergeRequestData, err := gls.getMergeRequests(context.Background(), client, "projectPath", MergeRequestState("opened"), time.Time{})
 
 			assert.Equal(t, tc.expectedCount, len(mergeRequestData))
 			if tc.expectedErr != nil {

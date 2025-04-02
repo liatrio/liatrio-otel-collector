@@ -51,9 +51,10 @@ query getMergeRequests(
   # @genqlient(pointer: true)
   $after: String
   $state: MergeRequestState
+  $createdAfter: Time!
 ) {
   project(fullPath: $fullPath) {
-    mergeRequests(state: $state, after: $after) {
+    mergeRequests(state: $state, createdAfter: $createdAfter, after: $after) {
       pageInfo {
         hasNextPage
         endCursor

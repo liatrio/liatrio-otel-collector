@@ -145,7 +145,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 
 			// Get both the merged and open merge requests for the repository
-			mrs, err := gls.getCombinedMergeRequests(ctx, graphClient, path)
+			mrs, err := gls.getCombinedMergeRequests(ctx, graphClient, path, gls.cfg.LimitMergeRequests)
 			if err != nil {
 				gls.logger.Sugar().Errorf("error getting merge requests: %v", zap.Error(err))
 				return
