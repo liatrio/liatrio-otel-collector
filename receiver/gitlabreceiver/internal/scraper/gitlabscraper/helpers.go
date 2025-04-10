@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"go.uber.org/zap"
 
 	"github.com/Khan/genqlient/graphql"
+	"github.com/cenkalti/backoff/v5"
 )
 
 type gitlabProject struct {
@@ -71,22 +73,55 @@ func (gls *gitlabScraper) getProjects(restClient *gitlab.Client) ([]gitlabProjec
 		}
 	}
 
+	gls.logger.Sugar().Infof("Found %d projects for Gitlab Org %s", len(projectList), gls.cfg.GitLabOrg)
 	return projectList, nil
 }
 
 func (gls *gitlabScraper) getBranchNames(ctx context.Context, client graphql.Client, projectPath string) (*getBranchNamesProjectRepository, error) {
-	branches, err := getBranchNames(ctx, client, projectPath)
+	var branches *getBranchNamesResponse
+	var err error
+
+	operation := func() (string, error) {
+		branches, err = getBranchNames(ctx, client, projectPath)
+		if err != nil {
+			if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
+				strings.Contains(apiErr.Message, "Too many requests") {
+				return "", backoff.RetryAfter(60)
+			}
+			return "", backoff.Permanent(err)
+		}
+		return "success", nil
+	}
+	_, err = backoff.Retry(ctx, operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+
 	if err != nil {
 		return nil, err
 	}
 	return &branches.Project.Repository, nil
 }
 
-func (gls *gitlabScraper) getInitialCommit(client *gitlab.Client, projectPath string, defaultBranch string, branch string) (*gitlab.Commit, error) {
-	diff, _, err := client.Repositories.Compare(projectPath, &gitlab.CompareOptions{From: &defaultBranch, To: &branch})
+func (gls *gitlabScraper) getInitialCommit(ctx context.Context, client *gitlab.Client, projectPath string, defaultBranch string, branch string) (*gitlab.Commit, error) {
+	var diff *gitlab.Compare
+	var err error
+
+	operation := func() (string, error) {
+		diff, _, err = client.Repositories.Compare(projectPath, &gitlab.CompareOptions{From: &defaultBranch, To: &branch})
+		if err != nil {
+			if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
+				strings.Contains(apiErr.Message, "Too many requests") {
+				return "", backoff.RetryAfter(60)
+			}
+			return "", backoff.Permanent(err)
+		}
+		return "success", nil
+	}
+
+	_, err = backoff.Retry(ctx, operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+
 	if err != nil {
 		return nil, err
 	}
+
 	if len(diff.Commits) == 0 {
 		return nil, nil
 	}
@@ -97,7 +132,22 @@ func (gls *gitlabScraper) getContributorCount(
 	restClient *gitlab.Client,
 	projectPath string,
 ) (int, error) {
-	contributors, _, err := restClient.Repositories.Contributors(projectPath, nil)
+	var contributors []*gitlab.Contributor
+	var err error
+
+	operation := func() (string, error) {
+		contributors, _, err = restClient.Repositories.Contributors(projectPath, nil)
+		if err != nil {
+			if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
+				strings.Contains(apiErr.Message, "Too many requests") {
+				return "", backoff.RetryAfter(60)
+			}
+			return "", backoff.Permanent(err)
+		}
+		return "success", nil
+	}
+	_, err = backoff.Retry(context.Background(), operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+
 	if err != nil {
 		gls.logger.Sugar().Errorf("error getting contributors: %v", zap.Error(err))
 		return 0, err
@@ -117,19 +167,30 @@ func (gls *gitlabScraper) getMergeRequests(
 	var mrCursor *string
 
 	for hasNextPage := true; hasNextPage; {
-		// Get the next page of data
-		mr, err := getMergeRequests(ctx, graphClient, projectPath, mrCursor, state, createdAfter)
+		operation := func() (string, error) {
+			mr, err := getMergeRequests(ctx, graphClient, projectPath, mrCursor, state, createdAfter)
+			if err != nil {
+				if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
+					strings.Contains(apiErr.Message, "Too many requests") {
+					return "", backoff.RetryAfter(60)
+				}
+				return "", backoff.Permanent(err)
+			}
+			if len(mr.Project.MergeRequests.Nodes) == 0 {
+				hasNextPage = false
+				return "success", nil
+			}
+			mrCursor = &mr.Project.MergeRequests.PageInfo.EndCursor
+			hasNextPage = mr.Project.MergeRequests.PageInfo.HasNextPage
+			mergeRequestData = append(mergeRequestData, mr.Project.MergeRequests.Nodes...)
+			return "success", nil
+		}
+		_, err := backoff.Retry(ctx, operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
 			return nil, err
 		}
-		if len(mr.Project.MergeRequests.Nodes) == 0 {
-			break
-		}
-
-		mrCursor = &mr.Project.MergeRequests.PageInfo.EndCursor
-		hasNextPage = mr.Project.MergeRequests.PageInfo.HasNextPage
-		mergeRequestData = append(mergeRequestData, mr.Project.MergeRequests.Nodes...)
 	}
 
 	return mergeRequestData, nil

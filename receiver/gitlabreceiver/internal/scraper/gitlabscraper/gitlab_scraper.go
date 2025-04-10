@@ -118,45 +118,47 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			branches, err := gls.getBranchNames(ctx, graphClient, path)
 			if err != nil {
-				gls.logger.Sugar().Errorf("error getting branches: %v", zap.Error(err))
+				gls.logger.Sugar().Errorf("error getting branches for project '%s': %v", path, zap.Error(err))
 				return
 			}
 			// Create a mutual exclusion lock to prevent the recordDataPoint
 			// from having a nil pointer error passing in the SetStartTimestamp
 			mux.Lock()
-
 			refType := metadata.AttributeVcsRefHeadTypeBranch
 			gls.mb.RecordVcsRefCountDataPoint(now, int64(len(branches.BranchNames)), url, path, refType)
-
+			mux.Unlock()
 			for _, branch := range branches.BranchNames {
 				if branch == branches.RootRef {
 					continue
 				}
 
-				commit, err := gls.getInitialCommit(restClient, path, branches.RootRef, branch)
+				commit, err := gls.getInitialCommit(ctx, restClient, path, branches.RootRef, branch)
 				if err != nil {
-					gls.logger.Sugar().Errorf("error: %v", err)
+					gls.logger.Sugar().Errorf("error getting initial commit for project '%s' and branch '%s': %v", path, branch, err)
 				}
 
 				if commit != nil {
 					branchAge := time.Since(*commit.CreatedAt).Seconds()
+					mux.Lock()
 					gls.mb.RecordVcsRefTimeDataPoint(now, int64(branchAge), url, path, branch, refType)
+					mux.Unlock()
 				}
 			}
 
 			// Get both the merged and open merge requests for the repository
 			mrs, err := gls.getCombinedMergeRequests(ctx, graphClient, path, gls.cfg.LimitMergeRequests)
 			if err != nil {
-				gls.logger.Sugar().Errorf("error getting merge requests: %v", zap.Error(err))
+				gls.logger.Sugar().Errorf("error getting merge requests for project '%s': %v", path, zap.Error(err))
 				return
 			}
 
 			// Get the number of contributors for the repository
 			contributorCount, err := gls.getContributorCount(restClient, path)
 			if err != nil {
-				gls.logger.Sugar().Errorf("error: %v", err)
+				gls.logger.Sugar().Errorf("error getting contributor count for project '%s': %v", path, err)
 				return
 			}
+			mux.Lock()
 			gls.mb.RecordVcsContributorCountDataPoint(now, int64(contributorCount), url, path)
 			// gls.mb.RecordVcsRepositoryContributorCountDataPoint(now, int64(contributorCount), path)
 
@@ -177,12 +179,13 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					gls.mb.RecordVcsChangeTimeToMergeDataPoint(now, mergedAge, url, path, mr.SourceBranch)
 				}
 			}
-
 			mux.Unlock()
 		}()
 	}
 
 	wg.Wait()
+
+	gls.logger.Sugar().Infof("Finished processing Gitlab org %s", gls.cfg.GitLabOrg)
 
 	gls.rb.SetVcsVendorName("gitlab")
 	gls.rb.SetOrganizationName(gls.cfg.GitLabOrg)
