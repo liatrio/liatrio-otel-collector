@@ -642,7 +642,7 @@ func TestGetInitialCommit(t *testing.T) {
 			defer func() { server.Close() }()
 			client, err := gitlab.NewClient("", gitlab.WithBaseURL(server.URL))
 			assert.NoError(t, err)
-			commit, err := gls.getInitialCommit(client, "project", "defaultBranch", "branch")
+			commit, err := gls.getInitialCommit(context.Background(), client, "project", "defaultBranch", "branch")
 
 			assert.Equal(t, tc.expectedCommit, commit)
 			if tc.expectedErr != nil {
