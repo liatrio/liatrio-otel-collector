@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -84,7 +83,7 @@ func (gls *gitlabScraper) getBranchNames(ctx context.Context, client graphql.Cli
 		branches, err = getBranchNames(ctx, client, projectPath)
 		if err != nil {
 			if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
-				strings.Contains(apiErr.Message, "Too many requests") {
+				apiErr.Response.Status == "429 Too Many Requests" {
 				return "", backoff.RetryAfter(60)
 			}
 			return "", backoff.Permanent(err)
@@ -107,7 +106,7 @@ func (gls *gitlabScraper) getInitialCommit(ctx context.Context, client *gitlab.C
 		diff, _, err = client.Repositories.Compare(projectPath, &gitlab.CompareOptions{From: &defaultBranch, To: &branch})
 		if err != nil {
 			if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
-				strings.Contains(apiErr.Message, "Too many requests") {
+				apiErr.Response.Status == "429 Too Many Requests" {
 				return "", backoff.RetryAfter(60)
 			}
 			return "", backoff.Permanent(err)
@@ -138,7 +137,7 @@ func (gls *gitlabScraper) getContributorCount(
 		contributors, _, err = restClient.Repositories.Contributors(projectPath, nil)
 		if err != nil {
 			if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
-				strings.Contains(apiErr.Message, "Too many requests") {
+				apiErr.Response.Status == "429 Too Many Requests" {
 				return "", backoff.RetryAfter(60)
 			}
 			return "", backoff.Permanent(err)
@@ -169,7 +168,7 @@ func (gls *gitlabScraper) getMergeRequests(
 			mr, err := getMergeRequests(ctx, graphClient, projectPath, mrCursor, state, createdAfter)
 			if err != nil {
 				if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
-					strings.Contains(apiErr.Message, "Too many requests") {
+					apiErr.Response.Status == "429 Too Many Requests" {
 					return "", backoff.RetryAfter(60)
 				}
 				return "", backoff.Permanent(err)
