@@ -9,7 +9,6 @@ import (
 	"time"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go"
-	"go.uber.org/zap"
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/cenkalti/backoff/v5"
@@ -149,7 +148,6 @@ func (gls *gitlabScraper) getContributorCount(
 	_, err = backoff.Retry(context.Background(), operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
 
 	if err != nil {
-		gls.logger.Sugar().Errorf("error getting contributors: %v", zap.Error(err))
 		return 0, err
 	}
 
@@ -188,7 +186,6 @@ func (gls *gitlabScraper) getMergeRequests(
 		_, err := backoff.Retry(ctx, operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
 
 		if err != nil {
-			gls.logger.Sugar().Errorf("error: %v", err)
 			return nil, err
 		}
 	}
@@ -212,12 +209,10 @@ func (gls *gitlabScraper) getCombinedMergeRequests(
 	// always grab all open MRs
 	openMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateOpened, time.Time{})
 	if err != nil {
-		gls.logger.Sugar().Errorf("error getting open merge requests: %v", zap.Error(err))
 		return nil, err
 	}
 	mergedMrs, err := gls.getMergeRequests(ctx, graphClient, projectPath, MergeRequestStateMerged, createdAfter)
 	if err != nil {
-		gls.logger.Sugar().Errorf("error getting merged merge requests: %v", zap.Error(err))
 		return nil, err
 	}
 	mrs := append(openMrs, mergedMrs...)
