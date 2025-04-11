@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cenkalti/backoff/v5"
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/metadata"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/pmetrictest"
@@ -52,7 +53,7 @@ func TestScrape(t *testing.T) {
 				},
 			}),
 			testFile:    "expected_no_projects.yaml",
-			expectedErr: errors.New("no GitLab projects found for the given group/org: project"),
+			expectedErr: backoff.Permanent(errors.New("no GitLab projects found for the given group/org: project")),
 		},
 		{
 			desc: "Happy Path",

@@ -94,7 +94,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		gls.logger.Sugar().Errorf("error: %v", err)
 	}
 
-	projectList, err := gls.getProjects(restClient)
+	projectList, err := gls.getProjects(ctx, restClient)
 	if err != nil {
 		gls.logger.Sugar().Errorf("error: %v", err)
 		return gls.mb.Emit(), err

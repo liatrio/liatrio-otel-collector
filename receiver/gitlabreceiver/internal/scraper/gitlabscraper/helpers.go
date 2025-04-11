@@ -21,54 +21,64 @@ type gitlabProject struct {
 	URL            string
 }
 
-func (gls *gitlabScraper) getProjects(restClient *gitlab.Client) ([]gitlabProject, error) {
+func (gls *gitlabScraper) getProjects(ctx context.Context, restClient *gitlab.Client) ([]gitlabProject, error) {
 	var projectList []gitlabProject
 
-	for nextPage := 1; nextPage > 0; {
-		// TODO: since we pass in a context already, do we need to create a new background context?
-		projects, res, err := restClient.Groups.ListGroupProjects(gls.cfg.GitLabOrg, &gitlab.ListGroupProjectsOptions{
-			IncludeSubGroups: gitlab.Ptr(true),
-			Topic:            gitlab.Ptr(gls.cfg.SearchTopic),
-			Search:           gitlab.Ptr(gls.cfg.SearchQuery),
-			Archived:         gitlab.Ptr(false),
-			ListOptions: gitlab.ListOptions{
-				Page:    nextPage,
-				PerPage: 100,
-			},
-		})
-		if err != nil {
-			gls.logger.Sugar().Errorf("error: %v", err)
-			return nil, err
-		}
-
-		if len(projects) == 0 {
-			errMsg := fmt.Sprintf("no GitLab projects found for the given group/org: %s", gls.cfg.GitLabOrg)
-			err = errors.New(errMsg)
-			gls.logger.Sugar().Error(err)
-			return nil, err
-		}
-
-		for _, p := range projects {
-			projectList = append(projectList, gitlabProject{
-				Name:           p.Name,
-				Path:           p.PathWithNamespace,
-				CreatedAt:      *p.CreatedAt,
-				LastActivityAt: *p.LastActivityAt,
-				URL:            p.WebURL,
+	operation := func() (string, error) {
+		for nextPage := 1; nextPage > 0; {
+			projects, res, err := restClient.Groups.ListGroupProjects(gls.cfg.GitLabOrg, &gitlab.ListGroupProjectsOptions{
+				IncludeSubGroups: gitlab.Ptr(true),
+				Topic:            gitlab.Ptr(gls.cfg.SearchTopic),
+				Search:           gitlab.Ptr(gls.cfg.SearchQuery),
+				Archived:         gitlab.Ptr(false),
+				ListOptions: gitlab.ListOptions{
+					Page:    nextPage,
+					PerPage: 100,
+				},
 			})
-		}
-
-		nextPageHeader := res.Header.Get("x-next-page")
-		if len(nextPageHeader) > 0 {
-			nextPage, err = strconv.Atoi(nextPageHeader)
 			if err != nil {
-				gls.logger.Sugar().Errorf("error: %v", err)
-
-				return nil, err
+				if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
+					apiErr.Response.Status == "429 Too Many Requests" {
+					return "", backoff.RetryAfter(60)
+				}
+				return "", backoff.Permanent(err)
 			}
-		} else {
-			nextPage = 0
+
+			if len(projects) == 0 {
+				errMsg := fmt.Sprintf("no GitLab projects found for the given group/org: %s", gls.cfg.GitLabOrg)
+				err = errors.New(errMsg)
+				gls.logger.Sugar().Error(err)
+				return "", backoff.Permanent(err)
+			}
+
+			for _, p := range projects {
+				projectList = append(projectList, gitlabProject{
+					Name:           p.Name,
+					Path:           p.PathWithNamespace,
+					CreatedAt:      *p.CreatedAt,
+					LastActivityAt: *p.LastActivityAt,
+					URL:            p.WebURL,
+				})
+			}
+
+			nextPageHeader := res.Header.Get("x-next-page")
+			if len(nextPageHeader) > 0 {
+				nextPage, err = strconv.Atoi(nextPageHeader)
+				if err != nil {
+					gls.logger.Sugar().Errorf("error: %v", err)
+
+					return "", backoff.Permanent(err)
+				}
+			} else {
+				nextPage = 0
+			}
 		}
+		return "success", nil
+	}
+	_, err := backoff.Retry(ctx, operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+
+	if err != nil {
+		return nil, err
 	}
 
 	gls.logger.Sugar().Infof("Found %d projects for Gitlab Org %s", len(projectList), gls.cfg.GitLabOrg)

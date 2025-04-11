@@ -209,7 +209,7 @@ func TestGetProjects(t *testing.T) {
 			gls.cfg.GitLabOrg = "project"
 			client, err := gitlab.NewClient("", gitlab.WithBaseURL(server.URL))
 			assert.NoError(t, err)
-			projects, err := gls.getProjects(client)
+			projects, err := gls.getProjects(context.Background(), client)
 
 			assert.Equal(t, tc.expectedCount, len(projects))
 			if tc.expectedErr != nil {
