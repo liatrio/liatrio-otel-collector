@@ -92,8 +92,6 @@ github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.124.1
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.124.1/go.mod h1:/WAA1PKvHNz7E5SrtGg2KfAWl/PrmS0FVYOanoGxk0I=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.124.1 h1:mMVzpkpy6rKL1Q/xXNogZVtWebIlxTRzhsgp3b9ioCM=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.124.1/go.mod h1:jM8Gsd0fIiwRzWrzd7Gm6PZYi5AgHPRkz0625Rtqyxo=
-github.com/open-telemetry/opentelemetry-collector-contrib/receiver/githubreceiver v0.124.1 h1:fDLRIEvk6BmZ/4hwMZ38qrwc71oIj1ndl9BWBuUg1Rs=
-github.com/open-telemetry/opentelemetry-collector-contrib/receiver/githubreceiver v0.124.1/go.mod h1:gtuF90yzRU9huf3iPGuN1aKAPFV4UqIL9GcMefuPkMY=
 github.com/pierrec/lz4/v4 v4.1.22 h1:cKFw6uJDK+/gfw5BcDL0JL5aBsAFdsIT18eRtLj7VIU=
 github.com/pierrec/lz4/v4 v4.1.22/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
