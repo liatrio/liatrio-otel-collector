@@ -390,7 +390,7 @@ func (ghs *githubScraper) getCommitData(
 
 	tar, err := backoff.Retry(ctx, operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
 	if err != nil {
-		return nil, errors.New("GraphQL query did not return the Commit Target")
+		return nil, err
 	}
 
 	return tar, nil

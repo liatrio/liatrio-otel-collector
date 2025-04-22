@@ -4,8 +4,8 @@ extensions:
   bearertokenauth/github:
     token: ${env:GH_PAT}
 
-  bearertokenauth/gitlab:
-    token: ${env:GL_PAT}
+  # bearertokenauth/gitlab:
+  #   token: ${env:GL_PAT}
 
 receivers:
   otlp:
@@ -32,9 +32,10 @@ receivers:
 
   github:
     initial_delay: 10s
-    collection_interval: 60s
+    collection_interval: 6000s
     scrapers:
       scraper:
+        concurrency_limit: 5
         # Optionally enable or disable metrics
         # metrics:
           # Example
@@ -57,9 +58,9 @@ exporters:
 
 service:
   ## Add bearertokenauth/* if you want to use bearer token auth extensions
-  extensions: [bearertokenauth/github, bearertokenauth/gitlab]
+  extensions: [bearertokenauth/github]
   pipelines:
     metrics:
-      receivers: [gitlab, github]
+      receivers: [github]
       processors: []
       exporters: [debug]
