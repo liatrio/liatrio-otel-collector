@@ -57,12 +57,12 @@ resourceSpans:
     scopeSpans:
       - scope: {}
         spans:
-          - endTimeUnixNano: "1744837825000000000"
+          - endTimeUnixNano: "1744837823000000000"
             kind: 2
             name: test (1.23)
             parentSpanId: aba151af7cfbcf0f
             spanId: e68a36b3514c8634
-            startTimeUnixNano: "1744837738000000000"
+            startTimeUnixNano: "1744837742000000000"
             status:
               code: 1
               message: success
