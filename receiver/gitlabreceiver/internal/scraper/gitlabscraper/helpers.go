@@ -227,3 +227,26 @@ func (gls *gitlabScraper) getCombinedMergeRequests(
 	mrs := append(openMrs, mergedMrs...)
 	return mrs, nil
 }
+
+func (gls *gitlabScraper) getPipelines(ctx context.Context, client graphql.Client, projectPath string) (*getPipelinesProjectPipelinesPipelineConnection, error) {
+	var pipelines *getPipelinesResponse
+	var err error
+
+	operation := func() (string, error) {
+		pipelines, err = getPipelines(ctx, client, projectPath)
+		if err != nil {
+			if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
+				apiErr.Response.Status == "429 Too Many Requests" {
+				return "", backoff.RetryAfter(60)
+			}
+			return "", backoff.Permanent(err)
+		}
+		return "success", nil
+	}
+	_, err = backoff.Retry(ctx, operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+
+	if err != nil {
+		return nil, err
+	}
+	return &pipelines.Project.Pipelines, nil
+}

@@ -91,6 +91,47 @@ var AllMergeRequestState = []MergeRequestState{
 	MergeRequestStateAll,
 }
 
+type PipelineStatusEnum string
+
+const (
+	// Pipeline has been created.
+	PipelineStatusEnumCreated PipelineStatusEnum = "CREATED"
+	// A resource (for example, a runner) that the pipeline requires to run is unavailable.
+	PipelineStatusEnumWaitingForResource PipelineStatusEnum = "WAITING_FOR_RESOURCE"
+	// Pipeline is preparing to run.
+	PipelineStatusEnumPreparing PipelineStatusEnum = "PREPARING"
+	// Pipeline has not started running yet.
+	PipelineStatusEnumPending PipelineStatusEnum = "PENDING"
+	// Pipeline is running.
+	PipelineStatusEnumRunning PipelineStatusEnum = "RUNNING"
+	// At least one stage of the pipeline failed.
+	PipelineStatusEnumFailed PipelineStatusEnum = "FAILED"
+	// Pipeline completed successfully.
+	PipelineStatusEnumSuccess PipelineStatusEnum = "SUCCESS"
+	// Pipeline was canceled before completion.
+	PipelineStatusEnumCanceled PipelineStatusEnum = "CANCELED"
+	// Pipeline was skipped.
+	PipelineStatusEnumSkipped PipelineStatusEnum = "SKIPPED"
+	// Pipeline needs to be manually started.
+	PipelineStatusEnumManual PipelineStatusEnum = "MANUAL"
+	// Pipeline is scheduled to run.
+	PipelineStatusEnumScheduled PipelineStatusEnum = "SCHEDULED"
+)
+
+var AllPipelineStatusEnum = []PipelineStatusEnum{
+	PipelineStatusEnumCreated,
+	PipelineStatusEnumWaitingForResource,
+	PipelineStatusEnumPreparing,
+	PipelineStatusEnumPending,
+	PipelineStatusEnumRunning,
+	PipelineStatusEnumFailed,
+	PipelineStatusEnumSuccess,
+	PipelineStatusEnumCanceled,
+	PipelineStatusEnumSkipped,
+	PipelineStatusEnumManual,
+	PipelineStatusEnumScheduled,
+}
+
 // __getAllGroupProjectsInput is used internally by genqlient
 type __getAllGroupProjectsInput struct {
 	FullPath string  `json:"fullPath"`
@@ -130,6 +171,14 @@ func (v *__getMergeRequestsInput) GetState() MergeRequestState { return v.State 
 
 // GetCreatedAfter returns __getMergeRequestsInput.CreatedAfter, and is useful for accessing the field via an interface.
 func (v *__getMergeRequestsInput) GetCreatedAfter() time.Time { return v.CreatedAfter }
+
+// __getPipelinesInput is used internally by genqlient
+type __getPipelinesInput struct {
+	FullPath string `json:"fullPath"`
+}
+
+// GetFullPath returns __getPipelinesInput.FullPath, and is useful for accessing the field via an interface.
+func (v *__getPipelinesInput) GetFullPath() string { return v.FullPath }
 
 // __getProjectsByTopicInput is used internally by genqlient
 type __getProjectsByTopicInput struct {
@@ -336,6 +385,73 @@ type getMergeRequestsResponse struct {
 // GetProject returns getMergeRequestsResponse.Project, and is useful for accessing the field via an interface.
 func (v *getMergeRequestsResponse) GetProject() getMergeRequestsProject { return v.Project }
 
+// getPipelinesProject includes the requested fields of the GraphQL type Project.
+type getPipelinesProject struct {
+	// Build pipelines of the project.
+	Pipelines getPipelinesProjectPipelinesPipelineConnection `json:"pipelines"`
+}
+
+// GetPipelines returns getPipelinesProject.Pipelines, and is useful for accessing the field via an interface.
+func (v *getPipelinesProject) GetPipelines() getPipelinesProjectPipelinesPipelineConnection {
+	return v.Pipelines
+}
+
+// getPipelinesProjectPipelinesPipelineConnection includes the requested fields of the GraphQL type PipelineConnection.
+// The GraphQL type's documentation follows.
+//
+// The connection type for Pipeline.
+type getPipelinesProjectPipelinesPipelineConnection struct {
+	// A list of nodes.
+	Nodes []getPipelinesProjectPipelinesPipelineConnectionNodesPipeline `json:"nodes"`
+}
+
+// GetNodes returns getPipelinesProjectPipelinesPipelineConnection.Nodes, and is useful for accessing the field via an interface.
+func (v *getPipelinesProjectPipelinesPipelineConnection) GetNodes() []getPipelinesProjectPipelinesPipelineConnectionNodesPipeline {
+	return v.Nodes
+}
+
+// getPipelinesProjectPipelinesPipelineConnectionNodesPipeline includes the requested fields of the GraphQL type Pipeline.
+type getPipelinesProjectPipelinesPipelineConnectionNodesPipeline struct {
+	// ID of the pipeline.
+	Id string `json:"id"`
+	// Internal ID of the pipeline.
+	Iid string `json:"iid"`
+	// Status of the pipeline (CREATED, WAITING_FOR_RESOURCE, PREPARING, PENDING, RUNNING, FAILED, SUCCESS, CANCELED, SKIPPED, MANUAL, SCHEDULED)
+	Status PipelineStatusEnum `json:"status"`
+	// Reference to the branch from which the pipeline was triggered.
+	Ref string `json:"ref"`
+	// Timestamp of the pipeline's creation.
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+// GetId returns getPipelinesProjectPipelinesPipelineConnectionNodesPipeline.Id, and is useful for accessing the field via an interface.
+func (v *getPipelinesProjectPipelinesPipelineConnectionNodesPipeline) GetId() string { return v.Id }
+
+// GetIid returns getPipelinesProjectPipelinesPipelineConnectionNodesPipeline.Iid, and is useful for accessing the field via an interface.
+func (v *getPipelinesProjectPipelinesPipelineConnectionNodesPipeline) GetIid() string { return v.Iid }
+
+// GetStatus returns getPipelinesProjectPipelinesPipelineConnectionNodesPipeline.Status, and is useful for accessing the field via an interface.
+func (v *getPipelinesProjectPipelinesPipelineConnectionNodesPipeline) GetStatus() PipelineStatusEnum {
+	return v.Status
+}
+
+// GetRef returns getPipelinesProjectPipelinesPipelineConnectionNodesPipeline.Ref, and is useful for accessing the field via an interface.
+func (v *getPipelinesProjectPipelinesPipelineConnectionNodesPipeline) GetRef() string { return v.Ref }
+
+// GetCreatedAt returns getPipelinesProjectPipelinesPipelineConnectionNodesPipeline.CreatedAt, and is useful for accessing the field via an interface.
+func (v *getPipelinesProjectPipelinesPipelineConnectionNodesPipeline) GetCreatedAt() time.Time {
+	return v.CreatedAt
+}
+
+// getPipelinesResponse is returned by getPipelines on success.
+type getPipelinesResponse struct {
+	// Find a project.
+	Project getPipelinesProject `json:"project"`
+}
+
+// GetProject returns getPipelinesResponse.Project, and is useful for accessing the field via an interface.
+func (v *getPipelinesResponse) GetProject() getPipelinesProject { return v.Project }
+
 // getProjectsByTopicProjectsProjectConnection includes the requested fields of the GraphQL type ProjectConnection.
 // The GraphQL type's documentation follows.
 //
@@ -522,6 +638,48 @@ func getMergeRequests(
 	}
 
 	data_ = &getMergeRequestsResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by getPipelines.
+const getPipelines_Operation = `
+query getPipelines ($fullPath: ID!) {
+	project(fullPath: $fullPath) {
+		pipelines(first: 20) {
+			nodes {
+				id
+				iid
+				status
+				ref
+				createdAt
+			}
+		}
+	}
+}
+`
+
+func getPipelines(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	fullPath string,
+) (data_ *getPipelinesResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "getPipelines",
+		Query:  getPipelines_Operation,
+		Variables: &__getPipelinesInput{
+			FullPath: fullPath,
+		},
+	}
+
+	data_ = &getPipelinesResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(

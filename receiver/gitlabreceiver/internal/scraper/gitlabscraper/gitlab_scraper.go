@@ -180,6 +180,14 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				}
 			}
 			mux.Unlock()
+
+			// Get pipelines to see if project is code/non-code project
+			pipelines, err := gls.getPipelines(ctx, graphClient, path)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error getting pipelines for project '%s': %v", path, zap.Error(err))
+				return
+			}
+
 		}()
 	}
 
