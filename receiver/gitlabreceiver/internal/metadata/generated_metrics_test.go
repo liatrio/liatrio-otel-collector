@@ -89,7 +89,7 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsRefCountDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", AttributeVcsRefHeadTypeBranch)
+			mb.RecordVcsRefCountDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", AttributeVcsRefHeadTypeBranch, true)
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -258,6 +258,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("vcs.ref.head.type")
 					assert.True(t, ok)
 					assert.EqualValues(t, "branch", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.is_code_project")
+					assert.True(t, ok)
+					assert.True(t, attrVal.Bool())
 				case "vcs.ref.lines_delta":
 					assert.False(t, validatedMetrics["vcs.ref.lines_delta"], "Found a duplicate in the metrics slice: vcs.ref.lines_delta")
 					validatedMetrics["vcs.ref.lines_delta"] = true

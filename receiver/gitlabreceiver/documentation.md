@@ -92,6 +92,7 @@ The number of refs of type branch in a repository.
 | vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str |
 | vcs.repository.name | The name of the VCS repository. | Any Str |
 | vcs.ref.head.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` |
+| vcs.repository.is_code_project | The flag indicating whether the repository is a code repository. | Any Bool |
 
 ### vcs.ref.lines_delta
 

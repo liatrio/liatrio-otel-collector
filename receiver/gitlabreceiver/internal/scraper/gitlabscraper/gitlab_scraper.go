@@ -116,6 +116,19 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 		go func() {
 			defer wg.Done()
 
+			// Get pipelines to see if project is code or non-code project
+			pipelines, err := gls.getPipelines(ctx, graphClient, path)
+			if err != nil {
+				gls.logger.Sugar().Errorf("error getting pipelines for project '%s': %v", path, zap.Error(err))
+			}
+
+			// Check if pipelines are present in the project
+			var is_code_project bool
+			if pipelines != nil && len(pipelines.Nodes) > 0 {
+				// Record attribute is_code_project as true
+				is_code_project = true
+			}
+
 			branches, err := gls.getBranchNames(ctx, graphClient, path)
 			if err != nil {
 				gls.logger.Sugar().Errorf("error getting branches for project '%s': %v", path, zap.Error(err))
@@ -125,8 +138,9 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			// from having a nil pointer error passing in the SetStartTimestamp
 			mux.Lock()
 			refType := metadata.AttributeVcsRefHeadTypeBranch
-			gls.mb.RecordVcsRefCountDataPoint(now, int64(len(branches.BranchNames)), url, path, refType)
+			gls.mb.RecordVcsRefCountDataPoint(now, int64(len(branches.BranchNames)), url, path, refType, is_code_project)
 			mux.Unlock()
+
 			for _, branch := range branches.BranchNames {
 				if branch == branches.RootRef {
 					continue
@@ -180,13 +194,6 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				}
 			}
 			mux.Unlock()
-
-			// Get pipelines to see if project is code/non-code project
-			pipelines, err := gls.getPipelines(ctx, graphClient, path)
-			if err != nil {
-				gls.logger.Sugar().Errorf("error getting pipelines for project '%s': %v", path, zap.Error(err))
-				return
-			}
 
 		}()
 	}

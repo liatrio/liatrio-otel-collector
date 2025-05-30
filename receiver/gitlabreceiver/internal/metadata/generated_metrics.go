@@ -397,7 +397,7 @@ func (m *metricVcsRefCount) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricVcsRefCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRefHeadTypeAttributeValue string) {
+func (m *metricVcsRefCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRefHeadTypeAttributeValue string, vcsRepositoryIsCodeProjectAttributeValue bool) {
 	if !m.config.Enabled {
 		return
 	}
@@ -408,6 +408,7 @@ func (m *metricVcsRefCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.
 	dp.Attributes().PutStr("vcs.repository.url.full", vcsRepositoryURLFullAttributeValue)
 	dp.Attributes().PutStr("vcs.repository.name", vcsRepositoryNameAttributeValue)
 	dp.Attributes().PutStr("vcs.ref.head.type", vcsRefHeadTypeAttributeValue)
+	dp.Attributes().PutBool("vcs.repository.is_code_project", vcsRepositoryIsCodeProjectAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -855,8 +856,8 @@ func (mb *MetricsBuilder) RecordVcsContributorCountDataPoint(ts pcommon.Timestam
 }
 
 // RecordVcsRefCountDataPoint adds a data point to vcs.ref.count metric.
-func (mb *MetricsBuilder) RecordVcsRefCountDataPoint(ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRefHeadTypeAttributeValue AttributeVcsRefHeadType) {
-	mb.metricVcsRefCount.recordDataPoint(mb.startTime, ts, val, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRefHeadTypeAttributeValue.String())
+func (mb *MetricsBuilder) RecordVcsRefCountDataPoint(ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRefHeadTypeAttributeValue AttributeVcsRefHeadType, vcsRepositoryIsCodeProjectAttributeValue bool) {
+	mb.metricVcsRefCount.recordDataPoint(mb.startTime, ts, val, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRefHeadTypeAttributeValue.String(), vcsRepositoryIsCodeProjectAttributeValue)
 }
 
 // RecordVcsRefLinesDeltaDataPoint adds a data point to vcs.ref.lines_delta metric.

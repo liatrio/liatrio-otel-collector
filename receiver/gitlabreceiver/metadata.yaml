@@ -26,6 +26,9 @@ attributes:
   vcs.repository.name:
     description: The name of the VCS repository.
     type: string
+  vcs.repository.is_code_project:
+    description: The flag indicating whether the repository is a code repository.
+    type: bool
   vcs.ref.head.name:
     description: The name of the VCS head reference (branch).
     type: string
@@ -69,7 +72,7 @@ metrics:
     gauge:
       value_type: int
     attributes:
-      [vcs.repository.url.full, vcs.repository.name, vcs.ref.head.type]
+      [vcs.repository.url.full, vcs.repository.name, vcs.ref.head.type, vcs.repository.is_code_project]
   vcs.ref.time:
     enabled: true
     description: Time a ref (branch) created from the default branch (trunk) has existed. The `vcs.ref.head.type` attribute will always be `branch`.
