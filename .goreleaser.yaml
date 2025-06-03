@@ -107,6 +107,12 @@ changelog:
       - '^docs:'
       - '^test:'
 
+docker_manifests:
+  - name_template: ghcr.io/liatrio/liatrio-otel-collector:{{ .Version }}
+    image_templates:
+      - ghcr.io/liatrio/liatrio-otel-collector:{{ .Version }}-amd64
+      - ghcr.io/liatrio/liatrio-otel-collector:{{ .Version }}-arm64
+
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
