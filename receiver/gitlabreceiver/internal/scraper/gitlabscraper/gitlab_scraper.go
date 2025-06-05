@@ -106,15 +106,31 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	wg.Add(len(projectList))
 	var mux sync.Mutex
 
+	var max int
+	switch {
+	case gls.cfg.ConcurrencyLimit > 0:
+		max = gls.cfg.ConcurrencyLimit
+	default:
+		max = len(projectList)
+	}
+
+	limiter := make(chan struct{}, max)
+
 	// TODO: Must account for when there are more than 100,000 branch names in a project.
 	for _, project := range projectList {
 		project := project
 		path := project.Path
 		now := now
 		url := project.URL
+		projectID := project.ID
+
+		limiter <- struct{}{}
 
 		go func() {
-			defer wg.Done()
+			defer func() {
+				<-limiter
+				wg.Done()
+			}()
 
 			branches, err := gls.getBranchNames(ctx, graphClient, path)
 			if err != nil {
@@ -125,7 +141,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			// from having a nil pointer error passing in the SetStartTimestamp
 			mux.Lock()
 			refType := metadata.AttributeVcsRefHeadTypeBranch
-			gls.mb.RecordVcsRefCountDataPoint(now, int64(len(branches.BranchNames)), url, path, refType)
+			gls.mb.RecordVcsRefCountDataPoint(now, int64(len(branches.BranchNames)), url, path, projectID, refType)
 			mux.Unlock()
 			for _, branch := range branches.BranchNames {
 				if branch == branches.RootRef {
@@ -140,7 +156,7 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				if commit != nil {
 					branchAge := time.Since(*commit.CreatedAt).Seconds()
 					mux.Lock()
-					gls.mb.RecordVcsRefTimeDataPoint(now, int64(branchAge), url, path, branch, refType)
+					gls.mb.RecordVcsRefTimeDataPoint(now, int64(branchAge), url, path, projectID, branch, refType)
 					mux.Unlock()
 				}
 			}
@@ -159,24 +175,24 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				return
 			}
 			mux.Lock()
-			gls.mb.RecordVcsContributorCountDataPoint(now, int64(contributorCount), url, path)
+			gls.mb.RecordVcsContributorCountDataPoint(now, int64(contributorCount), url, path, projectID)
 			// gls.mb.RecordVcsRepositoryContributorCountDataPoint(now, int64(contributorCount), path)
 
 			for _, mr := range mrs {
 				//nolint:lll
-				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Additions), url, path, mr.SourceBranch, refType, metadata.AttributeVcsLineChangeTypeAdded)
+				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Additions), url, path, projectID, mr.SourceBranch, refType, metadata.AttributeVcsLineChangeTypeAdded)
 				//nolint:lll
-				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Deletions), url, path, mr.SourceBranch, refType, metadata.AttributeVcsLineChangeTypeRemoved)
+				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Deletions), url, path, projectID, mr.SourceBranch, refType, metadata.AttributeVcsLineChangeTypeRemoved)
 
 				// Checks if the merge request has been merged. This is done with IsZero() which tells us if the
 				// time is or isn't  January 1, year 1, 00:00:00 UTC, which is what null in graphql date values
 				// get returned as in Go.
 				if mr.MergedAt.IsZero() {
 					mrAge := int64(time.Since(mr.CreatedAt).Seconds())
-					gls.mb.RecordVcsChangeDurationDataPoint(now, mrAge, url, path, mr.SourceBranch, metadata.AttributeVcsChangeStateOpen)
+					gls.mb.RecordVcsChangeDurationDataPoint(now, mrAge, url, path, projectID, mr.SourceBranch, metadata.AttributeVcsChangeStateOpen)
 				} else {
 					mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Seconds())
-					gls.mb.RecordVcsChangeTimeToMergeDataPoint(now, mergedAge, url, path, mr.SourceBranch)
+					gls.mb.RecordVcsChangeTimeToMergeDataPoint(now, mergedAge, url, path, projectID, mr.SourceBranch)
 				}
 			}
 			mux.Unlock()

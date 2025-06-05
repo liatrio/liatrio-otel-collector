@@ -21,4 +21,5 @@ type Config struct {
 	SearchTopic        string `mapstructure:"search_topic"`
 	SearchQuery        string `mapstructure:"search_query"`
 	LimitMergeRequests int    `mapstructure:"limit_merge_requests"`
+	ConcurrencyLimit   int    `mapstructure:"concurrency_limit"`
 }

@@ -131,18 +131,6 @@ func (v *__getMergeRequestsInput) GetState() MergeRequestState { return v.State 
 // GetCreatedAfter returns __getMergeRequestsInput.CreatedAfter, and is useful for accessing the field via an interface.
 func (v *__getMergeRequestsInput) GetCreatedAfter() time.Time { return v.CreatedAfter }
 
-// __getProjectsByTopicInput is used internally by genqlient
-type __getProjectsByTopicInput struct {
-	Org    string   `json:"org"`
-	Topics []string `json:"topics"`
-}
-
-// GetOrg returns __getProjectsByTopicInput.Org, and is useful for accessing the field via an interface.
-func (v *__getProjectsByTopicInput) GetOrg() string { return v.Org }
-
-// GetTopics returns __getProjectsByTopicInput.Topics, and is useful for accessing the field via an interface.
-func (v *__getProjectsByTopicInput) GetTopics() []string { return v.Topics }
-
 // getAllGroupProjectsGroup includes the requested fields of the GraphQL type Group.
 type getAllGroupProjectsGroup struct {
 	// Projects within this namespace.
@@ -184,6 +172,8 @@ func (v *getAllGroupProjectsGroupProjectsProjectConnection) GetNodes() []getAllG
 type getAllGroupProjectsGroupProjectsProjectConnectionNodesProject struct {
 	// Name of the project (without namespace).
 	Name string `json:"name"`
+	// ID of the project.
+	Id string `json:"id"`
 	// Full path of the project.
 	FullPath string `json:"fullPath"`
 	// Timestamp of the project creation.
@@ -196,6 +186,9 @@ type getAllGroupProjectsGroupProjectsProjectConnectionNodesProject struct {
 func (v *getAllGroupProjectsGroupProjectsProjectConnectionNodesProject) GetName() string {
 	return v.Name
 }
+
+// GetId returns getAllGroupProjectsGroupProjectsProjectConnectionNodesProject.Id, and is useful for accessing the field via an interface.
+func (v *getAllGroupProjectsGroupProjectsProjectConnectionNodesProject) GetId() string { return v.Id }
 
 // GetFullPath returns getAllGroupProjectsGroupProjectsProjectConnectionNodesProject.FullPath, and is useful for accessing the field via an interface.
 func (v *getAllGroupProjectsGroupProjectsProjectConnectionNodesProject) GetFullPath() string {
@@ -336,61 +329,6 @@ type getMergeRequestsResponse struct {
 // GetProject returns getMergeRequestsResponse.Project, and is useful for accessing the field via an interface.
 func (v *getMergeRequestsResponse) GetProject() getMergeRequestsProject { return v.Project }
 
-// getProjectsByTopicProjectsProjectConnection includes the requested fields of the GraphQL type ProjectConnection.
-// The GraphQL type's documentation follows.
-//
-// The connection type for Project.
-type getProjectsByTopicProjectsProjectConnection struct {
-	// A list of nodes.
-	Nodes []getProjectsByTopicProjectsProjectConnectionNodesProject `json:"nodes"`
-}
-
-// GetNodes returns getProjectsByTopicProjectsProjectConnection.Nodes, and is useful for accessing the field via an interface.
-func (v *getProjectsByTopicProjectsProjectConnection) GetNodes() []getProjectsByTopicProjectsProjectConnectionNodesProject {
-	return v.Nodes
-}
-
-// getProjectsByTopicProjectsProjectConnectionNodesProject includes the requested fields of the GraphQL type Project.
-type getProjectsByTopicProjectsProjectConnectionNodesProject struct {
-	// Name of the project (without namespace).
-	Name string `json:"name"`
-	// Full path of the project.
-	FullPath string `json:"fullPath"`
-	// Timestamp of the project creation.
-	CreatedAt time.Time `json:"createdAt"`
-	// Timestamp of the project last activity.
-	LastActivityAt time.Time `json:"lastActivityAt"`
-}
-
-// GetName returns getProjectsByTopicProjectsProjectConnectionNodesProject.Name, and is useful for accessing the field via an interface.
-func (v *getProjectsByTopicProjectsProjectConnectionNodesProject) GetName() string { return v.Name }
-
-// GetFullPath returns getProjectsByTopicProjectsProjectConnectionNodesProject.FullPath, and is useful for accessing the field via an interface.
-func (v *getProjectsByTopicProjectsProjectConnectionNodesProject) GetFullPath() string {
-	return v.FullPath
-}
-
-// GetCreatedAt returns getProjectsByTopicProjectsProjectConnectionNodesProject.CreatedAt, and is useful for accessing the field via an interface.
-func (v *getProjectsByTopicProjectsProjectConnectionNodesProject) GetCreatedAt() time.Time {
-	return v.CreatedAt
-}
-
-// GetLastActivityAt returns getProjectsByTopicProjectsProjectConnectionNodesProject.LastActivityAt, and is useful for accessing the field via an interface.
-func (v *getProjectsByTopicProjectsProjectConnectionNodesProject) GetLastActivityAt() time.Time {
-	return v.LastActivityAt
-}
-
-// getProjectsByTopicResponse is returned by getProjectsByTopic on success.
-type getProjectsByTopicResponse struct {
-	// Find projects visible to the current user.
-	Projects getProjectsByTopicProjectsProjectConnection `json:"projects"`
-}
-
-// GetProjects returns getProjectsByTopicResponse.Projects, and is useful for accessing the field via an interface.
-func (v *getProjectsByTopicResponse) GetProjects() getProjectsByTopicProjectsProjectConnection {
-	return v.Projects
-}
-
 // The query executed by getAllGroupProjects.
 const getAllGroupProjects_Operation = `
 query getAllGroupProjects ($fullPath: ID!, $after: String) {
@@ -403,6 +341,7 @@ query getAllGroupProjects ($fullPath: ID!, $after: String) {
 			}
 			nodes {
 				name
+				id
 				fullPath
 				createdAt
 				lastActivityAt
@@ -522,47 +461,6 @@ func getMergeRequests(
 	}
 
 	data_ = &getMergeRequestsResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
-// The query executed by getProjectsByTopic.
-const getProjectsByTopic_Operation = `
-query getProjectsByTopic ($org: String!, $topics: [String!]) {
-	projects(searchNamespaces: true, search: $org, topics: $topics) {
-		nodes {
-			name
-			fullPath
-			createdAt
-			lastActivityAt
-		}
-	}
-}
-`
-
-func getProjectsByTopic(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	org string,
-	topics []string,
-) (data_ *getProjectsByTopicResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "getProjectsByTopic",
-		Query:  getProjectsByTopic_Operation,
-		Variables: &__getProjectsByTopicInput{
-			Org:    org,
-			Topics: topics,
-		},
-	}
-
-	data_ = &getProjectsByTopicResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(

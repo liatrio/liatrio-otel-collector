@@ -14,21 +14,11 @@ query getAllGroupProjects(
 
       nodes {
         name
+        id
         fullPath
         createdAt
         lastActivityAt
       }
-    }
-  }
-}
-
-query getProjectsByTopic($org: String!, $topics: [String!]) {
-  projects(searchNamespaces: true, search: $org, topics: $topics) {
-    nodes {
-      name
-      fullPath
-      createdAt
-      lastActivityAt
     }
   }
 }
