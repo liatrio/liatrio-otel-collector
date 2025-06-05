@@ -111,7 +111,8 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	case gls.cfg.ConcurrencyLimit > 0:
 		max = gls.cfg.ConcurrencyLimit
 	default:
-		max = len(projectList)
+		// We add the 1 on here to avoid a deadlock when the number of projects is 0.
+		max = len(projectList) + 1
 	}
 
 	limiter := make(chan struct{}, max)
