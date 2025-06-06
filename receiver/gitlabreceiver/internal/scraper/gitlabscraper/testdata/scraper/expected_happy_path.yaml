@@ -24,6 +24,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -40,6 +43,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -58,6 +64,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -71,6 +80,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -89,6 +101,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -113,6 +128,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -132,6 +150,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -151,6 +172,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -170,6 +194,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -189,6 +216,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -208,6 +238,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -227,6 +260,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -246,6 +282,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""
@@ -267,6 +306,9 @@ resourceMetrics:
                     - key: vcs.repository.name
                       value:
                         stringValue: project
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.repository.url.full
                       value:
                         stringValue: ""

@@ -15,6 +15,7 @@ import (
 
 type gitlabProject struct {
 	Name           string
+	ID             string
 	Path           string
 	CreatedAt      time.Time
 	LastActivityAt time.Time
@@ -54,6 +55,7 @@ func (gls *gitlabScraper) getProjects(ctx context.Context, restClient *gitlab.Cl
 			for _, p := range projects {
 				projectList = append(projectList, gitlabProject{
 					Name:           p.Name,
+					ID:             strconv.Itoa(p.ID),
 					Path:           p.PathWithNamespace,
 					CreatedAt:      *p.CreatedAt,
 					LastActivityAt: *p.LastActivityAt,

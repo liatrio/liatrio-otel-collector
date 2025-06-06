@@ -70,38 +70,38 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsChangeCountDataPoint(ts, 1, "vcs.repository.url.full-val", AttributeVcsChangeStateOpen, "vcs.repository.name-val")
+			mb.RecordVcsChangeCountDataPoint(ts, 1, "vcs.repository.url.full-val", AttributeVcsChangeStateOpen, "vcs.repository.name-val", "vcs.repository.id-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsChangeDurationDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.ref.head.name-val", AttributeVcsChangeStateOpen)
+			mb.RecordVcsChangeDurationDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val", AttributeVcsChangeStateOpen)
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsChangeTimeToApprovalDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.ref.head.name-val")
+			mb.RecordVcsChangeTimeToApprovalDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsChangeTimeToMergeDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.ref.head.name-val")
+			mb.RecordVcsChangeTimeToMergeDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val")
 
 			allMetricsCount++
-			mb.RecordVcsContributorCountDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val")
-
-			defaultMetricsCount++
-			allMetricsCount++
-			mb.RecordVcsRefCountDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", AttributeVcsRefHeadTypeBranch)
+			mb.RecordVcsContributorCountDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsRefLinesDeltaDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.ref.head.name-val", AttributeVcsRefHeadTypeBranch, AttributeVcsLineChangeTypeAdded)
+			mb.RecordVcsRefCountDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", AttributeVcsRefHeadTypeBranch)
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsRefRevisionsDeltaDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.ref.head.name-val", AttributeVcsRefHeadTypeBranch, AttributeVcsRevisionDeltaDirectionAhead)
+			mb.RecordVcsRefLinesDeltaDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val", AttributeVcsRefHeadTypeBranch, AttributeVcsLineChangeTypeAdded)
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsRefTimeDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.ref.head.name-val", AttributeVcsRefHeadTypeBranch)
+			mb.RecordVcsRefRevisionsDeltaDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val", AttributeVcsRefHeadTypeBranch, AttributeVcsRevisionDeltaDirectionAhead)
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordVcsRefTimeDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val", AttributeVcsRefHeadTypeBranch)
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -153,6 +153,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.id")
+					assert.True(t, ok)
+					assert.EqualValues(t, "vcs.repository.id-val", attrVal.Str())
 				case "vcs.change.duration":
 					assert.False(t, validatedMetrics["vcs.change.duration"], "Found a duplicate in the metrics slice: vcs.change.duration")
 					validatedMetrics["vcs.change.duration"] = true
@@ -171,6 +174,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.id")
+					assert.True(t, ok)
+					assert.EqualValues(t, "vcs.repository.id-val", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("vcs.ref.head.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.ref.head.name-val", attrVal.Str())
@@ -195,6 +201,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.id")
+					assert.True(t, ok)
+					assert.EqualValues(t, "vcs.repository.id-val", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("vcs.ref.head.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.ref.head.name-val", attrVal.Str())
@@ -216,6 +225,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.id")
+					assert.True(t, ok)
+					assert.EqualValues(t, "vcs.repository.id-val", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("vcs.ref.head.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.ref.head.name-val", attrVal.Str())
@@ -237,6 +249,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.id")
+					assert.True(t, ok)
+					assert.EqualValues(t, "vcs.repository.id-val", attrVal.Str())
 				case "vcs.ref.count":
 					assert.False(t, validatedMetrics["vcs.ref.count"], "Found a duplicate in the metrics slice: vcs.ref.count")
 					validatedMetrics["vcs.ref.count"] = true
@@ -255,6 +270,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.id")
+					assert.True(t, ok)
+					assert.EqualValues(t, "vcs.repository.id-val", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("vcs.ref.head.type")
 					assert.True(t, ok)
 					assert.EqualValues(t, "branch", attrVal.Str())
@@ -276,6 +294,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.id")
+					assert.True(t, ok)
+					assert.EqualValues(t, "vcs.repository.id-val", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("vcs.ref.head.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.ref.head.name-val", attrVal.Str())
@@ -303,6 +324,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.id")
+					assert.True(t, ok)
+					assert.EqualValues(t, "vcs.repository.id-val", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("vcs.ref.head.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.ref.head.name-val", attrVal.Str())
@@ -330,6 +354,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.id")
+					assert.True(t, ok)
+					assert.EqualValues(t, "vcs.repository.id-val", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("vcs.ref.head.name")
 					assert.True(t, ok)
 					assert.EqualValues(t, "vcs.ref.head.name-val", attrVal.Str())

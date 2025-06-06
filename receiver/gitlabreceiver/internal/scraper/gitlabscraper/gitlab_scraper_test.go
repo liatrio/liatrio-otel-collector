@@ -62,6 +62,7 @@ func TestScrape(t *testing.T) {
 					projects: []*gitlab.Project{
 						{
 							Name:              "project",
+							ID:                1,
 							PathWithNamespace: "project",
 							CreatedAt:         gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
 							LastActivityAt:    gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
