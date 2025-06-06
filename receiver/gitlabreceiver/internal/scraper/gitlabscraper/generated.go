@@ -91,18 +91,6 @@ var AllMergeRequestState = []MergeRequestState{
 	MergeRequestStateAll,
 }
 
-// __getAllGroupProjectsInput is used internally by genqlient
-type __getAllGroupProjectsInput struct {
-	FullPath string  `json:"fullPath"`
-	After    *string `json:"after"`
-}
-
-// GetFullPath returns __getAllGroupProjectsInput.FullPath, and is useful for accessing the field via an interface.
-func (v *__getAllGroupProjectsInput) GetFullPath() string { return v.FullPath }
-
-// GetAfter returns __getAllGroupProjectsInput.After, and is useful for accessing the field via an interface.
-func (v *__getAllGroupProjectsInput) GetAfter() *string { return v.After }
-
 // __getBranchNamesInput is used internally by genqlient
 type __getBranchNamesInput struct {
 	FullPath string `json:"fullPath"`
@@ -130,110 +118,6 @@ func (v *__getMergeRequestsInput) GetState() MergeRequestState { return v.State 
 
 // GetCreatedAfter returns __getMergeRequestsInput.CreatedAfter, and is useful for accessing the field via an interface.
 func (v *__getMergeRequestsInput) GetCreatedAfter() time.Time { return v.CreatedAfter }
-
-// getAllGroupProjectsGroup includes the requested fields of the GraphQL type Group.
-type getAllGroupProjectsGroup struct {
-	// Projects within this namespace.
-	Projects getAllGroupProjectsGroupProjectsProjectConnection `json:"projects"`
-}
-
-// GetProjects returns getAllGroupProjectsGroup.Projects, and is useful for accessing the field via an interface.
-func (v *getAllGroupProjectsGroup) GetProjects() getAllGroupProjectsGroupProjectsProjectConnection {
-	return v.Projects
-}
-
-// getAllGroupProjectsGroupProjectsProjectConnection includes the requested fields of the GraphQL type ProjectConnection.
-// The GraphQL type's documentation follows.
-//
-// The connection type for Project.
-type getAllGroupProjectsGroupProjectsProjectConnection struct {
-	// Total count of collection.
-	Count int `json:"count"`
-	// Information to aid in pagination.
-	PageInfo getAllGroupProjectsGroupProjectsProjectConnectionPageInfo `json:"pageInfo"`
-	// A list of nodes.
-	Nodes []getAllGroupProjectsGroupProjectsProjectConnectionNodesProject `json:"nodes"`
-}
-
-// GetCount returns getAllGroupProjectsGroupProjectsProjectConnection.Count, and is useful for accessing the field via an interface.
-func (v *getAllGroupProjectsGroupProjectsProjectConnection) GetCount() int { return v.Count }
-
-// GetPageInfo returns getAllGroupProjectsGroupProjectsProjectConnection.PageInfo, and is useful for accessing the field via an interface.
-func (v *getAllGroupProjectsGroupProjectsProjectConnection) GetPageInfo() getAllGroupProjectsGroupProjectsProjectConnectionPageInfo {
-	return v.PageInfo
-}
-
-// GetNodes returns getAllGroupProjectsGroupProjectsProjectConnection.Nodes, and is useful for accessing the field via an interface.
-func (v *getAllGroupProjectsGroupProjectsProjectConnection) GetNodes() []getAllGroupProjectsGroupProjectsProjectConnectionNodesProject {
-	return v.Nodes
-}
-
-// getAllGroupProjectsGroupProjectsProjectConnectionNodesProject includes the requested fields of the GraphQL type Project.
-type getAllGroupProjectsGroupProjectsProjectConnectionNodesProject struct {
-	// Name of the project (without namespace).
-	Name string `json:"name"`
-	// ID of the project.
-	Id string `json:"id"`
-	// Full path of the project.
-	FullPath string `json:"fullPath"`
-	// Timestamp of the project creation.
-	CreatedAt time.Time `json:"createdAt"`
-	// Timestamp of the project last activity.
-	LastActivityAt time.Time `json:"lastActivityAt"`
-}
-
-// GetName returns getAllGroupProjectsGroupProjectsProjectConnectionNodesProject.Name, and is useful for accessing the field via an interface.
-func (v *getAllGroupProjectsGroupProjectsProjectConnectionNodesProject) GetName() string {
-	return v.Name
-}
-
-// GetId returns getAllGroupProjectsGroupProjectsProjectConnectionNodesProject.Id, and is useful for accessing the field via an interface.
-func (v *getAllGroupProjectsGroupProjectsProjectConnectionNodesProject) GetId() string { return v.Id }
-
-// GetFullPath returns getAllGroupProjectsGroupProjectsProjectConnectionNodesProject.FullPath, and is useful for accessing the field via an interface.
-func (v *getAllGroupProjectsGroupProjectsProjectConnectionNodesProject) GetFullPath() string {
-	return v.FullPath
-}
-
-// GetCreatedAt returns getAllGroupProjectsGroupProjectsProjectConnectionNodesProject.CreatedAt, and is useful for accessing the field via an interface.
-func (v *getAllGroupProjectsGroupProjectsProjectConnectionNodesProject) GetCreatedAt() time.Time {
-	return v.CreatedAt
-}
-
-// GetLastActivityAt returns getAllGroupProjectsGroupProjectsProjectConnectionNodesProject.LastActivityAt, and is useful for accessing the field via an interface.
-func (v *getAllGroupProjectsGroupProjectsProjectConnectionNodesProject) GetLastActivityAt() time.Time {
-	return v.LastActivityAt
-}
-
-// getAllGroupProjectsGroupProjectsProjectConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
-// The GraphQL type's documentation follows.
-//
-// Information about pagination in a connection.
-type getAllGroupProjectsGroupProjectsProjectConnectionPageInfo struct {
-	// When paginating forwards, are there more items?
-	HasNextPage bool `json:"hasNextPage"`
-	// When paginating forwards, the cursor to continue.
-	EndCursor string `json:"endCursor"`
-}
-
-// GetHasNextPage returns getAllGroupProjectsGroupProjectsProjectConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
-func (v *getAllGroupProjectsGroupProjectsProjectConnectionPageInfo) GetHasNextPage() bool {
-	return v.HasNextPage
-}
-
-// GetEndCursor returns getAllGroupProjectsGroupProjectsProjectConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
-func (v *getAllGroupProjectsGroupProjectsProjectConnectionPageInfo) GetEndCursor() string {
-	return v.EndCursor
-}
-
-// getAllGroupProjectsResponse is returned by getAllGroupProjects on success.
-type getAllGroupProjectsResponse struct {
-	// Find a group.
-	Group getAllGroupProjectsGroup `json:"group"`
-}
-
-// GetGroup returns getAllGroupProjectsResponse.Group, and is useful for accessing the field via an interface.
-func (v *getAllGroupProjectsResponse) GetGroup() getAllGroupProjectsGroup { return v.Group }
 
 // getBranchNamesProject includes the requested fields of the GraphQL type Project.
 type getBranchNamesProject struct {
@@ -328,55 +212,6 @@ type getMergeRequestsResponse struct {
 
 // GetProject returns getMergeRequestsResponse.Project, and is useful for accessing the field via an interface.
 func (v *getMergeRequestsResponse) GetProject() getMergeRequestsProject { return v.Project }
-
-// The query executed by getAllGroupProjects.
-const getAllGroupProjects_Operation = `
-query getAllGroupProjects ($fullPath: ID!, $after: String) {
-	group(fullPath: $fullPath) {
-		projects(includeSubgroups: true, after: $after) {
-			count
-			pageInfo {
-				hasNextPage
-				endCursor
-			}
-			nodes {
-				name
-				id
-				fullPath
-				createdAt
-				lastActivityAt
-			}
-		}
-	}
-}
-`
-
-func getAllGroupProjects(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	fullPath string,
-	after *string,
-) (data_ *getAllGroupProjectsResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "getAllGroupProjects",
-		Query:  getAllGroupProjects_Operation,
-		Variables: &__getAllGroupProjectsInput{
-			FullPath: fullPath,
-			After:    after,
-		},
-	}
-
-	data_ = &getAllGroupProjectsResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
 
 // The query executed by getBranchNames.
 const getBranchNames_Operation = `

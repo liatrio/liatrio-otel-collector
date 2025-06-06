@@ -1,28 +1,3 @@
-query getAllGroupProjects(
-  $fullPath: ID!,
-  # @genqlient(pointer: true)
-  $after: String
-) {
-  group(fullPath: $fullPath) {
-    projects(includeSubgroups: true, after: $after) {
-      count
-
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-
-      nodes {
-        name
-        id
-        fullPath
-        createdAt
-        lastActivityAt
-      }
-    }
-  }
-}
-
 query getBranchNames($fullPath: ID!) {
   project(fullPath: $fullPath) {
     repository {
