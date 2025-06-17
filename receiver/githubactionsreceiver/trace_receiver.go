@@ -41,7 +41,7 @@ func newTracesReceiver(
 	}
 
 	transport := "http"
-	if config.TLSSetting != nil {
+	if config.TLS != nil {
 		transport = "https"
 	}
 
