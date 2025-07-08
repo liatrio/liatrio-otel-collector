@@ -2,7 +2,7 @@ module github.com/liatrio/liatrio-otel-collector/extension/githubappauthextensio
 
 go 1.23.0
 
-toolchain go1.23.6
+toolchain go1.24.5
 
 require (
 	github.com/bradleyfalzon/ghinstallation/v2 v2.14.0
