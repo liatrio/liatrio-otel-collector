@@ -8,6 +8,10 @@ extensions:
     token: ${env:GL_PAT}
 
 receivers:
+  webhookevent:
+    endpoint: 0.0.0.0:8088
+    path: /events
+    health_path: /healthcheck
   otlp:
     protocols:
       grpc:
@@ -48,6 +52,8 @@ receivers:
           authenticator: bearertokenauth/github
 
 processors:
+  gitlabpipeline:
+    token: ${env:GL_PAT}
 
 exporters:
   debug:
@@ -62,4 +68,8 @@ service:
     metrics:
       receivers: [gitlab, github]
       processors: []
+      exporters: [debug]
+    logs:
+      receivers: [webhookevent]
+      processors: [gitlabpipeline]
       exporters: [debug]

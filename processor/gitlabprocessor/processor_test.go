@@ -69,7 +69,6 @@ func TestProcessLogs(t *testing.T) {
 		logger: zap.NewNop(),
 		GetPipeCompAttrsFn: func(ctx context.Context, fullPath string, revision string) (map[string]string, error) {
 			return map[string]string{
-				// might need to fix this?"
 				"liatrio/pipeline-components/components/test": "1.0.0",
 			}, nil
 		},
