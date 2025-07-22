@@ -2,14 +2,15 @@
 
 ## Overview
 
-The GitLab Pipeline Processor is a custom [OpenTelemetry (OTel) Collector](https://opentelemetry.io/docs/collector/) processor designed to enrich log records with metadata about pipeline components from GitLab repositories. This enables enhanced observability and traceability for CI/CD pipeline executions by embedding component/version information directly into your logs.
+The GitLab Pipeline Processor is a custom [OpenTelemetry (OTel) Collector](https://opentelemetry.io/docs/collector/) processor designed to enrich log records with additional pipeline metadata not included in native gitlab pipeline event logs. 
 
 ## Features
-- Fetches pipeline component information from GitLab for each log record containing repository and revision attributes.
-- Enriches log records with component version metadata in the form:
-  - `component.<component_path>.version = <version>`
-- Supports all types of GitLab CI includes: **component includes**, **local includes**, and **file includes**. This means the processor extracts and annotates logs with version or source information for any component, file, or local pipeline include referenced in the `.gitlab-ci.yml` file.
-- Handles missing attributes and API errors gracefully (logs errors, continues processing).
+- Fetches pipeline [include](https://docs.gitlab.com/ci/yaml/includes) information from GitLab for any log record containing repository and revision attributes.
+- Enriches log records with include name and version metadata
+  - Example (component include): `component.<component_path>.version = <version>`
+- Other supported include types: 
+  - **local includes**,
+  - **file includes**. 
 
 ## How It Works
 1. For each log record, checks for the presence of:
@@ -67,6 +68,3 @@ service:
 
 ## License
 This processor is distributed under the Apache 2.0 License.
-
-## Contact
-For questions or support, please contact the Liatrio engineering team.
