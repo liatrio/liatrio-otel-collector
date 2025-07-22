@@ -1,4 +1,4 @@
-package pipelineprocessor
+package gitlabprocessor
 
 import (
 	"context"

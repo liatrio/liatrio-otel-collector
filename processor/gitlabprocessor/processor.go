@@ -1,4 +1,4 @@
-package pipelineprocessor // import "github.com/liatrio/liatrio-otel-collector/processor/pipelineprocessor"
+package gitlabprocessor // import "github.com/liatrio/liatrio-otel-collector/processor/gitlabprocessor"
 
 import (
 	"context"

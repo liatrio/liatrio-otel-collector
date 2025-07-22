@@ -1,1 +1,1 @@
-package pipelineprocessor
+package gitlabprocessor
