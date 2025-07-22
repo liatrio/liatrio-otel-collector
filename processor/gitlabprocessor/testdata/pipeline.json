@@ -1,0 +1,290 @@
+{
+    "object_kind": "pipeline",
+    "object_attributes": {
+      "id": 1796450359,
+      "iid": 419,
+      "name": null,
+      "ref": "main",
+      "tag": false,
+      "sha": "9b6402073b62eeb6540947840d454ba97ee03770",
+      "before_sha": "0000000000000000000000000000000000000000",
+      "source": "web",
+      "status": "pending",
+      "detailed_status": "passed",
+      "stages": [
+        ".pipeline-policy-pre",
+        ".pipeline-policy-post"
+      ],
+      "created_at": "2025-05-01 20:44:22 UTC",
+      "finished_at": "2025-05-01 20:45:54 UTC",
+      "duration": 89,
+      "queued_duration": 2,
+      "variables": [],
+      "url": "https://gitlab.com/liatrio/test-project/-/pipelines/1796450359"
+    },
+    "merge_request": null,
+    "user": {
+      "id": 23362052,
+      "name": "Jonathan Dorsey",
+      "username": "jdorsey5",
+      "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
+      "email": "[REDACTED]"
+    },
+    "project": {
+      "id": 69034076,
+      "name": "jono-test-project",
+      "description": null,
+      "web_url": "https://gitlab.com/liatrio/test-project",
+      "avatar_url": null,
+      "git_ssh_url": "git@gitlab.com:liatrio/test-project.git",
+      "git_http_url": "https://gitlab.com/liatrio/test-project.git",
+      "namespace": "Liatrio Workshop",
+      "visibility_level": 0,
+      "path_with_namespace": "liatrio/test-project",
+      "default_branch": "main",
+      "ci_config_path": ""
+    },
+    "commit": {
+      "id": "9b6402073b62eeb6540947840d454ba97ee03770",
+      "message": "chore(release): 1.4.0\n\n## [1.4.0](https://gitlab.com/liatrio/test-project/compare/1.3.1...1.4.0) (2025-05-01)\n\n### Features\n\n* Test new deployment ([4623444](https://gitlab.com/liatrio/test-project/commit/4623444502dbc6f3c948921c99fc0576bcc49e34))\n",
+      "title": "chore(release): 1.4.0",
+      "timestamp": "2025-05-01T20:29:55+00:00",
+      "url": "https://gitlab.com/liatrio/test-project/-/commit/9b6402073b62eeb6540947840d454ba97ee03770",
+      "author": {
+        "name": "semantic-release-bot",
+        "email": "[REDACTED]"
+      }
+    },
+    "builds": [
+      {
+        "id": 9898500158,
+        "stage": ".pipeline-policy-post",
+        "name": "check_for_image",
+        "status": "success",
+        "created_at": "2025-05-01 20:44:22 UTC",
+        "started_at": "2025-05-01 20:44:47 UTC",
+        "finished_at": "2025-05-01 20:45:17 UTC",
+        "duration": 30.735086,
+        "queued_duration": 0.388318,
+        "failure_reason": null,
+        "when": "always",
+        "manual": false,
+        "allow_failure": false,
+        "user": {
+          "id": 23362052,
+          "name": "Jonathan Dorsey",
+          "username": "jdorsey5",
+          "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
+          "email": "[REDACTED]"
+        },
+        "runner": {
+          "id": 45203999,
+          "description": "",
+          "runner_type": "group_type",
+          "active": true,
+          "is_shared": false,
+          "tags": [
+            "scf-test-runner",
+            "appsec"
+          ]
+        },
+        "artifacts_file": {
+          "filename": null,
+          "size": null
+        },
+        "environment": null
+      },
+      {
+        "id": 9898500155,
+        "stage": ".pipeline-policy-post",
+        "name": "container_scanning",
+        "status": "success",
+        "created_at": "2025-05-01 20:44:22 UTC",
+        "started_at": "2025-05-01 20:45:19 UTC",
+        "finished_at": "2025-05-01 20:45:26 UTC",
+        "duration": 7.374651,
+        "queued_duration": 1.326758,
+        "failure_reason": null,
+        "when": "on_success",
+        "manual": false,
+        "allow_failure": true,
+        "user": {
+          "id": 23362052,
+          "name": "Jonathan Dorsey",
+          "username": "jdorsey5",
+          "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
+          "email": "[REDACTED]"
+        },
+        "runner": {
+          "id": 46764524,
+          "description": "",
+          "runner_type": "group_type",
+          "active": true,
+          "is_shared": false,
+          "tags": [
+            "appsec",
+            "runner2",
+            "scf-ec2"
+          ]
+        },
+        "artifacts_file": {
+          "filename": null,
+          "size": null
+        },
+        "environment": null
+      },
+      {
+        "id": 9898500152,
+        "stage": ".pipeline-policy-post",
+        "name": "gemnasium-maven-dependency_scanning",
+        "status": "success",
+        "created_at": "2025-05-01 20:44:22 UTC",
+        "started_at": "2025-05-01 20:44:47 UTC",
+        "finished_at": "2025-05-01 20:45:54 UTC",
+        "duration": 67.018502,
+        "queued_duration": 0.466411,
+        "failure_reason": null,
+        "when": "on_success",
+        "manual": false,
+        "allow_failure": true,
+        "user": {
+          "id": 23362052,
+          "name": "Jonathan Dorsey",
+          "username": "jdorsey5",
+          "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
+          "email": "[REDACTED]"
+        },
+        "runner": {
+          "id": 47142927,
+          "description": "",
+          "runner_type": "group_type",
+          "active": true,
+          "is_shared": false,
+          "tags": [
+            "appsec",
+            "r3"
+          ]
+        },
+        "artifacts_file": {
+          "filename": "artifacts.zip",
+          "size": 2050
+        },
+        "environment": null
+      },
+      {
+        "id": 9898500150,
+        "stage": ".pipeline-policy-pre",
+        "name": "kics-iac-sast",
+        "status": "success",
+        "created_at": "2025-05-01 20:44:22 UTC",
+        "started_at": "2025-05-01 20:44:24 UTC",
+        "finished_at": "2025-05-01 20:44:40 UTC",
+        "duration": 16.59301,
+        "queued_duration": 0.783243,
+        "failure_reason": null,
+        "when": "on_success",
+        "manual": false,
+        "allow_failure": true,
+        "user": {
+          "id": 23362052,
+          "name": "Jonathan Dorsey",
+          "username": "jdorsey5",
+          "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
+          "email": "[REDACTED]"
+        },
+        "runner": {
+          "id": 47142927,
+          "description": "",
+          "runner_type": "group_type",
+          "active": true,
+          "is_shared": false,
+          "tags": [
+            "appsec",
+            "r3"
+          ]
+        },
+        "artifacts_file": {
+          "filename": null,
+          "size": null
+        },
+        "environment": null
+      },
+      {
+        "id": 9898500147,
+        "stage": ".pipeline-policy-pre",
+        "name": "secret_detection",
+        "status": "success",
+        "created_at": "2025-05-01 20:44:22 UTC",
+        "started_at": "2025-05-01 20:44:23 UTC",
+        "finished_at": "2025-05-01 20:44:36 UTC",
+        "duration": 13.452881,
+        "queued_duration": 0.266922,
+        "failure_reason": null,
+        "when": "on_success",
+        "manual": false,
+        "allow_failure": true,
+        "user": {
+          "id": 23362052,
+          "name": "Jonathan Dorsey",
+          "username": "jdorsey5",
+          "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
+          "email": "[REDACTED]"
+        },
+        "runner": {
+          "id": 47142927,
+          "description": "",
+          "runner_type": "group_type",
+          "active": true,
+          "is_shared": false,
+          "tags": [
+            "appsec",
+            "r3"
+          ]
+        },
+        "artifacts_file": {
+          "filename": null,
+          "size": null
+        },
+        "environment": null
+      },
+      {
+        "id": 9898500149,
+        "stage": ".pipeline-policy-pre",
+        "name": "semgrep-sast",
+        "status": "success",
+        "created_at": "2025-05-01 20:44:22 UTC",
+        "started_at": "2025-05-01 20:44:23 UTC",
+        "finished_at": "2025-05-01 20:44:46 UTC",
+        "duration": 22.465482,
+        "queued_duration": 0.524265,
+        "failure_reason": null,
+        "when": "on_success",
+        "manual": false,
+        "allow_failure": true,
+        "user": {
+          "id": 23362052,
+          "name": "Jonathan Dorsey",
+          "username": "jdorsey5",
+          "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
+          "email": "[REDACTED]"
+        },
+        "runner": {
+          "id": 46764524,
+          "description": "",
+          "runner_type": "group_type",
+          "active": true,
+          "is_shared": false,
+          "tags": [
+            "appsec",
+            "runner2",
+            "scf-ec2"
+          ]
+        },
+        "artifacts_file": {
+          "filename": null,
+          "size": null
+        },
+        "environment": null
+      }
+    ]
+  }

@@ -1,0 +1,78 @@
+query getBlobContent($projectPath: ID!, $path: String!, $ref: String) {
+  project(fullPath: $projectPath) {
+    id
+    repository {
+      blobs(paths: [$path], ref: $ref) {
+        nodes {
+          id
+          rawBlob
+        }
+      }
+    }
+  }
+}
+
+query getCiConfigData($projectPath: ID!, $sha: String, $content: String!) {
+  ciConfig(projectPath: $projectPath, sha: $sha, content: $content) {
+    errors
+    includes {
+      location
+      type
+      blob
+      raw
+      __typename
+    }
+    mergedYaml
+    status
+    stages {
+      ...PipelineStagesConnection
+      __typename
+    }
+    __typename
+  }
+}
+
+fragment PipelineStagesConnection on CiConfigStageConnection {
+  nodes {
+    name
+    groups {
+      nodes {
+        name
+        size
+        jobs {
+          nodes {
+            name
+            script
+            beforeScript
+            afterScript
+            environment
+            allowFailure
+            tags
+            when
+            only {
+              refs
+              __typename
+            }
+            except {
+              refs
+              __typename
+            }
+            needs {
+              nodes {
+                name
+                __typename
+              }
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
