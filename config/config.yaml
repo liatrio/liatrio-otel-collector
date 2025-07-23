@@ -71,5 +71,5 @@ service:
       exporters: [debug]
     logs:
       receivers: [webhookevent]
-      processors: [gitlabpipeline]
+      processors: [gitlab]
       exporters: [debug]

@@ -40,14 +40,9 @@ func newTracesReceiver(
 		return nil, errMissingEndpoint
 	}
 
-	transport := "http"
-	if config.TLSSetting != nil {
-		transport = "https"
-	}
-
 	obsrecv, err := receiverhelper.NewObsReport(receiverhelper.ObsReportSettings{
 		ReceiverID:             params.ID,
-		Transport:              transport,
+		Transport:              "http",
 		ReceiverCreateSettings: params,
 	})
 
@@ -72,17 +67,20 @@ func newTracesReceiver(
 func (gar *githubActionsReceiver) Start(ctx context.Context, host component.Host) error {
 	endpoint := fmt.Sprintf("%s%s", gar.config.Endpoint, gar.config.Path)
 	gar.logger.Info("Starting GithubActions server", zap.String("endpoint", endpoint))
-	//  #nosec G112
-	gar.server = &http.Server{
-		Addr:    gar.config.ServerConfig.Endpoint,
-		Handler: gar,
+	ln, err := gar.config.ServerConfig.ToListener(ctx)
+	if err != nil {
+		return err
+	}
+
+	gar.server, err = gar.config.ServerConfig.ToServer(ctx, nil, gar.createSettings.TelemetrySettings, gar)
+	if err != nil {
+		return err
 	}
 
 	gar.shutdownWG.Add(1)
 	go func() {
 		defer gar.shutdownWG.Done()
-
-		if errHTTP := gar.server.ListenAndServe(); !errors.Is(errHTTP, http.ErrServerClosed) && errHTTP != nil {
+		if errHTTP := gar.server.Serve(ln); !errors.Is(errHTTP, http.ErrServerClosed) && errHTTP != nil {
 			gar.createSettings.TelemetrySettings.Logger.Error("Server closed with error", zap.Error(errHTTP))
 		}
 	}()

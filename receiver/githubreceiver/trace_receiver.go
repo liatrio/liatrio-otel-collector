@@ -46,14 +46,9 @@ func newTracesReceiver(
 		return nil, errMissingEndpoint
 	}
 
-	transport := "http"
-	if config.WebHook.TLSSetting != nil {
-		transport = "https"
-	}
-
 	obsrecv, err := receiverhelper.NewObsReport(receiverhelper.ObsReportSettings{
 		ReceiverID:             params.ID,
-		Transport:              transport,
+		Transport:              "http",
 		ReceiverCreateSettings: params,
 	})
 	if err != nil {

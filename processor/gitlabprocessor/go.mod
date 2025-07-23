@@ -11,7 +11,7 @@ require (
 	go.opentelemetry.io/collector/component v1.35.0
 	go.opentelemetry.io/collector/component/componenttest v0.129.0
 	go.opentelemetry.io/collector/config/confighttp v0.129.0
-	go.opentelemetry.io/collector/confmap v1.33.0
+	go.opentelemetry.io/collector/confmap v1.29.0
 	go.opentelemetry.io/collector/consumer v1.35.0
 	go.opentelemetry.io/collector/consumer/consumertest v0.129.0
 	go.opentelemetry.io/collector/pdata v1.35.0
@@ -31,7 +31,6 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
-	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/go-tpm v0.9.5 // indirect
@@ -85,5 +84,4 @@ require (
 	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	sigs.k8s.io/yaml v1.4.0 // indirect
 )
