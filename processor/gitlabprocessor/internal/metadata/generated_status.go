@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	Type      = component.MustNewType("pipeline")
-	ScopeName = "github.com/liatrio/liatrio-otel-collector/receiver/gitlabprocessor"
+	Type      = component.MustNewType("gitlab")
+	ScopeName = "github.com/liatrio/liatrio-otel-collector/processor/gitlabprocessor"
 )
 
 const (
