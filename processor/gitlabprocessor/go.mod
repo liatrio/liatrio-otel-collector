@@ -1,4 +1,4 @@
-module github.com/liatrio/liatrio-otel-collector/receiver/gitlabprocessor
+module github.com/liatrio/liatrio-otel-collector/processor/gitlabprocessor
 
 go 1.24.0
 

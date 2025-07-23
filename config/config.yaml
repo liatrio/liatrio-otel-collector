@@ -52,7 +52,7 @@ receivers:
           authenticator: bearertokenauth/github
 
 processors:
-  gitlabpipeline:
+  gitlab:
     token: ${env:GL_PAT}
 
 exporters:

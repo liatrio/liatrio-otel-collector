@@ -32,6 +32,7 @@ exporters:
 processors:
   - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.124.0
   - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.124.0
+  - gomod: github.com/liatrio/liatrio-otel-collector/processor/gitlabprocessor v0.1.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.124.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.124.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.124.0
@@ -75,6 +76,7 @@ providers:
 replaces:
   - github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver => ../receiver/gitlabreceiver/
   - github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver => ../receiver/githubreceiver/
+  - github.com/liatrio/liatrio-otel-collector/processor/gitlabprocessor => ../processor/gitlabprocessor/
   - github.com/liatrio/liatrio-otel-collector/receiver/githubactionsreceiver => ../receiver/githubactionsreceiver/
   - github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension => ../extension/githubappauthextension/
   - github.com/golang-jwt/jwt/v5 => github.com/golang-jwt/jwt/v5 v5.2.2

@@ -11,7 +11,7 @@ import (
 	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/processor/processorhelper"
 
-	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabprocessor/internal/metadata"
+	"github.com/liatrio/liatrio-otel-collector/processor/gitlabprocessor/internal/metadata"
 )
 
 var (

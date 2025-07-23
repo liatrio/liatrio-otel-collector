@@ -1,5 +1,5 @@
 ---
-type: pipeline
+type: gitlab
 
 sem_conv_version: 1.27.0
 
