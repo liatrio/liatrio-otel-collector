@@ -91,6 +91,10 @@ To configure the GitHub Scraper you will need to make the following changes to
 4) Set environment variables: `GITHUB_ORG`, `GITHUB_USER`, and `GITHUB_PAT`
 
 
+### Configure GitLab Processor
+
+See [processor/gitlabprocessor/README.md](processor/gitlabprocessor/README.md) information on configuring and using the gitlab processor.
+
 ### Configure GitHub Scraper
 
 To configure the GitHub Scraper you will need to make the following changes to

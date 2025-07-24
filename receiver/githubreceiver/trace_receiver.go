@@ -26,6 +26,8 @@ var errMissingEndpoint = errors.New("missing a receiver endpoint")
 
 const healthyResponse = `{"text": "GitHub receiver webhook is healthy"}`
 
+const transportProtocol = "http"
+
 type githubTracesReceiver struct {
 	traceConsumer consumer.Traces
 	cfg           *Config
@@ -46,14 +48,9 @@ func newTracesReceiver(
 		return nil, errMissingEndpoint
 	}
 
-	transport := "http"
-	if config.WebHook.TLSSetting != nil {
-		transport = "https"
-	}
-
 	obsrecv, err := receiverhelper.NewObsReport(receiverhelper.ObsReportSettings{
 		ReceiverID:             params.ID,
-		Transport:              transport,
+		Transport:              transportProtocol,
 		ReceiverCreateSettings: params,
 	})
 	if err != nil {
