@@ -58,9 +58,6 @@ processors:
   gitlab:
     token: ${env:GL_PAT}
 
-  ############################################
-  # Gitlab Pipeline Events
-  ############################################
   transform/gitlabpipelineevents:
     log_statements:
       - context: log

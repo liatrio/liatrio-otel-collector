@@ -20,36 +20,34 @@
       "duration": 89,
       "queued_duration": 2,
       "variables": [],
-      "url": "https://gitlab.com/liatrio/test-project/-/pipelines/1796450359"
+      "url": "https://gitlab.com/example-org/test-project/-/pipelines/1796450359"
     },
     "merge_request": null,
     "user": {
       "id": 23362052,
       "name": "Jonathan Dorsey",
       "username": "jdorsey5",
-      "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
       "email": "[REDACTED]"
     },
     "project": {
       "id": 69034076,
       "name": "jono-test-project",
       "description": null,
-      "web_url": "https://gitlab.com/liatrio/test-project",
-      "avatar_url": null,
-      "git_ssh_url": "git@gitlab.com:liatrio/test-project.git",
-      "git_http_url": "https://gitlab.com/liatrio/test-project.git",
+      "web_url": "https://gitlab.com/example-org/test-project",
+      "git_ssh_url": "git@gitlab.com:example-org/test-project.git",
+      "git_http_url": "https://gitlab.com/example-org/test-project.git",
       "namespace": "Liatrio Workshop",
       "visibility_level": 0,
-      "path_with_namespace": "liatrio/test-project",
+      "path_with_namespace": "example-org/test-project",
       "default_branch": "main",
       "ci_config_path": ""
     },
     "commit": {
       "id": "9b6402073b62eeb6540947840d454ba97ee03770",
-      "message": "chore(release): 1.4.0\n\n## [1.4.0](https://gitlab.com/liatrio/test-project/compare/1.3.1...1.4.0) (2025-05-01)\n\n### Features\n\n* Test new deployment ([4623444](https://gitlab.com/liatrio/test-project/commit/4623444502dbc6f3c948921c99fc0576bcc49e34))\n",
+      "message": "chore(release): 1.4.0\n\n## [1.4.0](https://gitlab.com/example-org/test-project/compare/1.3.1...1.4.0) (2025-05-01)\n\n### Features\n\n* Test new deployment ([4623444](https://gitlab.com/example-org/test-project/commit/4623444502dbc6f3c948921c99fc0576bcc49e34))\n",
       "title": "chore(release): 1.4.0",
       "timestamp": "2025-05-01T20:29:55+00:00",
-      "url": "https://gitlab.com/liatrio/test-project/-/commit/9b6402073b62eeb6540947840d454ba97ee03770",
+      "url": "https://gitlab.com/example-org/test-project/-/commit/9b6402073b62eeb6540947840d454ba97ee03770",
       "author": {
         "name": "semantic-release-bot",
         "email": "[REDACTED]"
@@ -74,7 +72,6 @@
           "id": 23362052,
           "name": "Jonathan Dorsey",
           "username": "jdorsey5",
-          "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
           "email": "[REDACTED]"
         },
         "runner": {
@@ -112,7 +109,6 @@
           "id": 23362052,
           "name": "Jonathan Dorsey",
           "username": "jdorsey5",
-          "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
           "email": "[REDACTED]"
         },
         "runner": {
@@ -151,7 +147,6 @@
           "id": 23362052,
           "name": "Jonathan Dorsey",
           "username": "jdorsey5",
-          "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
           "email": "[REDACTED]"
         },
         "runner": {
@@ -189,7 +184,6 @@
           "id": 23362052,
           "name": "Jonathan Dorsey",
           "username": "jdorsey5",
-          "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
           "email": "[REDACTED]"
         },
         "runner": {
@@ -227,7 +221,6 @@
           "id": 23362052,
           "name": "Jonathan Dorsey",
           "username": "jdorsey5",
-          "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
           "email": "[REDACTED]"
         },
         "runner": {
@@ -265,7 +258,6 @@
           "id": 23362052,
           "name": "Jonathan Dorsey",
           "username": "jdorsey5",
-          "avatar_url": "https://secure.gravatar.com/avatar/48dd142b321ceb13662d6c0b283ff072b2758ac068fe9f740f9ff8098cbb7b78?s=80&d=identicon",
           "email": "[REDACTED]"
         },
         "runner": {

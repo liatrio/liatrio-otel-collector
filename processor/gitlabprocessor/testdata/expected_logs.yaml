@@ -14,6 +14,6 @@ resourceLogs:
               - key: "vcs.ref.head.revision"
                 value:
                   stringValue: "abc123"
-              - key: "component.liatrio/pipeline-components/components/test.version"
+              - key: "component.example-org/pipeline-components/components/test.version"
                 value:
                   stringValue: "1.0.0"

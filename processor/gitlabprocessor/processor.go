@@ -52,7 +52,7 @@ func (a *pipelineProcessor) processLogs(ctx context.Context, ld plog.Logs) (plog
 
 				comps, err := a.GetPipeCompAttrsFn(ctx, fullPath.AsString(), revision.AsString())
 				if err != nil {
-					a.logger.Sugar().Errorf("error: %s", err.Error())
+					a.logger.Error("error", zap.String("error", err.Error()))
 					continue
 				}
 
@@ -103,17 +103,17 @@ func (a *pipelineProcessor) getPipeCompAttrs(ctx context.Context, fullPath strin
 
 	blob, err := getBlobContent(context.Background(), graphClient, fullPath, ".gitlab-ci.yml", revision)
 	if err != nil {
-		a.logger.Sugar().Errorf("error getting blob content for repo %s: %s", fullPath, err.Error())
+		a.logger.Error("error getting blob content for repo", zap.String("repo", fullPath), zap.String("error", err.Error()))
 		return nil, err
 	}
 
 	if blob.Project.Id == "" {
-		a.logger.Sugar().Debugf("no project id found for repo %s", fullPath)
+		a.logger.Debug("no project id found for repo", zap.String("repo", fullPath))
 		return nil, nil
 	}
 
 	if len(blob.Project.Repository.Blobs.GetNodes()) == 0 {
-		a.logger.Sugar().Debugf("no blob content found for repo %s", fullPath)
+		a.logger.Debug("no blob content found for repo", zap.String("repo", fullPath))
 		return nil, nil
 	}
 
@@ -122,26 +122,26 @@ func (a *pipelineProcessor) getPipeCompAttrs(ctx context.Context, fullPath strin
 	config, err := getCiConfigData(context.Background(), graphClient, fullPath, revision, raw)
 
 	if err != nil {
-		a.logger.Sugar().Errorf("error getting ci config data for repo %s: %s", fullPath, err.Error())
+		a.logger.Error("error getting ci config data for repo", zap.String("repo", fullPath), zap.String("error", err.Error()))
 		return nil, err
 	}
 	if len(config.CiConfig.Errors) > 0 {
-		a.logger.Sugar().Debugf("graphql call for ci config returned errors for repo %s: %s", fullPath, config.CiConfig.Errors)
+		a.logger.Debug("graphql call for ci config returned errors for repo", zap.String("repo", fullPath), zap.Any("errors", config.CiConfig.Errors))
 		return nil, nil
 	}
 	if len(config.CiConfig.Includes) == 0 {
-		a.logger.Sugar().Debugf("no includes found for repo %s", fullPath)
+		a.logger.Debug("no includes found for repo", zap.String("repo", fullPath))
 	}
 	for _, include := range config.CiConfig.Includes {
-		if include.Type == "component" {
+		switch include.Type {
+		case "component":
 			componentParts := strings.Split(include.Location, "@")
 			if len(componentParts) == 2 {
 				componentName := strings.TrimPrefix(componentParts[0], "gitlab.com/")
 				componentVersion := componentParts[1]
 				components[componentName] = componentVersion
 			}
-			continue
-		} else if include.Type == "file" {
+		case "file":
 			componentParts := strings.Split(include.Blob, "/-/")
 			if len(componentParts) == 2 {
 				//concat the location (which is the file name) with the componentName (which
@@ -155,7 +155,7 @@ func (a *pipelineProcessor) getPipeCompAttrs(ctx context.Context, fullPath strin
 
 				components[componentName] = componentVersion
 			}
-		} else if include.Type == "local" {
+		case "local":
 			//for local includes, we'll just concat the location (path in the repo) with the
 			//full namespace of the project from the blob link.
 			componentParts := strings.Split(include.Blob, "/-/")
@@ -167,7 +167,6 @@ func (a *pipelineProcessor) getPipeCompAttrs(ctx context.Context, fullPath strin
 				components[componentName] = componentVersion
 			}
 		}
-
 	}
 
 	return components, nil

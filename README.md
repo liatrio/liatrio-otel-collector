@@ -91,19 +91,9 @@ To configure the GitHub Scraper you will need to make the following changes to
 4) Set environment variables: `GITHUB_ORG`, `GITHUB_USER`, and `GITHUB_PAT`
 
 
-### Configure GitLab Pipeline Processor
+### Configure GitLab Processor
 
-To configure the GitLab Pipeline Processor:
-
-1) Uncomment/add the `processors.gitlabpipeline` section in your configuration file:
-
-    ```yaml
-    processors:
-      gitlabpipeline:
-        token: ${env:GL_PAT}  # Set your GitLab Personal Access Token as an environment variable
-    ```
-
-2) Set environment variables: `GL_PAT`
+See [processor/gitlabprocessor/README.md](processor/gitlabprocessor/README.md) information on configuring and using the gitlab processor.
 
 ### Configure GitHub Scraper
 

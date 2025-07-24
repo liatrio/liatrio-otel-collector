@@ -41,8 +41,6 @@ receivers:
 processors:
   gitlab:
     token: ${env:GL_PAT}
-    # Alternatively, set the token directly:
-    # token: "glpat-xxxxxxxxxxxxxxxxxxxx"
 
 exporters:
   logging:
@@ -59,16 +57,6 @@ service:
 ## Requirements
 - OpenTelemetry Collector
 - Access to the GitLab GraphQL API (ensure the token provided has appropriate permissions)
-
-## Development & Testing
-- To build the processor:
-  ```sh
-  go build ./...
-  ```
-- To run tests:
-  ```sh
-  go test ./...
-  ```
 
 ## License
 This processor is distributed under the Apache 2.0 License.
