@@ -1,16 +1,20 @@
-# GitLab Pipeline Processor
+# GitLab Processor
 
 ## Overview
 
-The GitLab Pipeline Processor is a custom [OpenTelemetry (OTel) Collector](https://opentelemetry.io/docs/collector/) processor designed to enrich log records with additional pipeline metadata not included in native gitlab pipeline event logs. 
+The GitLab Processor is a custom [OpenTelemetry (OTel) Collector](https://opentelemetry.io/docs/collector/) processor designed to enrich log records with metadata from GitLab. While the processor is designed to support a range of GitLab-related enrichment capabilities, its current implementation focuses on pipeline processing—specifically enriching logs with pipeline metadata not included in native GitLab pipeline event logs.
+
+> **Note:** Pipeline enrichment is currently the only implemented feature. The processor is designed for future extensibility to support additional GitLab-related log enrichment use cases.
+
 
 ## Features
-- Fetches pipeline [include](https://docs.gitlab.com/ci/yaml/includes) information from GitLab for any log record containing repository and revision attributes.
+- (Currently implemented) Fetches pipeline [include](https://docs.gitlab.com/ci/yaml/includes) information from GitLab for any log record containing repository and revision attributes.
 - Enriches log records with include name and version metadata
   - Example (component include): `component.<component_path>.version = <version>`
 - Other supported include types: 
   - **local includes**,
   - **file includes**. 
+- Designed for future extensibility to support additional GitLab log enrichment features beyond pipeline processing.
 
 ## How It Works
 1. For each log record, checks for the presence of:
@@ -35,7 +39,7 @@ receivers:
       grpc:
 
 processors:
-  gitlabpipeline:
+  gitlab:
     token: ${env:GL_PAT}
     # Alternatively, set the token directly:
     # token: "glpat-xxxxxxxxxxxxxxxxxxxx"
