@@ -272,8 +272,6 @@ go.opentelemetry.io/collector/scraper v0.129.0 h1:L7M1qxRo1bNnntfqiZGvC0yrSLT+0+
 go.opentelemetry.io/collector/scraper v0.129.0/go.mod h1:oMuPNmyYpAA3FiWpOsoeHRl1P+w1GvBXoFEK+ogipMM=
 go.opentelemetry.io/collector/scraper/scraperhelper v0.129.0 h1:RFfxRrQIRgQ4QT6jbxkEBgwCCHJKIWbb3u1EdsGa+0Q=
 go.opentelemetry.io/collector/scraper/scraperhelper v0.129.0/go.mod h1:i4H3AgYVpzD0TZL5lwy1gLBpF9oMqJzBL8diH2i2Sxk=
-go.opentelemetry.io/collector/semconv v0.124.0 h1:YTdo3UFwNyDQCh9DiSm2rbzAgBuwn/9dNZ0rv454goA=
-go.opentelemetry.io/collector/semconv v0.124.0/go.mod h1:te6VQ4zZJO5Lp8dM2XIhDxDiL45mwX0YAQQWRQ0Qr9U=
 go.opentelemetry.io/collector/service v0.129.0 h1:iauNP1MwcEdSmBW6ls30itxszV8biZRClJyO62B1KCo=
 go.opentelemetry.io/collector/service v0.129.0/go.mod h1:U5ulge2o/5Mvoubp0BMU7+xC7SUfw0fpXyPSDbCPAtc=
 go.opentelemetry.io/collector/service/hostcapabilities v0.129.0 h1:XYrwQJ8PnO+uMoc6804sm2bZfVB3pNC0G0e2O99oq3Y=

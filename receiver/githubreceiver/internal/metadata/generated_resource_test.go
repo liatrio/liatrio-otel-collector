@@ -35,17 +35,17 @@ func TestResourceBuilder(t *testing.T) {
 			val, ok := res.Attributes().Get("organization.name")
 			assert.True(t, ok)
 			if ok {
-				assert.EqualValues(t, "organization.name-val", val.Str())
+				assert.Equal(t, "organization.name-val", val.Str())
 			}
 			val, ok = res.Attributes().Get("team.name")
 			assert.Equal(t, tt == "all_set", ok)
 			if ok {
-				assert.EqualValues(t, "team.name-val", val.Str())
+				assert.Equal(t, "team.name-val", val.Str())
 			}
 			val, ok = res.Attributes().Get("vcs.vendor.name")
 			assert.True(t, ok)
 			if ok {
-				assert.EqualValues(t, "vcs.vendor.name-val", val.Str())
+				assert.Equal(t, "vcs.vendor.name-val", val.Str())
 			}
 		})
 	}
