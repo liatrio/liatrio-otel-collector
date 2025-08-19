@@ -3,7 +3,7 @@ module github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver
 go 1.23.5
 
 require (
-	github.com/Khan/genqlient v0.8.0
+	github.com/Khan/genqlient v0.8.1
 	github.com/cenkalti/backoff/v5 v5.0.2
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v69 v69.2.0
