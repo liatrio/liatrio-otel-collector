@@ -53,7 +53,7 @@ func TestScrape(t *testing.T) {
 				},
 			}),
 			testFile:    "expected_no_projects.yaml",
-			expectedErr: errors.New("no GitLab projects found for the given group/org: project"),
+			expectedErr: backoff.Permanent(errors.New("no GitLab projects found for the given group/org: project")),
 		},
 		{
 			desc: "Happy Path",
