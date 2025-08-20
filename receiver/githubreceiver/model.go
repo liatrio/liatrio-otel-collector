@@ -26,19 +26,19 @@ const (
 	VCSProviderKey = attribute.Key("vcs.provider")
 
 	// CICD Pipeline keys
-	CICDPipelineNameKey = attribute.Key("cicd.pipeline.name")
-	CICDPipelineRunIDKey = attribute.Key("cicd.pipeline.run.id")
+	CICDPipelineNameKey      = attribute.Key("cicd.pipeline.name")
+	CICDPipelineRunIDKey     = attribute.Key("cicd.pipeline.run.id")
 	CICDPipelineTaskRunIDKey = attribute.Key("cicd.pipeline.task.run.id")
 
 	// CICD Pipeline Task Run Status
-	AttributeCICDPipelineTaskRunStatus = "cicd.pipeline.task.run.status"
+	AttributeCICDPipelineTaskRunStatus             = "cicd.pipeline.task.run.status"
 	AttributeCICDPipelineTaskRunStatusCancellation = "cancelled"
 
 	// CICD Pipeline Run Queue Duration
 	AttributeCICDPipelineRunQueueDuration = "cicd.pipeline.run.queue.duration"
 
 	// vcs.change.state with enum values of open, closed, or merged.
-	AttributeVCSChangeStateKey = attribute.Key("vcs.change.state")
+	AttributeVCSChangeStateKey    = attribute.Key("vcs.change.state")
 	AttributeVCSChangeStateOpen   = "open"
 	AttributeVCSChangeStateClosed = "closed"
 	AttributeVCSChangeStateMerged = "merged"
@@ -50,17 +50,17 @@ const (
 	AttributeVCSChangeIDKey = attribute.Key("vcs.change.id")
 
 	// vcs.revision_delta.direction with enum values of behind or ahead.
-	AttributeVCSRevisionDeltaDirectionKey = attribute.Key("vcs.revision_delta.direction")
+	AttributeVCSRevisionDeltaDirectionKey    = attribute.Key("vcs.revision_delta.direction")
 	AttributeVCSRevisionDeltaDirectionBehind = "behind"
 	AttributeVCSRevisionDeltaDirectionAhead  = "ahead"
 
 	// vcs.line_change.type with enum values of added or removed.
-	AttributeVCSLineChangeTypeKey = attribute.Key("vcs.line_change.type")
+	AttributeVCSLineChangeTypeKey     = attribute.Key("vcs.line_change.type")
 	AttributeVCSLineChangeTypeAdded   = "added"
 	AttributeVCSLineChangeTypeRemoved = "removed"
 
 	// vcs.ref.type with enum values of branch or tag.
-	AttributeVCSRefTypeKey = attribute.Key("vcs.ref.type")
+	AttributeVCSRefTypeKey    = attribute.Key("vcs.ref.type")
 	AttributeVCSRefTypeBranch = "branch"
 	AttributeVCSRefTypeTag    = "tag"
 
@@ -74,7 +74,7 @@ const (
 	AttributeVCSRefBaseRevisionKey = attribute.Key("vcs.ref.base.revision")
 
 	// vcs.ref.base.type with enum values of branch or tag.
-	AttributeVCSRefBaseTypeKey = attribute.Key("vcs.ref.base.type")
+	AttributeVCSRefBaseTypeKey    = attribute.Key("vcs.ref.base.type")
 	AttributeVCSRefBaseTypeBranch = "branch"
 	AttributeVCSRefBaseTypeTag    = "tag"
 
@@ -85,7 +85,7 @@ const (
 	AttributeVCSRefHeadRevisionKey = attribute.Key("vcs.ref.head.revision")
 
 	// vcs.ref.head.type with enum values of branch or tag.
-	AttributeVCSRefHeadTypeKey = attribute.Key("vcs.ref.head.type")
+	AttributeVCSRefHeadTypeKey    = attribute.Key("vcs.ref.head.type")
 	AttributeVCSRefHeadTypeBranch = "branch"
 	AttributeVCSRefHeadTypeTag    = "tag"
 
@@ -95,7 +95,7 @@ const (
 	AttributeCICDPipelineRunURLFullKey = attribute.Key("cicd.pipeline.run.url.full") // equivalent to GitHub's `html_url`
 
 	// These are being added in https://github.com/open-telemetry/semantic-conventions/pull/1681
-	AttributeCICDPipelineRunStatusKey = attribute.Key("cicd.pipeline.run.status") // equivalent to GitHub's `conclusion`
+	AttributeCICDPipelineRunStatusKey           = attribute.Key("cicd.pipeline.run.status") // equivalent to GitHub's `conclusion`
 	AttributeCICDPipelineRunStatusCancelled     = "cancelled"
 	AttributeCICDPipelineRunStatusFailure       = "failure"
 	AttributeCICDPipelineRunStatusNeutral       = "neutral"
@@ -106,7 +106,7 @@ const (
 	AttributeCICDPipelineRunStatusUnprocessable = "unprocessable"
 
 	// These are being added in https://github.com/open-telemetry/semantic-conventions/pull/1681
-	AttributeCICDPipelineTaskRunStatusKey = attribute.Key("cicd.pipeline.task.run.status") // equivalent to GitHub's `conclusion`
+	AttributeCICDPipelineTaskRunStatusKey           = attribute.Key("cicd.pipeline.task.run.status") // equivalent to GitHub's `conclusion`
 	AttributeCICDPipelineTaskRunStatusCancelled     = "cancelled"
 	AttributeCICDPipelineTaskRunStatusFailure       = "failure"
 	AttributeCICDPipelineTaskRunStatusNeutral       = "neutral"
@@ -117,17 +117,17 @@ const (
 	AttributeCICDPipelineTaskRunStatusUnprocessable = "unprocessable"
 
 	// The following attributes are not part of the semantic conventions yet.
-	AttributeCICDPipelineRunSenderLoginKey         = attribute.Key("cicd.pipeline.run.sender.login")      // GitHub's Run Sender Login
+	AttributeCICDPipelineRunSenderLoginKey            = attribute.Key("cicd.pipeline.run.sender.login")              // GitHub's Run Sender Login
 	AttributeCICDPipelineRunPreviousAttemptURLFullKey = attribute.Key("cicd.pipeline.run.previous_attempt.url.full") // GitHub's Previous Attempt URL
-	AttributeCICDPipelineTaskRunSenderLoginKey     = attribute.Key("cicd.pipeline.task.run.sender.login") // GitHub's Task Sender Login
-	AttributeCICDPipelineFilePathKey               = attribute.Key("cicd.pipeline.file.path")             // GitHub's Path in workflow_run
-	AttributeCICDPipelineWorkerIDKey               = attribute.Key("cicd.pipeline.worker.id")          // GitHub's Runner ID
-	AttributeCICDPipelineWorkerGroupIDKey          = attribute.Key("cicd.pipeline.worker.group.id")    // GitHub's Runner Group ID
-	AttributeCICDPipelineWorkerNameKey             = attribute.Key("cicd.pipeline.worker.name")        // GitHub's Runner Name
-	AttributeCICDPipelineWorkerGroupNameKey        = attribute.Key("cicd.pipeline.worker.group.name")  // GitHub's Runner Group Name
-	AttributeCICDPipelineWorkerNodeIDKey           = attribute.Key("cicd.pipeline.worker.node.id")     // GitHub's Runner Node ID
-	AttributeCICDPipelineWorkerLabelsKey           = attribute.Key("cicd.pipeline.worker.labels")      // GitHub's Runner Labels
-	AttributeCICDPipelineRunQueueDurationKey       = attribute.Key("cicd.pipeline.run.queue.duration") // GitHub's Queue Duration
+	AttributeCICDPipelineTaskRunSenderLoginKey        = attribute.Key("cicd.pipeline.task.run.sender.login")         // GitHub's Task Sender Login
+	AttributeCICDPipelineFilePathKey                  = attribute.Key("cicd.pipeline.file.path")                     // GitHub's Path in workflow_run
+	AttributeCICDPipelineWorkerIDKey                  = attribute.Key("cicd.pipeline.worker.id")                     // GitHub's Runner ID
+	AttributeCICDPipelineWorkerGroupIDKey             = attribute.Key("cicd.pipeline.worker.group.id")               // GitHub's Runner Group ID
+	AttributeCICDPipelineWorkerNameKey                = attribute.Key("cicd.pipeline.worker.name")                   // GitHub's Runner Name
+	AttributeCICDPipelineWorkerGroupNameKey           = attribute.Key("cicd.pipeline.worker.group.name")             // GitHub's Runner Group Name
+	AttributeCICDPipelineWorkerNodeIDKey              = attribute.Key("cicd.pipeline.worker.node.id")                // GitHub's Runner Node ID
+	AttributeCICDPipelineWorkerLabelsKey              = attribute.Key("cicd.pipeline.worker.labels")                 // GitHub's Runner Labels
+	AttributeCICDPipelineRunQueueDurationKey          = attribute.Key("cicd.pipeline.run.queue.duration")            // GitHub's Queue Duration
 	// These attributes are already defined as Keys above, so we can remove these string versions
 
 	// The following attributes are exclusive to GitHub but not listed under
