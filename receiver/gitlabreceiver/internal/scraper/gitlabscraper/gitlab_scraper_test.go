@@ -138,13 +138,13 @@ func TestScrape(t *testing.T) {
 				require.Error(t, err)
 				// Compare error messages directly since backoff.Retry may unwrap PermanentError
 				var expectedMsg, actualMsg string
-				if permErr, ok := tc.expectedErr.(*backoff.PermanentError); ok {
+				if permErr, ok := tc.expectedErr.(*backoff.PermanentError); ok && permErr.Err != nil {
 					expectedMsg = permErr.Err.Error()
 				} else {
 					expectedMsg = tc.expectedErr.Error()
 				}
 
-				if permErr, ok := err.(*backoff.PermanentError); ok {
+				if permErr, ok := err.(*backoff.PermanentError); ok && permErr.Err != nil {
 					actualMsg = permErr.Err.Error()
 				} else {
 					actualMsg = err.Error()
