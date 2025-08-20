@@ -135,12 +135,22 @@ func TestScrape(t *testing.T) {
 
 			actualMetrics, err := gls.scrape(context.Background())
 			if tc.expectedErr != nil {
-				// Handle backoff.PermanentError by unwrapping it
-				if permErr, ok := err.(*backoff.PermanentError); ok {
-					require.Equal(t, tc.expectedErr.Error(), permErr.Err.Error())
+				require.Error(t, err)
+				// Compare error messages directly since backoff.Retry may unwrap PermanentError
+				var expectedMsg, actualMsg string
+				if permErr, ok := tc.expectedErr.(*backoff.PermanentError); ok {
+					expectedMsg = permErr.Err.Error()
 				} else {
-					require.Equal(t, tc.expectedErr, err)
+					expectedMsg = tc.expectedErr.Error()
 				}
+
+				if permErr, ok := err.(*backoff.PermanentError); ok {
+					actualMsg = permErr.Err.Error()
+				} else {
+					actualMsg = err.Error()
+				}
+
+				require.Equal(t, expectedMsg, actualMsg)
 			} else {
 				require.NoError(t, err)
 			}
