@@ -10,7 +10,7 @@ resourceSpans:
         - key: vcs.vendor.name
           value:
             stringValue: github
-        - key: vcs.ref.head
+        - key: vcs.ref.head.name
           value:
             stringValue: renovate/major-tool-deps
         - key: vcs.ref.head.type

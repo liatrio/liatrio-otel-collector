@@ -67,8 +67,7 @@ const (
 	AttributeVCSRefBaseTypeTag    = "tag"
 
 	// vcs.ref.head.name
-	AttributeVCSRefHeadKey = attribute.Key("vcs.ref.head")
-
+	// AttributeVCSRefHeadKey is now available in semconv as semconv.VCSRefHeadNameKey
 	// vcs.ref.head.revision
 	AttributeVCSRefHeadRevisionKey = attribute.Key("vcs.ref.head.revision")
 
@@ -166,7 +165,7 @@ func (gtr *githubTracesReceiver) getWorkflowRunAttrs(resource pcommon.Resource, 
 	// VCS Attributes
 	attrs.PutStr(string(semconv.VCSRepositoryNameKey), e.GetRepo().GetName())
 	attrs.PutStr("vcs.vendor.name", "github")
-	attrs.PutStr(string(AttributeVCSRefHeadKey), e.GetWorkflowRun().GetHeadBranch())
+	attrs.PutStr(string(semconv.VCSRefHeadNameKey), e.GetWorkflowRun().GetHeadBranch())
 	attrs.PutStr(string(AttributeVCSRefHeadTypeKey), AttributeVCSRefHeadTypeBranch)
 	attrs.PutStr(string(AttributeVCSRefHeadRevisionKey), e.GetWorkflowRun().GetHeadSHA())
 	attrs.PutStr("vcs.ref.head.revision.author.name", e.GetWorkflowRun().GetHeadCommit().GetCommitter().GetName())
@@ -242,7 +241,7 @@ func (gtr *githubTracesReceiver) getWorkflowJobAttrs(resource pcommon.Resource, 
 	// VCS Attributes
 	attrs.PutStr(string(semconv.VCSRepositoryNameKey), e.GetRepo().GetName())
 	attrs.PutStr("vcs.vendor.name", "github")
-	attrs.PutStr(string(AttributeVCSRefHeadKey), e.GetWorkflowJob().GetHeadBranch())
+	attrs.PutStr(string(semconv.VCSRefHeadNameKey), e.GetWorkflowJob().GetHeadBranch())
 	attrs.PutStr(string(AttributeVCSRefHeadTypeKey), AttributeVCSRefHeadTypeBranch)
 	attrs.PutStr(string(AttributeVCSRefHeadRevisionKey), e.GetWorkflowJob().GetHeadSHA())
 
