@@ -28,7 +28,7 @@ const (
 	// CICD Pipeline keys
 	// CICDPipelineNameKey is now available in semconv
 	//CICDPipelineRunIDKey     = attribute.Key("cicd.pipeline.run.id")
-	CICDPipelineTaskRunIDKey = attribute.Key("cicd.pipeline.task.run.id")
+	//CICDPipelineTaskRunIDKey = attribute.Key("cicd.pipeline.task.run.id")
 
 	// CICD Pipeline Task Run Status
 	AttributeCICDPipelineTaskRunStatus             = "cicd.pipeline.task.run.status"
@@ -278,7 +278,7 @@ func (gtr *githubTracesReceiver) getWorkflowJobAttrs(resource pcommon.Resource, 
 	attrs.PutStr(string(semconv.CICDPipelineNameKey), e.GetWorkflowJob().GetName())
 	attrs.PutStr(string(AttributeCICDPipelineTaskRunSenderLoginKey), e.GetSender().GetLogin())
 	attrs.PutStr("cicd.pipeline.task.run.url.full", e.GetWorkflowJob().GetHTMLURL())
-	attrs.PutInt(string(CICDPipelineTaskRunIDKey), e.GetWorkflowJob().GetID())
+	attrs.PutInt(string(semconv.CICDPipelineTaskRunIDKey), e.GetWorkflowJob().GetID())
 	switch status := strings.ToLower(e.GetWorkflowJob().GetConclusion()); status {
 	case "success":
 		// Only set cicd.pipeline.run.task.status to match expected test output
