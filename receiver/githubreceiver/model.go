@@ -26,7 +26,7 @@ const (
 	AttributeCICDPipelineRunQueueDuration = "cicd.pipeline.run.queue.duration"
 
 	// vcs.change.state with enum values of open, closed, or merged.
-	AttributeVCSChangeStateKey    = attribute.Key("vcs.change.state")
+	//AttributeVCSChangeStateKey    = attribute.Key("vcs.change.state")
 	AttributeVCSChangeStateOpen   = "open"
 	AttributeVCSChangeStateClosed = "closed"
 	AttributeVCSChangeStateMerged = "merged"
