@@ -69,17 +69,17 @@ const (
 	// vcs.ref.head.name
 	// AttributeVCSRefHeadKey is now available in semconv as semconv.VCSRefHeadNameKey
 	// vcs.ref.head.revision
-	AttributeVCSRefHeadRevisionKey = attribute.Key("vcs.ref.head.revision")
+	// AttributeVCSRefHeadRevisionKey is now available in semconv as semconv.VCSRefHeadRevisionKey
 
 	// vcs.ref.head.type with enum values of branch or tag.
-	AttributeVCSRefHeadTypeKey    = attribute.Key("vcs.ref.head.type")
+	// AttributeVCSRefHeadTypeKey is now available in semconv as semconv.VCSRefHeadTypeKey
 	AttributeVCSRefHeadTypeBranch = "branch"
 	AttributeVCSRefHeadTypeTag    = "tag"
 
 	// The following prototype attributes that do not exist yet in semconv.
 	// They are highly experimental and subject to change.
 
-	AttributeCICDPipelineRunURLFullKey = attribute.Key("cicd.pipeline.run.url.full") // equivalent to GitHub's `html_url`
+	// AttributeCICDPipelineRunURLFullKey is now available in semconv as semconv.CICDPipelineRunURLFullKey
 
 	// These are being added in https://github.com/open-telemetry/semantic-conventions/pull/1681
 	AttributeCICDPipelineRunStatusKey           = attribute.Key("cicd.pipeline.run.status") // equivalent to GitHub's `conclusion`
@@ -164,17 +164,17 @@ func (gtr *githubTracesReceiver) getWorkflowRunAttrs(resource pcommon.Resource, 
 
 	// VCS Attributes
 	attrs.PutStr(string(semconv.VCSRepositoryNameKey), e.GetRepo().GetName())
-	attrs.PutStr("vcs.vendor.name", "github")
+	attrs.PutStr(AttributeVCSVendorName, "github")
 	attrs.PutStr(string(semconv.VCSRefHeadNameKey), e.GetWorkflowRun().GetHeadBranch())
-	attrs.PutStr(string(AttributeVCSRefHeadTypeKey), AttributeVCSRefHeadTypeBranch)
-	attrs.PutStr(string(AttributeVCSRefHeadRevisionKey), e.GetWorkflowRun().GetHeadSHA())
-	attrs.PutStr("vcs.ref.head.revision.author.name", e.GetWorkflowRun().GetHeadCommit().GetCommitter().GetName())
-	attrs.PutStr("vcs.ref.head.revision.author.email", e.GetWorkflowRun().GetHeadCommit().GetCommitter().GetEmail())
+	attrs.PutStr(string(semconv.VCSRefHeadTypeKey), AttributeVCSRefHeadTypeBranch)
+	attrs.PutStr(string(semconv.VCSRefHeadRevisionKey), e.GetWorkflowRun().GetHeadSHA())
+	attrs.PutStr(AttributeVCSRefHeadRevisionAuthorName, e.GetWorkflowRun().GetHeadCommit().GetCommitter().GetName())
+	attrs.PutStr(AttributeVCSRefHeadRevisionAuthorEmail, e.GetWorkflowRun().GetHeadCommit().GetCommitter().GetEmail())
 
 	// CICD Attributes
 	attrs.PutStr(string(semconv.CICDPipelineNameKey), e.GetWorkflowRun().GetName())
 	attrs.PutStr(string(AttributeCICDPipelineRunSenderLoginKey), e.GetSender().GetLogin())
-	attrs.PutStr(string(AttributeCICDPipelineRunURLFullKey), e.GetWorkflowRun().GetHTMLURL())
+	attrs.PutStr(string(semconv.CICDPipelineRunURLFullKey), e.GetWorkflowRun().GetHTMLURL())
 	attrs.PutInt(string(semconv.CICDPipelineRunIDKey), e.GetWorkflowRun().GetID())
 
 	// Status
@@ -240,10 +240,10 @@ func (gtr *githubTracesReceiver) getWorkflowJobAttrs(resource pcommon.Resource, 
 
 	// VCS Attributes
 	attrs.PutStr(string(semconv.VCSRepositoryNameKey), e.GetRepo().GetName())
-	attrs.PutStr("vcs.vendor.name", "github")
+	attrs.PutStr(AttributeVCSVendorName, "github")
 	attrs.PutStr(string(semconv.VCSRefHeadNameKey), e.GetWorkflowJob().GetHeadBranch())
-	attrs.PutStr(string(AttributeVCSRefHeadTypeKey), AttributeVCSRefHeadTypeBranch)
-	attrs.PutStr(string(AttributeVCSRefHeadRevisionKey), e.GetWorkflowJob().GetHeadSHA())
+	attrs.PutStr(string(semconv.VCSRefHeadTypeKey), AttributeVCSRefHeadTypeBranch)
+	attrs.PutStr(string(semconv.VCSRefHeadRevisionKey), e.GetWorkflowJob().GetHeadSHA())
 
 	// CICD Worker (GitHub Runner) Attributes
 	attrs.PutInt(string(AttributeCICDPipelineWorkerIDKey), e.GetWorkflowJob().GetRunnerID())
