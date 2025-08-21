@@ -26,7 +26,7 @@ const (
 	VCSProviderKey = attribute.Key("vcs.provider")
 
 	// CICD Pipeline keys
-	CICDPipelineNameKey      = attribute.Key("cicd.pipeline.name")
+	// CICDPipelineNameKey is now available in semconv
 	CICDPipelineRunIDKey     = attribute.Key("cicd.pipeline.run.id")
 	CICDPipelineTaskRunIDKey = attribute.Key("cicd.pipeline.task.run.id")
 
@@ -185,7 +185,7 @@ func (gtr *githubTracesReceiver) getWorkflowRunAttrs(resource pcommon.Resource, 
 	attrs.PutStr("vcs.ref.head.revision.author.email", e.GetWorkflowRun().GetHeadCommit().GetCommitter().GetEmail())
 
 	// CICD Attributes
-	attrs.PutStr(string(CICDPipelineNameKey), e.GetWorkflowRun().GetName())
+	attrs.PutStr(string(semconv.CICDPipelineNameKey), e.GetWorkflowRun().GetName())
 	attrs.PutStr(string(AttributeCICDPipelineRunSenderLoginKey), e.GetSender().GetLogin())
 	attrs.PutStr(string(AttributeCICDPipelineRunURLFullKey), e.GetWorkflowRun().GetHTMLURL())
 	attrs.PutInt(string(CICDPipelineRunIDKey), e.GetWorkflowRun().GetID())
@@ -275,7 +275,7 @@ func (gtr *githubTracesReceiver) getWorkflowJobAttrs(resource pcommon.Resource, 
 	}
 
 	// CICD Attributes
-	attrs.PutStr(string(CICDPipelineNameKey), e.GetWorkflowJob().GetName())
+	attrs.PutStr(string(semconv.CICDPipelineNameKey), e.GetWorkflowJob().GetName())
 	attrs.PutStr(string(AttributeCICDPipelineTaskRunSenderLoginKey), e.GetSender().GetLogin())
 	attrs.PutStr("cicd.pipeline.task.run.url.full", e.GetWorkflowJob().GetHTMLURL())
 	attrs.PutInt(string(CICDPipelineTaskRunIDKey), e.GetWorkflowJob().GetID())
