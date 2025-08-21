@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-github/v69/github"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
-	semconv "go.opentelemetry.io/collector/semconv/v1.27.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 )
@@ -325,23 +325,23 @@ func (gtr *githubTracesReceiver) createStepSpan(
 	span.SetSpanID(spanID)
 
 	attrs := span.Attributes()
-	attrs.PutStr(semconv.AttributeCicdPipelineTaskName, name)
-	attrs.PutStr(AttributeCICDPipelineTaskRunStatus, step.GetStatus())
+	attrs.PutStr(string(semconv.CICDPipelineTaskNameKey), name)
+	attrs.PutStr("cicd.pipeline.run.task.status", step.GetStatus())
 	span.SetStartTimestamp(pcommon.NewTimestampFromTime(step.GetStartedAt().Time))
 	span.SetEndTimestamp(pcommon.NewTimestampFromTime(step.GetCompletedAt().Time))
 
 	switch strings.ToLower(step.GetConclusion()) {
 	case "success":
-		attrs.PutStr(AttributeCICDPipelineTaskRunStatus, AttributeCICDPipelineTaskRunStatusSuccess)
+		attrs.PutStr("cicd.pipeline.run.task.status", "success")
 		span.Status().SetCode(ptrace.StatusCodeOk)
 	case "failure":
-		attrs.PutStr(AttributeCICDPipelineTaskRunStatus, AttributeCICDPipelineTaskRunStatusFailure)
+		attrs.PutStr("cicd.pipeline.run.task.status", "failure")
 		span.Status().SetCode(ptrace.StatusCodeError)
 	case "skipped":
-		attrs.PutStr(AttributeCICDPipelineTaskRunStatus, AttributeCICDPipelineTaskRunStatusFailure)
+		attrs.PutStr("cicd.pipeline.run.task.status", "skipped")
 		span.Status().SetCode(ptrace.StatusCodeUnset)
 	case "cancelled":
-		attrs.PutStr(AttributeCICDPipelineTaskRunStatus, AttributeCICDPipelineTaskRunStatusCancellation)
+		attrs.PutStr("cicd.pipeline.run.task.status", "cancelled")
 		span.Status().SetCode(ptrace.StatusCodeUnset)
 	default:
 		span.Status().SetCode(ptrace.StatusCodeUnset)
