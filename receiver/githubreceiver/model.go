@@ -265,7 +265,7 @@ func (gtr *githubTracesReceiver) getWorkflowJobAttrs(resource pcommon.Resource, 
 	// CICD Attributes
 	attrs.PutStr(string(semconv.CICDPipelineNameKey), e.GetWorkflowJob().GetName())
 	attrs.PutStr(string(AttributeCICDPipelineTaskRunSenderLoginKey), e.GetSender().GetLogin())
-	attrs.PutStr("cicd.pipeline.task.run.url.full", e.GetWorkflowJob().GetHTMLURL())
+	attrs.PutStr(string(semconv.CICDPipelineTaskRunURLFullKey), e.GetWorkflowJob().GetHTMLURL())
 	attrs.PutInt(string(semconv.CICDPipelineTaskRunIDKey), e.GetWorkflowJob().GetID())
 	switch status := strings.ToLower(e.GetWorkflowJob().GetConclusion()); status {
 	case "success":
