@@ -27,9 +27,9 @@ const (
 
 	// vcs.change.state with enum values of open, closed, or merged.
 	//AttributeVCSChangeStateKey    = attribute.Key("vcs.change.state")
-	AttributeVCSChangeStateOpen   = "open"
-	AttributeVCSChangeStateClosed = "closed"
-	AttributeVCSChangeStateMerged = "merged"
+	//AttributeVCSChangeStateOpen   = "open"
+	//AttributeVCSChangeStateClosed = "closed"
+	//AttributeVCSChangeStateMerged = "merged"
 
 	// vcs.change.title
 	AttributeVCSChangeTitleKey = attribute.Key("vcs.change.title")
