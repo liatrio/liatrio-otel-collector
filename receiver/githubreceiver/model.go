@@ -31,8 +31,8 @@ const (
 	//CICDPipelineTaskRunIDKey = attribute.Key("cicd.pipeline.task.run.id")
 
 	// CICD Pipeline Task Run Status
-	AttributeCICDPipelineTaskRunStatus             = "cicd.pipeline.task.run.status"
-	AttributeCICDPipelineTaskRunStatusCancellation = "cancelled"
+	//AttributeCICDPipelineTaskRunStatus             = "cicd.pipeline.task.run.status"
+	//AttributeCICDPipelineTaskRunStatusCancellation = "cancelled"
 
 	// CICD Pipeline Run Queue Duration
 	AttributeCICDPipelineRunQueueDuration = "cicd.pipeline.run.queue.duration"
