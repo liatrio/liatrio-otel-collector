@@ -23,7 +23,7 @@ import (
 // Define constants for cicdconv and vcsconv packages
 const (
 	// VCS Provider key
-	VCSProviderKey = attribute.Key("vcs.provider")
+	//VCSProviderKey = attribute.Key("vcs.provider")
 
 	// CICD Pipeline keys
 	// CICDPipelineNameKey is now available in semconv
