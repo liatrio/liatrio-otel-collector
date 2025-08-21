@@ -26,43 +26,43 @@ const (
 	AttributeCICDPipelineRunQueueDuration = "cicd.pipeline.run.queue.duration"
 
 	// vcs.change.state with enum values of open, closed, or merged.
-	AttributeVCSChangeStateKey    = attribute.Key("vcs.change.state")
+	//AttributeVCSChangeStateKey is now available in semconv as semconv.VCSChangeStateKey
 	AttributeVCSChangeStateOpen   = "open"
 	AttributeVCSChangeStateClosed = "closed"
 	AttributeVCSChangeStateMerged = "merged"
 
 	// vcs.change.title
-	AttributeVCSChangeTitleKey = attribute.Key("vcs.change.title")
+	// AttributeVCSChangeTitleKey is now available in semconv as semconv.VCSChangeTitleKey
 
 	// vcs.change.id
-	AttributeVCSChangeIDKey = attribute.Key("vcs.change.id")
+	// AttributeVCSChangeIDKey is now available in semconv as semconv.VCSChangeIDKey
 
 	// vcs.revision_delta.direction with enum values of behind or ahead.
-	AttributeVCSRevisionDeltaDirectionKey    = attribute.Key("vcs.revision_delta.direction")
+	// AttributeVCSRevisionDeltaDirectionKey is now available in semconv as semconv.VCSRevisionDeltaDirectionKey
 	AttributeVCSRevisionDeltaDirectionBehind = "behind"
 	AttributeVCSRevisionDeltaDirectionAhead  = "ahead"
 
 	// vcs.line_change.type with enum values of added or removed.
-	AttributeVCSLineChangeTypeKey     = attribute.Key("vcs.line_change.type")
+	// AttributeVCSLineChangeTypeKey is now available in semconv as semconv.VCSLineChangeTypeKey
 	AttributeVCSLineChangeTypeAdded   = "added"
 	AttributeVCSLineChangeTypeRemoved = "removed"
 
 	// vcs.ref.type with enum values of branch or tag.
-	AttributeVCSRefTypeKey    = attribute.Key("vcs.ref.type")
+	// AttributeVCSRefTypeKey is now available in semconv as semconv.VCSRefTypeKey
 	AttributeVCSRefTypeBranch = "branch"
 	AttributeVCSRefTypeTag    = "tag"
 
 	// vcs.repository.name
-	AttributeVCSRepositoryNameKey = attribute.Key("vcs.repository.name")
+	//AttributeVCSRepositoryNameKey is now available in semconv as semconv.VCSRepositoryNameKey
 
 	// vcs.ref.base.name
-	AttributeVCSRefBaseKey = attribute.Key("vcs.ref.base")
+	// AttributeVCSRefBaseKey is now available in semconv as semconv.VCSRefBaseTypeKey
 
 	// vcs.ref.base.revision
-	AttributeVCSRefBaseRevisionKey = attribute.Key("vcs.ref.base.revision")
+	// AttributeVCSRefBaseRevisionKey is now available in semconv as semconv.VCSRefBaseRevisionKey
 
 	// vcs.ref.base.type with enum values of branch or tag.
-	AttributeVCSRefBaseTypeKey    = attribute.Key("vcs.ref.base.type")
+	// AttributeVCSRefBaseTypeKey is now available in semconv as semconv.VCSRefBaseTypeKey
 	AttributeVCSRefBaseTypeBranch = "branch"
 	AttributeVCSRefBaseTypeTag    = "tag"
 
@@ -164,7 +164,7 @@ func (gtr *githubTracesReceiver) getWorkflowRunAttrs(resource pcommon.Resource, 
 	attrs.PutStr(string(semconv.ServiceNameKey), svc)
 
 	// VCS Attributes
-	attrs.PutStr(string(AttributeVCSRepositoryNameKey), e.GetRepo().GetName())
+	attrs.PutStr(string(semconv.VCSRepositoryNameKey), e.GetRepo().GetName())
 	attrs.PutStr("vcs.vendor.name", "github")
 	attrs.PutStr(string(AttributeVCSRefHeadKey), e.GetWorkflowRun().GetHeadBranch())
 	attrs.PutStr(string(AttributeVCSRefHeadTypeKey), AttributeVCSRefHeadTypeBranch)
@@ -240,7 +240,7 @@ func (gtr *githubTracesReceiver) getWorkflowJobAttrs(resource pcommon.Resource, 
 	attrs.PutStr(string(semconv.ServiceNameKey), svc)
 
 	// VCS Attributes
-	attrs.PutStr(string(AttributeVCSRepositoryNameKey), e.GetRepo().GetName())
+	attrs.PutStr(string(semconv.VCSRepositoryNameKey), e.GetRepo().GetName())
 	attrs.PutStr("vcs.vendor.name", "github")
 	attrs.PutStr(string(AttributeVCSRefHeadKey), e.GetWorkflowJob().GetHeadBranch())
 	attrs.PutStr(string(AttributeVCSRefHeadTypeKey), AttributeVCSRefHeadTypeBranch)
