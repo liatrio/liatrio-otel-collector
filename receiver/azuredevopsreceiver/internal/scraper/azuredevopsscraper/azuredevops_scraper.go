@@ -146,7 +146,8 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 				} else if pr.Status == "active" {
 					if !pr.CreationDate.IsZero() {
 						prAge := int64(time.Since(pr.CreationDate).Seconds())
-						ados.mb.RecordVcsChangeDurationDataPoint(now, prAge, repo.WebURL, repo.Name, repo.ID, pr.SourceRefName, metadata.AttributeVcsChangeStateOpen)
+						ados.mb.RecordVcsChangeDurationDataPoint(now, prAge, repo.WebURL, repo.Name, repo.ID,
+							pr.SourceRefName, metadata.AttributeVcsChangeStateOpen)
 					}
 				}
 				mux.Unlock()
