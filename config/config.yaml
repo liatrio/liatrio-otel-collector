@@ -7,6 +7,9 @@ extensions:
   bearertokenauth/gitlab:
     token: ${env:GL_PAT}
 
+  bearertokenauth/azuredevops:
+    token: ${env:ADO_PAT}
+
 receivers:
   webhookevent:
     endpoint: 0.0.0.0:8088
@@ -16,6 +19,23 @@ receivers:
     protocols:
       grpc:
       http:
+
+  azuredevops:
+    initial_delay: 10s
+    collection_interval: 60s
+    scrapers:
+      azuredevops:
+        # Optionally enable or disable metrics
+        # metrics:
+          # Example
+          # vcs.repository.count:
+          #   enabled: true
+          #   ...
+        organization: ${env:ADO_ORG}
+        project: ${env:ADO_PROJECT}
+        base_url: https://dev.azure.com
+        auth:
+          authenticator: bearertokenauth/azuredevops
 
   gitlab:
     initial_delay: 10s
@@ -94,16 +114,16 @@ processors:
 
 exporters:
   debug:
-    verbosity: basic
+    verbosity: detailed
     sampling_initial: 2
     sampling_thereafter: 500
 
 service:
   ## Add bearertokenauth/* if you want to use bearer token auth extensions
-  extensions: [bearertokenauth/github, bearertokenauth/gitlab]
+  extensions: [bearertokenauth/azuredevops, bearertokenauth/github, bearertokenauth/gitlab]
   pipelines:
     metrics:
-      receivers: [gitlab, github]
+      receivers: [azuredevops, github, gitlab]
       processors: []
       exporters: [debug]
     logs:
