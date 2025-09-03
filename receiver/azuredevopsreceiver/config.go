@@ -8,6 +8,8 @@ import (
 	"fmt"
 
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config/confighttp"
+	"go.opentelemetry.io/collector/config/configopaque"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/scraper/scraperhelper"
 
@@ -24,6 +26,22 @@ type Config struct {
 	scraperhelper.ControllerConfig `mapstructure:",squash"`
 	Scrapers                       map[string]internal.Config `mapstructure:"scrapers"`
 	metadata.MetricsBuilderConfig  `mapstructure:",squash"`
+	WebHook                        WebHook `mapstructure:"webhook"`
+}
+
+type WebHook struct {
+	confighttp.ServerConfig `mapstructure:",squash"`       // squash ensures fields are correctly decoded in embedded struct
+	Path                    string                         `mapstructure:"path"`             // path for data collection. Default is /events
+	HealthPath              string                         `mapstructure:"health_path"`      // path for health check api. Default is /health_check
+	RequiredHeaders         map[string]configopaque.String `mapstructure:"required_headers"` // optional setting to set one or more required headers for all requests to have (except the health check)
+	AzureDevOpsHeaders      AzureDevOpsHeaders             `mapstructure:",squash"`          // GitLab headers set by default
+	Secret                  string                         `mapstructure:"secret"`           // secret for webhook
+	ServiceName             string                         `mapstructure:"service_name"`
+}
+
+type AzureDevOpsHeaders struct {
+	Customizable map[string]string `mapstructure:","` // can be overwritten via required_headers
+	Fixed        map[string]string `mapstructure:","` // are not allowed to be overwritten
 }
 
 var _ component.Config = (*Config)(nil)

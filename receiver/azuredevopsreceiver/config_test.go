@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/otelcol/otelcoltest"
 	"go.opentelemetry.io/collector/scraper/scraperhelper"
@@ -51,6 +52,16 @@ func TestLoadConfig(t *testing.T) {
 		},
 		Scrapers: map[string]internal.Config{
 			azuredevopsscraper.TypeStr: (&azuredevopsscraper.Factory{}).CreateDefaultConfig(),
+		},
+		// WebHook will be set to default values by the factory
+		WebHook: WebHook{
+			ServerConfig: confighttp.ServerConfig{
+				Endpoint:     "localhost:8080",
+				ReadTimeout:  500 * time.Millisecond,
+				WriteTimeout: 500 * time.Millisecond,
+			},
+			Path:       "/events",
+			HealthPath: "/health",
 		},
 	}
 

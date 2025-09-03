@@ -34,8 +34,8 @@ func TestCreateReceiver(t *testing.T) {
 	cfg := factory.CreateDefaultConfig()
 
 	tReceiver, err := factory.CreateTraces(context.Background(), creationSet, cfg, consumertest.NewNop())
-	assert.Equal(t, err, pipeline.ErrSignalNotSupported)
-	assert.Nil(t, tReceiver)
+	assert.NoError(t, err)
+	assert.NotNil(t, tReceiver)
 
 	mReceiver, err := factory.CreateMetrics(context.Background(), creationSet, cfg, consumertest.NewNop())
 	assert.NoError(t, err)

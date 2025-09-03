@@ -7,8 +7,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/scraper"
@@ -20,6 +22,13 @@ import (
 )
 
 // This file implements a factory for the azuredevops receiver
+const (
+	defaultReadTimeout  = 500 * time.Millisecond
+	defaultWriteTimeout = 500 * time.Millisecond
+	defaultPath         = "/events"
+	defaultHealthPath   = "/health"
+	defaultEndpoint     = "localhost:8080"
+)
 
 var (
 	scraperFactories = map[string]internal.ScraperFactory{
@@ -35,6 +44,7 @@ func NewFactory() receiver.Factory {
 		metadata.Type,
 		createDefaultConfig,
 		receiver.WithMetrics(createMetricsReceiver, metadata.MetricsStability),
+		receiver.WithTraces(createTracesReceiver, metadata.TracesStability),
 	)
 }
 
@@ -51,12 +61,15 @@ func getScraperFactory(key string) (internal.ScraperFactory, bool) {
 func createDefaultConfig() component.Config {
 	return &Config{
 		ControllerConfig: scraperhelper.NewDefaultControllerConfig(),
-		// TODO: metrics builder configuration may need to be in each sub scraper,
-		// TODO: for right now setting here because the metrics in this receiver will apply to all
-		// TODO: scrapers defined as a common set of azuredevops
-		// TODO: aqp completely remove these comments if the metrics build config
-		// needs to be defined in each scraper
-		// MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
+		WebHook: WebHook{
+			ServerConfig: confighttp.ServerConfig{
+				Endpoint:     defaultEndpoint,
+				ReadTimeout:  defaultReadTimeout,
+				WriteTimeout: defaultWriteTimeout,
+			},
+			Path:       defaultPath,
+			HealthPath: defaultHealthPath,
+		},
 	}
 }
 
@@ -86,6 +99,20 @@ func createMetricsReceiver(
 		consumer,
 		addScraperOpts...,
 	)
+}
+
+// createTracesReceiver creates a trace receiver based on provided config.
+func createTracesReceiver(
+	_ context.Context,
+	set receiver.Settings,
+	cfg component.Config,
+	nextConsumer consumer.Traces,
+) (receiver.Traces, error) {
+	rCfg := cfg.(*Config)
+	if nextConsumer == nil {
+		return nil, errors.New("no nextConsumer provided")
+	}
+	return newTracesReceiver(set, rCfg, nextConsumer)
 }
 
 func createAddScraperOpts(

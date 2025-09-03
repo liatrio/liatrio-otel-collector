@@ -6,7 +6,7 @@ sem_conv_version: 1.27.0
 status:
   class: receiver
   stability:
-    development: [metrics]
+    development: [metrics, traces]
   distributions: [liatrio]
 
 resource_attributes:
