@@ -173,9 +173,6 @@ func (atr *azuredevopsTracesReceiver) createPipelineJobRootSpan(
 	return nil
 }
 
-
-
-
 func transformAzureDevOpsURL(apiURL string) string {
 	// Transform Azure DevOps API URLs to web URLs
 	htmlURL := strings.Replace(apiURL, "/_apis/", "/", 1)

@@ -12,10 +12,10 @@ import (
 
 // PipelineRunStateChangedEvent represents a ms.vss-pipelines.run-state-changed-event from Azure DevOps
 type PipelineRunStateChangedEvent struct {
-	ID             string `json:"id"`
-	EventType      string `json:"eventType"`
-	PublisherID    string `json:"publisherId"`
-	Message        struct {
+	ID          string `json:"id"`
+	EventType   string `json:"eventType"`
+	PublisherID string `json:"publisherId"`
+	Message     struct {
 		Text     string `json:"text"`
 		HTML     string `json:"html"`
 		Markdown string `json:"markdown"`
@@ -51,10 +51,10 @@ type PipelineRunStateChangedEvent struct {
 
 // PipelineStageStateChangedEvent represents a ms.vss-pipelines.stage-state-changed-event from Azure DevOps
 type PipelineStageStateChangedEvent struct {
-	ID             string `json:"id"`
-	EventType      string `json:"eventType"`
-	PublisherID    string `json:"publisherId"`
-	Message        struct {
+	ID          string `json:"id"`
+	EventType   string `json:"eventType"`
+	PublisherID string `json:"publisherId"`
+	Message     struct {
 		Text     string `json:"text"`
 		HTML     string `json:"html"`
 		Markdown string `json:"markdown"`
@@ -203,9 +203,9 @@ type PipelineJobStateChangedEvent struct {
 			Folder   string `json:"folder"`
 		} `json:"pipeline"`
 		Repositories []struct {
-			Alias string `json:"alias"`
-			ID    string `json:"id"`
-			Type  string `json:"type"`
+			Alias  string `json:"alias"`
+			ID     string `json:"id"`
+			Type   string `json:"type"`
 			Change struct {
 				Author struct {
 					Name  string    `json:"name"`
