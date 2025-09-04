@@ -133,12 +133,18 @@ func (atr *azuredevopsTracesReceiver) createPipelineStageRootSpan(
 	span := scopeSpans.Spans().AppendEmpty()
 
 	span.SetTraceID(traceID)
+	parentSpanId, err := generatePipelineSpanID(int64(event.Resource.Run.Pipeline.ID))
+	if err != nil {
+		atr.logger.Sugar().Error("failed to generate parent span ID", zap.Error(err))
+		return fmt.Errorf("failed to generate parent span ID: %w", err)
+	}
 	spanID, err := generateStageSpanID(event.Resource.Stage.ID)
 	if err != nil {
 		atr.logger.Sugar().Error("failed to generate span ID", zap.Error(err))
 		return fmt.Errorf("failed to generate span ID: %w", err)
 	}
 	span.SetSpanID(spanID)
+	span.SetParentSpanID(parentSpanId)
 	span.SetName(fmt.Sprintf("Pipeline Stage: %s", event.Resource.Stage.Name))
 	span.SetKind(ptrace.SpanKindInternal)
 	span.SetStartTimestamp(pcommon.NewTimestampFromTime(event.Resource.Run.CreatedDate))
@@ -165,12 +171,18 @@ func (atr *azuredevopsTracesReceiver) createPipelineJobRootSpan(
 	span := scopeSpans.Spans().AppendEmpty()
 
 	span.SetTraceID(traceID)
+	parentSpanId, err := generateStageSpanID(event.Resource.Stage.ID)
+	if err != nil {
+		atr.logger.Sugar().Error("failed to generate parent span ID", zap.Error(err))
+		return fmt.Errorf("failed to generate parent span ID: %w", err)
+	}
 	spanID, err := generateJobSpanID(int64(event.Resource.Run.ID), event.Resource.Job.Attempt, event.Resource.Job.Name)
 	if err != nil {
 		atr.logger.Sugar().Error("failed to generate span ID", zap.Error(err))
 		return fmt.Errorf("failed to generate span ID: %w", err)
 	}
 	span.SetSpanID(spanID)
+	span.SetParentSpanID(parentSpanId)
 	span.SetName(fmt.Sprintf("Pipeline Job: %s", event.Resource.Job.Name))
 	span.SetKind(ptrace.SpanKindInternal)
 	span.SetStartTimestamp(pcommon.NewTimestampFromTime(event.Resource.Job.StartTime))
@@ -215,23 +227,6 @@ func newTraceID(runID int64, runAttempt int) (pcommon.TraceID, error) {
 	return id, nil
 }
 
-// newParentSpanID creates a deterministic Parent Span ID based on the provided
-// runID and runAttempt. `s` is appended to the end of the input to
-// differentiate between a deterministic traceID and the parentSpanID.
-func newParentSpanID(runID int64, runAttempt int) (pcommon.SpanID, error) {
-	input := fmt.Sprintf("%d%ds", runID, runAttempt)
-	hash := sha256.Sum256([]byte(input))
-	spanIDHex := hex.EncodeToString(hash[:])
-
-	var spanID pcommon.SpanID
-	_, err := hex.Decode(spanID[:], []byte(spanIDHex[16:32]))
-	if err != nil {
-		return pcommon.SpanID{}, err
-	}
-
-	return spanID, nil
-}
-
 func generatePipelineSpanID(pipelineID int64) (pcommon.SpanID, error) {
 	input := fmt.Sprintf("pipeline_%d", pipelineID)
 	hash := sha256.Sum256([]byte(input))
@@ -260,36 +255,8 @@ func generateStageSpanID(stageID string) (pcommon.SpanID, error) {
 	return spanID, nil
 }
 
-func generateReleaseSpanID(releaseID int64) (pcommon.SpanID, error) {
-	input := fmt.Sprintf("release_%d", releaseID)
-	hash := sha256.Sum256([]byte(input))
-	spanIDHex := hex.EncodeToString(hash[:])
-
-	var spanID pcommon.SpanID
-	_, err := hex.Decode(spanID[:], []byte(spanIDHex[16:32]))
-	if err != nil {
-		return pcommon.SpanID{}, err
-	}
-
-	return spanID, nil
-}
-
 func generateJobSpanID(runID int64, runAttempt int, job string) (pcommon.SpanID, error) {
 	input := fmt.Sprintf("%d%d%s", runID, runAttempt, job)
-	hash := sha256.Sum256([]byte(input))
-	spanIDHex := hex.EncodeToString(hash[:])
-
-	var spanID pcommon.SpanID
-	_, err := hex.Decode(spanID[:], []byte(spanIDHex[16:32]))
-	if err != nil {
-		return pcommon.SpanID{}, err
-	}
-
-	return spanID, nil
-}
-
-func generateParentSpanID(runID int64, runAttempt int) (pcommon.SpanID, error) {
-	input := fmt.Sprintf("%d%ds", runID, runAttempt)
 	hash := sha256.Sum256([]byte(input))
 	spanIDHex := hex.EncodeToString(hash[:])
 

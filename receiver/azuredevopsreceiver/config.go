@@ -30,13 +30,14 @@ type Config struct {
 }
 
 type WebHook struct {
-	confighttp.ServerConfig `mapstructure:",squash"`       // squash ensures fields are correctly decoded in embedded struct
-	Path                    string                         `mapstructure:"path"`             // path for data collection. Default is /events
-	HealthPath              string                         `mapstructure:"health_path"`      // path for health check api. Default is /health_check
-	RequiredHeaders         map[string]configopaque.String `mapstructure:"required_headers"` // optional setting to set one or more required headers for all requests to have (except the health check)
-	AzureDevOpsHeaders      AzureDevOpsHeaders             `mapstructure:",squash"`          // GitLab headers set by default
-	Secret                  string                         `mapstructure:"secret"`           // secret for webhook
-	ServiceName             string                         `mapstructure:"service_name"`
+	confighttp.ServerConfig `mapstructure:",squash"` // squash ensures fields are correctly decoded in embedded struct
+	Path                    string                   `mapstructure:"path"`        // path for data collection. Default is /events
+	HealthPath              string                   `mapstructure:"health_path"` // path for health check api. Default is /health_check
+	// optional setting to set one or more required headers for all requests to have (except the health check)
+	RequiredHeaders    map[string]configopaque.String `mapstructure:"required_headers"`
+	AzureDevOpsHeaders AzureDevOpsHeaders             `mapstructure:",squash"` // GitLab headers set by default
+	Secret             string                         `mapstructure:"secret"`  // secret for webhook
+	ServiceName        string                         `mapstructure:"service_name"`
 }
 
 type AzureDevOpsHeaders struct {

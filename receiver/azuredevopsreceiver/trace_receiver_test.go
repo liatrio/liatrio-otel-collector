@@ -5,7 +5,6 @@ package azuredevopsreceiver
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 	"go.uber.org/zap/zaptest"
 
@@ -197,25 +195,5 @@ func TestGenerateTraceID(t *testing.T) {
 				require.NotEqual(t, [16]byte{}, traceID)
 			}
 		})
-	}
-}
-
-// attributeValueToString converts an attribute value to a string regardless of its actual type
-func attributeValueToString(attr pcommon.Value) string {
-	switch attr.Type() {
-	case pcommon.ValueTypeStr:
-		return attr.Str()
-	case pcommon.ValueTypeInt:
-		return strconv.FormatInt(attr.Int(), 10)
-	case pcommon.ValueTypeDouble:
-		return strconv.FormatFloat(attr.Double(), 'f', -1, 64)
-	case pcommon.ValueTypeBool:
-		return strconv.FormatBool(attr.Bool())
-	case pcommon.ValueTypeMap:
-		return "<Map Value>"
-	case pcommon.ValueTypeSlice:
-		return "<Slice Value>"
-	default:
-		return "<Unknown Value Type>"
 	}
 }

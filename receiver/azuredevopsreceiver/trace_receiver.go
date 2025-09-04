@@ -206,10 +206,7 @@ func (atr *azuredevopsTracesReceiver) validateAzureDevOpsSignature(payload []byt
 		return false
 	}
 
-	// Remove "sha256=" prefix if present
-	if strings.HasPrefix(signature, "sha256=") {
-		signature = signature[7:]
-	}
+	signature = strings.TrimPrefix(signature, "sha256=")
 
 	// Create HMAC hash
 	mac := hmac.New(sha256.New, []byte(atr.cfg.WebHook.Secret))
