@@ -103,8 +103,8 @@ func (atr *azuredevopsTracesReceiver) createPipelineRunRootSpan(
 	span.SetTraceID(traceID)
 	spanID, err := generatePipelineSpanID(int64(event.Resource.Run.Pipeline.ID))
 	if err != nil {
-		atr.logger.Sugar().Error("failed to generate span ID", zap.Error(err))
-		return fmt.Errorf("failed to generate span ID: %w", err)
+		atr.logger.Sugar().Error("failed to generate pipeline span ID", zap.Error(err))
+		return fmt.Errorf("failed to generate pipeline span ID: %w", err)
 	}
 	span.SetSpanID(spanID)
 	span.SetName(fmt.Sprintf("Pipeline Run: %s", event.Resource.Run.Pipeline.Name))
@@ -140,8 +140,8 @@ func (atr *azuredevopsTracesReceiver) createPipelineStageRootSpan(
 	}
 	spanID, err := generateStageSpanID(event.Resource.Stage.ID)
 	if err != nil {
-		atr.logger.Sugar().Error("failed to generate span ID", zap.Error(err))
-		return fmt.Errorf("failed to generate span ID: %w", err)
+		atr.logger.Sugar().Error("failed to generate stage span ID", zap.Error(err))
+		return fmt.Errorf("failed to generate stage span ID: %w", err)
 	}
 	span.SetSpanID(spanID)
 	span.SetParentSpanID(parentSpanId)
@@ -178,8 +178,8 @@ func (atr *azuredevopsTracesReceiver) createPipelineJobRootSpan(
 	}
 	spanID, err := generateJobSpanID(int64(event.Resource.Run.ID), event.Resource.Job.Attempt, event.Resource.Job.Name)
 	if err != nil {
-		atr.logger.Sugar().Error("failed to generate span ID", zap.Error(err))
-		return fmt.Errorf("failed to generate span ID: %w", err)
+		atr.logger.Sugar().Error("failed to generate job span ID", zap.Error(err))
+		return fmt.Errorf("failed to generate job span ID: %w", err)
 	}
 	span.SetSpanID(spanID)
 	span.SetParentSpanID(parentSpanId)
