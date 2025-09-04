@@ -52,7 +52,7 @@ func (atr *azuredevopsTracesReceiver) handlePipelineStageStateChanged(e *Pipelin
 		return ptrace.Traces{}, fmt.Errorf("failed to get pipeline stage attributes: %w", err)
 	}
 
-	traceID, err := newTraceID(int64(e.Resource.Run.ID), 2)
+	traceID, err := newTraceID(int64(e.Resource.Run.Pipeline.ID), 1)
 	if err != nil {
 		atr.logger.Sugar().Error("failed to generate trace ID", zap.Error(err))
 	}
@@ -77,7 +77,7 @@ func (atr *azuredevopsTracesReceiver) handlePipelineJobStateChanged(e *PipelineJ
 		return ptrace.Traces{}, fmt.Errorf("failed to get pipeline job attributes: %w", err)
 	}
 
-	traceID, err := newTraceID(int64(e.Resource.Run.ID), 3)
+	traceID, err := newTraceID(int64(e.Resource.Run.Pipeline.ID), 1)
 	if err != nil {
 		atr.logger.Sugar().Error("failed to generate trace ID", zap.Error(err))
 	}
