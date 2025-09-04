@@ -24,12 +24,14 @@ func (atr *azuredevopsTracesReceiver) handlePipelineRunStateChanged(e *PipelineR
 
 	err := atr.getPipelineRunStateChangedAttrs(resource, e)
 	if err != nil {
+		atr.logger.Sugar().Error("failed to get pipeline run attributes", zap.Error(err))
 		return ptrace.Traces{}, fmt.Errorf("failed to get pipeline run attributes: %w", err)
 	}
 
 	traceID, err := newTraceID(int64(e.Resource.Run.Pipeline.ID), 1)
 	if err != nil {
 		atr.logger.Sugar().Error("failed to generate trace ID", zap.Error(err))
+		return ptrace.Traces{}, fmt.Errorf("failed to generate trace ID: %w", err)
 	}
 
 	err = atr.createPipelineRunRootSpan(r, e, traceID)
@@ -49,12 +51,14 @@ func (atr *azuredevopsTracesReceiver) handlePipelineStageStateChanged(e *Pipelin
 
 	err := atr.getPipelineStageStateChangedAttrs(resource, e)
 	if err != nil {
+		atr.logger.Sugar().Error("failed to get pipeline stage attributes", zap.Error(err))
 		return ptrace.Traces{}, fmt.Errorf("failed to get pipeline stage attributes: %w", err)
 	}
 
 	traceID, err := newTraceID(int64(e.Resource.Run.Pipeline.ID), 1)
 	if err != nil {
 		atr.logger.Sugar().Error("failed to generate trace ID", zap.Error(err))
+		return ptrace.Traces{}, fmt.Errorf("failed to generate trace ID: %w", err)
 	}
 
 	err = atr.createPipelineStageRootSpan(r, e, traceID)
@@ -74,12 +78,14 @@ func (atr *azuredevopsTracesReceiver) handlePipelineJobStateChanged(e *PipelineJ
 
 	err := atr.getPipelineJobStateChangedAttrs(resource, e)
 	if err != nil {
+		atr.logger.Sugar().Error("failed to get pipeline job attributes", zap.Error(err))
 		return ptrace.Traces{}, fmt.Errorf("failed to get pipeline job attributes: %w", err)
 	}
 
 	traceID, err := newTraceID(int64(e.Resource.Run.Pipeline.ID), 1)
 	if err != nil {
 		atr.logger.Sugar().Error("failed to generate trace ID", zap.Error(err))
+		return ptrace.Traces{}, fmt.Errorf("failed to generate trace ID: %w", err)
 	}
 
 	err = atr.createPipelineJobRootSpan(r, e, traceID)
