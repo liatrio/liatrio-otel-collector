@@ -101,7 +101,12 @@ func (atr *azuredevopsTracesReceiver) createPipelineRunRootSpan(
 	span := scopeSpans.Spans().AppendEmpty()
 
 	span.SetTraceID(traceID)
-	span.SetSpanID(pcommon.NewSpanIDEmpty())
+	spanID, err := generatePipelineSpanID(int64(event.Resource.Run.Pipeline.ID))
+	if err != nil {
+		atr.logger.Sugar().Error("failed to generate span ID", zap.Error(err))
+		return fmt.Errorf("failed to generate span ID: %w", err)
+	}
+	span.SetSpanID(spanID)
 	span.SetName(fmt.Sprintf("Pipeline Run: %s", event.Resource.Run.Pipeline.Name))
 	span.SetKind(ptrace.SpanKindInternal)
 	span.SetStartTimestamp(pcommon.NewTimestampFromTime(event.Resource.Run.CreatedDate))
@@ -128,7 +133,12 @@ func (atr *azuredevopsTracesReceiver) createPipelineStageRootSpan(
 	span := scopeSpans.Spans().AppendEmpty()
 
 	span.SetTraceID(traceID)
-	span.SetSpanID(pcommon.NewSpanIDEmpty())
+	spanID, err := generateStageSpanID(event.Resource.Stage.ID)
+	if err != nil {
+		atr.logger.Sugar().Error("failed to generate span ID", zap.Error(err))
+		return fmt.Errorf("failed to generate span ID: %w", err)
+	}
+	span.SetSpanID(spanID)
 	span.SetName(fmt.Sprintf("Pipeline Stage: %s", event.Resource.Stage.Name))
 	span.SetKind(ptrace.SpanKindInternal)
 	span.SetStartTimestamp(pcommon.NewTimestampFromTime(event.Resource.Run.CreatedDate))
@@ -154,8 +164,14 @@ func (atr *azuredevopsTracesReceiver) createPipelineJobRootSpan(
 	scopeSpans := resourceSpans.ScopeSpans().AppendEmpty()
 	span := scopeSpans.Spans().AppendEmpty()
 
+
 	span.SetTraceID(traceID)
-	span.SetSpanID(pcommon.NewSpanIDEmpty())
+	spanID, err := generateJobSpanID(int64(event.Resource.Run.ID), event.Resource.Job.Attempt, event.Resource.Job.Name)
+	if err != nil {
+		atr.logger.Sugar().Error("failed to generate span ID", zap.Error(err))
+		return fmt.Errorf("failed to generate span ID: %w", err)
+	}
+	span.SetSpanID(spanID)
 	span.SetName(fmt.Sprintf("Pipeline Job: %s", event.Resource.Job.Name))
 	span.SetKind(ptrace.SpanKindInternal)
 	span.SetStartTimestamp(pcommon.NewTimestampFromTime(event.Resource.Job.StartTime))
@@ -229,6 +245,20 @@ func generatePipelineSpanID(pipelineID int64) (pcommon.SpanID, error) {
 	}
 
 	return spanID, nil
+}
+
+func generateStageSpanID(stageID string) (pcommon.SpanID, error) {
+    input := fmt.Sprintf("stage_%s", stageID)
+    hash := sha256.Sum256([]byte(input))
+    spanIDHex := hex.EncodeToString(hash[:])
+
+    var spanID pcommon.SpanID
+    _, err := hex.Decode(spanID[:], []byte(spanIDHex[16:32]))
+    if err != nil {
+        return pcommon.SpanID{}, err
+    }
+
+    return spanID, nil
 }
 
 func generateReleaseSpanID(releaseID int64) (pcommon.SpanID, error) {
