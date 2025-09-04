@@ -164,7 +164,6 @@ func (atr *azuredevopsTracesReceiver) createPipelineJobRootSpan(
 	scopeSpans := resourceSpans.ScopeSpans().AppendEmpty()
 	span := scopeSpans.Spans().AppendEmpty()
 
-
 	span.SetTraceID(traceID)
 	spanID, err := generateJobSpanID(int64(event.Resource.Run.ID), event.Resource.Job.Attempt, event.Resource.Job.Name)
 	if err != nil {
@@ -248,17 +247,17 @@ func generatePipelineSpanID(pipelineID int64) (pcommon.SpanID, error) {
 }
 
 func generateStageSpanID(stageID string) (pcommon.SpanID, error) {
-    input := fmt.Sprintf("stage_%s", stageID)
-    hash := sha256.Sum256([]byte(input))
-    spanIDHex := hex.EncodeToString(hash[:])
+	input := fmt.Sprintf("stage_%s", stageID)
+	hash := sha256.Sum256([]byte(input))
+	spanIDHex := hex.EncodeToString(hash[:])
 
-    var spanID pcommon.SpanID
-    _, err := hex.Decode(spanID[:], []byte(spanIDHex[16:32]))
-    if err != nil {
-        return pcommon.SpanID{}, err
-    }
+	var spanID pcommon.SpanID
+	_, err := hex.Decode(spanID[:], []byte(spanIDHex[16:32]))
+	if err != nil {
+		return pcommon.SpanID{}, err
+	}
 
-    return spanID, nil
+	return spanID, nil
 }
 
 func generateReleaseSpanID(releaseID int64) (pcommon.SpanID, error) {
