@@ -36,7 +36,7 @@ type PipelineRunStateChangedEvent struct {
 				} `json:"web"`
 			} `json:"_links"`
 			Pipeline struct {
-				ID   int    `json:"id"`
+				ID   int64  `json:"id"`
 				Name string `json:"name"`
 			} `json:"pipeline"`
 			State        string    `json:"state"`
@@ -83,8 +83,8 @@ type PipelineStageStateChangedEvent struct {
 		Run struct {
 			Pipeline struct {
 				URL      string `json:"url"`
-				ID       int    `json:"id"`
-				Revision int    `json:"revision"`
+				ID       int64  `json:"id"`
+				Revision int64  `json:"revision"`
 				Name     string `json:"name"`
 				Folder   string `json:"folder"`
 			} `json:"pipeline"`
@@ -92,13 +92,13 @@ type PipelineStageStateChangedEvent struct {
 			Result       string    `json:"result"`
 			CreatedDate  time.Time `json:"createdDate"`
 			FinishedDate time.Time `json:"finishedDate"`
-			ID           int       `json:"id"`
+			ID           int64     `json:"id"`
 			Name         string    `json:"name"`
 		} `json:"run"`
 		Pipeline struct {
 			URL      string `json:"url"`
-			ID       int    `json:"id"`
-			Revision int    `json:"revision"`
+			ID       int64  `json:"id"`
+			Revision int64  `json:"revision"`
 			Name     string `json:"name"`
 			Folder   string `json:"folder"`
 		} `json:"pipeline"`
@@ -138,7 +138,7 @@ type PipelineStageStateChangedEvent struct {
 // PipelineJobStateChangedEvent represents a ms.vss-pipelines.job-state-changed-event from Azure DevOps
 type PipelineJobStateChangedEvent struct {
 	SubscriptionID string `json:"subscriptionId"`
-	NotificationID int    `json:"notificationId"`
+	NotificationID int64  `json:"notificationId"`
 	ID             string `json:"id"`
 	EventType      string `json:"eventType"`
 	PublisherID    string `json:"publisherId"`
@@ -168,13 +168,13 @@ type PipelineJobStateChangedEvent struct {
 			Result     string    `json:"result"`
 			StartTime  time.Time `json:"startTime"`
 			FinishTime time.Time `json:"finishTime"`
-			Attempt    int       `json:"attempt"`
+			Attempt    int64     `json:"attempt"`
 		} `json:"job"`
 		Stage struct {
 			ID          string    `json:"id"`
 			Name        string    `json:"name"`
 			DisplayName string    `json:"displayName"`
-			Attempt     int       `json:"attempt"`
+			Attempt     int64     `json:"attempt"`
 			State       string    `json:"state"`
 			Result      string    `json:"result"`
 			StartTime   time.Time `json:"startTime"`
@@ -183,8 +183,8 @@ type PipelineJobStateChangedEvent struct {
 		Run struct {
 			Pipeline struct {
 				URL      string `json:"url"`
-				ID       int    `json:"id"`
-				Revision int    `json:"revision"`
+				ID       int64  `json:"id"`
+				Revision int64  `json:"revision"`
 				Name     string `json:"name"`
 				Folder   string `json:"folder"`
 			} `json:"pipeline"`
@@ -192,13 +192,13 @@ type PipelineJobStateChangedEvent struct {
 			Result       string    `json:"result"`
 			CreatedDate  time.Time `json:"createdDate"`
 			FinishedDate time.Time `json:"finishedDate"`
-			ID           int       `json:"id"`
+			ID           int64     `json:"id"`
 			Name         string    `json:"name"`
 		} `json:"run"`
 		Pipeline struct {
 			URL      string `json:"url"`
-			ID       int    `json:"id"`
-			Revision int    `json:"revision"`
+			ID       int64  `json:"id"`
+			Revision int64  `json:"revision"`
 			Name     string `json:"name"`
 			Folder   string `json:"folder"`
 		} `json:"pipeline"`

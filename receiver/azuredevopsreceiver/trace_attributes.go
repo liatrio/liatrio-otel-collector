@@ -9,8 +9,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-// getPipelineRunStateChangedAttrs gets resource attributes for Azure DevOps Pipeline Run State Changed events
-func (atr *azuredevopsTracesReceiver) getPipelineRunStateChangedAttrs(resource pcommon.Resource, event *PipelineRunStateChangedEvent) error {
+// getPipelineEventAttrs gets resource attributes for Azure DevOps Pipeline Run State Changed events
+func (atr *azuredevopsTracesReceiver) getPipelineEventAttrs(resource pcommon.Resource, event *PipelineRunStateChangedEvent) error {
 	attrs := resource.Attributes()
 
 	attrs.PutStr("cicd.pipeline.name", event.Resource.Run.Pipeline.Name)
@@ -26,8 +26,8 @@ func (atr *azuredevopsTracesReceiver) getPipelineRunStateChangedAttrs(resource p
 	return nil
 }
 
-// getPipelineStageStateChangedAttrs gets resource attributes for Azure DevOps Pipeline Stage State Changed events
-func (atr *azuredevopsTracesReceiver) getPipelineStageStateChangedAttrs(resource pcommon.Resource, event *PipelineStageStateChangedEvent) error {
+// getStageEventAttrs gets resource attributes for Azure DevOps Pipeline Stage State Changed events
+func (atr *azuredevopsTracesReceiver) getStageEventAttrs(resource pcommon.Resource, event *PipelineStageStateChangedEvent) error {
 	attrs := resource.Attributes()
 
 	attrs.PutStr("cicd.pipeline.name", event.Resource.Pipeline.Name)
@@ -59,8 +59,8 @@ func (atr *azuredevopsTracesReceiver) getPipelineStageStateChangedAttrs(resource
 	return nil
 }
 
-// getPipelineJobStateChangedAttrs gets resource attributes for Azure DevOps Pipeline Job State Changed events
-func (atr *azuredevopsTracesReceiver) getPipelineJobStateChangedAttrs(resource pcommon.Resource, event *PipelineJobStateChangedEvent) error {
+// getJobEventAttrs gets resource attributes for Azure DevOps Pipeline Job State Changed events
+func (atr *azuredevopsTracesReceiver) getJobEventAttrs(resource pcommon.Resource, event *PipelineJobStateChangedEvent) error {
 	attrs := resource.Attributes()
 
 	attrs.PutStr("cicd.pipeline.name", event.Resource.Pipeline.Name)

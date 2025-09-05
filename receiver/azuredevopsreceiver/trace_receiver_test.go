@@ -96,7 +96,7 @@ func TestEventToTracesTraces(t *testing.T) {
 							} `json:"web"`
 						} `json:"_links"`
 						Pipeline struct {
-							ID   int    `json:"id"`
+							ID   int64  `json:"id"`
 							Name string `json:"name"`
 						} `json:"pipeline"`
 						State        string    `json:"state"`
@@ -116,7 +116,7 @@ func TestEventToTracesTraces(t *testing.T) {
 							} `json:"web"`
 						} `json:"_links"`
 						Pipeline struct {
-							ID   int    `json:"id"`
+							ID   int64  `json:"id"`
 							Name string `json:"name"`
 						} `json:"pipeline"`
 						State        string    `json:"state"`
@@ -126,7 +126,7 @@ func TestEventToTracesTraces(t *testing.T) {
 						URL          string    `json:"url"`
 					}{
 						Pipeline: struct {
-							ID   int    `json:"id"`
+							ID   int64  `json:"id"`
 							Name string `json:"name"`
 						}{
 							ID:   123,
@@ -149,7 +149,7 @@ func TestEventToTracesTraces(t *testing.T) {
 			atr := &azuredevopsTracesReceiver{
 				logger: logger,
 			}
-			traces, err := atr.handlePipelineRunStateChanged(test.event.(*PipelineRunStateChangedEvent))
+			traces, err := atr.handlePipelineEvent(test.event.(*PipelineRunStateChangedEvent))
 
 			if test.expectedError != nil {
 				require.Error(t, err)
@@ -165,28 +165,25 @@ func TestEventToTracesTraces(t *testing.T) {
 
 func TestGenerateTraceID(t *testing.T) {
 	tests := []struct {
-		desc       string
-		runID      int64
-		runAttempt int
-		expectErr  bool
+		desc      string
+		runID     int64
+		expectErr bool
 	}{
 		{
-			desc:       "Valid trace ID generation",
-			runID:      123,
-			runAttempt: 1,
-			expectErr:  false,
+			desc:      "Valid trace ID generation",
+			runID:     123,
+			expectErr: false,
 		},
 		{
-			desc:       "Different run ID generates different trace ID",
-			runID:      456,
-			runAttempt: 1,
-			expectErr:  false,
+			desc:      "Different run ID generates different trace ID",
+			runID:     456,
+			expectErr: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			traceID, err := newTraceID(tc.runID, tc.runAttempt)
+			traceID, err := newTraceID(tc.runID)
 
 			if tc.expectErr {
 				require.Error(t, err)

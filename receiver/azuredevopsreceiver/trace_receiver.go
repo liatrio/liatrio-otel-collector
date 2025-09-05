@@ -167,21 +167,21 @@ func (atr *azuredevopsTracesReceiver) handleReq(w http.ResponseWriter, req *http
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-		td, err = atr.handlePipelineRunStateChanged(e)
+		td, err = atr.handlePipelineEvent(e)
 	case *PipelineStageStateChangedEvent:
 		if e.Resource.Stage.State != "completed" {
 			atr.logger.Debug("pipeline stage not complete, skipping...", zap.String("state", e.Resource.Stage.State))
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-		td, err = atr.handlePipelineStageStateChanged(e)
+		td, err = atr.handleStageEvent(e)
 	case *PipelineJobStateChangedEvent:
 		if e.Resource.Job.State != "completed" {
 			atr.logger.Debug("pipeline job not complete, skipping...", zap.String("state", e.Resource.Job.State))
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-		td, err = atr.handlePipelineJobStateChanged(e)
+		td, err = atr.handleJobEvent(e)
 	default:
 		atr.logger.Sugar().Debug("event type not supported")
 		http.Error(w, "event type not supported", http.StatusBadRequest)
