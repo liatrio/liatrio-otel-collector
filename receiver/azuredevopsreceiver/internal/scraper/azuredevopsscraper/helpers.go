@@ -4,6 +4,11 @@
 package azuredevopsscraper
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -83,4 +88,122 @@ type AzureDevOpsCommit struct {
 	Comment   string `json:"comment"`
 	URL       string `json:"url"`
 	RemoteURL string `json:"remoteUrl"`
+}
+
+// makeRequest makes an authenticated request to the Azure DevOps REST API
+func (ados *azuredevopsScraper) makeRequest(ctx context.Context, endpoint string, baseUrlModifier string) (*http.Response, error) {
+	baseModifier := ""
+	if baseUrlModifier != "" {
+		baseModifier = fmt.Sprintf("/%s/", baseUrlModifier)
+	}
+	fullURL := fmt.Sprintf("%s/%s%s/_apis/%s", ados.cfg.BaseURL, ados.cfg.Organization, baseModifier, endpoint)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", fullURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add authentication header
+	req.SetBasicAuth("", ados.cfg.PersonalAccessToken)
+	req.Header.Set("Accept", "application/json")
+
+	return ados.client.Do(req)
+}
+
+// getRepositories retrieves all repositories for a given project
+func (ados *azuredevopsScraper) getRepositories(ctx context.Context, projectID string) ([]AzureDevOpsRepository, error) {
+	resp, err := ados.makeRequest(ctx, "git/repositories?api-version=7.1", projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Value []AzureDevOpsRepository `json:"value"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	return result.Value, nil
+}
+
+// getBranches retrieves all branches for a given repository
+func (ados *azuredevopsScraper) getBranches(ctx context.Context, projectID, repoID string) ([]AzureDevOpsBranch, error) {
+	endpoint := fmt.Sprintf("git/repositories/%s/refs?api-version=7.1&filter=heads/", url.QueryEscape(repoID))
+	resp, err := ados.makeRequest(ctx, endpoint, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Value []struct {
+			Name     string `json:"name"`
+			ObjectID string `json:"objectId"`
+		} `json:"value"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	var branches []AzureDevOpsBranch
+	for _, ref := range result.Value {
+		// Extract branch name from refs/heads/branch-name
+		branchName := ref.Name
+		if len(branchName) > 11 && branchName[:11] == "refs/heads/" {
+			branchName = branchName[11:]
+		}
+
+		branches = append(branches, AzureDevOpsBranch{
+			Name:        branchName,
+			ObjectID:    ref.ObjectID,
+			CreatedDate: time.Now(), // Azure DevOps doesn't provide branch creation date directly
+		})
+	}
+
+	return branches, nil
+}
+
+// getPullRequests retrieves pull requests for a given repository
+func (ados *azuredevopsScraper) getPullRequests(ctx context.Context, projectID, repoID string) ([]AzureDevOpsPullRequest, error) {
+	// Build the endpoint with searchCriteria.minTime if LimitPullRequests is configured
+	endpoint := fmt.Sprintf("git/repositories/%s/pullrequests?api-version=7.1", url.QueryEscape(repoID))
+	
+	// Add time filter if LimitPullRequests is configured (days in the past)
+	if ados.cfg.LimitPullRequests > 0 {
+		minTime := time.Now().AddDate(0, 0, -ados.cfg.LimitPullRequests)
+		minTimeStr := minTime.Format(time.RFC3339)
+		endpoint += fmt.Sprintf("&searchCriteria.minTime=%s", url.QueryEscape(minTimeStr))
+	}
+
+	resp, err := ados.makeRequest(ctx, endpoint, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Value []AzureDevOpsPullRequest `json:"value"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	return result.Value, nil
 }

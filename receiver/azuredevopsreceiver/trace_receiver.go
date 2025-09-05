@@ -194,8 +194,8 @@ func (atr *azuredevopsTracesReceiver) handleReq(w http.ResponseWriter, req *http
 			http.Error(w, "failed to consume traces", http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
 	}
+	w.WriteHeader(http.StatusOK)
 
 	atr.obsrecv.EndTracesOp(ctx, "protobuf", td.SpanCount(), err)
 }

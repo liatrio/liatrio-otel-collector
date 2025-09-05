@@ -28,7 +28,7 @@ type Config struct {
 	// BaseURL for Azure DevOps API (defaults to https://dev.azure.com)
 	BaseURL string `mapstructure:"base_url"`
 
-	// LimitPullRequests limits the number of pull requests to fetch per repository
+	// LimitPullRequests specifies the number of days in the past to search for pull requests
 	LimitPullRequests int `mapstructure:"limit_pull_requests"`
 
 	// ConcurrencyLimit limits the number of concurrent API requests
