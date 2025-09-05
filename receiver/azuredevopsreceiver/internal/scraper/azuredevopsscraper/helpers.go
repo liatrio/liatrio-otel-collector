@@ -179,7 +179,7 @@ func (ados *azuredevopsScraper) getBranches(ctx context.Context, projectID, repo
 func (ados *azuredevopsScraper) getPullRequests(ctx context.Context, projectID, repoID string) ([]AzureDevOpsPullRequest, error) {
 	// Build the endpoint with searchCriteria.minTime if LimitPullRequests is configured
 	endpoint := fmt.Sprintf("git/repositories/%s/pullrequests?api-version=7.1", url.QueryEscape(repoID))
-	
+
 	// Add time filter if LimitPullRequests is configured (days in the past)
 	if ados.cfg.LimitPullRequests > 0 {
 		minTime := time.Now().AddDate(0, 0, -ados.cfg.LimitPullRequests)
