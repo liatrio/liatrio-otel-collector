@@ -1,0 +1,143 @@
+{
+  "subscriptionId": "c2af811a-b654-4a9b-b1a6-952fde26dbc6",
+  "notificationId": 1,
+  "id": "d5eb8d4c-dfca-4f91-a942-b45d9489ef0f",
+  "eventType": "ms.vss-pipelines.run-state-changed-event",
+  "publisherId": "pipelines",
+  "message": {
+    "text": "Run 20250903.1 in progress.",
+    "html": "Run <a href=\"https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5152\">20250903.1</a> in progress.",
+    "markdown": "Run [20250903.1](https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5152) in progress."
+  },
+  "detailedMessage": {
+    "text": "Run 20250903.1 in progress.",
+    "html": "Run <a href=\"https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5152\">20250903.1</a> in progress.",
+    "markdown": "Run [20250903.1](https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5152) in progress."
+  },
+  "resource": {
+    "projectId": "5a9cc47d-2818-4a4a-b99d-db0a28f4e08f",
+    "run": {
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_apis/pipelines/55/runs/5152"
+        },
+        "web": {
+          "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5152"
+        },
+        "pipeline.web": {
+          "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/definition?definitionId=55"
+        },
+        "pipeline": {
+          "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_apis/pipelines/55?revision=1"
+        }
+      },
+      "templateParameters": {},
+      "pipeline": {
+        "url": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_apis/pipelines/55?revision=1",
+        "id": 55,
+        "revision": 1,
+        "name": "liatrio.azure-pipelines",
+        "folder": "\\"
+      },
+      "state": "inProgress",
+      "createdDate": "2025-09-03T17:39:26.2111382Z",
+      "url": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_apis/pipelines/55/runs/5152",
+      "resources": {
+        "repositories": {
+          "self": {
+            "repository": {
+              "fullName": "liatrio/azure-pipelines",
+              "connection": {
+                "id": "f2647e1c-5591-4585-b2f6-d4179eab4bc6"
+              },
+              "type": "gitHub"
+            },
+            "refName": "refs/heads/azure-pipelines",
+            "version": "9c33bac1de43b87371817868501d6ee7b56bf3a9"
+          }
+        }
+      },
+      "id": 5152,
+      "name": "20250903.1"
+    },
+    "pipeline": {
+      "url": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_apis/pipelines/55?revision=1",
+      "id": 55,
+      "revision": 1,
+      "name": "liatrio.azure-pipelines",
+      "folder": "\\"
+    },
+    "stages": [
+      {
+        "_links": {
+          "web": {
+            "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5152"
+          },
+          "pipeline.web": {
+            "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/definition?definitionId=55"
+          }
+        },
+        "id": "96ac2280-8cb4-5df5-99de-dd2da759617d",
+        "name": "__default",
+        "displayName": "__default",
+        "attempt": 1,
+        "state": "notStarted",
+        "startTime": null
+      }
+    ],
+    "requestedBy": {
+      "displayName": "Jonathan Dorsey",
+      "url": "https://spsprodcus3.vssps.visualstudio.com/Af86eb464-2125-4b4a-a04c-7d60258377e9/_apis/Identities/6ad1a6c6-d8d7-6922-b071-7dcb9c3a7206",
+      "_links": {
+        "avatar": {
+          "href": "https://dev.azure.com/liatrio/_apis/GraphProfile/MemberAvatars/aad.NmFkMWE2YzYtZDhkNy03OTIyLWIwNzEtN2RjYjljM2E3MjA2"
+        }
+      },
+      "id": "6ad1a6c6-d8d7-6922-b071-7dcb9c3a7206",
+      "uniqueName": "jonathand@liatrio.com",
+      "imageUrl": "https://dev.azure.com/liatrio/_apis/GraphProfile/MemberAvatars/aad.NmFkMWE2YzYtZDhkNy03OTIyLWIwNzEtN2RjYjljM2E3MjA2",
+      "descriptor": "aad.NmFkMWE2YzYtZDhkNy03OTIyLWIwNzEtN2RjYjljM2E3MjA2"
+    },
+    "requestedFor": {
+      "displayName": "Jonathan Dorsey",
+      "url": "https://spsprodcus3.vssps.visualstudio.com/Af86eb464-2125-4b4a-a04c-7d60258377e9/_apis/Identities/6ad1a6c6-d8d7-6922-b071-7dcb9c3a7206",
+      "_links": {
+        "avatar": {
+          "href": "https://dev.azure.com/liatrio/_apis/GraphProfile/MemberAvatars/aad.NmFkMWE2YzYtZDhkNy03OTIyLWIwNzEtN2RjYjljM2E3MjA2"
+        }
+      },
+      "id": "6ad1a6c6-d8d7-6922-b071-7dcb9c3a7206",
+      "uniqueName": "jonathand@liatrio.com",
+      "imageUrl": "https://dev.azure.com/liatrio/_apis/GraphProfile/MemberAvatars/aad.NmFkMWE2YzYtZDhkNy03OTIyLWIwNzEtN2RjYjljM2E3MjA2",
+      "descriptor": "aad.NmFkMWE2YzYtZDhkNy03OTIyLWIwNzEtN2RjYjljM2E3MjA2"
+    },
+    "queue": {
+      "id": 9,
+      "name": "Azure Pipelines",
+      "pool": {
+        "id": 9,
+        "name": "Azure Pipelines",
+        "isHosted": true
+      }
+    },
+    "runId": 5152,
+    "runUrl": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_apis/pipelines/55/runs/5152",
+    "repositories": []
+  },
+  "resourceVersion": "5.1-preview.1",
+  "resourceContainers": {
+    "collection": {
+      "id": "543d3920-89fa-4357-bd7d-82429a368899",
+      "baseUrl": "https://dev.azure.com/liatrio/"
+    },
+    "account": {
+      "id": "f86eb464-2125-4b4a-a04c-7d60258377e9",
+      "baseUrl": "https://dev.azure.com/liatrio/"
+    },
+    "project": {
+      "id": "5a9cc47d-2818-4a4a-b99d-db0a28f4e08f",
+      "baseUrl": "https://dev.azure.com/liatrio/"
+    }
+  },
+  "createdDate": "2025-09-03T17:39:35.0428261Z"
+}

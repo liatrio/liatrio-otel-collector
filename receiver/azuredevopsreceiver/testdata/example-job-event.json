@@ -1,0 +1,139 @@
+{
+  "subscriptionId": "e91ed846-808a-4589-b64d-ae0afe6aef61",
+  "notificationId": 15,
+  "id": "55922d5c-793e-41d5-a7d9-4bbdc591ff7b",
+  "eventType": "ms.vss-pipelines.job-state-changed-event",
+  "publisherId": "pipelines",
+  "message": {
+    "text": "Run 20250905.4 stage Deploy job Deploy to Production succeeded.",
+    "html": "Run 20250905.4 stage Deploy job <a href=\"https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5168\">Deploy to Production</a> succeeded.",
+    "markdown": "Run 20250905.4 stage Deploy job [Deploy to Production](https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5168) succeeded."
+  },
+  "detailedMessage": {
+    "text": "Run 20250905.4 stage Deploy job Deploy to Production succeeded.",
+    "html": "Run 20250905.4 stage Deploy job <a href=\"https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5168\">Deploy to Production</a> succeeded.",
+    "markdown": "Run 20250905.4 stage Deploy job [Deploy to Production](https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5168) succeeded."
+  },
+  "resource": {
+    "projectId": "5a9cc47d-2818-4a4a-b99d-db0a28f4e08f",
+    "job": {
+      "_links": {
+        "web": {
+          "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5168"
+        },
+        "pipeline.web": {
+          "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/definition?definitionId=377"
+        }
+      },
+      "id": "563df155-79bb-5d6b-cf84-435946d74fed",
+      "name": "Deploy to Production",
+      "attempt": 1,
+      "state": "completed",
+      "result": "succeeded",
+      "startTime": "2025-09-05T17:22:08.5966667Z",
+      "finishTime": "2025-09-05T17:22:14.1266667Z"
+    },
+    "stage": {
+      "_links": {
+        "web": {
+          "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5168"
+        },
+        "pipeline.web": {
+          "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/definition?definitionId=377"
+        }
+      },
+      "id": "d4a9a205-d52e-57fb-7b17-15a9d984af62",
+      "name": "Deploy",
+      "displayName": "Deployment Stage",
+      "attempt": 1,
+      "state": "running",
+      "startTime": "2025-09-05T17:21:50.5066667Z"
+    },
+    "run": {
+      "_links": {
+        "self": {
+          "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_apis/pipelines/377/runs/5168"
+        },
+        "web": {
+          "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/results?buildId=5168"
+        },
+        "pipeline.web": {
+          "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_build/definition?definitionId=377"
+        },
+        "pipeline": {
+          "href": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_apis/pipelines/377?revision=1"
+        }
+      },
+      "templateParameters": {},
+      "pipeline": {
+        "url": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_apis/pipelines/377?revision=1",
+        "id": 377,
+        "revision": 1,
+        "name": "Flywheel",
+        "folder": "\\"
+      },
+      "state": "inProgress",
+      "createdDate": "2025-09-05T17:20:29.0104512Z",
+      "url": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_apis/pipelines/377/runs/5168",
+      "resources": {
+        "repositories": {
+          "self": {
+            "repository": {
+              "id": "487e28f0-8046-41cf-8eee-a566eeca25e3",
+              "type": "azureReposGit"
+            },
+            "refName": "refs/heads/master",
+            "version": "c58505db78c16b9053653861cdcbd446ef4975ab"
+          }
+        }
+      },
+      "id": 5168,
+      "name": "20250905.4"
+    },
+    "pipeline": {
+      "url": "https://dev.azure.com/liatrio/5a9cc47d-2818-4a4a-b99d-db0a28f4e08f/_apis/pipelines/377?revision=1",
+      "id": 377,
+      "revision": 1,
+      "name": "Flywheel",
+      "folder": "\\"
+    },
+    "repositories": [
+      {
+        "alias": "self",
+        "id": "487e28f0-8046-41cf-8eee-a566eeca25e3",
+        "type": "Git",
+        "change": {
+          "author": {
+            "name": "Connor Mulligan",
+            "email": "connorm@liatrio.com",
+            "date": "2025-09-04T19:40:40Z"
+          },
+          "committer": {
+            "name": "Connor Mulligan",
+            "email": "connorm@liatrio.com",
+            "date": "2025-09-04T19:40:40Z"
+          },
+          "message": "Set up CI with Azure Pipelines",
+          "version": "c58505db78c16b9053653861cdcbd446ef4975ab"
+        },
+        "url": "https://liatrio@dev.azure.com/liatrio/Flywheel/_git/Flywheel"
+      }
+    ]
+  },
+  "resourceVersion": "5.1-preview.1",
+  "resourceContainers": {
+    "collection": {
+      "id": "543d3920-89fa-4357-bd7d-82429a368899",
+      "baseUrl": "https://dev.azure.com/liatrio/"
+    },
+    "account": {
+      "id": "f86eb464-2125-4b4a-a04c-7d60258377e9",
+      "baseUrl": "https://dev.azure.com/liatrio/"
+    },
+    "project": {
+      "id": "5a9cc47d-2818-4a4a-b99d-db0a28f4e08f",
+      "baseUrl": "https://dev.azure.com/liatrio/"
+    }
+  },
+  "createdDate": "2025-09-05T17:22:23.2738994Z"
+}

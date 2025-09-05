@@ -20,11 +20,10 @@ import (
 
 func TestNewAzureDevOpsScraper(t *testing.T) {
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             "https://dev.azure.com",
-		LimitPullRequests:   100,
-		ConcurrencyLimit:    5,
+		Organization:      "test-org",
+		BaseURL:           "https://dev.azure.com",
+		LimitPullRequests: 100,
+		ConcurrencyLimit:  5,
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -39,9 +38,8 @@ func TestNewAzureDevOpsScraper(t *testing.T) {
 
 func TestAzureDevOpsScraperStart(t *testing.T) {
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             "https://dev.azure.com",
+		Organization: "test-org",
+		BaseURL:      "https://dev.azure.com",
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -54,9 +52,8 @@ func TestAzureDevOpsScraperStart(t *testing.T) {
 
 func TestMakeRequestURL(t *testing.T) {
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             "https://dev.azure.com",
+		Organization: "test-org",
+		BaseURL:      "https://dev.azure.com",
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -165,7 +162,6 @@ func TestScrapeSuccess(t *testing.T) {
 	cfg := &Config{
 		Organization:             "test-org",
 		Project:                  "test-project",
-		PersonalAccessToken:      "test-token",
 		BaseURL:                  server.URL,
 		LimitPullRequests:        100,
 		ConcurrencyLimit:         5,
@@ -188,10 +184,9 @@ func TestScrapeSuccess(t *testing.T) {
 
 func TestScrapeClientNotInitialized(t *testing.T) {
 	cfg := &Config{
-		Organization:        "test-org",
-		Project:             "test-project",
-		PersonalAccessToken: "test-token",
-		BaseURL:             "https://dev.azure.com",
+		Organization: "test-org",
+		Project:      "test-project",
+		BaseURL:      "https://dev.azure.com",
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -217,7 +212,6 @@ func TestScrapeRepositoriesError(t *testing.T) {
 	cfg := &Config{
 		Organization:             "test-org",
 		Project:                  "test-project",
-		PersonalAccessToken:      "test-token",
 		BaseURL:                  server.URL,
 		MetricsBuilderConfig:     metadata.DefaultMetricsBuilderConfig(),
 		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
@@ -253,11 +247,6 @@ func TestGetRepositoriesSuccess(t *testing.T) {
 
 	handlers := map[string]func(w http.ResponseWriter, r *http.Request){
 		"/test-org/test-project/_apis/git/repositories": func(w http.ResponseWriter, r *http.Request) {
-			// Verify authentication header
-			username, password, ok := r.BasicAuth()
-			assert.True(t, ok)
-			assert.Equal(t, "", username)
-			assert.Equal(t, "test-token", password)
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
@@ -269,9 +258,8 @@ func TestGetRepositoriesSuccess(t *testing.T) {
 	defer server.Close()
 
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             server.URL,
+		Organization: "test-org",
+		BaseURL:      server.URL,
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -297,9 +285,8 @@ func TestGetRepositoriesError(t *testing.T) {
 	defer server.Close()
 
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             server.URL,
+		Organization: "test-org",
+		BaseURL:      server.URL,
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -342,9 +329,8 @@ func TestGetBranchesSuccess(t *testing.T) {
 	defer server.Close()
 
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             server.URL,
+		Organization: "test-org",
+		BaseURL:      server.URL,
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -396,10 +382,9 @@ func TestGetPullRequestsSuccess(t *testing.T) {
 	defer server.Close()
 
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             server.URL,
-		LimitPullRequests:   30, // 30 days in the past
+		Organization:      "test-org",
+		BaseURL:           server.URL,
+		LimitPullRequests: 30, // 30 days in the past
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -434,10 +419,9 @@ func TestGetPullRequestsWithTimeFilter(t *testing.T) {
 	defer server.Close()
 
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             server.URL,
-		LimitPullRequests:   7, // 7 days in the past
+		Organization:      "test-org",
+		BaseURL:           server.URL,
+		LimitPullRequests: 7, // 7 days in the past
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -468,10 +452,9 @@ func TestGetPullRequestsWithoutTimeFilter(t *testing.T) {
 	defer server.Close()
 
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             server.URL,
-		LimitPullRequests:   0, // No time filter
+		Organization:      "test-org",
+		BaseURL:           server.URL,
+		LimitPullRequests: 0, // No time filter
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -489,12 +472,6 @@ func TestMakeRequestSuccess(t *testing.T) {
 			// Verify request headers
 			assert.Equal(t, "application/json", r.Header.Get("Accept"))
 
-			// Verify authentication
-			username, password, ok := r.BasicAuth()
-			assert.True(t, ok)
-			assert.Equal(t, "", username)
-			assert.Equal(t, "test-token", password)
-
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprint(w, `{"success": true}`)
 		},
@@ -504,9 +481,8 @@ func TestMakeRequestSuccess(t *testing.T) {
 	defer server.Close()
 
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             server.URL,
+		Organization: "test-org",
+		BaseURL:      server.URL,
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -566,7 +542,6 @@ func TestScrapeWithConcurrencyLimit(t *testing.T) {
 	cfg := &Config{
 		Organization:             "test-org",
 		Project:                  "test-project",
-		PersonalAccessToken:      "test-token",
 		BaseURL:                  server.URL,
 		ConcurrencyLimit:         1, // Test with concurrency limit of 1
 		MetricsBuilderConfig:     metadata.DefaultMetricsBuilderConfig(),
@@ -641,7 +616,6 @@ func TestScrapeWithBranchMetrics(t *testing.T) {
 	cfg := &Config{
 		Organization:             "test-org",
 		Project:                  "test-project",
-		PersonalAccessToken:      "test-token",
 		BaseURL:                  server.URL,
 		MetricsBuilderConfig:     metadata.DefaultMetricsBuilderConfig(),
 		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
@@ -683,9 +657,8 @@ func TestGetBranchesError(t *testing.T) {
 	defer server.Close()
 
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             server.URL,
+		Organization: "test-org",
+		BaseURL:      server.URL,
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -709,9 +682,8 @@ func TestGetPullRequestsError(t *testing.T) {
 	defer server.Close()
 
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             server.URL,
+		Organization: "test-org",
+		BaseURL:      server.URL,
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -736,9 +708,8 @@ func TestMakeRequestWithoutBaseUrlModifier(t *testing.T) {
 	defer server.Close()
 
 	cfg := &Config{
-		Organization:        "test-org",
-		PersonalAccessToken: "test-token",
-		BaseURL:             server.URL,
+		Organization: "test-org",
+		BaseURL:      server.URL,
 	}
 
 	settings := receivertest.NewNopSettings(metadata.Type)
@@ -809,7 +780,6 @@ func TestScrapeWithPullRequestMetrics(t *testing.T) {
 	cfg := &Config{
 		Organization:             "test-org",
 		Project:                  "test-project",
-		PersonalAccessToken:      "test-token",
 		BaseURL:                  server.URL,
 		MetricsBuilderConfig:     metadata.DefaultMetricsBuilderConfig(),
 		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),

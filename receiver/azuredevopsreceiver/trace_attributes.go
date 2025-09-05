@@ -18,7 +18,9 @@ func (atr *azuredevopsTracesReceiver) getPipelineEventAttrs(resource pcommon.Res
 	attrs.PutStr("cicd.pipeline.run.state", event.Resource.Run.State)
 	attrs.PutStr("cicd.pipeline.run.result", event.Resource.Run.Result)
 	attrs.PutStr("cicd.pipeline.run.created_date", event.Resource.Run.CreatedDate.Format(time.RFC3339))
-	attrs.PutStr("cicd.pipeline.run.finished_date", event.Resource.Run.FinishedDate.Format(time.RFC3339))
+	if event.Resource.Run.FinishedDate != nil {
+		attrs.PutStr("cicd.pipeline.run.finished_date", event.Resource.Run.FinishedDate.Format(time.RFC3339))
+	}
 	attrs.PutStr("cicd.pipeline.run.url", transformAzureDevOpsURL(event.Resource.Run.URL))
 
 	attrs.PutStr("vcs.vendor.name", "azuredevops")
@@ -36,10 +38,7 @@ func (atr *azuredevopsTracesReceiver) getStageEventAttrs(resource pcommon.Resour
 	attrs.PutStr("cicd.pipeline.stage.display_name", event.Resource.Stage.DisplayName)
 	attrs.PutStr("cicd.pipeline.stage.state", event.Resource.Stage.State)
 	attrs.PutStr("cicd.pipeline.stage.result", event.Resource.Stage.Result)
-	attrs.PutStr("cicd.pipeline.run.state", event.Resource.Run.State)
-	attrs.PutStr("cicd.pipeline.run.result", event.Resource.Run.Result)
 	attrs.PutStr("cicd.pipeline.run.created_date", event.Resource.Run.CreatedDate.Format(time.RFC3339))
-	attrs.PutStr("cicd.pipeline.run.finished_date", event.Resource.Run.FinishedDate.Format(time.RFC3339))
 
 	// Add repository information if available
 	if len(event.Resource.Repositories) > 0 {
@@ -68,19 +67,18 @@ func (atr *azuredevopsTracesReceiver) getJobEventAttrs(resource pcommon.Resource
 	attrs.PutStr("cicd.pipeline.job.name", event.Resource.Job.Name)
 	attrs.PutStr("cicd.pipeline.job.state", event.Resource.Job.State)
 	attrs.PutStr("cicd.pipeline.job.result", event.Resource.Job.Result)
-	attrs.PutStr("cicd.pipeline.job.start_time", event.Resource.Job.StartTime.Format(time.RFC3339))
-	attrs.PutStr("cicd.pipeline.job.finish_time", event.Resource.Job.FinishTime.Format(time.RFC3339))
+	if event.Resource.Job.StartTime != nil {
+		attrs.PutStr("cicd.pipeline.job.start_time", event.Resource.Job.StartTime.Format(time.RFC3339))
+	}
+	if event.Resource.Job.FinishTime != nil {
+		attrs.PutStr("cicd.pipeline.job.finish_time", event.Resource.Job.FinishTime.Format(time.RFC3339))
+	}
 	attrs.PutInt("cicd.pipeline.job.attempt", int64(event.Resource.Job.Attempt))
 
 	attrs.PutStr("cicd.pipeline.stage.name", event.Resource.Stage.Name)
 	attrs.PutStr("cicd.pipeline.stage.display_name", event.Resource.Stage.DisplayName)
-	attrs.PutStr("cicd.pipeline.stage.state", event.Resource.Stage.State)
-	attrs.PutStr("cicd.pipeline.stage.result", event.Resource.Stage.Result)
 
-	attrs.PutStr("cicd.pipeline.run.state", event.Resource.Run.State)
-	attrs.PutStr("cicd.pipeline.run.result", event.Resource.Run.Result)
 	attrs.PutStr("cicd.pipeline.run.created_date", event.Resource.Run.CreatedDate.Format(time.RFC3339))
-	attrs.PutStr("cicd.pipeline.run.finished_date", event.Resource.Run.FinishedDate.Format(time.RFC3339))
 
 	// Add repository information if available
 	if len(event.Resource.Repositories) > 0 {

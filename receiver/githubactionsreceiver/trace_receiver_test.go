@@ -63,7 +63,7 @@ func TestCreateNewTracesReceiver(t *testing.T) {
 	}
 }
 
-func TestEventToTraces(t *testing.T) {
+func TestEventToTracesTraces(t *testing.T) {
 	tests := []struct {
 		desc            string
 		payloadFilePath string

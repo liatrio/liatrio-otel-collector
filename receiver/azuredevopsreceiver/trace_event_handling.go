@@ -116,7 +116,9 @@ func (atr *azuredevopsTracesReceiver) createPipelineRootSpan(
 	span.SetName(fmt.Sprintf("Pipeline Run: %s", event.Resource.Run.Pipeline.Name))
 	span.SetKind(ptrace.SpanKindInternal)
 	span.SetStartTimestamp(pcommon.NewTimestampFromTime(event.Resource.Run.CreatedDate))
-	span.SetEndTimestamp(pcommon.NewTimestampFromTime(event.Resource.Run.FinishedDate))
+	if event.Resource.Run.FinishedDate != nil {
+		span.SetEndTimestamp(pcommon.NewTimestampFromTime(*event.Resource.Run.FinishedDate))
+	}
 
 	return nil
 }
@@ -147,7 +149,9 @@ func (atr *azuredevopsTracesReceiver) createStageEventSpan(
 	span.SetName(fmt.Sprintf("Pipeline Stage: %s", event.Resource.Stage.Name))
 	span.SetKind(ptrace.SpanKindInternal)
 	span.SetStartTimestamp(pcommon.NewTimestampFromTime(event.Resource.Run.CreatedDate))
-	span.SetEndTimestamp(pcommon.NewTimestampFromTime(event.Resource.Run.FinishedDate))
+	if event.Resource.Run.FinishedDate != nil {
+		span.SetEndTimestamp(pcommon.NewTimestampFromTime(*event.Resource.Run.FinishedDate))
+	}
 
 	return nil
 }
@@ -177,8 +181,12 @@ func (atr *azuredevopsTracesReceiver) createJobEventSpan(
 	span.SetParentSpanID(parentSpanId)
 	span.SetName(fmt.Sprintf("Pipeline Job: %s", event.Resource.Job.Name))
 	span.SetKind(ptrace.SpanKindInternal)
-	span.SetStartTimestamp(pcommon.NewTimestampFromTime(event.Resource.Job.StartTime))
-	span.SetEndTimestamp(pcommon.NewTimestampFromTime(event.Resource.Job.FinishTime))
+	if event.Resource.Job.StartTime != nil {
+		span.SetStartTimestamp(pcommon.NewTimestampFromTime(*event.Resource.Job.StartTime))
+	}
+	if event.Resource.Job.FinishTime != nil {
+		span.SetEndTimestamp(pcommon.NewTimestampFromTime(*event.Resource.Job.FinishTime))
+	}
 
 	return nil
 }

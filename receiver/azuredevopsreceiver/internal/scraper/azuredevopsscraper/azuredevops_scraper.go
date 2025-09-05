@@ -65,9 +65,11 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 	// Get repositories from the specified project
 	repos, err := ados.getRepositories(ctx, ados.cfg.Project)
 	if err != nil {
-		ados.logger.Sugar().Errorf("error getting repositories for project '%s': %v", ados.cfg.Project, err)
+		ados.logger.Sugar().Errorf("error getting repositories for project %s: %v", ados.cfg.Project, err)
 		return ados.mb.Emit(), err
 	}
+
+	ados.logger.Sugar().Infof("Found %d repositories for organization %s and project %s", len(repos), ados.cfg.Organization, ados.cfg.Project)
 
 	// Record repository count metric
 	ados.mb.RecordVcsRepositoryCountDataPoint(now, int64(len(repos)))

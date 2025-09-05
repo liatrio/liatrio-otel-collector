@@ -148,8 +148,6 @@ func (atr *azuredevopsTracesReceiver) handleReq(w http.ResponseWriter, req *http
 		}
 	}
 
-	atr.logger.Sugar().Infof("Received webhook request: %s", string(body))
-
 	// Parse the webhook payload based on event type
 	event, err := atr.parseAzureDevOpsWebhook(body)
 	if err != nil {
