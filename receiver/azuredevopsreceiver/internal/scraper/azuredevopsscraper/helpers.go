@@ -103,8 +103,6 @@ func (ados *azuredevopsScraper) makeRequest(ctx context.Context, endpoint string
 		return nil, err
 	}
 
-	// // Add authentication header
-	// req.SetBasicAuth("", ados.cfg.PersonalAccessToken)
 	req.Header.Set("Accept", "application/json")
 
 	return ados.client.Do(req)
