@@ -41,6 +41,7 @@ The time duration a change (pull request/merge request/changelist) has been in a
 
 | Name | Description | Values | Optional |
 | ---- | ----------- | ------ | -------- |
+| vcs.repository.change.id | The unique identifier of the VCS change (pull request). | Any Str | false |
 | vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | false |
 | vcs.repository.name | The name of the VCS repository. | Any Str | false |
 | vcs.repository.id | The unique identifier of the VCS repository. | Any Str | false |
@@ -59,6 +60,7 @@ The amount of time it took a change (pull request) to go from open to approved.
 
 | Name | Description | Values | Optional |
 | ---- | ----------- | ------ | -------- |
+| vcs.repository.change.id | The unique identifier of the VCS change (pull request). | Any Str | false |
 | vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | false |
 | vcs.repository.name | The name of the VCS repository. | Any Str | false |
 | vcs.repository.id | The unique identifier of the VCS repository. | Any Str | false |
@@ -76,6 +78,7 @@ The amount of time it took a change (pull request) to go from open to merged.
 
 | Name | Description | Values | Optional |
 | ---- | ----------- | ------ | -------- |
+| vcs.repository.change.id | The unique identifier of the VCS change (pull request). | Any Str | false |
 | vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | false |
 | vcs.repository.name | The name of the VCS repository. | Any Str | false |
 | vcs.repository.id | The unique identifier of the VCS repository. | Any Str | false |
