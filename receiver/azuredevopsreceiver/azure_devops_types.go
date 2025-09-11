@@ -156,8 +156,8 @@ type PipelineRunStateChangedEvent struct {
 				IsHosted bool   `json:"isHosted"`
 			} `json:"pool"`
 		} `json:"queue"`
-		RunID        int64                   `json:"runId"`
-		RunURL       string                  `json:"runUrl"`
+		RunID        int64                          `json:"runId"`
+		RunURL       string                         `json:"runUrl"`
 		Repositories []AzureDevOpsWebhookRepository `json:"repositories"`
 	} `json:"resource"`
 	ResourceVersion    string `json:"resourceVersion"`
@@ -262,10 +262,10 @@ type PipelineStageStateChangedEvent struct {
 			Name     string `json:"name"`
 			Folder   string `json:"folder"`
 		} `json:"pipeline"`
-		RunID        int64                   `json:"runId"`
-		StageName    string                  `json:"stageName"`
-		RunURL       string                  `json:"runUrl"`
-		ProjectID    string                  `json:"projectId"`
+		RunID        int64                          `json:"runId"`
+		StageName    string                         `json:"stageName"`
+		RunURL       string                         `json:"runUrl"`
+		ProjectID    string                         `json:"projectId"`
 		Repositories []AzureDevOpsWebhookRepository `json:"repositories"`
 	} `json:"resource"`
 	ResourceVersion    string `json:"resourceVersion"`
