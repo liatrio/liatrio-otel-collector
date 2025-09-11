@@ -12,6 +12,13 @@ import (
 	"time"
 )
 
+const (
+	// Azure DevOps Endpoints
+	repositoriesEndpoint = "git/repositories?api-version=7.1"
+	branchesEndpoint     = "git/repositories/%s/refs?api-version=7.1&filter=heads/"
+	pullRequestsEndpoint = "git/repositories/%s/pullrequests?api-version=7.1"
+)
+
 // AzureDevOpsProject represents a project in Azure DevOps
 type AzureDevOpsProject struct {
 	ID             string    `json:"id"`
@@ -110,7 +117,7 @@ func (ados *azuredevopsScraper) makeRequest(ctx context.Context, endpoint string
 
 // getRepositories retrieves all repositories for a given project
 func (ados *azuredevopsScraper) getRepositories(ctx context.Context, projectID string) ([]AzureDevOpsRepository, error) {
-	resp, err := ados.makeRequest(ctx, "git/repositories?api-version=7.1", projectID)
+	resp, err := ados.makeRequest(ctx, repositoriesEndpoint, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +140,7 @@ func (ados *azuredevopsScraper) getRepositories(ctx context.Context, projectID s
 
 // getBranches retrieves all branches for a given repository
 func (ados *azuredevopsScraper) getBranches(ctx context.Context, projectID, repoID string) ([]AzureDevOpsBranch, error) {
-	endpoint := fmt.Sprintf("git/repositories/%s/refs?api-version=7.1&filter=heads/", url.QueryEscape(repoID))
+	endpoint := fmt.Sprintf(branchesEndpoint, url.QueryEscape(repoID))
 	resp, err := ados.makeRequest(ctx, endpoint, projectID)
 	if err != nil {
 		return nil, err
@@ -176,7 +183,7 @@ func (ados *azuredevopsScraper) getBranches(ctx context.Context, projectID, repo
 // getPullRequests retrieves pull requests for a given repository
 func (ados *azuredevopsScraper) getPullRequests(ctx context.Context, projectID, repoID string) ([]AzureDevOpsPullRequest, error) {
 	// Build the endpoint with searchCriteria.minTime if LimitPullRequests is configured
-	endpoint := fmt.Sprintf("git/repositories/%s/pullrequests?api-version=7.1", url.QueryEscape(repoID))
+	endpoint := fmt.Sprintf(pullRequestsEndpoint, url.QueryEscape(repoID))
 
 	// Add time filter if LimitPullRequests is configured (days in the past)
 	if ados.cfg.LimitPullRequests > 0 {
