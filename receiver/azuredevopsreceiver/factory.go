@@ -124,7 +124,7 @@ func createAddScraperOpts(
 	scraperControllerOptions := make([]scraperhelper.ControllerOption, 0, len(cfg.Scrapers))
 
 	for key, cfg := range cfg.Scrapers {
-		azuredevopsscraper, err := createazuredevopsScraper(ctx, params, key, cfg, factories)
+		azuredevopsscraper, err := createAzureDevOpsScraper(ctx, params, key, cfg, factories)
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to create scraper %q: %w", key, err)
@@ -136,7 +136,7 @@ func createAddScraperOpts(
 	return scraperControllerOptions, nil
 }
 
-func createazuredevopsScraper(
+func createAzureDevOpsScraper(
 	ctx context.Context,
 	params receiver.Settings,
 	key string,
