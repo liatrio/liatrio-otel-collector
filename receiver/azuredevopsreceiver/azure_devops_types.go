@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-// AzureDevOpsRepository represents a repository in Azure DevOps webhook events
-type AzureDevOpsRepository struct {
+// AzureDevOpsWebhookRepository represents a repository in Azure DevOps webhook events
+type AzureDevOpsWebhookRepository struct {
 	Alias  string `json:"alias"`
 	ID     string `json:"id"`
 	Type   string `json:"type"`
@@ -158,7 +158,7 @@ type PipelineRunStateChangedEvent struct {
 		} `json:"queue"`
 		RunID        int64                   `json:"runId"`
 		RunURL       string                  `json:"runUrl"`
-		Repositories []AzureDevOpsRepository `json:"repositories"`
+		Repositories []AzureDevOpsWebhookRepository `json:"repositories"`
 	} `json:"resource"`
 	ResourceVersion    string `json:"resourceVersion"`
 	ResourceContainers struct {
@@ -266,7 +266,7 @@ type PipelineStageStateChangedEvent struct {
 		StageName    string                  `json:"stageName"`
 		RunURL       string                  `json:"runUrl"`
 		ProjectID    string                  `json:"projectId"`
-		Repositories []AzureDevOpsRepository `json:"repositories"`
+		Repositories []AzureDevOpsWebhookRepository `json:"repositories"`
 	} `json:"resource"`
 	ResourceVersion    string `json:"resourceVersion"`
 	ResourceContainers struct {
@@ -388,7 +388,7 @@ type PipelineJobStateChangedEvent struct {
 			Name     string `json:"name"`
 			Folder   string `json:"folder"`
 		} `json:"pipeline"`
-		Repositories []AzureDevOpsRepository `json:"repositories"`
+		Repositories []AzureDevOpsWebhookRepository `json:"repositories"`
 	} `json:"resource"`
 	ResourceVersion    string `json:"resourceVersion"`
 	ResourceContainers struct {
