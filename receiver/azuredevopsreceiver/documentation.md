@@ -96,7 +96,7 @@ The number of refs of type branch in a repository.
 | vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | false |
 | vcs.repository.name | The name of the VCS repository. | Any Str | false |
 | vcs.repository.id | The unique identifier of the VCS repository. | Any Str | false |
-| vcs.ref.head.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | false |
+| vcs.ref.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | false |
 
 ### vcs.ref.lines_delta
 
@@ -114,7 +114,7 @@ The number of lines added/removed in a ref (branch) relative to the default bran
 | vcs.repository.name | The name of the VCS repository. | Any Str | false |
 | vcs.repository.id | The unique identifier of the VCS repository. | Any Str | false |
 | vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | false |
-| vcs.ref.head.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | false |
+| vcs.ref.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | false |
 | vcs.line_change.type | The type of line change being measured on a ref (branch). | Str: ``added``, ``removed`` | false |
 
 ### vcs.ref.revisions_delta
@@ -133,12 +133,12 @@ The number of revisions (commits) a ref (branch) is ahead/behind the branch from
 | vcs.repository.name | The name of the VCS repository. | Any Str | false |
 | vcs.repository.id | The unique identifier of the VCS repository. | Any Str | false |
 | vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | false |
-| vcs.ref.head.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | false |
+| vcs.ref.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | false |
 | vcs.revision_delta.direction | The type of revision comparison. | Str: ``ahead``, ``behind`` | false |
 
 ### vcs.ref.time
 
-Time a ref (branch) created from the default branch (trunk) has existed. The `vcs.ref.head.type` attribute will always be `branch`.
+Time a ref (branch) created from the default branch (trunk) has existed. The `vcs.ref.type` attribute will always be `branch`.
 
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
@@ -152,7 +152,7 @@ Time a ref (branch) created from the default branch (trunk) has existed. The `vc
 | vcs.repository.name | The name of the VCS repository. | Any Str | false |
 | vcs.repository.id | The unique identifier of the VCS repository. | Any Str | false |
 | vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | false |
-| vcs.ref.head.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | false |
+| vcs.ref.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | false |
 
 ### vcs.repository.count
 
