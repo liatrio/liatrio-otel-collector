@@ -1,7 +1,7 @@
 ---
 type: azuredevops
 
-sem_conv_version: 1.27.0
+sem_conv_version: 1.37.0
 
 status:
   class: receiver
@@ -10,11 +10,11 @@ status:
   distributions: [liatrio]
 
 resource_attributes:
-  organization.name:
+  vcs.owner.name:
     enabled: true
     description: VCS Organization
     type: string
-  vcs.vendor.name:
+  vcs.provider.name:
     enabled: true
     description: The name of the VCS vendor/provider (ie. azuredevops)
     type: string
