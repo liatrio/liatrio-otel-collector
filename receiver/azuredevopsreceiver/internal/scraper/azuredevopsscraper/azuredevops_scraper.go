@@ -108,7 +108,7 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 			}
 
 			mux.Lock()
-			refType := metadata.AttributeVcsRefHeadTypeBranch
+			refType := metadata.AttributeVcsRefTypeBranch
 			ados.mb.RecordVcsRefCountDataPoint(now, int64(len(branches)), repo.WebURL, repo.Name, repo.ID, refType)
 			mux.Unlock()
 
@@ -159,8 +159,8 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 	ados.logger.Sugar().Infof("Finished processing Azure DevOps project %s in org %s", ados.cfg.Project, ados.cfg.Organization)
 
 	// Set resource attributes
-	ados.rb.SetVcsVendorName("azuredevops")
-	ados.rb.SetOrganizationName(ados.cfg.Organization)
+	ados.rb.SetVcsProviderName("azuredevops")
+	ados.rb.SetVcsOwnerName(ados.cfg.Organization)
 
 	res := ados.rb.Emit()
 	return ados.mb.Emit(metadata.WithResource(res)), nil

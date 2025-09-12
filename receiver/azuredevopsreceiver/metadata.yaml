@@ -72,10 +72,10 @@ metrics:
     gauge:
       value_type: int
     attributes:
-      [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.type]
+      [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.type]
   vcs.ref.time:
     enabled: true
-    description: Time a ref (branch) created from the default branch (trunk) has existed. The `vcs.ref.head.type` attribute will always be `branch`.
+    description: Time a ref (branch) created from the default branch (trunk) has existed. The `vcs.ref.type` attribute will always be `branch`.
     unit: s
     gauge:
       value_type: int
@@ -85,7 +85,7 @@ metrics:
         vcs.repository.name,
         vcs.repository.id,
         vcs.ref.head.name,
-        vcs.ref.head.type,
+        vcs.ref.type,
       ]
   vcs.ref.revisions_delta:
     enabled: true
@@ -99,7 +99,7 @@ metrics:
         vcs.repository.name,
         vcs.repository.id,
         vcs.ref.head.name,
-        vcs.ref.head.type,
+        vcs.ref.type,
         vcs.revision_delta.direction,
       ]
   vcs.ref.lines_delta:
@@ -114,7 +114,7 @@ metrics:
         vcs.repository.name,
         vcs.repository.id,
         vcs.ref.head.name,
-        vcs.ref.head.type,
+        vcs.ref.type,
         vcs.line_change.type,
       ]
   vcs.contributor.count:
