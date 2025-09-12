@@ -192,5 +192,5 @@ The number of unique contributors to a repository.
 
 | Name | Description | Values | Enabled |
 | ---- | ----------- | ------ | ------- |
-| organization.name | VCS Organization | Any Str | true |
-| vcs.vendor.name | The name of the VCS vendor/provider (ie. azuredevops) | Any Str | true |
+| vcs.owner.name | VCS Organization | Any Str | true |
+| vcs.provider.name | The name of the VCS vendor/provider (ie. azuredevops) | Any Str | true |

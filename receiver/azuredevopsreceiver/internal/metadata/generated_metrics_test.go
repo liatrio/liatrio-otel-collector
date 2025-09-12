@@ -108,8 +108,8 @@ func TestMetricsBuilder(t *testing.T) {
 			mb.RecordVcsRepositoryCountDataPoint(ts, 1)
 
 			rb := mb.NewResourceBuilder()
-			rb.SetOrganizationName("organization.name-val")
-			rb.SetVcsVendorName("vcs.vendor.name-val")
+			rb.SetVcsOwnerName("vcs.owner.name-val")
+			rb.SetVcsProviderName("vcs.provider.name-val")
 			res := rb.Emit()
 			metrics := mb.Emit(WithResource(res))
 
