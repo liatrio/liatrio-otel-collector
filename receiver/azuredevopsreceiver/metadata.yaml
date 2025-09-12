@@ -32,7 +32,7 @@ attributes:
   vcs.ref.head.name:
     description: The name of the VCS head reference (branch).
     type: string
-  vcs.ref.head.type:
+  vcs.ref.type:
     description: The type of the head reference (branch, tag).
     type: string
     enum:
