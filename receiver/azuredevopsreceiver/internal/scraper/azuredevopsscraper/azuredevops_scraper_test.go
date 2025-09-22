@@ -637,11 +637,11 @@ func TestScrapeWithBranchMetrics(t *testing.T) {
 	// Check that resource attributes are set correctly
 	resource := resourceMetrics.At(0).Resource()
 	attrs := resource.Attributes()
-	vendorName, exists := attrs.Get("vcs.vendor.name")
+	vendorName, exists := attrs.Get("vcs.provider.name")
 	assert.True(t, exists)
 	assert.Equal(t, "azuredevops", vendorName.Str())
 
-	orgName, exists := attrs.Get("organization.name")
+	orgName, exists := attrs.Get("vcs.owner.name")
 	assert.True(t, exists)
 	assert.Equal(t, "test-org", orgName.Str())
 }

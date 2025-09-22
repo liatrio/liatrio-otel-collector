@@ -77,6 +77,6 @@ func TestPipelineJobStateChangedEventUnmarshal(t *testing.T) {
 	assert.Equal(t, "self", repo.Alias)
 	assert.Equal(t, "487e28f0-8046-41cf-8eee-a566eeca25e3", repo.ID)
 	assert.Equal(t, "Git", repo.Type)
-	assert.Equal(t, "Connor Mulligan", repo.Change.Author.Name)
-	assert.Equal(t, "connorm@liatrio.com", repo.Change.Author.Email)
+	assert.Equal(t, "Example User", repo.Change.Author.Name)
+	assert.Equal(t, "user@example.com", repo.Change.Author.Email)
 }
