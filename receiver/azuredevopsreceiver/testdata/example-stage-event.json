@@ -1,5 +1,5 @@
 {
-  "subscriptionId": "641cb57a-9bed-403b-8772-3ad075e97738",
+  "subscriptionId": "12345678-1234-1234-1234-123456789ghi",
   "notificationId": 20,
   "id": "2f7a77d6-bcac-42cd-bae7-9098659a8a32",
   "eventType": "ms.vss-pipelines.stage-state-changed-event",
@@ -92,19 +92,19 @@
         "type": "Git",
         "change": {
           "author": {
-            "name": "Connor Mulligan",
-            "email": "connorm@liatrio.com",
+            "name": "Example User",
+            "email": "user@example.com",
             "date": "2025-09-04T19:40:40Z"
           },
           "committer": {
-            "name": "Connor Mulligan",
-            "email": "connorm@liatrio.com",
+            "name": "Example User",
+            "email": "user@example.com",
             "date": "2025-09-04T19:40:40Z"
           },
           "message": "Set up CI with Azure Pipelines",
           "version": "c58505db78c16b9053653861cdcbd446ef4975ab"
         },
-        "url": "https://liatrio@dev.azure.com/liatrio/Flywheel/_git/Flywheel"
+        "url": "https://example-org@dev.azure.com/example-org/example-project/_git/example-repo"
       }
     ]
   },
