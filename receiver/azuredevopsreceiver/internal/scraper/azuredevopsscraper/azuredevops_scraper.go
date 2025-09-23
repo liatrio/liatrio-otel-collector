@@ -118,17 +118,44 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 					continue
 				}
 
-				// Calculate branch age
-				if !branch.CreatedDate.IsZero() {
-					branchAge := time.Since(branch.CreatedDate).Seconds()
+				// Calculate branch age by finding the initial commit that diverged from default branch
+				commit, err := ados.getInitialCommit(ctx, ados.cfg.Project, repo.ID, repo.DefaultBranch, branch.Name)
+				if err != nil {
+					ados.logger.Sugar().Errorf("error getting initial commit for repo '%s' and branch '%s': %v", repo.Name, branch.Name, err)
+				}
+
+				if commit != nil {
+					branchAge := time.Since(commit.Author.Date).Seconds()
 					mux.Lock()
 					ados.mb.RecordVcsRefTimeDataPoint(now, int64(branchAge), repo.WebURL, repo.Name, repo.ID, branch.Name, refType)
 					mux.Unlock()
 				}
 			}
 
+			latestBuildId, err := ados.getLatestBuildId(ctx, ados.cfg.Project, repo.ID, repo.DefaultBranch)
+			if err != nil {
+				ados.logger.Sugar().Errorf("error getting latest build id for repo '%s': %v", repo.Name, err)
+			}
+
+			if latestBuildId != "" {
+				coveragePercentage, err := ados.getCodeCoverageForBuild(ctx, ados.cfg.Project, latestBuildId)
+				if err != nil {
+					ados.logger.Sugar().Errorf("error getting code coverage for build '%s': %v", latestBuildId, err)
+				}
+				ados.logger.Sugar().Infof("Recording '%d%%' code coverage for build '%s' in repo '%s'", coveragePercentage, latestBuildId, repo.Name)
+				ados.mb.RecordVcsCodeCoverageDataPoint(
+					now,
+					coveragePercentage,
+					repo.WebURL,
+					repo.Name,
+					repo.ID,
+					repo.DefaultBranch,
+					metadata.AttributeVcsRefHeadTypeBranch,
+				)
+			}
+
 			// Get pull requests for this repository
-			pullRequests, err := ados.getPullRequests(ctx, ados.cfg.Project, repo.ID)
+			pullRequests, err := ados.getCombinedPullRequests(ctx, ados.cfg.Project, repo.ID)
 			if err != nil {
 				ados.logger.Sugar().Errorf("error getting pull requests for repo '%s': %v", repo.Name, err)
 				return
@@ -137,12 +164,13 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 			// Process pull request metrics
 			for _, pr := range pullRequests {
 				mux.Lock()
-				if pr.Status == "completed" {
+				switch pr.Status {
+				case "completed":
 					if !pr.ClosedDate.IsZero() && !pr.CreationDate.IsZero() {
 						timeToMerge := int64(pr.ClosedDate.Sub(pr.CreationDate).Seconds())
 						ados.mb.RecordVcsChangeTimeToMergeDataPoint(now, timeToMerge, repo.WebURL, repo.Name, repo.ID, pr.SourceRefName)
 					}
-				} else if pr.Status == "active" {
+				case "active":
 					if !pr.CreationDate.IsZero() {
 						prAge := int64(time.Since(pr.CreationDate).Seconds())
 						ados.mb.RecordVcsChangeDurationDataPoint(now, prAge, repo.WebURL, repo.Name, repo.ID,

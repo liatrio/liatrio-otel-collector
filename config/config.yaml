@@ -34,6 +34,7 @@ receivers:
         organization: ${env:ADO_ORG}
         project: ${env:ADO_PROJECT}
         base_url: https://dev.azure.com
+        # search_query: ${env:SEARCH_QUERY} #Recommended optional query override
         auth:
           authenticator: bearertokenauth/azuredevops
     webhook:
@@ -53,7 +54,7 @@ receivers:
           #   enabled: true
           #   ...
         gitlab_org: ${env:GL_ORG}
-        # search_query: ${env:SEARCH_QUERY}  #Recommended optional query override, defaults to "{org,user}:<github_org>"
+        # search_query: ${env:SEARCH_QUERY} #Recommended optional query override
         # endpoint: https://selfmanagedenterpriseserver.com
         auth:
           authenticator: bearertokenauth/gitlab

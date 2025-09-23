@@ -65,6 +65,32 @@ var MapAttributeVcsLineChangeType = map[string]AttributeVcsLineChangeType{
 	"removed": AttributeVcsLineChangeTypeRemoved,
 }
 
+// AttributeVcsRefHeadType specifies the value vcs.ref.head.type attribute.
+type AttributeVcsRefHeadType int
+
+const (
+	_ AttributeVcsRefHeadType = iota
+	AttributeVcsRefHeadTypeBranch
+	AttributeVcsRefHeadTypeTag
+)
+
+// String returns the string representation of the AttributeVcsRefHeadType.
+func (av AttributeVcsRefHeadType) String() string {
+	switch av {
+	case AttributeVcsRefHeadTypeBranch:
+		return "branch"
+	case AttributeVcsRefHeadTypeTag:
+		return "tag"
+	}
+	return ""
+}
+
+// MapAttributeVcsRefHeadType is a helper map of string to AttributeVcsRefHeadType attribute value.
+var MapAttributeVcsRefHeadType = map[string]AttributeVcsRefHeadType{
+	"branch": AttributeVcsRefHeadTypeBranch,
+	"tag":    AttributeVcsRefHeadTypeTag,
+}
+
 // AttributeVcsRefType specifies the value vcs.ref.type attribute.
 type AttributeVcsRefType int
 
@@ -130,6 +156,9 @@ var MetricsInfo = metricsInfo{
 	VcsChangeTimeToMerge: metricInfo{
 		Name: "vcs.change.time_to_merge",
 	},
+	VcsCodeCoverage: metricInfo{
+		Name: "vcs.code_coverage",
+	},
 	VcsContributorCount: metricInfo{
 		Name: "vcs.contributor.count",
 	},
@@ -155,6 +184,7 @@ type metricsInfo struct {
 	VcsChangeDuration       metricInfo
 	VcsChangeTimeToApproval metricInfo
 	VcsChangeTimeToMerge    metricInfo
+	VcsCodeCoverage         metricInfo
 	VcsContributorCount     metricInfo
 	VcsRefCount             metricInfo
 	VcsRefLinesDelta        metricInfo
@@ -377,6 +407,61 @@ func (m *metricVcsChangeTimeToMerge) emit(metrics pmetric.MetricSlice) {
 
 func newMetricVcsChangeTimeToMerge(cfg MetricConfig) metricVcsChangeTimeToMerge {
 	m := metricVcsChangeTimeToMerge{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricVcsCodeCoverage struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills vcs.code_coverage metric with initial data.
+func (m *metricVcsCodeCoverage) init() {
+	m.data.SetName("vcs.code_coverage")
+	m.data.SetDescription("The code coverage percentage of a ref (branch).")
+	m.data.SetUnit("%")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricVcsCodeCoverage) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefHeadTypeAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("vcs.repository.url.full", vcsRepositoryURLFullAttributeValue)
+	dp.Attributes().PutStr("vcs.repository.name", vcsRepositoryNameAttributeValue)
+	dp.Attributes().PutStr("vcs.repository.id", vcsRepositoryIDAttributeValue)
+	dp.Attributes().PutStr("vcs.ref.head.name", vcsRefHeadNameAttributeValue)
+	dp.Attributes().PutStr("vcs.ref.head.type", vcsRefHeadTypeAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricVcsCodeCoverage) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricVcsCodeCoverage) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricVcsCodeCoverage(cfg MetricConfig) metricVcsCodeCoverage {
+	m := metricVcsCodeCoverage{config: cfg}
 	if cfg.Enabled {
 		m.data = pmetric.NewMetric()
 		m.init()
@@ -721,6 +806,7 @@ type MetricsBuilder struct {
 	metricVcsChangeDuration        metricVcsChangeDuration
 	metricVcsChangeTimeToApproval  metricVcsChangeTimeToApproval
 	metricVcsChangeTimeToMerge     metricVcsChangeTimeToMerge
+	metricVcsCodeCoverage          metricVcsCodeCoverage
 	metricVcsContributorCount      metricVcsContributorCount
 	metricVcsRefCount              metricVcsRefCount
 	metricVcsRefLinesDelta         metricVcsRefLinesDelta
@@ -756,6 +842,7 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, opt
 		metricVcsChangeDuration:        newMetricVcsChangeDuration(mbc.Metrics.VcsChangeDuration),
 		metricVcsChangeTimeToApproval:  newMetricVcsChangeTimeToApproval(mbc.Metrics.VcsChangeTimeToApproval),
 		metricVcsChangeTimeToMerge:     newMetricVcsChangeTimeToMerge(mbc.Metrics.VcsChangeTimeToMerge),
+		metricVcsCodeCoverage:          newMetricVcsCodeCoverage(mbc.Metrics.VcsCodeCoverage),
 		metricVcsContributorCount:      newMetricVcsContributorCount(mbc.Metrics.VcsContributorCount),
 		metricVcsRefCount:              newMetricVcsRefCount(mbc.Metrics.VcsRefCount),
 		metricVcsRefLinesDelta:         newMetricVcsRefLinesDelta(mbc.Metrics.VcsRefLinesDelta),
@@ -851,6 +938,7 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	mb.metricVcsChangeDuration.emit(ils.Metrics())
 	mb.metricVcsChangeTimeToApproval.emit(ils.Metrics())
 	mb.metricVcsChangeTimeToMerge.emit(ils.Metrics())
+	mb.metricVcsCodeCoverage.emit(ils.Metrics())
 	mb.metricVcsContributorCount.emit(ils.Metrics())
 	mb.metricVcsRefCount.emit(ils.Metrics())
 	mb.metricVcsRefLinesDelta.emit(ils.Metrics())
@@ -906,6 +994,11 @@ func (mb *MetricsBuilder) RecordVcsChangeTimeToApprovalDataPoint(ts pcommon.Time
 // RecordVcsChangeTimeToMergeDataPoint adds a data point to vcs.change.time_to_merge metric.
 func (mb *MetricsBuilder) RecordVcsChangeTimeToMergeDataPoint(ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string) {
 	mb.metricVcsChangeTimeToMerge.recordDataPoint(mb.startTime, ts, val, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryIDAttributeValue, vcsRefHeadNameAttributeValue)
+}
+
+// RecordVcsCodeCoverageDataPoint adds a data point to vcs.code_coverage metric.
+func (mb *MetricsBuilder) RecordVcsCodeCoverageDataPoint(ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefHeadTypeAttributeValue AttributeVcsRefHeadType) {
+	mb.metricVcsCodeCoverage.recordDataPoint(mb.startTime, ts, val, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryIDAttributeValue, vcsRefHeadNameAttributeValue, vcsRefHeadTypeAttributeValue.String())
 }
 
 // RecordVcsContributorCountDataPoint adds a data point to vcs.contributor.count metric.

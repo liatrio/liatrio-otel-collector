@@ -391,7 +391,7 @@ func TestGetPullRequestsSuccess(t *testing.T) {
 	scraper := newAzureDevOpsScraper(context.Background(), settings, cfg)
 	scraper.client = &http.Client{}
 
-	prs, err := scraper.getPullRequests(context.Background(), "test-project", "repo-1")
+	prs, err := scraper.getPullRequests(context.Background(), "test-project", "repo-1", "completed", time.Time{})
 	require.NoError(t, err)
 	assert.Len(t, prs, 1)
 	assert.Equal(t, 1, prs[0].PullRequestID)
@@ -428,7 +428,7 @@ func TestGetPullRequestsWithTimeFilter(t *testing.T) {
 	scraper := newAzureDevOpsScraper(context.Background(), settings, cfg)
 	scraper.client = &http.Client{}
 
-	prs, err := scraper.getPullRequests(context.Background(), "test-project", "repo-1")
+	prs, err := scraper.getPullRequests(context.Background(), "test-project", "repo-1", "completed", time.Time{})
 	require.NoError(t, err)
 	assert.Len(t, prs, 0)
 }
@@ -461,7 +461,7 @@ func TestGetPullRequestsWithoutTimeFilter(t *testing.T) {
 	scraper := newAzureDevOpsScraper(context.Background(), settings, cfg)
 	scraper.client = &http.Client{}
 
-	prs, err := scraper.getPullRequests(context.Background(), "test-project", "repo-1")
+	prs, err := scraper.getPullRequests(context.Background(), "test-project", "repo-1", "completed", time.Time{})
 	require.NoError(t, err)
 	assert.Len(t, prs, 0)
 }
@@ -690,7 +690,7 @@ func TestGetPullRequestsError(t *testing.T) {
 	scraper := newAzureDevOpsScraper(context.Background(), settings, cfg)
 	scraper.client = &http.Client{}
 
-	prs, err := scraper.getPullRequests(context.Background(), "test-project", "repo-1")
+	prs, err := scraper.getPullRequests(context.Background(), "test-project", "repo-1", "completed", time.Time{})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "API request failed with status 403")
 	assert.Nil(t, prs)

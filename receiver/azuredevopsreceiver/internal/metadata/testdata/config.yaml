@@ -9,6 +9,8 @@ all_set:
       enabled: true
     vcs.change.time_to_merge:
       enabled: true
+    vcs.code_coverage:
+      enabled: true
     vcs.contributor.count:
       enabled: true
     vcs.ref.count:
@@ -35,6 +37,8 @@ none_set:
     vcs.change.time_to_approval:
       enabled: false
     vcs.change.time_to_merge:
+      enabled: false
+    vcs.code_coverage:
       enabled: false
     vcs.contributor.count:
       enabled: false

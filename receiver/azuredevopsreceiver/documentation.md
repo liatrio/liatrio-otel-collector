@@ -81,6 +81,24 @@ The amount of time it took a change (pull request) to go from open to merged.
 | vcs.repository.id | The unique identifier of the VCS repository. | Any Str | false |
 | vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | false |
 
+### vcs.code_coverage
+
+The code coverage percentage of a ref (branch).
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| % | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | false |
+| vcs.repository.name | The name of the VCS repository. | Any Str | false |
+| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | false |
+| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | false |
+| vcs.ref.head.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | false |
+
 ### vcs.ref.count
 
 The number of refs of type branch in a repository.

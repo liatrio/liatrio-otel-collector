@@ -32,6 +32,12 @@ attributes:
   vcs.ref.head.name:
     description: The name of the VCS head reference (branch).
     type: string
+  vcs.ref.head.type:
+    description: The type of the head reference (branch, tag).
+    type: string
+    enum:
+      - branch
+      - tag
   vcs.ref.type:
     description: The type of the head reference (branch, tag).
     type: string
@@ -116,6 +122,20 @@ metrics:
         vcs.ref.head.name,
         vcs.ref.type,
         vcs.line_change.type,
+      ]
+  vcs.code_coverage:
+    enabled: true
+    description: The code coverage percentage of a ref (branch).
+    unit: "%"
+    gauge:
+      value_type: int
+    attributes:
+      [
+        vcs.repository.url.full,
+        vcs.repository.name,
+        vcs.repository.id,
+        vcs.ref.head.name,
+        vcs.ref.head.type,
       ]
   vcs.contributor.count:
     enabled: false

@@ -84,6 +84,10 @@ func TestMetricsBuilder(t *testing.T) {
 			allMetricsCount++
 			mb.RecordVcsChangeTimeToMergeDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val")
 
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordVcsCodeCoverageDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val", AttributeVcsRefHeadTypeBranch)
+
 			allMetricsCount++
 			mb.RecordVcsContributorCountDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val")
 
@@ -231,6 +235,33 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("vcs.ref.head.name")
 					assert.True(t, ok)
 					assert.Equal(t, "vcs.ref.head.name-val", attrVal.Str())
+				case "vcs.code_coverage":
+					assert.False(t, validatedMetrics["vcs.code_coverage"], "Found a duplicate in the metrics slice: vcs.code_coverage")
+					validatedMetrics["vcs.code_coverage"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The code coverage percentage of a ref (branch).", ms.At(i).Description())
+					assert.Equal(t, "%", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("vcs.repository.url.full")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.repository.url.full-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.id")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.repository.id-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.ref.head.name")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.ref.head.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.ref.head.type")
+					assert.True(t, ok)
+					assert.Equal(t, "branch", attrVal.Str())
 				case "vcs.contributor.count":
 					assert.False(t, validatedMetrics["vcs.contributor.count"], "Found a duplicate in the metrics slice: vcs.contributor.count")
 					validatedMetrics["vcs.contributor.count"] = true

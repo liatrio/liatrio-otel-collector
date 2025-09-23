@@ -22,6 +22,9 @@ type Config struct {
 	// Project is the specific Azure DevOps project to scrape
 	Project string `mapstructure:"project"`
 
+	// SearchQuery is the specific Azure DevOps project to scrape
+	SearchQuery string `mapstructure:"search_query"`
+
 	// BaseURL for Azure DevOps API (defaults to https://dev.azure.com)
 	BaseURL string `mapstructure:"base_url"`
 

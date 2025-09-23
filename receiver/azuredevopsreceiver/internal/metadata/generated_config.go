@@ -32,6 +32,7 @@ type MetricsConfig struct {
 	VcsChangeDuration       MetricConfig `mapstructure:"vcs.change.duration"`
 	VcsChangeTimeToApproval MetricConfig `mapstructure:"vcs.change.time_to_approval"`
 	VcsChangeTimeToMerge    MetricConfig `mapstructure:"vcs.change.time_to_merge"`
+	VcsCodeCoverage         MetricConfig `mapstructure:"vcs.code_coverage"`
 	VcsContributorCount     MetricConfig `mapstructure:"vcs.contributor.count"`
 	VcsRefCount             MetricConfig `mapstructure:"vcs.ref.count"`
 	VcsRefLinesDelta        MetricConfig `mapstructure:"vcs.ref.lines_delta"`
@@ -52,6 +53,9 @@ func DefaultMetricsConfig() MetricsConfig {
 			Enabled: true,
 		},
 		VcsChangeTimeToMerge: MetricConfig{
+			Enabled: true,
+		},
+		VcsCodeCoverage: MetricConfig{
 			Enabled: true,
 		},
 		VcsContributorCount: MetricConfig{
