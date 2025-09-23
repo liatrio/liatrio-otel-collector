@@ -236,7 +236,7 @@ func (m *metricVcsChangeDuration) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricVcsChangeDuration) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsChangeStateAttributeValue string) {
+func (m *metricVcsChangeDuration) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsChangeStateAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -244,7 +244,7 @@ func (m *metricVcsChangeDuration) recordDataPoint(start pcommon.Timestamp, ts pc
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("vcs.repository.change.id", vcsRepositoryChangeIDAttributeValue)
+	dp.Attributes().PutStr("vcs.change.id", vcsChangeIDAttributeValue)
 	dp.Attributes().PutStr("vcs.repository.url.full", vcsRepositoryURLFullAttributeValue)
 	dp.Attributes().PutStr("vcs.repository.name", vcsRepositoryNameAttributeValue)
 	dp.Attributes().PutStr("vcs.repository.id", vcsRepositoryIDAttributeValue)
@@ -292,7 +292,7 @@ func (m *metricVcsChangeTimeToApproval) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricVcsChangeTimeToApproval) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string) {
+func (m *metricVcsChangeTimeToApproval) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -300,7 +300,7 @@ func (m *metricVcsChangeTimeToApproval) recordDataPoint(start pcommon.Timestamp,
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("vcs.repository.change.id", vcsRepositoryChangeIDAttributeValue)
+	dp.Attributes().PutStr("vcs.change.id", vcsChangeIDAttributeValue)
 	dp.Attributes().PutStr("vcs.repository.url.full", vcsRepositoryURLFullAttributeValue)
 	dp.Attributes().PutStr("vcs.repository.name", vcsRepositoryNameAttributeValue)
 	dp.Attributes().PutStr("vcs.repository.id", vcsRepositoryIDAttributeValue)
@@ -347,7 +347,7 @@ func (m *metricVcsChangeTimeToMerge) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricVcsChangeTimeToMerge) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string) {
+func (m *metricVcsChangeTimeToMerge) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -355,7 +355,7 @@ func (m *metricVcsChangeTimeToMerge) recordDataPoint(start pcommon.Timestamp, ts
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("vcs.repository.change.id", vcsRepositoryChangeIDAttributeValue)
+	dp.Attributes().PutStr("vcs.change.id", vcsChangeIDAttributeValue)
 	dp.Attributes().PutStr("vcs.repository.url.full", vcsRepositoryURLFullAttributeValue)
 	dp.Attributes().PutStr("vcs.repository.name", vcsRepositoryNameAttributeValue)
 	dp.Attributes().PutStr("vcs.repository.id", vcsRepositoryIDAttributeValue)
@@ -897,18 +897,18 @@ func (mb *MetricsBuilder) RecordVcsChangeCountDataPoint(ts pcommon.Timestamp, va
 }
 
 // RecordVcsChangeDurationDataPoint adds a data point to vcs.change.duration metric.
-func (mb *MetricsBuilder) RecordVcsChangeDurationDataPoint(ts pcommon.Timestamp, val int64, vcsRepositoryChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsChangeStateAttributeValue AttributeVcsChangeState) {
-	mb.metricVcsChangeDuration.recordDataPoint(mb.startTime, ts, val, vcsRepositoryChangeIDAttributeValue, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryIDAttributeValue, vcsRefHeadNameAttributeValue, vcsChangeStateAttributeValue.String())
+func (mb *MetricsBuilder) RecordVcsChangeDurationDataPoint(ts pcommon.Timestamp, val int64, vcsChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsChangeStateAttributeValue AttributeVcsChangeState) {
+	mb.metricVcsChangeDuration.recordDataPoint(mb.startTime, ts, val, vcsChangeIDAttributeValue, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryIDAttributeValue, vcsRefHeadNameAttributeValue, vcsChangeStateAttributeValue.String())
 }
 
 // RecordVcsChangeTimeToApprovalDataPoint adds a data point to vcs.change.time_to_approval metric.
-func (mb *MetricsBuilder) RecordVcsChangeTimeToApprovalDataPoint(ts pcommon.Timestamp, val int64, vcsRepositoryChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string) {
-	mb.metricVcsChangeTimeToApproval.recordDataPoint(mb.startTime, ts, val, vcsRepositoryChangeIDAttributeValue, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryIDAttributeValue, vcsRefHeadNameAttributeValue)
+func (mb *MetricsBuilder) RecordVcsChangeTimeToApprovalDataPoint(ts pcommon.Timestamp, val int64, vcsChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string) {
+	mb.metricVcsChangeTimeToApproval.recordDataPoint(mb.startTime, ts, val, vcsChangeIDAttributeValue, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryIDAttributeValue, vcsRefHeadNameAttributeValue)
 }
 
 // RecordVcsChangeTimeToMergeDataPoint adds a data point to vcs.change.time_to_merge metric.
-func (mb *MetricsBuilder) RecordVcsChangeTimeToMergeDataPoint(ts pcommon.Timestamp, val int64, vcsRepositoryChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string) {
-	mb.metricVcsChangeTimeToMerge.recordDataPoint(mb.startTime, ts, val, vcsRepositoryChangeIDAttributeValue, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryIDAttributeValue, vcsRefHeadNameAttributeValue)
+func (mb *MetricsBuilder) RecordVcsChangeTimeToMergeDataPoint(ts pcommon.Timestamp, val int64, vcsChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string) {
+	mb.metricVcsChangeTimeToMerge.recordDataPoint(mb.startTime, ts, val, vcsChangeIDAttributeValue, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryIDAttributeValue, vcsRefHeadNameAttributeValue)
 }
 
 // RecordVcsContributorCountDataPoint adds a data point to vcs.contributor.count metric.
