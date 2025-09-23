@@ -391,7 +391,9 @@ func TestGetPullRequestsSuccess(t *testing.T) {
 	scraper := newAzureDevOpsScraper(context.Background(), settings, cfg)
 	scraper.client = &http.Client{}
 
-	prs, err := scraper.getPullRequests(context.Background(), "test-project", "repo-1", "completed", time.Time{})
+	minTime := time.Now().AddDate(0, 0, -cfg.LimitPullRequests)
+
+	prs, err := scraper.getPullRequests(context.Background(), "test-project", "repo-1", "completed", minTime)
 	require.NoError(t, err)
 	assert.Len(t, prs, 1)
 	assert.Equal(t, 1, prs[0].PullRequestID)
@@ -428,7 +430,9 @@ func TestGetPullRequestsWithTimeFilter(t *testing.T) {
 	scraper := newAzureDevOpsScraper(context.Background(), settings, cfg)
 	scraper.client = &http.Client{}
 
-	prs, err := scraper.getPullRequests(context.Background(), "test-project", "repo-1", "completed", time.Time{})
+	minTime := time.Now().AddDate(0, 0, -cfg.LimitPullRequests)
+
+	prs, err := scraper.getPullRequests(context.Background(), "test-project", "repo-1", "completed", minTime)
 	require.NoError(t, err)
 	assert.Len(t, prs, 0)
 }
