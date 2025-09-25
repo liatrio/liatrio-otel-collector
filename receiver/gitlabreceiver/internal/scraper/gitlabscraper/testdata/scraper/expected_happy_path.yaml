@@ -18,6 +18,9 @@ resourceMetrics:
                     - key: vcs.change.state
                       value:
                         stringValue: open
+                    - key: vcs.change.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.ref.head.name
                       value:
                         stringValue: ""
@@ -37,6 +40,9 @@ resourceMetrics:
                     - key: vcs.change.state
                       value:
                         stringValue: open
+                    - key: vcs.change.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.ref.head.name
                       value:
                         stringValue: ""
@@ -58,6 +64,9 @@ resourceMetrics:
               dataPoints:
                 - asInt: "9223372036"
                   attributes:
+                    - key: vcs.change.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.ref.head.name
                       value:
                         stringValue: ""
@@ -74,6 +83,9 @@ resourceMetrics:
                   timeUnixNano: "2000000"
                 - asInt: "9223372036"
                   attributes:
+                    - key: vcs.change.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.ref.head.name
                       value:
                         stringValue: ""

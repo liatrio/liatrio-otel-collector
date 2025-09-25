@@ -56,7 +56,7 @@ attributes:
     enum:
       - added
       - removed
-  vcs.repository.change.id:
+  vcs.change.id:
     description: The unique identifier of the VCS change (pull request).
     type: string
 
@@ -135,7 +135,7 @@ metrics:
       value_type: int
     attributes:
       [
-        vcs.repository.change.id,
+        vcs.change.id,
         vcs.repository.url.full,
         vcs.repository.name,
         vcs.repository.id,
@@ -149,7 +149,7 @@ metrics:
     gauge:
       value_type: int
     attributes:
-      [vcs.repository.change.id, vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
+      [vcs.change.id, vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
   vcs.change.time_to_approval:
     enabled: true
     description: The amount of time it took a change (pull request) to go from open to approved.
@@ -157,7 +157,7 @@ metrics:
     gauge:
       value_type: int
     attributes:
-      [vcs.repository.change.id, vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
+      [vcs.change.id, vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
   vcs.change.count:
     description: The number of changes (pull requests) in a repository, categorized by their state (either open or merged).
     enabled: true
