@@ -171,7 +171,7 @@ func genDefaultSearchQuery(ownertype string, ghorg string) string {
 // https://docs.github.com/en/enterprise-server@3.8/graphql/guides/forming-calls-with-graphql#the-graphql-endpoint
 // https://docs.github.com/en/enterprise-server@3.8/rest/guides/getting-started-with-the-rest-api#making-a-request
 func (ghs *githubScraper) createClients() (gClient graphql.Client, rClient *github.Client, err error) {
-	rClient := github.NewClient(ghs.client)
+	rClient = github.NewClient(ghs.client)
 	gClient = graphql.NewClient(defaultGraphURL, ghs.client)
 
 	if ghs.cfg.ClientConfig.Endpoint != "" {

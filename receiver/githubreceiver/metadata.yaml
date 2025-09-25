@@ -42,9 +42,6 @@ attributes:
     enum:
       - branch
       - tag
-  vcs.change.id:
-    description: The unique identifier of a change (pull request).
-    type: string
   vcs.change.state:
     description: The state of a change (pull request)
     type: string
@@ -146,7 +143,6 @@ metrics:
       [
         vcs.repository.url.full,
         vcs.repository.name,
-        vcs.change.id,
         vcs.ref.head.name,
         vcs.change.state,
       ]
