@@ -14,7 +14,7 @@ func (atr *azuredevopsTracesReceiver) getPipelineEventAttrs(resource pcommon.Res
 	attrs := resource.Attributes()
 
 	attrs.PutStr("cicd.pipeline.name", event.Resource.Run.Pipeline.Name)
-	attrs.PutInt("cicd.pipeline.id", int64(event.Resource.Run.Pipeline.ID))
+	attrs.PutInt("cicd.pipeline.id", int64(event.Resource.RunID))
 	attrs.PutStr("cicd.pipeline.run.state", event.Resource.Run.State)
 	attrs.PutStr("cicd.pipeline.run.result", event.Resource.Run.Result)
 	attrs.PutStr("cicd.pipeline.run.created_date", event.Resource.Run.CreatedDate.Format(time.RFC3339))
@@ -33,7 +33,7 @@ func (atr *azuredevopsTracesReceiver) getStageEventAttrs(resource pcommon.Resour
 	attrs := resource.Attributes()
 
 	attrs.PutStr("cicd.pipeline.name", event.Resource.Pipeline.Name)
-	attrs.PutInt("cicd.pipeline.id", int64(event.Resource.Pipeline.ID))
+	attrs.PutInt("cicd.pipeline.id", int64(event.Resource.RunID))
 	attrs.PutStr("cicd.pipeline.stage.name", event.Resource.Stage.Name)
 	attrs.PutStr("cicd.pipeline.stage.display_name", event.Resource.Stage.DisplayName)
 	attrs.PutStr("cicd.pipeline.stage.state", event.Resource.Stage.State)
@@ -63,7 +63,7 @@ func (atr *azuredevopsTracesReceiver) getJobEventAttrs(resource pcommon.Resource
 	attrs := resource.Attributes()
 
 	attrs.PutStr("cicd.pipeline.name", event.Resource.Pipeline.Name)
-	attrs.PutInt("cicd.pipeline.id", int64(event.Resource.Pipeline.ID))
+	attrs.PutInt("cicd.pipeline.id", int64(event.Resource.RunID))
 	attrs.PutStr("cicd.pipeline.job.name", event.Resource.Job.Name)
 	attrs.PutStr("cicd.pipeline.job.state", event.Resource.Job.State)
 	attrs.PutStr("cicd.pipeline.job.result", event.Resource.Job.Result)

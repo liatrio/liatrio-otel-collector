@@ -28,7 +28,7 @@ func (atr *azuredevopsTracesReceiver) handlePipelineEvent(e *PipelineRunStateCha
 		return ptrace.Traces{}, fmt.Errorf("failed to get pipeline run attributes: %w", err)
 	}
 
-	traceID, err := newTraceID(e.Resource.Run.Pipeline.ID)
+	traceID, err := newTraceID(e.Resource.RunID)
 	if err != nil {
 		atr.logger.Sugar().Error("failed to generate trace ID", zap.Error(err))
 		return ptrace.Traces{}, fmt.Errorf("failed to generate trace ID: %w", err)
@@ -55,7 +55,7 @@ func (atr *azuredevopsTracesReceiver) handleStageEvent(e *PipelineStageStateChan
 		return ptrace.Traces{}, fmt.Errorf("failed to get pipeline stage attributes: %w", err)
 	}
 
-	traceID, err := newTraceID(e.Resource.Run.Pipeline.ID)
+	traceID, err := newTraceID(e.Resource.RunID)
 	if err != nil {
 		atr.logger.Sugar().Error("failed to generate trace ID", zap.Error(err))
 		return ptrace.Traces{}, fmt.Errorf("failed to generate trace ID: %w", err)
@@ -82,7 +82,7 @@ func (atr *azuredevopsTracesReceiver) handleJobEvent(e *PipelineJobStateChangedE
 		return ptrace.Traces{}, fmt.Errorf("failed to get pipeline job attributes: %w", err)
 	}
 
-	traceID, err := newTraceID(e.Resource.Run.Pipeline.ID)
+	traceID, err := newTraceID(e.Resource.RunID)
 	if err != nil {
 		atr.logger.Sugar().Error("failed to generate trace ID", zap.Error(err))
 		return ptrace.Traces{}, fmt.Errorf("failed to generate trace ID: %w", err)
@@ -148,9 +148,9 @@ func (atr *azuredevopsTracesReceiver) createStageEventSpan(
 	span.SetParentSpanID(parentSpanId)
 	span.SetName(fmt.Sprintf("Pipeline Stage: %s", event.Resource.Stage.Name))
 	span.SetKind(ptrace.SpanKindInternal)
-	span.SetStartTimestamp(pcommon.NewTimestampFromTime(event.Resource.Run.CreatedDate))
-	if event.Resource.Run.FinishedDate != nil {
-		span.SetEndTimestamp(pcommon.NewTimestampFromTime(*event.Resource.Run.FinishedDate))
+	span.SetStartTimestamp(pcommon.NewTimestampFromTime(*event.Resource.Stage.StartTime))
+	if event.Resource.Stage.FinishTime != nil {
+		span.SetEndTimestamp(pcommon.NewTimestampFromTime(*event.Resource.Stage.FinishTime))
 	}
 
 	return nil

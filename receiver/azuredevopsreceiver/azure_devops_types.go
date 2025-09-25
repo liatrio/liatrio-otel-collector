@@ -322,6 +322,7 @@ type PipelineJobStateChangedEvent struct {
 			StartTime  *time.Time `json:"startTime"`
 			FinishTime *time.Time `json:"finishTime"`
 		} `json:"job"`
+		RunID int64 `json:"runId"`
 		Stage struct {
 			Links struct {
 				Web struct {
