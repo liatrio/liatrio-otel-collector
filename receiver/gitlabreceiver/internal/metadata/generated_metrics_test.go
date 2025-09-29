@@ -74,15 +74,15 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsChangeDurationDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val", AttributeVcsChangeStateOpen)
+			mb.RecordVcsChangeDurationDataPoint(ts, 1, "vcs.change.id-val", "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val", AttributeVcsChangeStateOpen)
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsChangeTimeToApprovalDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val")
+			mb.RecordVcsChangeTimeToApprovalDataPoint(ts, 1, "vcs.change.id-val", "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsChangeTimeToMergeDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val")
+			mb.RecordVcsChangeTimeToMergeDataPoint(ts, 1, "vcs.change.id-val", "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val")
 
 			allMetricsCount++
 			mb.RecordVcsContributorCountDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val")
@@ -168,7 +168,10 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("vcs.repository.url.full")
+					attrVal, ok := dp.Attributes().Get("vcs.change.id")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.change.id-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.url.full")
 					assert.True(t, ok)
 					assert.Equal(t, "vcs.repository.url.full-val", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
@@ -195,7 +198,10 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("vcs.repository.url.full")
+					attrVal, ok := dp.Attributes().Get("vcs.change.id")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.change.id-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.url.full")
 					assert.True(t, ok)
 					assert.Equal(t, "vcs.repository.url.full-val", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
@@ -219,7 +225,10 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("vcs.repository.url.full")
+					attrVal, ok := dp.Attributes().Get("vcs.change.id")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.change.id-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.url.full")
 					assert.True(t, ok)
 					assert.Equal(t, "vcs.repository.url.full-val", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("vcs.repository.name")

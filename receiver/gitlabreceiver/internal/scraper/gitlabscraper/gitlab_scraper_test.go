@@ -82,10 +82,12 @@ func TestScrape(t *testing.T) {
 							Nodes: []MergeRequestNode{
 								{
 									Title:     "mr1",
+									Iid:       "1",
 									CreatedAt: time.Now().AddDate(0, 0, -1),
 								},
 								{
 									Title:    "mr1",
+									Iid:      "1",
 									MergedAt: time.Now().AddDate(0, 0, -1),
 								},
 							},
