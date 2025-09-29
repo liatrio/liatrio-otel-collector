@@ -64,7 +64,7 @@ func TestPipelineJobStateChangedEventUnmarshal(t *testing.T) {
 	// Verify key fields are populated correctly
 	assert.Equal(t, "ms.vss-pipelines.job-state-changed-event", event.EventType)
 	assert.Equal(t, "pipelines", event.PublisherID)
-	assert.Equal(t, "5a9cc47d-2818-4a4a-b99d-db0a28f4e08f", event.Resource.ProjectID)
+	assert.Equal(t, "00000000-0000-0000-0000-000000000000", event.Resource.ProjectID)
 	assert.Equal(t, "Deploy to Production", event.Resource.Job.Name)
 	assert.Equal(t, "completed", event.Resource.Job.State)
 	assert.Equal(t, "succeeded", event.Resource.Job.Result)
@@ -75,7 +75,7 @@ func TestPipelineJobStateChangedEventUnmarshal(t *testing.T) {
 	assert.Len(t, event.Resource.Repositories, 1)
 	repo := event.Resource.Repositories[0]
 	assert.Equal(t, "self", repo.Alias)
-	assert.Equal(t, "487e28f0-8046-41cf-8eee-a566eeca25e3", repo.ID)
+	assert.Equal(t, "44444444-4444-4444-4444-444444444444", repo.ID)
 	assert.Equal(t, "Git", repo.Type)
 	assert.Equal(t, "Example User", repo.Change.Author.Name)
 	assert.Equal(t, "user@example.com", repo.Change.Author.Email)
