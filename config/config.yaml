@@ -34,23 +34,6 @@ receivers:
         auth:
           authenticator: bearertokenauth/gitlab
 
-  github:
-    initial_delay: 10s
-    collection_interval: 60s
-    scrapers:
-      scraper:
-        # Optionally enable or disable metrics
-        # metrics:
-          # Example
-          # vcs.repository.count:
-          #   enabled: true
-          #   ...
-        github_org: ${env:GH_ORG}
-        # search_query: ${env:SEARCH_QUERY}  #Recommended optional query override, defaults to "{org,user}:<github_org>"
-        # endpoint: https://selfmanagedenterpriseserver.com
-        auth:
-          authenticator: bearertokenauth/github
-
 processors:
   transform/body:
     error_mode: ignore
@@ -100,10 +83,10 @@ exporters:
 
 service:
   ## Add bearertokenauth/* if you want to use bearer token auth extensions
-  extensions: [bearertokenauth/github, bearertokenauth/gitlab]
+  extensions: [bearertokenauth/gitlab]
   pipelines:
     metrics:
-      receivers: [gitlab, github]
+      receivers: [gitlab]
       processors: []
       exporters: [debug]
     logs:
