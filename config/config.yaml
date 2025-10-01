@@ -7,15 +7,40 @@ extensions:
   bearertokenauth/gitlab:
     token: ${env:GL_PAT}
 
+  bearertokenauth/azuredevops:
+    token: ${env:ADO_PAT}
+
 receivers:
-  webhookevent:
-    endpoint: 0.0.0.0:8088
-    path: /events
-    health_path: /healthcheck
-  otlp:
-    protocols:
-      grpc:
-      http:
+  # webhookevent:
+  #   endpoint: 0.0.0.0:8088
+  #   path: /events
+  #   health_path: /healthcheck
+  # otlp:
+  #   protocols:
+  #     grpc:
+  #     http:
+
+  azuredevops:
+    initial_delay: 10s
+    collection_interval: 6000s
+    scrapers:
+      azuredevops:
+        # Optionally enable or disable metrics
+        # metrics:
+          # Example
+          # vcs.repository.count:
+          #   enabled: true
+          #   ...
+        organization: ${env:ADO_ORG}
+        project: ${env:ADO_PROJECT}
+        base_url: https://dev.azure.com
+        # search_query: ${env:SEARCH_QUERY} #Recommended optional query override
+        auth:
+          authenticator: bearertokenauth/azuredevops
+    webhook:
+      endpoint: 0.0.0.0:8088
+      path: /
+      health_path: /healthcheck
 
   gitlab:
     initial_delay: 10s
@@ -29,7 +54,7 @@ receivers:
           #   enabled: true
           #   ...
         gitlab_org: ${env:GL_ORG}
-        # search_query: ${env:SEARCH_QUERY}  #Recommended optional query override, defaults to "{org,user}:<github_org>"
+        # search_query: ${env:SEARCH_QUERY} #Recommended optional query override
         # endpoint: https://selfmanagedenterpriseserver.com
         auth:
           authenticator: bearertokenauth/gitlab
@@ -55,8 +80,8 @@ processors:
   transform/body:
     error_mode: ignore
     log_statements: ['set(log.body, ParseJSON(log.body)) where log.body != nil']
-  gitlab:
-    token: ${env:GL_PAT}
+  # gitlab:
+  #   token: ${env:GL_PAT}
 
   transform/gitlabpipelineevents:
     log_statements:
@@ -94,18 +119,18 @@ processors:
 
 exporters:
   debug:
-    verbosity: basic
+    verbosity: detailed
     sampling_initial: 2
     sampling_thereafter: 500
 
 service:
   ## Add bearertokenauth/* if you want to use bearer token auth extensions
-  extensions: [bearertokenauth/github, bearertokenauth/gitlab]
+  extensions: [bearertokenauth/azuredevops] # , bearertokenauth/github, bearertokenauth/gitlab]
   pipelines:
     metrics:
-      receivers: [gitlab, github]
+      receivers: [azuredevops] # , github, gitlab]
       processors: []
-      exporters: [debug]
+      exporters: [debug, otlphttp/openobserve]
     logs:
       receivers: [webhookevent]
       processors:
@@ -114,3 +139,7 @@ service:
         - transform/gitlabpipelineevents
         - gitlab
       exporters: [debug]
+    traces:
+      receivers: [azuredevops]
+      processors: []
+      exporters: [debug, otlphttp/openobserve]
