@@ -190,10 +190,10 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				// get returned as in Go.
 				if mr.MergedAt.IsZero() {
 					mrAge := int64(time.Since(mr.CreatedAt).Seconds())
-					gls.mb.RecordVcsChangeDurationDataPoint(now, mrAge, url, path, projectID, mr.SourceBranch, metadata.AttributeVcsChangeStateOpen)
+					gls.mb.RecordVcsChangeDurationDataPoint(now, mrAge, mr.Iid, url, path, projectID, mr.SourceBranch, metadata.AttributeVcsChangeStateOpen)
 				} else {
 					mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Seconds())
-					gls.mb.RecordVcsChangeTimeToMergeDataPoint(now, mergedAge, url, path, projectID, mr.SourceBranch)
+					gls.mb.RecordVcsChangeTimeToMergeDataPoint(now, mergedAge, mr.Iid, url, path, projectID, mr.SourceBranch)
 				}
 			}
 			mux.Unlock()

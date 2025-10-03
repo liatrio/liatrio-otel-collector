@@ -1,0 +1,16 @@
+---
+receivers:
+  azuredevops:
+
+processors:
+  nop:
+
+exporters:
+  nop:
+
+service:
+  pipelines:
+    metrics:
+      receivers: [azuredevops]
+      processors: [nop]
+      exporters: [nop]
