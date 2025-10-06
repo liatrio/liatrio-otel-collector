@@ -7,7 +7,7 @@ dist:
   debug_compilation: false
 
 extensions:
-  - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.132.0
+  - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.136.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension v0.132.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.132.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.132.0
