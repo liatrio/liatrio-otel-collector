@@ -5,7 +5,6 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/extension"
-	"go.opentelemetry.io/collector/extension/auth"
 
 	"github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension/internal/metadata"
 )
@@ -25,12 +24,5 @@ func createDefaultConfig() component.Config {
 }
 
 func createExtension(_ context.Context, set extension.Settings, cfg component.Config) (extension.Extension, error) {
-	ga, err := newGitHubAppAuthenticator(cfg.(*Config), set.Logger)
-	if err != nil {
-		return nil, err
-	}
-
-	return auth.NewClient(
-		auth.WithClientRoundTripper(ga.roundTripper),
-	), nil
+	return newGitHubAppAuthenticator(cfg.(*Config), set.Logger)
 }
