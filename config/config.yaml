@@ -1,12 +1,6 @@
 ---
 extensions:
 
-  bearertokenauth/github:
-    token: ${env:GH_PAT}
-
-  bearertokenauth/gitlab:
-    token: ${env:GL_PAT}
-
   bearertokenauth/azuredevops:
     token: ${env:ADO_PAT}
 
@@ -42,40 +36,6 @@ receivers:
       path: /
       health_path: /healthcheck
 
-  gitlab:
-    initial_delay: 10s
-    collection_interval: 60s
-    scrapers:
-      gitlab:
-        # Optionally enable or disable metrics
-        # metrics:
-          # Example
-          # vcs.repository.count:
-          #   enabled: true
-          #   ...
-        gitlab_org: ${env:GL_ORG}
-        # search_query: ${env:SEARCH_QUERY} #Recommended optional query override
-        # endpoint: https://selfmanagedenterpriseserver.com
-        auth:
-          authenticator: bearertokenauth/gitlab
-
-  github:
-    initial_delay: 10s
-    collection_interval: 60s
-    scrapers:
-      scraper:
-        # Optionally enable or disable metrics
-        # metrics:
-          # Example
-          # vcs.repository.count:
-          #   enabled: true
-          #   ...
-        github_org: ${env:GH_ORG}
-        # search_query: ${env:SEARCH_QUERY}  #Recommended optional query override, defaults to "{org,user}:<github_org>"
-        # endpoint: https://selfmanagedenterpriseserver.com
-        auth:
-          authenticator: bearertokenauth/github
-
 processors:
   transform/body:
     error_mode: ignore
@@ -83,38 +43,38 @@ processors:
   # gitlab:
   #   token: ${env:GL_PAT}
 
-  transform/gitlabpipelineevents:
-    log_statements:
-      - context: log
-        statements:
-          - keep_keys(log.body, ["object_kind", "project", "object_attributes"])
-          - keep_keys(log.body["project"], ["id", "name", "namespace", "path_with_namespace",
-            "web_url"]) where log.body["project"] != nil
-          - keep_keys(log.body["object_attributes"], ["id", "ref", "sha", "url", "status"])
-            where log.body["object_attributes"] != nil
-          - set(log.attributes["event.name"], Concat(["pipeline", log.body["project"]["id"],
-            log.body["object_attributes"]["id"]], "_")) where log.body["project"]["id"]
-            != nil and log.body["object_attributes"]["id"] != nil
-          - set(log.attributes["vcs.repository.owner"], log.body["project"]["namespace"])
-            where log.body["project"]["namespace"] != nil
-          - set(log.attributes["vcs.repository.url.full"], log.body["project"]["web_url"])
-            where log.body["project"]["web_url"] != nil
-          - set(log.attributes["vcs.ref.head.name"], log.body["object_attributes"]["ref"])
-            where log.body["object_attributes"]["ref"] != nil
-          - set(log.attributes["vcs.ref.head.revision"], log.body["object_attributes"]["sha"])
-            where log.body["object_attributes"]["sha"] != nil
-          - set(log.attributes["vcs.repository.name"], log.body["project"]["path_with_namespace"])
-            where log.body["project"]["path_with_namespace"] != nil
-          - set(log.attributes["vcs.repository.id"], Concat(["", log.body["project"]["id"]],
-            "")) where log.body["project"]["id"] != nil
-          - set(resource.attributes["service.namespace"], "gitlab")
-          - set(resource.attributes["service.name"], log.body["project"]["name"])
-            where log.body["project"]["name"] != nil
-  filter/gitlabpipelineevents:
-    error_mode: ignore
-    logs:
-      log_record:
-        - not IsMatch(body["object_kind"], "pipeline")
+  # transform/gitlabpipelineevents:
+  #   log_statements:
+  #     - context: log
+  #       statements:
+  #         - keep_keys(log.body, ["object_kind", "project", "object_attributes"])
+  #         - keep_keys(log.body["project"], ["id", "name", "namespace", "path_with_namespace",
+  #           "web_url"]) where log.body["project"] != nil
+  #         - keep_keys(log.body["object_attributes"], ["id", "ref", "sha", "url", "status"])
+  #           where log.body["object_attributes"] != nil
+  #         - set(log.attributes["event.name"], Concat(["pipeline", log.body["project"]["id"],
+  #           log.body["object_attributes"]["id"]], "_")) where log.body["project"]["id"]
+  #           != nil and log.body["object_attributes"]["id"] != nil
+  #         - set(log.attributes["vcs.repository.owner"], log.body["project"]["namespace"])
+  #           where log.body["project"]["namespace"] != nil
+  #         - set(log.attributes["vcs.repository.url.full"], log.body["project"]["web_url"])
+  #           where log.body["project"]["web_url"] != nil
+  #         - set(log.attributes["vcs.ref.head.name"], log.body["object_attributes"]["ref"])
+  #           where log.body["object_attributes"]["ref"] != nil
+  #         - set(log.attributes["vcs.ref.head.revision"], log.body["object_attributes"]["sha"])
+  #           where log.body["object_attributes"]["sha"] != nil
+  #         - set(log.attributes["vcs.repository.name"], log.body["project"]["path_with_namespace"])
+  #           where log.body["project"]["path_with_namespace"] != nil
+  #         - set(log.attributes["vcs.repository.id"], Concat(["", log.body["project"]["id"]],
+  #           "")) where log.body["project"]["id"] != nil
+  #         - set(resource.attributes["service.namespace"], "gitlab")
+  #         - set(resource.attributes["service.name"], log.body["project"]["name"])
+  #           where log.body["project"]["name"] != nil
+  # filter/gitlabpipelineevents:
+  #   error_mode: ignore
+  #   logs:
+  #     log_record:
+  #       - not IsMatch(body["object_kind"], "pipeline")
 
 
 exporters:
@@ -135,9 +95,9 @@ service:
       receivers: [webhookevent]
       processors:
         - transform/body
-        - filter/gitlabpipelineevents
-        - transform/gitlabpipelineevents
-        - gitlab
+        # - filter/gitlabpipelineevents
+        # - transform/gitlabpipelineevents1
+        # - gitlab
       exporters: [debug]
     traces:
       receivers: [azuredevops]
