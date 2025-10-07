@@ -60,6 +60,8 @@ receivers:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8seventsreceiver v0.132.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sobjectsreceiver v0.132.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awss3receiver v0.132.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/githubreceiver v0.132.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/gitlabreceiver v0.132.0
 
 connectors:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/spanmetricsconnector v0.132.0
