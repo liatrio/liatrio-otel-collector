@@ -47,8 +47,6 @@ processors:
 
 receivers:
   - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.136.0
-  - gomod: github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver v0.90.1
-  - gomod: github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver v0.90.1
   - gomod: github.com/liatrio/liatrio-otel-collector/receiver/githubactionsreceiver v0.90.1
   - gomod: github.com/liatrio/liatrio-otel-collector/receiver/azuredevopsreceiver v0.90.1
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.136.0
@@ -61,6 +59,8 @@ receivers:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8seventsreceiver v0.136.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sobjectsreceiver v0.136.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awss3receiver v0.136.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/githubreceiver v0.136.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/gitlabreceiver v0.136.0
 
 connectors:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/spanmetricsconnector v0.136.0
