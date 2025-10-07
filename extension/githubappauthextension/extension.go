@@ -1,9 +1,11 @@
 package githubappauthextension // import "github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension"
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
+	"go.opentelemetry.io/collector/component"
 	"go.uber.org/zap"
 )
 
@@ -36,11 +38,18 @@ func newGitHubAppAuthenticator(cfg *Config, logger *zap.Logger) (*githubAppAuthe
 
 }
 
-// The roundTripper function has to be defined in this way so that the createExtension
-// function can return auth.NewClient() as a component. Thus we take the
-// roundTripper created by the ghinstallation package, send the transport up,
-// and pass through this function so that the extension can handle
-// authentication.
-func (g *githubAppAuthenticator) roundTripper(base http.RoundTripper) (http.RoundTripper, error) {
+// RoundTripper implements the extensionauth.HTTPClient interface.
+// It returns the transport created by the ghinstallation package for authentication.
+func (g *githubAppAuthenticator) RoundTripper(base http.RoundTripper) (http.RoundTripper, error) {
 	return g.client.Transport, nil
+}
+
+// Start implements the component.Component interface.
+func (g *githubAppAuthenticator) Start(_ context.Context, _ component.Host) error {
+	return nil
+}
+
+// Shutdown implements the component.Component interface.
+func (g *githubAppAuthenticator) Shutdown(_ context.Context) error {
+	return nil
 }
