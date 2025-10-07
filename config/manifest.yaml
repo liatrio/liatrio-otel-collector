@@ -47,7 +47,6 @@ processors:
 
 receivers:
   - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.136.0
-  - gomod: github.com/liatrio/liatrio-otel-collector/receiver/githubactionsreceiver v0.90.1
   - gomod: github.com/liatrio/liatrio-otel-collector/receiver/azuredevopsreceiver v0.90.1
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.136.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver v0.136.0
@@ -76,7 +75,6 @@ providers:
 replaces:
   - github.com/liatrio/liatrio-otel-collector/receiver/azuredevopsreceiver => ../receiver/azuredevopsreceiver/
   - github.com/liatrio/liatrio-otel-collector/processor/gitlabprocessor => ../processor/gitlabprocessor/
-  - github.com/liatrio/liatrio-otel-collector/receiver/githubactionsreceiver => ../receiver/githubactionsreceiver/
   - github.com/liatrio/liatrio-otel-collector/extension/githubappauthextension => ../extension/githubappauthextension/
   - github.com/golang-jwt/jwt/v5 => github.com/golang-jwt/jwt/v5 v5.2.2
   - golang.org/x/oauth2 => golang.org/x/oauth2 v0.27.0
