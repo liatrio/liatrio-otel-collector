@@ -161,16 +161,22 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 				return
 			}
 
+			// Count PRs by state
+			openCount := int64(0)
+			mergedCount := int64(0)
+
 			// Process pull request metrics
 			for _, pr := range pullRequests {
 				mux.Lock()
 				switch pr.Status {
 				case "completed":
+					mergedCount++
 					if !pr.ClosedDate.IsZero() && !pr.CreationDate.IsZero() {
 						timeToMerge := int64(pr.ClosedDate.Sub(pr.CreationDate).Seconds())
 						ados.mb.RecordVcsChangeTimeToMergeDataPoint(now, timeToMerge, repo.WebURL, repo.Name, repo.ID, pr.SourceRefName)
 					}
 				case "active":
+					openCount++
 					if !pr.CreationDate.IsZero() {
 						prAge := int64(time.Since(pr.CreationDate).Seconds())
 						ados.mb.RecordVcsChangeDurationDataPoint(now, prAge, repo.WebURL, repo.Name, repo.ID,
@@ -179,6 +185,16 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 				}
 				mux.Unlock()
 			}
+
+			// Record PR counts by state
+			mux.Lock()
+			if openCount > 0 {
+				ados.mb.RecordVcsChangeCountDataPoint(now, openCount, repo.WebURL, metadata.AttributeVcsChangeStateOpen, repo.Name, repo.ID)
+			}
+			if mergedCount > 0 {
+				ados.mb.RecordVcsChangeCountDataPoint(now, mergedCount, repo.WebURL, metadata.AttributeVcsChangeStateMerged, repo.Name, repo.ID)
+			}
+			mux.Unlock()
 		}()
 	}
 
