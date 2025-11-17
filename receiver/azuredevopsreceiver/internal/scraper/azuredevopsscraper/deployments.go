@@ -81,7 +81,10 @@ func (ados *azuredevopsScraper) getReleaseDefinitionID(ctx context.Context, org,
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return 0, fmt.Errorf("API request failed with status %d", resp.StatusCode)
+		}
 		return 0, fmt.Errorf("API error %d: %s", resp.StatusCode, string(body))
 	}
 
@@ -124,7 +127,10 @@ func (ados *azuredevopsScraper) getDefinitionEnvironmentID(ctx context.Context, 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return 0, fmt.Errorf("API request failed with status %d", resp.StatusCode)
+		}
 		return 0, fmt.Errorf("API error %d: %s", resp.StatusCode, string(body))
 	}
 
@@ -176,8 +182,11 @@ func (ados *azuredevopsScraper) fetchDeployments(ctx context.Context, org, proje
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			body, _ := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			resp.Body.Close()
+			if err != nil {
+				return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
+			}
 			return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(body))
 		}
 
