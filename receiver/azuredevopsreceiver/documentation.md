@@ -12,6 +12,53 @@ metrics:
     enabled: false
 ```
 
+### deploy.deployment.count
+
+The number of deployments by service, environment, and status.
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic |
+| ---- | ----------- | ---------- | ----------------------- | --------- |
+| {deployment} | Sum | Int | Unspecified | true |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| deploy.service | Logical service or application name associated with the deployment. | Any Str | false |
+| deploy.environment | Target environment or stage for the deployment (for example, Production (West US)). | Any Str | false |
+| deploy.status | Deployment status as reported by Azure DevOps. | Str: ``succeeded``, ``failed``, ``inProgress`` | false |
+
+### deploy.deployment.duration
+
+Average deployment duration for a given service and environment.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| s | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| deploy.service | Logical service or application name associated with the deployment. | Any Str | false |
+| deploy.environment | Target environment or stage for the deployment (for example, Production (West US)). | Any Str | false |
+
+### deploy.deployment.last_timestamp
+
+Unix timestamp of the last completed deployment for a service, environment, and status.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| s | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| deploy.service | Logical service or application name associated with the deployment. | Any Str | false |
+| deploy.environment | Target environment or stage for the deployment (for example, Production (West US)). | Any Str | false |
+| deploy.status | Deployment status as reported by Azure DevOps. | Str: ``succeeded``, ``failed``, ``inProgress`` | false |
+
 ### vcs.change.count
 
 The number of changes (pull requests) in a repository, categorized by their state (either open or merged).

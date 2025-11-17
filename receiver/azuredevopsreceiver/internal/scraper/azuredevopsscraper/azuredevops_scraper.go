@@ -6,7 +6,9 @@ package azuredevopsscraper
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -202,10 +204,141 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 
 	ados.logger.Sugar().Infof("Finished processing Azure DevOps project %s in org %s", ados.cfg.Project, ados.cfg.Organization)
 
+	// Scrape deployment metrics if configured
+	if ados.cfg.DeploymentPipelineName != "" && ados.cfg.DeploymentStageName != "" {
+		if err := ados.scrapeDeployments(ctx, now); err != nil {
+			ados.logger.Sugar().Errorf("error scraping deployments: %v", err)
+		}
+	}
+
 	// Set resource attributes
 	ados.rb.SetVcsProviderName("azuredevops")
 	ados.rb.SetVcsOwnerName(ados.cfg.Organization)
 
 	res := ados.rb.Emit()
 	return ados.mb.Emit(metadata.WithResource(res)), nil
+}
+
+// scrapeDeployments fetches and records deployment metrics
+func (ados *azuredevopsScraper) scrapeDeployments(ctx context.Context, now pcommon.Timestamp) error {
+	lookbackDays := ados.cfg.DeploymentLookbackDays
+	if lookbackDays <= 0 {
+		lookbackDays = 30 // default to 30 days
+	}
+
+	ados.logger.Sugar().Infof("Scraping deployments for pipeline '%s', stage '%s'", ados.cfg.DeploymentPipelineName, ados.cfg.DeploymentStageName)
+
+	// Get release definition ID
+	definitionID, err := ados.getReleaseDefinitionID(ctx, ados.cfg.Organization, ados.cfg.Project, ados.cfg.DeploymentPipelineName)
+	if err != nil {
+		return fmt.Errorf("failed to get release definition ID: %w", err)
+	}
+	ados.logger.Sugar().Debugf("Found release definition ID: %d", definitionID)
+
+	// Get environment ID
+	environmentID, err := ados.getDefinitionEnvironmentID(ctx, ados.cfg.Organization, ados.cfg.Project, definitionID, ados.cfg.DeploymentStageName)
+	if err != nil {
+		return fmt.Errorf("failed to get environment ID: %w", err)
+	}
+	ados.logger.Sugar().Debugf("Found environment ID: %d", environmentID)
+
+	// Fetch deployments
+	deployments, err := ados.fetchDeployments(ctx, ados.cfg.Organization, ados.cfg.Project, definitionID, environmentID, lookbackDays)
+	if err != nil {
+		return fmt.Errorf("failed to fetch deployments: %w", err)
+	}
+	ados.logger.Sugar().Infof("Fetched %d deployments", len(deployments))
+
+	// Process and record metrics
+	ados.recordDeploymentMetrics(now, deployments, ados.cfg.DeploymentStageName)
+
+	return nil
+}
+
+// recordDeploymentMetrics processes deployments and records metrics
+func (ados *azuredevopsScraper) recordDeploymentMetrics(now pcommon.Timestamp, deployments []Deployment, environment string) {
+	// Track counts, durations, and last timestamps
+	counts := make(map[string]int64)         // key: service|environment|status
+	durations := make(map[string][]int64)    // key: service|environment
+	lastTimestamps := make(map[string]int64) // key: service|environment|status
+
+	for _, deployment := range deployments {
+		service := extractServiceName(deployment)
+		status := deployment.DeploymentStatus
+
+		// Count deployments
+		countKey := fmt.Sprintf("%s|%s|%s", service, environment, status)
+		counts[countKey]++
+
+		// Track duration for succeeded deployments
+		if status == "succeeded" && !deployment.StartedOn.IsZero() && !deployment.CompletedOn.IsZero() {
+			duration := int64(deployment.CompletedOn.Sub(deployment.StartedOn).Seconds())
+			durationKey := fmt.Sprintf("%s|%s", service, environment)
+			durations[durationKey] = append(durations[durationKey], duration)
+		}
+
+		// Track last deployment timestamp
+		if !deployment.CompletedOn.IsZero() {
+			timestampKey := fmt.Sprintf("%s|%s|%s", service, environment, status)
+			timestamp := deployment.CompletedOn.Unix()
+			if existing, ok := lastTimestamps[timestampKey]; !ok || timestamp > existing {
+				lastTimestamps[timestampKey] = timestamp
+			}
+		}
+	}
+
+	// Record deployment counts
+	for key, count := range counts {
+		parts := strings.Split(key, "|")
+		if len(parts) == 3 {
+			statusAttr := mapDeploymentStatus(parts[2])
+			ados.mb.RecordDeployDeploymentCountDataPoint(now, count, parts[0], parts[1], statusAttr)
+		}
+	}
+
+	// Record average durations
+	for key, durationList := range durations {
+		if len(durationList) > 0 {
+			var sum int64
+			for _, d := range durationList {
+				sum += d
+			}
+			avgDuration := sum / int64(len(durationList))
+			parts := strings.Split(key, "|")
+			if len(parts) == 2 {
+				ados.mb.RecordDeployDeploymentDurationDataPoint(now, avgDuration, parts[0], parts[1])
+			}
+		}
+	}
+
+	// Record last timestamps
+	for key, timestamp := range lastTimestamps {
+		parts := strings.Split(key, "|")
+		if len(parts) == 3 {
+			statusAttr := mapDeploymentStatus(parts[2])
+			ados.mb.RecordDeployDeploymentLastTimestampDataPoint(now, timestamp, parts[0], parts[1], statusAttr)
+		}
+	}
+
+	ados.logger.Sugar().Infof("Recorded deployment metrics: %d count entries, %d duration entries, %d timestamp entries",
+		len(counts), len(durations), len(lastTimestamps))
+}
+
+// mapDeploymentStatus converts Azure DevOps deployment status string to typed enum
+func mapDeploymentStatus(status string) metadata.AttributeDeployStatus {
+	// Normalize status string
+	normalized := strings.ToLower(strings.TrimSpace(status))
+
+	// Map to enum values defined in metadata
+	switch normalized {
+	case "succeeded":
+		return metadata.AttributeDeployStatusSucceeded
+	case "failed":
+		return metadata.AttributeDeployStatusFailed
+	case "inprogress", "in_progress":
+		return metadata.AttributeDeployStatusInProgress
+	default:
+		// Default to inProgress for unknown statuses
+		return metadata.AttributeDeployStatusInProgress
+	}
 }

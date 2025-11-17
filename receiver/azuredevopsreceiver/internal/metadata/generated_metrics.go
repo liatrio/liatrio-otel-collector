@@ -13,6 +13,36 @@ import (
 	conventions "go.opentelemetry.io/otel/semconv/v1.37.0"
 )
 
+// AttributeDeployStatus specifies the value deploy.status attribute.
+type AttributeDeployStatus int
+
+const (
+	_ AttributeDeployStatus = iota
+	AttributeDeployStatusSucceeded
+	AttributeDeployStatusFailed
+	AttributeDeployStatusInProgress
+)
+
+// String returns the string representation of the AttributeDeployStatus.
+func (av AttributeDeployStatus) String() string {
+	switch av {
+	case AttributeDeployStatusSucceeded:
+		return "succeeded"
+	case AttributeDeployStatusFailed:
+		return "failed"
+	case AttributeDeployStatusInProgress:
+		return "inProgress"
+	}
+	return ""
+}
+
+// MapAttributeDeployStatus is a helper map of string to AttributeDeployStatus attribute value.
+var MapAttributeDeployStatus = map[string]AttributeDeployStatus{
+	"succeeded":  AttributeDeployStatusSucceeded,
+	"failed":     AttributeDeployStatusFailed,
+	"inProgress": AttributeDeployStatusInProgress,
+}
+
 // AttributeVcsChangeState specifies the value vcs.change.state attribute.
 type AttributeVcsChangeState int
 
@@ -144,6 +174,15 @@ var MapAttributeVcsRevisionDeltaDirection = map[string]AttributeVcsRevisionDelta
 }
 
 var MetricsInfo = metricsInfo{
+	DeployDeploymentCount: metricInfo{
+		Name: "deploy.deployment.count",
+	},
+	DeployDeploymentDuration: metricInfo{
+		Name: "deploy.deployment.duration",
+	},
+	DeployDeploymentLastTimestamp: metricInfo{
+		Name: "deploy.deployment.last_timestamp",
+	},
 	VcsChangeCount: metricInfo{
 		Name: "vcs.change.count",
 	},
@@ -180,21 +219,184 @@ var MetricsInfo = metricsInfo{
 }
 
 type metricsInfo struct {
-	VcsChangeCount          metricInfo
-	VcsChangeDuration       metricInfo
-	VcsChangeTimeToApproval metricInfo
-	VcsChangeTimeToMerge    metricInfo
-	VcsCodeCoverage         metricInfo
-	VcsContributorCount     metricInfo
-	VcsRefCount             metricInfo
-	VcsRefLinesDelta        metricInfo
-	VcsRefRevisionsDelta    metricInfo
-	VcsRefTime              metricInfo
-	VcsRepositoryCount      metricInfo
+	DeployDeploymentCount         metricInfo
+	DeployDeploymentDuration      metricInfo
+	DeployDeploymentLastTimestamp metricInfo
+	VcsChangeCount                metricInfo
+	VcsChangeDuration             metricInfo
+	VcsChangeTimeToApproval       metricInfo
+	VcsChangeTimeToMerge          metricInfo
+	VcsCodeCoverage               metricInfo
+	VcsContributorCount           metricInfo
+	VcsRefCount                   metricInfo
+	VcsRefLinesDelta              metricInfo
+	VcsRefRevisionsDelta          metricInfo
+	VcsRefTime                    metricInfo
+	VcsRepositoryCount            metricInfo
 }
 
 type metricInfo struct {
 	Name string
+}
+
+type metricDeployDeploymentCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills deploy.deployment.count metric with initial data.
+func (m *metricDeployDeploymentCount) init() {
+	m.data.SetName("deploy.deployment.count")
+	m.data.SetDescription("The number of deployments by service, environment, and status.")
+	m.data.SetUnit("{deployment}")
+	m.data.SetEmptySum()
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityUnspecified)
+	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricDeployDeploymentCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, deployServiceAttributeValue string, deployEnvironmentAttributeValue string, deployStatusAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("deploy.service", deployServiceAttributeValue)
+	dp.Attributes().PutStr("deploy.environment", deployEnvironmentAttributeValue)
+	dp.Attributes().PutStr("deploy.status", deployStatusAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricDeployDeploymentCount) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricDeployDeploymentCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricDeployDeploymentCount(cfg MetricConfig) metricDeployDeploymentCount {
+	m := metricDeployDeploymentCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricDeployDeploymentDuration struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills deploy.deployment.duration metric with initial data.
+func (m *metricDeployDeploymentDuration) init() {
+	m.data.SetName("deploy.deployment.duration")
+	m.data.SetDescription("Average deployment duration for a given service and environment.")
+	m.data.SetUnit("s")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricDeployDeploymentDuration) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, deployServiceAttributeValue string, deployEnvironmentAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("deploy.service", deployServiceAttributeValue)
+	dp.Attributes().PutStr("deploy.environment", deployEnvironmentAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricDeployDeploymentDuration) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricDeployDeploymentDuration) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricDeployDeploymentDuration(cfg MetricConfig) metricDeployDeploymentDuration {
+	m := metricDeployDeploymentDuration{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricDeployDeploymentLastTimestamp struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills deploy.deployment.last_timestamp metric with initial data.
+func (m *metricDeployDeploymentLastTimestamp) init() {
+	m.data.SetName("deploy.deployment.last_timestamp")
+	m.data.SetDescription("Unix timestamp of the last completed deployment for a service, environment, and status.")
+	m.data.SetUnit("s")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricDeployDeploymentLastTimestamp) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, deployServiceAttributeValue string, deployEnvironmentAttributeValue string, deployStatusAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("deploy.service", deployServiceAttributeValue)
+	dp.Attributes().PutStr("deploy.environment", deployEnvironmentAttributeValue)
+	dp.Attributes().PutStr("deploy.status", deployStatusAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricDeployDeploymentLastTimestamp) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricDeployDeploymentLastTimestamp) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricDeployDeploymentLastTimestamp(cfg MetricConfig) metricDeployDeploymentLastTimestamp {
+	m := metricDeployDeploymentLastTimestamp{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
 }
 
 type metricVcsChangeCount struct {
@@ -795,24 +997,27 @@ func newMetricVcsRepositoryCount(cfg MetricConfig) metricVcsRepositoryCount {
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
-	config                         MetricsBuilderConfig // config of the metrics builder.
-	startTime                      pcommon.Timestamp    // start time that will be applied to all recorded data points.
-	metricsCapacity                int                  // maximum observed number of metrics per resource.
-	metricsBuffer                  pmetric.Metrics      // accumulates metrics data before emitting.
-	buildInfo                      component.BuildInfo  // contains version information.
-	resourceAttributeIncludeFilter map[string]filter.Filter
-	resourceAttributeExcludeFilter map[string]filter.Filter
-	metricVcsChangeCount           metricVcsChangeCount
-	metricVcsChangeDuration        metricVcsChangeDuration
-	metricVcsChangeTimeToApproval  metricVcsChangeTimeToApproval
-	metricVcsChangeTimeToMerge     metricVcsChangeTimeToMerge
-	metricVcsCodeCoverage          metricVcsCodeCoverage
-	metricVcsContributorCount      metricVcsContributorCount
-	metricVcsRefCount              metricVcsRefCount
-	metricVcsRefLinesDelta         metricVcsRefLinesDelta
-	metricVcsRefRevisionsDelta     metricVcsRefRevisionsDelta
-	metricVcsRefTime               metricVcsRefTime
-	metricVcsRepositoryCount       metricVcsRepositoryCount
+	config                              MetricsBuilderConfig // config of the metrics builder.
+	startTime                           pcommon.Timestamp    // start time that will be applied to all recorded data points.
+	metricsCapacity                     int                  // maximum observed number of metrics per resource.
+	metricsBuffer                       pmetric.Metrics      // accumulates metrics data before emitting.
+	buildInfo                           component.BuildInfo  // contains version information.
+	resourceAttributeIncludeFilter      map[string]filter.Filter
+	resourceAttributeExcludeFilter      map[string]filter.Filter
+	metricDeployDeploymentCount         metricDeployDeploymentCount
+	metricDeployDeploymentDuration      metricDeployDeploymentDuration
+	metricDeployDeploymentLastTimestamp metricDeployDeploymentLastTimestamp
+	metricVcsChangeCount                metricVcsChangeCount
+	metricVcsChangeDuration             metricVcsChangeDuration
+	metricVcsChangeTimeToApproval       metricVcsChangeTimeToApproval
+	metricVcsChangeTimeToMerge          metricVcsChangeTimeToMerge
+	metricVcsCodeCoverage               metricVcsCodeCoverage
+	metricVcsContributorCount           metricVcsContributorCount
+	metricVcsRefCount                   metricVcsRefCount
+	metricVcsRefLinesDelta              metricVcsRefLinesDelta
+	metricVcsRefRevisionsDelta          metricVcsRefRevisionsDelta
+	metricVcsRefTime                    metricVcsRefTime
+	metricVcsRepositoryCount            metricVcsRepositoryCount
 }
 
 // MetricBuilderOption applies changes to default metrics builder.
@@ -834,23 +1039,26 @@ func WithStartTime(startTime pcommon.Timestamp) MetricBuilderOption {
 }
 func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, options ...MetricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
-		config:                         mbc,
-		startTime:                      pcommon.NewTimestampFromTime(time.Now()),
-		metricsBuffer:                  pmetric.NewMetrics(),
-		buildInfo:                      settings.BuildInfo,
-		metricVcsChangeCount:           newMetricVcsChangeCount(mbc.Metrics.VcsChangeCount),
-		metricVcsChangeDuration:        newMetricVcsChangeDuration(mbc.Metrics.VcsChangeDuration),
-		metricVcsChangeTimeToApproval:  newMetricVcsChangeTimeToApproval(mbc.Metrics.VcsChangeTimeToApproval),
-		metricVcsChangeTimeToMerge:     newMetricVcsChangeTimeToMerge(mbc.Metrics.VcsChangeTimeToMerge),
-		metricVcsCodeCoverage:          newMetricVcsCodeCoverage(mbc.Metrics.VcsCodeCoverage),
-		metricVcsContributorCount:      newMetricVcsContributorCount(mbc.Metrics.VcsContributorCount),
-		metricVcsRefCount:              newMetricVcsRefCount(mbc.Metrics.VcsRefCount),
-		metricVcsRefLinesDelta:         newMetricVcsRefLinesDelta(mbc.Metrics.VcsRefLinesDelta),
-		metricVcsRefRevisionsDelta:     newMetricVcsRefRevisionsDelta(mbc.Metrics.VcsRefRevisionsDelta),
-		metricVcsRefTime:               newMetricVcsRefTime(mbc.Metrics.VcsRefTime),
-		metricVcsRepositoryCount:       newMetricVcsRepositoryCount(mbc.Metrics.VcsRepositoryCount),
-		resourceAttributeIncludeFilter: make(map[string]filter.Filter),
-		resourceAttributeExcludeFilter: make(map[string]filter.Filter),
+		config:                              mbc,
+		startTime:                           pcommon.NewTimestampFromTime(time.Now()),
+		metricsBuffer:                       pmetric.NewMetrics(),
+		buildInfo:                           settings.BuildInfo,
+		metricDeployDeploymentCount:         newMetricDeployDeploymentCount(mbc.Metrics.DeployDeploymentCount),
+		metricDeployDeploymentDuration:      newMetricDeployDeploymentDuration(mbc.Metrics.DeployDeploymentDuration),
+		metricDeployDeploymentLastTimestamp: newMetricDeployDeploymentLastTimestamp(mbc.Metrics.DeployDeploymentLastTimestamp),
+		metricVcsChangeCount:                newMetricVcsChangeCount(mbc.Metrics.VcsChangeCount),
+		metricVcsChangeDuration:             newMetricVcsChangeDuration(mbc.Metrics.VcsChangeDuration),
+		metricVcsChangeTimeToApproval:       newMetricVcsChangeTimeToApproval(mbc.Metrics.VcsChangeTimeToApproval),
+		metricVcsChangeTimeToMerge:          newMetricVcsChangeTimeToMerge(mbc.Metrics.VcsChangeTimeToMerge),
+		metricVcsCodeCoverage:               newMetricVcsCodeCoverage(mbc.Metrics.VcsCodeCoverage),
+		metricVcsContributorCount:           newMetricVcsContributorCount(mbc.Metrics.VcsContributorCount),
+		metricVcsRefCount:                   newMetricVcsRefCount(mbc.Metrics.VcsRefCount),
+		metricVcsRefLinesDelta:              newMetricVcsRefLinesDelta(mbc.Metrics.VcsRefLinesDelta),
+		metricVcsRefRevisionsDelta:          newMetricVcsRefRevisionsDelta(mbc.Metrics.VcsRefRevisionsDelta),
+		metricVcsRefTime:                    newMetricVcsRefTime(mbc.Metrics.VcsRefTime),
+		metricVcsRepositoryCount:            newMetricVcsRepositoryCount(mbc.Metrics.VcsRepositoryCount),
+		resourceAttributeIncludeFilter:      make(map[string]filter.Filter),
+		resourceAttributeExcludeFilter:      make(map[string]filter.Filter),
 	}
 	if mbc.ResourceAttributes.VcsOwnerName.MetricsInclude != nil {
 		mb.resourceAttributeIncludeFilter["vcs.owner.name"] = filter.CreateFilter(mbc.ResourceAttributes.VcsOwnerName.MetricsInclude)
@@ -934,6 +1142,9 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	ils.Scope().SetName(ScopeName)
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
+	mb.metricDeployDeploymentCount.emit(ils.Metrics())
+	mb.metricDeployDeploymentDuration.emit(ils.Metrics())
+	mb.metricDeployDeploymentLastTimestamp.emit(ils.Metrics())
 	mb.metricVcsChangeCount.emit(ils.Metrics())
 	mb.metricVcsChangeDuration.emit(ils.Metrics())
 	mb.metricVcsChangeTimeToApproval.emit(ils.Metrics())
@@ -974,6 +1185,21 @@ func (mb *MetricsBuilder) Emit(options ...ResourceMetricsOption) pmetric.Metrics
 	metrics := mb.metricsBuffer
 	mb.metricsBuffer = pmetric.NewMetrics()
 	return metrics
+}
+
+// RecordDeployDeploymentCountDataPoint adds a data point to deploy.deployment.count metric.
+func (mb *MetricsBuilder) RecordDeployDeploymentCountDataPoint(ts pcommon.Timestamp, val int64, deployServiceAttributeValue string, deployEnvironmentAttributeValue string, deployStatusAttributeValue AttributeDeployStatus) {
+	mb.metricDeployDeploymentCount.recordDataPoint(mb.startTime, ts, val, deployServiceAttributeValue, deployEnvironmentAttributeValue, deployStatusAttributeValue.String())
+}
+
+// RecordDeployDeploymentDurationDataPoint adds a data point to deploy.deployment.duration metric.
+func (mb *MetricsBuilder) RecordDeployDeploymentDurationDataPoint(ts pcommon.Timestamp, val int64, deployServiceAttributeValue string, deployEnvironmentAttributeValue string) {
+	mb.metricDeployDeploymentDuration.recordDataPoint(mb.startTime, ts, val, deployServiceAttributeValue, deployEnvironmentAttributeValue)
+}
+
+// RecordDeployDeploymentLastTimestampDataPoint adds a data point to deploy.deployment.last_timestamp metric.
+func (mb *MetricsBuilder) RecordDeployDeploymentLastTimestampDataPoint(ts pcommon.Timestamp, val int64, deployServiceAttributeValue string, deployEnvironmentAttributeValue string, deployStatusAttributeValue AttributeDeployStatus) {
+	mb.metricDeployDeploymentLastTimestamp.recordDataPoint(mb.startTime, ts, val, deployServiceAttributeValue, deployEnvironmentAttributeValue, deployStatusAttributeValue.String())
 }
 
 // RecordVcsChangeCountDataPoint adds a data point to vcs.change.count metric.

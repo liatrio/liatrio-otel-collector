@@ -1,6 +1,12 @@
 default:
 all_set:
   metrics:
+    deploy.deployment.count:
+      enabled: true
+    deploy.deployment.duration:
+      enabled: true
+    deploy.deployment.last_timestamp:
+      enabled: true
     vcs.change.count:
       enabled: true
     vcs.change.duration:
@@ -30,6 +36,12 @@ all_set:
       enabled: true
 none_set:
   metrics:
+    deploy.deployment.count:
+      enabled: false
+    deploy.deployment.duration:
+      enabled: false
+    deploy.deployment.last_timestamp:
+      enabled: false
     vcs.change.count:
       enabled: false
     vcs.change.duration:

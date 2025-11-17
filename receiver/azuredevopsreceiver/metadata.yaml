@@ -62,6 +62,19 @@ attributes:
     enum:
       - added
       - removed
+  deploy.service:
+    description: Logical service or application name associated with the deployment.
+    type: string
+  deploy.environment:
+    description: Target environment or stage for the deployment (for example, Production (West US)).
+    type: string
+  deploy.status:
+    description: Deployment status as reported by Azure DevOps.
+    type: string
+    enum:
+      - succeeded
+      - failed
+      - inProgress
 
 metrics:
   vcs.repository.count:
@@ -181,6 +194,29 @@ metrics:
       value_type: int
     unit: "{change}"
     attributes: [vcs.repository.url.full, vcs.change.state, vcs.repository.name, vcs.repository.id]
+  deploy.deployment.count:
+    enabled: true
+    description: The number of deployments by service, environment, and status.
+    unit: "{deployment}"
+    sum:
+      value_type: int
+      aggregation: cumulative
+      monotonic: true
+    attributes: [deploy.service, deploy.environment, deploy.status]
+  deploy.deployment.duration:
+    enabled: true
+    description: Average deployment duration for a given service and environment.
+    unit: s
+    gauge:
+      value_type: int
+    attributes: [deploy.service, deploy.environment]
+  deploy.deployment.last_timestamp:
+    enabled: true
+    description: Unix timestamp of the last completed deployment for a service, environment, and status.
+    unit: s
+    gauge:
+      value_type: int
+    attributes: [deploy.service, deploy.environment, deploy.status]
 
 tests:
   config:
