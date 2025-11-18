@@ -62,19 +62,20 @@ attributes:
     enum:
       - added
       - removed
-  deploy.service:
-    description: Logical service or application name associated with the deployment.
+  # Deployment attributes follow OpenTelemetry semantic conventions (Experimental)
+  # Reference: https://opentelemetry.io/docs/specs/semconv/attributes-registry/deployment/
+  service.name:
+    description: Logical name of the service being deployed.
     type: string
-  deploy.environment:
-    description: Target environment or stage for the deployment (for example, Production (West US)).
+  deployment.environment.name:
+    description: Name of the deployment environment (aka deployment tier).
     type: string
-  deploy.status:
-    description: Deployment status as reported by Azure DevOps.
+  deployment.status:
+    description: The status of the deployment.
     type: string
     enum:
       - succeeded
       - failed
-      - inProgress
 
 metrics:
   vcs.repository.count:
@@ -202,21 +203,21 @@ metrics:
       value_type: int
       aggregation: cumulative
       monotonic: true
-    attributes: [deploy.service, deploy.environment, deploy.status]
+    attributes: [service.name, deployment.environment.name, deployment.status]
   deploy.deployment.duration:
     enabled: true
     description: Average deployment duration for a given service and environment.
     unit: s
     gauge:
       value_type: int
-    attributes: [deploy.service, deploy.environment]
+    attributes: [service.name, deployment.environment.name]
   deploy.deployment.last_timestamp:
     enabled: true
     description: Unix timestamp of the last completed deployment for a service, environment, and status.
     unit: s
     gauge:
       value_type: int
-    attributes: [deploy.service, deploy.environment, deploy.status]
+    attributes: [service.name, deployment.environment.name, deployment.status]
 
 tests:
   config:

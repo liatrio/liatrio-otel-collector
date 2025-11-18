@@ -24,9 +24,9 @@ The number of deployments by service, environment, and status.
 
 | Name | Description | Values | Optional |
 | ---- | ----------- | ------ | -------- |
-| deploy.service | Logical service or application name associated with the deployment. | Any Str | false |
-| deploy.environment | Target environment or stage for the deployment (for example, Production (West US)). | Any Str | false |
-| deploy.status | Deployment status as reported by Azure DevOps. | Str: ``succeeded``, ``failed``, ``inProgress`` | false |
+| service.name | Logical name of the service being deployed. | Any Str | false |
+| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | false |
+| deployment.status | The status of the deployment. | Str: ``succeeded``, ``failed`` | false |
 
 ### deploy.deployment.duration
 
@@ -40,8 +40,8 @@ Average deployment duration for a given service and environment.
 
 | Name | Description | Values | Optional |
 | ---- | ----------- | ------ | -------- |
-| deploy.service | Logical service or application name associated with the deployment. | Any Str | false |
-| deploy.environment | Target environment or stage for the deployment (for example, Production (West US)). | Any Str | false |
+| service.name | Logical name of the service being deployed. | Any Str | false |
+| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | false |
 
 ### deploy.deployment.last_timestamp
 
@@ -55,9 +55,9 @@ Unix timestamp of the last completed deployment for a service, environment, and 
 
 | Name | Description | Values | Optional |
 | ---- | ----------- | ------ | -------- |
-| deploy.service | Logical service or application name associated with the deployment. | Any Str | false |
-| deploy.environment | Target environment or stage for the deployment (for example, Production (West US)). | Any Str | false |
-| deploy.status | Deployment status as reported by Azure DevOps. | Str: ``succeeded``, ``failed``, ``inProgress`` | false |
+| service.name | Logical name of the service being deployed. | Any Str | false |
+| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | false |
+| deployment.status | The status of the deployment. | Str: ``succeeded``, ``failed`` | false |
 
 ### vcs.change.count
 

@@ -44,9 +44,11 @@ type ReleaseDefinitionDetail struct {
 }
 
 // Deployment represents a deployment from Azure DevOps Release Management API
+// API Reference: https://learn.microsoft.com/en-us/rest/api/azure/devops/release/deployments/list
+// Response schema: https://learn.microsoft.com/en-us/rest/api/azure/devops/release/deployments/list#deployment
 type Deployment struct {
 	ID               int       `json:"id"`
-	DeploymentStatus string    `json:"deploymentStatus"`
+	DeploymentStatus string    `json:"deploymentStatus"` // Possible values: "undefined", "notDeployed", "inProgress", "succeeded", "failed", "partiallySucceeded"
 	StartedOn        time.Time `json:"startedOn"`
 	CompletedOn      time.Time `json:"completedOn"`
 	Release          struct {
@@ -93,19 +95,22 @@ func (ados *azuredevopsScraper) getReleaseDefinitionID(ctx context.Context, org,
 		return 0, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	// Try exact match first
+	// Try exact match
 	for _, def := range result.Value {
 		if strings.EqualFold(strings.TrimSpace(def.Name), strings.TrimSpace(pipelineName)) {
 			return def.ID, nil
 		}
 	}
 
-	// If only one result, use it
-	if len(result.Value) == 1 {
-		return result.Value[0].ID, nil
+	// No exact match found - provide helpful error with what was found
+	var foundNames []string
+	for _, def := range result.Value {
+		foundNames = append(foundNames, def.Name)
 	}
-
-	return 0, fmt.Errorf("pipeline '%s' not found (found %d results)", pipelineName, len(result.Value))
+	if len(foundNames) > 0 {
+		return 0, fmt.Errorf("pipeline '%s' not found (found %d results: %v)", pipelineName, len(result.Value), foundNames)
+	}
+	return 0, fmt.Errorf("pipeline '%s' not found (no results returned)", pipelineName)
 }
 
 // getDefinitionEnvironmentID finds the environment ID by stage name within a release definition
@@ -149,10 +154,10 @@ func (ados *azuredevopsScraper) getDefinitionEnvironmentID(ctx context.Context, 
 }
 
 // fetchDeployments retrieves deployments for a specific release definition and environment
-func (ados *azuredevopsScraper) fetchDeployments(ctx context.Context, org, project string, definitionID, environmentID, lookbackDays int) ([]Deployment, error) {
+// since the specified minTime to avoid fetching duplicate data
+func (ados *azuredevopsScraper) fetchDeployments(ctx context.Context, org, project string, definitionID, environmentID int, minTime time.Time) ([]Deployment, error) {
 	urlPath := fmt.Sprintf("%s/%s/%s/_apis/release/deployments", vsrmBaseURL, org, project)
 
-	minTime := time.Now().UTC().AddDate(0, 0, -lookbackDays)
 	minTimeISO := minTime.Format("2006-01-02T15:04:05Z")
 
 	var allDeployments []Deployment

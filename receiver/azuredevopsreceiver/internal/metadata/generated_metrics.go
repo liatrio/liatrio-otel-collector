@@ -13,34 +13,30 @@ import (
 	conventions "go.opentelemetry.io/otel/semconv/v1.37.0"
 )
 
-// AttributeDeployStatus specifies the value deploy.status attribute.
-type AttributeDeployStatus int
+// AttributeDeploymentStatus specifies the value deployment.status attribute.
+type AttributeDeploymentStatus int
 
 const (
-	_ AttributeDeployStatus = iota
-	AttributeDeployStatusSucceeded
-	AttributeDeployStatusFailed
-	AttributeDeployStatusInProgress
+	_ AttributeDeploymentStatus = iota
+	AttributeDeploymentStatusSucceeded
+	AttributeDeploymentStatusFailed
 )
 
-// String returns the string representation of the AttributeDeployStatus.
-func (av AttributeDeployStatus) String() string {
+// String returns the string representation of the AttributeDeploymentStatus.
+func (av AttributeDeploymentStatus) String() string {
 	switch av {
-	case AttributeDeployStatusSucceeded:
+	case AttributeDeploymentStatusSucceeded:
 		return "succeeded"
-	case AttributeDeployStatusFailed:
+	case AttributeDeploymentStatusFailed:
 		return "failed"
-	case AttributeDeployStatusInProgress:
-		return "inProgress"
 	}
 	return ""
 }
 
-// MapAttributeDeployStatus is a helper map of string to AttributeDeployStatus attribute value.
-var MapAttributeDeployStatus = map[string]AttributeDeployStatus{
-	"succeeded":  AttributeDeployStatusSucceeded,
-	"failed":     AttributeDeployStatusFailed,
-	"inProgress": AttributeDeployStatusInProgress,
+// MapAttributeDeploymentStatus is a helper map of string to AttributeDeploymentStatus attribute value.
+var MapAttributeDeploymentStatus = map[string]AttributeDeploymentStatus{
+	"succeeded": AttributeDeploymentStatusSucceeded,
+	"failed":    AttributeDeploymentStatusFailed,
 }
 
 // AttributeVcsChangeState specifies the value vcs.change.state attribute.
@@ -256,7 +252,7 @@ func (m *metricDeployDeploymentCount) init() {
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricDeployDeploymentCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, deployServiceAttributeValue string, deployEnvironmentAttributeValue string, deployStatusAttributeValue string) {
+func (m *metricDeployDeploymentCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string, deploymentStatusAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -264,9 +260,9 @@ func (m *metricDeployDeploymentCount) recordDataPoint(start pcommon.Timestamp, t
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("deploy.service", deployServiceAttributeValue)
-	dp.Attributes().PutStr("deploy.environment", deployEnvironmentAttributeValue)
-	dp.Attributes().PutStr("deploy.status", deployStatusAttributeValue)
+	dp.Attributes().PutStr("service.name", serviceNameAttributeValue)
+	dp.Attributes().PutStr("deployment.environment.name", deploymentEnvironmentNameAttributeValue)
+	dp.Attributes().PutStr("deployment.status", deploymentStatusAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -309,7 +305,7 @@ func (m *metricDeployDeploymentDuration) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricDeployDeploymentDuration) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, deployServiceAttributeValue string, deployEnvironmentAttributeValue string) {
+func (m *metricDeployDeploymentDuration) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -317,8 +313,8 @@ func (m *metricDeployDeploymentDuration) recordDataPoint(start pcommon.Timestamp
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("deploy.service", deployServiceAttributeValue)
-	dp.Attributes().PutStr("deploy.environment", deployEnvironmentAttributeValue)
+	dp.Attributes().PutStr("service.name", serviceNameAttributeValue)
+	dp.Attributes().PutStr("deployment.environment.name", deploymentEnvironmentNameAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -361,7 +357,7 @@ func (m *metricDeployDeploymentLastTimestamp) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricDeployDeploymentLastTimestamp) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, deployServiceAttributeValue string, deployEnvironmentAttributeValue string, deployStatusAttributeValue string) {
+func (m *metricDeployDeploymentLastTimestamp) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string, deploymentStatusAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -369,9 +365,9 @@ func (m *metricDeployDeploymentLastTimestamp) recordDataPoint(start pcommon.Time
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
 	dp.SetIntValue(val)
-	dp.Attributes().PutStr("deploy.service", deployServiceAttributeValue)
-	dp.Attributes().PutStr("deploy.environment", deployEnvironmentAttributeValue)
-	dp.Attributes().PutStr("deploy.status", deployStatusAttributeValue)
+	dp.Attributes().PutStr("service.name", serviceNameAttributeValue)
+	dp.Attributes().PutStr("deployment.environment.name", deploymentEnvironmentNameAttributeValue)
+	dp.Attributes().PutStr("deployment.status", deploymentStatusAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -1188,18 +1184,18 @@ func (mb *MetricsBuilder) Emit(options ...ResourceMetricsOption) pmetric.Metrics
 }
 
 // RecordDeployDeploymentCountDataPoint adds a data point to deploy.deployment.count metric.
-func (mb *MetricsBuilder) RecordDeployDeploymentCountDataPoint(ts pcommon.Timestamp, val int64, deployServiceAttributeValue string, deployEnvironmentAttributeValue string, deployStatusAttributeValue AttributeDeployStatus) {
-	mb.metricDeployDeploymentCount.recordDataPoint(mb.startTime, ts, val, deployServiceAttributeValue, deployEnvironmentAttributeValue, deployStatusAttributeValue.String())
+func (mb *MetricsBuilder) RecordDeployDeploymentCountDataPoint(ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string, deploymentStatusAttributeValue AttributeDeploymentStatus) {
+	mb.metricDeployDeploymentCount.recordDataPoint(mb.startTime, ts, val, serviceNameAttributeValue, deploymentEnvironmentNameAttributeValue, deploymentStatusAttributeValue.String())
 }
 
 // RecordDeployDeploymentDurationDataPoint adds a data point to deploy.deployment.duration metric.
-func (mb *MetricsBuilder) RecordDeployDeploymentDurationDataPoint(ts pcommon.Timestamp, val int64, deployServiceAttributeValue string, deployEnvironmentAttributeValue string) {
-	mb.metricDeployDeploymentDuration.recordDataPoint(mb.startTime, ts, val, deployServiceAttributeValue, deployEnvironmentAttributeValue)
+func (mb *MetricsBuilder) RecordDeployDeploymentDurationDataPoint(ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string) {
+	mb.metricDeployDeploymentDuration.recordDataPoint(mb.startTime, ts, val, serviceNameAttributeValue, deploymentEnvironmentNameAttributeValue)
 }
 
 // RecordDeployDeploymentLastTimestampDataPoint adds a data point to deploy.deployment.last_timestamp metric.
-func (mb *MetricsBuilder) RecordDeployDeploymentLastTimestampDataPoint(ts pcommon.Timestamp, val int64, deployServiceAttributeValue string, deployEnvironmentAttributeValue string, deployStatusAttributeValue AttributeDeployStatus) {
-	mb.metricDeployDeploymentLastTimestamp.recordDataPoint(mb.startTime, ts, val, deployServiceAttributeValue, deployEnvironmentAttributeValue, deployStatusAttributeValue.String())
+func (mb *MetricsBuilder) RecordDeployDeploymentLastTimestampDataPoint(ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string, deploymentStatusAttributeValue AttributeDeploymentStatus) {
+	mb.metricDeployDeploymentLastTimestamp.recordDataPoint(mb.startTime, ts, val, serviceNameAttributeValue, deploymentEnvironmentNameAttributeValue, deploymentStatusAttributeValue.String())
 }
 
 // RecordVcsChangeCountDataPoint adds a data point to vcs.change.count metric.

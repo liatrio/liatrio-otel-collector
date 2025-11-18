@@ -70,15 +70,15 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordDeployDeploymentCountDataPoint(ts, 1, "deploy.service-val", "deploy.environment-val", AttributeDeployStatusSucceeded)
+			mb.RecordDeployDeploymentCountDataPoint(ts, 1, "service.name-val", "deployment.environment.name-val", AttributeDeploymentStatusSucceeded)
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordDeployDeploymentDurationDataPoint(ts, 1, "deploy.service-val", "deploy.environment-val")
+			mb.RecordDeployDeploymentDurationDataPoint(ts, 1, "service.name-val", "deployment.environment.name-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordDeployDeploymentLastTimestampDataPoint(ts, 1, "deploy.service-val", "deploy.environment-val", AttributeDeployStatusSucceeded)
+			mb.RecordDeployDeploymentLastTimestampDataPoint(ts, 1, "service.name-val", "deployment.environment.name-val", AttributeDeploymentStatusSucceeded)
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -162,13 +162,13 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("deploy.service")
+					attrVal, ok := dp.Attributes().Get("service.name")
 					assert.True(t, ok)
-					assert.Equal(t, "deploy.service-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("deploy.environment")
+					assert.Equal(t, "service.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("deployment.environment.name")
 					assert.True(t, ok)
-					assert.Equal(t, "deploy.environment-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("deploy.status")
+					assert.Equal(t, "deployment.environment.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("deployment.status")
 					assert.True(t, ok)
 					assert.Equal(t, "succeeded", attrVal.Str())
 				case "deploy.deployment.duration":
@@ -183,12 +183,12 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("deploy.service")
+					attrVal, ok := dp.Attributes().Get("service.name")
 					assert.True(t, ok)
-					assert.Equal(t, "deploy.service-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("deploy.environment")
+					assert.Equal(t, "service.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("deployment.environment.name")
 					assert.True(t, ok)
-					assert.Equal(t, "deploy.environment-val", attrVal.Str())
+					assert.Equal(t, "deployment.environment.name-val", attrVal.Str())
 				case "deploy.deployment.last_timestamp":
 					assert.False(t, validatedMetrics["deploy.deployment.last_timestamp"], "Found a duplicate in the metrics slice: deploy.deployment.last_timestamp")
 					validatedMetrics["deploy.deployment.last_timestamp"] = true
@@ -201,13 +201,13 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("deploy.service")
+					attrVal, ok := dp.Attributes().Get("service.name")
 					assert.True(t, ok)
-					assert.Equal(t, "deploy.service-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("deploy.environment")
+					assert.Equal(t, "service.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("deployment.environment.name")
 					assert.True(t, ok)
-					assert.Equal(t, "deploy.environment-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("deploy.status")
+					assert.Equal(t, "deployment.environment.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("deployment.status")
 					assert.True(t, ok)
 					assert.Equal(t, "succeeded", attrVal.Str())
 				case "vcs.change.count":
