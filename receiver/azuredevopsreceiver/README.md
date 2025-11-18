@@ -89,9 +89,11 @@ service:
 
 To enable deployment metrics scraping from Azure DevOps Release Management API, configure the following parameters:
 
-- `deployment_pipeline_name`: Name of the Release Pipeline to scrape (required for deployment metrics)
-- `deployment_stage_name`: Name of the Environment/Stage to track (required for deployment metrics)
-- `deployment_lookback_days`: Number of days of deployment history to fetch (default: 30)
+- `deployment_pipeline_name`: Name of the Release Pipeline to scrape (optional - if not set, deployment metrics are disabled)
+- `deployment_stage_name`: Name of the Environment/Stage to track (optional - if not set, deployment metrics are disabled)
+- `deployment_lookback_days`: Number of days of deployment history to fetch on first scrape (optional, default: 30)
+
+**Note:** Both `deployment_pipeline_name` and `deployment_stage_name` must be set to enable deployment metrics. If either is empty, deployment scraping is skipped.
 
 **Note:** Your Azure DevOps PAT must have **Release (Read)** permissions in addition to **Code (Read)** to scrape deployment metrics.
 
