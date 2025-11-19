@@ -37,13 +37,12 @@ type deploymentDurationKey struct {
 }
 
 type azuredevopsScraper struct {
-	client                   *http.Client
-	cfg                      *Config
-	settings                 component.TelemetrySettings
-	logger                   *zap.Logger
-	mb                       *metadata.MetricsBuilder
-	rb                       *metadata.ResourceBuilder
-	lastDeploymentScrapeTime time.Time
+	client   *http.Client
+	cfg      *Config
+	settings component.TelemetrySettings
+	logger   *zap.Logger
+	mb       *metadata.MetricsBuilder
+	rb       *metadata.ResourceBuilder
 }
 
 func (ados *azuredevopsScraper) start(ctx context.Context, host component.Host) (err error) {
@@ -238,21 +237,14 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 
 // fetchDeploymentData fetches deployment data from Azure DevOps Release Management API
 func (ados *azuredevopsScraper) fetchDeploymentData(ctx context.Context) ([]Deployment, error) {
-	// Determine the time window for fetching deployments
-	var minTime time.Time
-	if ados.lastDeploymentScrapeTime.IsZero() {
-		// First scrape - use configured lookback days
-		lookbackDays := ados.cfg.DeploymentLookbackDays
-		if lookbackDays <= 0 {
-			lookbackDays = 30 // default to 30 days
-		}
-		minTime = time.Now().UTC().AddDate(0, 0, -lookbackDays)
-		ados.logger.Sugar().Infof("First deployment scrape - fetching last %d days", lookbackDays)
-	} else {
-		// Subsequent scrapes - fetch only since last scrape to avoid duplicates
-		minTime = ados.lastDeploymentScrapeTime
-		ados.logger.Sugar().Infof("Fetching deployments since last scrape at %s", minTime.Format(time.RFC3339))
+	// Always fetch deployments from the configured lookback window
+	// This ensures metrics are consistently updated even when no new deployments occur
+	lookbackDays := ados.cfg.DeploymentLookbackDays
+	if lookbackDays <= 0 {
+		lookbackDays = 30 // default to 30 days
 	}
+	minTime := time.Now().UTC().AddDate(0, 0, -lookbackDays)
+	ados.logger.Sugar().Infof("Fetching deployments from last %d days", lookbackDays)
 
 	ados.logger.Sugar().Infof("Fetching deployments for pipeline '%s', stage '%s'", ados.cfg.DeploymentPipelineName, ados.cfg.DeploymentStageName)
 
@@ -276,9 +268,6 @@ func (ados *azuredevopsScraper) fetchDeploymentData(ctx context.Context) ([]Depl
 		return nil, fmt.Errorf("failed to fetch deployments: %w", err)
 	}
 	ados.logger.Sugar().Infof("Fetched %d deployments", len(deployments))
-
-	// Update last scrape time to now to track for next scrape
-	ados.lastDeploymentScrapeTime = time.Now().UTC()
 
 	return deployments, nil
 }
