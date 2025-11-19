@@ -6,8 +6,8 @@ toolchain go1.24.0
 
 require (
 	github.com/Khan/genqlient v0.8.0
-	github.com/golangci/golangci-lint v1.64.5
-	github.com/google/osv-scanner v1.9.2
+	github.com/golangci/golangci-lint/v2 v2.6.2
+	github.com/google/osv-scanner/v2 v2.3.0
 	github.com/securego/gosec/v2 v2.22.1
 	go.opentelemetry.io/build-tools/crosslink v0.18.0
 	go.opentelemetry.io/build-tools/multimod v0.18.0
