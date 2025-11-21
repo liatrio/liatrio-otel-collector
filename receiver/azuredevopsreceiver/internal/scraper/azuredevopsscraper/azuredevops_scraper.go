@@ -36,6 +36,33 @@ type deploymentDurationKey struct {
 	Environment string
 }
 
+// WorkItem represents an Azure DevOps work item
+type WorkItem struct {
+	ID     int                    `json:"id"`
+	Fields map[string]interface{} `json:"fields"`
+}
+
+// WorkItemQueryResult represents the result of a WIQL query
+type WorkItemQueryResult struct {
+	WorkItems []struct {
+		ID  int    `json:"id"`
+		URL string `json:"url"`
+	} `json:"workItems"`
+}
+
+// WorkItemBatchResult represents a batch get work items response
+type WorkItemBatchResult struct {
+	Count int        `json:"count"`
+	Value []WorkItem `json:"value"`
+}
+
+// workItemMetricKey is used as a map key for tracking work item metrics
+type workItemMetricKey struct {
+	workItemType string
+	state        string
+	project      string
+}
+
 type azuredevopsScraper struct {
 	client   *http.Client
 	cfg      *Config
@@ -224,6 +251,16 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 			ados.logger.Sugar().Errorf("error fetching deployments: %v", err)
 		} else {
 			ados.recordDeploymentMetrics(now, deployments, ados.cfg.DeploymentStageName)
+		}
+	}
+
+	// Scrape work item metrics if configured
+	if len(ados.cfg.WorkItemTypes) > 0 || ados.cfg.WorkItemLookbackDays > 0 {
+		workItems, err := ados.fetchWorkItems(ctx, ados.cfg.Organization, ados.cfg.Project, ados.cfg.WorkItemTypes, ados.cfg.WorkItemLookbackDays)
+		if err != nil {
+			ados.logger.Sugar().Errorf("error fetching work items: %v", err)
+		} else {
+			ados.recordWorkItemMetrics(now, workItems, ados.cfg.Project)
 		}
 	}
 

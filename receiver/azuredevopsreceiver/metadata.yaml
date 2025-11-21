@@ -76,6 +76,16 @@ attributes:
     enum:
       - succeeded
       - failed
+  # Work item attributes
+  work_item.type:
+    description: The type of work item (User Story, Bug, Task, etc.).
+    type: string
+  work_item.state:
+    description: The current state of the work item (New, Active, Resolved, Closed, etc.).
+    type: string
+  project.name:
+    description: The name of the Azure DevOps project.
+    type: string
 
 metrics:
   vcs.repository.count:
@@ -218,6 +228,30 @@ metrics:
     gauge:
       value_type: int
     attributes: [service.name, deployment.environment.name, deployment.status]
+  work_item.cycle_time:
+    enabled: true
+    description: Time from work item creation to closure in seconds. Only recorded for closed work items.
+    unit: s
+    gauge:
+      value_type: int
+    attributes: [work_item.type, project.name]
+  # Work item metrics follow a similar pattern to VCS and deployment metrics
+  # Note: There are no official OTel semantic conventions for work items yet,
+  # so we follow the established pattern from vcs.* and deploy.* namespaces
+  work_item.age:
+    enabled: true
+    description: Time since work item creation for items that are not yet closed, in seconds.
+    unit: s
+    gauge:
+      value_type: int
+    attributes: [work_item.type, work_item.state, project.name]
+  work_item.count:
+    enabled: true
+    description: The number of work items by type and state.
+    unit: "{work_item}"
+    gauge:
+      value_type: int
+    attributes: [work_item.type, work_item.state, project.name]
 
 tests:
   config:

@@ -212,6 +212,15 @@ var MetricsInfo = metricsInfo{
 	VcsRepositoryCount: metricInfo{
 		Name: "vcs.repository.count",
 	},
+	WorkItemAge: metricInfo{
+		Name: "work_item.age",
+	},
+	WorkItemCount: metricInfo{
+		Name: "work_item.count",
+	},
+	WorkItemCycleTime: metricInfo{
+		Name: "work_item.cycle_time",
+	},
 }
 
 type metricsInfo struct {
@@ -229,6 +238,9 @@ type metricsInfo struct {
 	VcsRefRevisionsDelta          metricInfo
 	VcsRefTime                    metricInfo
 	VcsRepositoryCount            metricInfo
+	WorkItemAge                   metricInfo
+	WorkItemCount                 metricInfo
+	WorkItemCycleTime             metricInfo
 }
 
 type metricInfo struct {
@@ -990,6 +1002,164 @@ func newMetricVcsRepositoryCount(cfg MetricConfig) metricVcsRepositoryCount {
 	return m
 }
 
+type metricWorkItemAge struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills work_item.age metric with initial data.
+func (m *metricWorkItemAge) init() {
+	m.data.SetName("work_item.age")
+	m.data.SetDescription("Time since work item creation for items that are not yet closed, in seconds.")
+	m.data.SetUnit("s")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricWorkItemAge) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, workItemStateAttributeValue string, projectNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("work_item.type", workItemTypeAttributeValue)
+	dp.Attributes().PutStr("work_item.state", workItemStateAttributeValue)
+	dp.Attributes().PutStr("project.name", projectNameAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricWorkItemAge) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricWorkItemAge) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricWorkItemAge(cfg MetricConfig) metricWorkItemAge {
+	m := metricWorkItemAge{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricWorkItemCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills work_item.count metric with initial data.
+func (m *metricWorkItemCount) init() {
+	m.data.SetName("work_item.count")
+	m.data.SetDescription("The number of work items by type and state.")
+	m.data.SetUnit("{work_item}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricWorkItemCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, workItemStateAttributeValue string, projectNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("work_item.type", workItemTypeAttributeValue)
+	dp.Attributes().PutStr("work_item.state", workItemStateAttributeValue)
+	dp.Attributes().PutStr("project.name", projectNameAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricWorkItemCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricWorkItemCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricWorkItemCount(cfg MetricConfig) metricWorkItemCount {
+	m := metricWorkItemCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricWorkItemCycleTime struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills work_item.cycle_time metric with initial data.
+func (m *metricWorkItemCycleTime) init() {
+	m.data.SetName("work_item.cycle_time")
+	m.data.SetDescription("Time from work item creation to closure in seconds. Only recorded for closed work items.")
+	m.data.SetUnit("s")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricWorkItemCycleTime) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, projectNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("work_item.type", workItemTypeAttributeValue)
+	dp.Attributes().PutStr("project.name", projectNameAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricWorkItemCycleTime) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricWorkItemCycleTime) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricWorkItemCycleTime(cfg MetricConfig) metricWorkItemCycleTime {
+	m := metricWorkItemCycleTime{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
@@ -1014,6 +1184,9 @@ type MetricsBuilder struct {
 	metricVcsRefRevisionsDelta          metricVcsRefRevisionsDelta
 	metricVcsRefTime                    metricVcsRefTime
 	metricVcsRepositoryCount            metricVcsRepositoryCount
+	metricWorkItemAge                   metricWorkItemAge
+	metricWorkItemCount                 metricWorkItemCount
+	metricWorkItemCycleTime             metricWorkItemCycleTime
 }
 
 // MetricBuilderOption applies changes to default metrics builder.
@@ -1053,6 +1226,9 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, opt
 		metricVcsRefRevisionsDelta:          newMetricVcsRefRevisionsDelta(mbc.Metrics.VcsRefRevisionsDelta),
 		metricVcsRefTime:                    newMetricVcsRefTime(mbc.Metrics.VcsRefTime),
 		metricVcsRepositoryCount:            newMetricVcsRepositoryCount(mbc.Metrics.VcsRepositoryCount),
+		metricWorkItemAge:                   newMetricWorkItemAge(mbc.Metrics.WorkItemAge),
+		metricWorkItemCount:                 newMetricWorkItemCount(mbc.Metrics.WorkItemCount),
+		metricWorkItemCycleTime:             newMetricWorkItemCycleTime(mbc.Metrics.WorkItemCycleTime),
 		resourceAttributeIncludeFilter:      make(map[string]filter.Filter),
 		resourceAttributeExcludeFilter:      make(map[string]filter.Filter),
 	}
@@ -1152,6 +1328,9 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	mb.metricVcsRefRevisionsDelta.emit(ils.Metrics())
 	mb.metricVcsRefTime.emit(ils.Metrics())
 	mb.metricVcsRepositoryCount.emit(ils.Metrics())
+	mb.metricWorkItemAge.emit(ils.Metrics())
+	mb.metricWorkItemCount.emit(ils.Metrics())
+	mb.metricWorkItemCycleTime.emit(ils.Metrics())
 
 	for _, op := range options {
 		op.apply(rm)
@@ -1251,6 +1430,21 @@ func (mb *MetricsBuilder) RecordVcsRefTimeDataPoint(ts pcommon.Timestamp, val in
 // RecordVcsRepositoryCountDataPoint adds a data point to vcs.repository.count metric.
 func (mb *MetricsBuilder) RecordVcsRepositoryCountDataPoint(ts pcommon.Timestamp, val int64) {
 	mb.metricVcsRepositoryCount.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordWorkItemAgeDataPoint adds a data point to work_item.age metric.
+func (mb *MetricsBuilder) RecordWorkItemAgeDataPoint(ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, workItemStateAttributeValue string, projectNameAttributeValue string) {
+	mb.metricWorkItemAge.recordDataPoint(mb.startTime, ts, val, workItemTypeAttributeValue, workItemStateAttributeValue, projectNameAttributeValue)
+}
+
+// RecordWorkItemCountDataPoint adds a data point to work_item.count metric.
+func (mb *MetricsBuilder) RecordWorkItemCountDataPoint(ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, workItemStateAttributeValue string, projectNameAttributeValue string) {
+	mb.metricWorkItemCount.recordDataPoint(mb.startTime, ts, val, workItemTypeAttributeValue, workItemStateAttributeValue, projectNameAttributeValue)
+}
+
+// RecordWorkItemCycleTimeDataPoint adds a data point to work_item.cycle_time metric.
+func (mb *MetricsBuilder) RecordWorkItemCycleTimeDataPoint(ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, projectNameAttributeValue string) {
+	mb.metricWorkItemCycleTime.recordDataPoint(mb.startTime, ts, val, workItemTypeAttributeValue, projectNameAttributeValue)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

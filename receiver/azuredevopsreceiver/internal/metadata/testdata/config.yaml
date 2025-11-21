@@ -29,6 +29,12 @@ all_set:
       enabled: true
     vcs.repository.count:
       enabled: true
+    work_item.age:
+      enabled: true
+    work_item.count:
+      enabled: true
+    work_item.cycle_time:
+      enabled: true
   resource_attributes:
     vcs.owner.name:
       enabled: true
@@ -63,6 +69,12 @@ none_set:
     vcs.ref.time:
       enabled: false
     vcs.repository.count:
+      enabled: false
+    work_item.age:
+      enabled: false
+    work_item.count:
+      enabled: false
+    work_item.cycle_time:
       enabled: false
   resource_attributes:
     vcs.owner.name:

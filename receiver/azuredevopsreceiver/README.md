@@ -17,6 +17,7 @@ projects and repositories in Azure DevOps for:
 
 - **VCS metrics:** repositories, branches, pull requests, and code coverage
 - **Deployment metrics:** deployment frequency, duration, and status from Release Management API
+- **Work item metrics:** cycle time, age, and counts for tracking work items (User Stories, Bugs, etc.)
 
 The current default set of metrics can be found in
 [documentation.md](./documentation.md).
@@ -74,6 +75,12 @@ receivers:
                 deployment_stage_name: "Production"
                 deployment_lookback_days: 30
                 
+                # Optional: Work item metrics configuration
+                work_item_types:
+                  - "User Story"
+                  - "Bug"
+                work_item_lookback_days: 30
+                
                 auth:
                     authenticator: bearertokenauth/azuredevops
 service:
@@ -96,6 +103,20 @@ To enable deployment metrics scraping from Azure DevOps Release Management API, 
 **Note:** Both `deployment_pipeline_name` and `deployment_stage_name` must be set to enable deployment metrics. If either is empty, deployment scraping is skipped.
 
 **Note:** Your Azure DevOps PAT must have **Release (Read)** permissions in addition to **Code (Read)** to scrape deployment metrics.
+
+### Work Item Metrics
+
+To enable work item metrics scraping from Azure DevOps Work Items API, configure the following parameters:
+
+- `work_item_types`: Array of work item types to track (e.g., "User Story", "Bug", "Task") (optional - if not set or empty, work item metrics are disabled)
+- `work_item_lookback_days`: Number of days of work item history to fetch on first scrape (optional, default: 30)
+
+Work item metrics include:
+- **Cycle Time**: Time from creation to closure for completed work items
+- **Age**: Time since creation for open work items
+- **Count**: Number of work items by type and state
+
+**Note:** Your Azure DevOps PAT must have **Work Items (Read)** permissions in addition to **Code (Read)** to scrape work item metrics.
 
 A Grafana Dashboard exists on the marketplace for metrics from this receiver
 and can be found

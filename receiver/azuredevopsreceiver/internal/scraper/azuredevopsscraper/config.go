@@ -42,6 +42,14 @@ type Config struct {
 
 	// DeploymentLookbackDays specifies how many days back to fetch deployment history
 	DeploymentLookbackDays int `mapstructure:"deployment_lookback_days"`
+
+	// WorkItemTypes is a list of work item types to track (e.g., "User Story", "Bug", "Task")
+	// If empty, defaults to ["User Story", "Bug"]
+	WorkItemTypes []string `mapstructure:"work_item_types"`
+
+	// WorkItemLookbackDays specifies how many days back to fetch work item history
+	// Defaults to 30 days if not set
+	WorkItemLookbackDays int `mapstructure:"work_item_lookback_days"`
 }
 
 var _ internal.Config = (*Config)(nil)

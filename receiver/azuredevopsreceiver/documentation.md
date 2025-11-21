@@ -227,6 +227,53 @@ The number of repositories in an organization.
 | ---- | ----------- | ---------- |
 | {repository} | Gauge | Int |
 
+### work_item.age
+
+Time since work item creation for items that are not yet closed, in seconds.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| s | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | false |
+| work_item.state | The current state of the work item (New, Active, Resolved, Closed, etc.). | Any Str | false |
+| project.name | The name of the Azure DevOps project. | Any Str | false |
+
+### work_item.count
+
+The number of work items by type and state.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| {work_item} | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | false |
+| work_item.state | The current state of the work item (New, Active, Resolved, Closed, etc.). | Any Str | false |
+| project.name | The name of the Azure DevOps project. | Any Str | false |
+
+### work_item.cycle_time
+
+Time from work item creation to closure in seconds. Only recorded for closed work items.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| s | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | false |
+| project.name | The name of the Azure DevOps project. | Any Str | false |
+
 ## Optional Metrics
 
 The following metrics are not emitted by default. Each of them can be enabled by applying the following configuration:

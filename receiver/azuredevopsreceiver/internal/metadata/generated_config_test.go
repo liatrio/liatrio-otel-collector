@@ -41,6 +41,9 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					VcsRefRevisionsDelta:          MetricConfig{Enabled: true},
 					VcsRefTime:                    MetricConfig{Enabled: true},
 					VcsRepositoryCount:            MetricConfig{Enabled: true},
+					WorkItemAge:                   MetricConfig{Enabled: true},
+					WorkItemCount:                 MetricConfig{Enabled: true},
+					WorkItemCycleTime:             MetricConfig{Enabled: true},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					VcsOwnerName:    ResourceAttributeConfig{Enabled: true},
@@ -66,6 +69,9 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					VcsRefRevisionsDelta:          MetricConfig{Enabled: false},
 					VcsRefTime:                    MetricConfig{Enabled: false},
 					VcsRepositoryCount:            MetricConfig{Enabled: false},
+					WorkItemAge:                   MetricConfig{Enabled: false},
+					WorkItemCount:                 MetricConfig{Enabled: false},
+					WorkItemCycleTime:             MetricConfig{Enabled: false},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					VcsOwnerName:    ResourceAttributeConfig{Enabled: false},

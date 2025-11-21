@@ -123,6 +123,18 @@ func TestMetricsBuilder(t *testing.T) {
 			allMetricsCount++
 			mb.RecordVcsRepositoryCountDataPoint(ts, 1)
 
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordWorkItemAgeDataPoint(ts, 1, "work_item.type-val", "work_item.state-val", "project.name-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordWorkItemCountDataPoint(ts, 1, "work_item.type-val", "work_item.state-val", "project.name-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordWorkItemCycleTimeDataPoint(ts, 1, "work_item.type-val", "project.name-val")
+
 			rb := mb.NewResourceBuilder()
 			rb.SetVcsOwnerName("vcs.owner.name-val")
 			rb.SetVcsProviderName("vcs.provider.name-val")
@@ -480,6 +492,66 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
+				case "work_item.age":
+					assert.False(t, validatedMetrics["work_item.age"], "Found a duplicate in the metrics slice: work_item.age")
+					validatedMetrics["work_item.age"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Time since work item creation for items that are not yet closed, in seconds.", ms.At(i).Description())
+					assert.Equal(t, "s", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("work_item.type")
+					assert.True(t, ok)
+					assert.Equal(t, "work_item.type-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("work_item.state")
+					assert.True(t, ok)
+					assert.Equal(t, "work_item.state-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("project.name")
+					assert.True(t, ok)
+					assert.Equal(t, "project.name-val", attrVal.Str())
+				case "work_item.count":
+					assert.False(t, validatedMetrics["work_item.count"], "Found a duplicate in the metrics slice: work_item.count")
+					validatedMetrics["work_item.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The number of work items by type and state.", ms.At(i).Description())
+					assert.Equal(t, "{work_item}", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("work_item.type")
+					assert.True(t, ok)
+					assert.Equal(t, "work_item.type-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("work_item.state")
+					assert.True(t, ok)
+					assert.Equal(t, "work_item.state-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("project.name")
+					assert.True(t, ok)
+					assert.Equal(t, "project.name-val", attrVal.Str())
+				case "work_item.cycle_time":
+					assert.False(t, validatedMetrics["work_item.cycle_time"], "Found a duplicate in the metrics slice: work_item.cycle_time")
+					validatedMetrics["work_item.cycle_time"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Time from work item creation to closure in seconds. Only recorded for closed work items.", ms.At(i).Description())
+					assert.Equal(t, "s", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("work_item.type")
+					assert.True(t, ok)
+					assert.Equal(t, "work_item.type-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("project.name")
+					assert.True(t, ok)
+					assert.Equal(t, "project.name-val", attrVal.Str())
 				}
 			}
 		})

@@ -42,6 +42,9 @@ type MetricsConfig struct {
 	VcsRefRevisionsDelta          MetricConfig `mapstructure:"vcs.ref.revisions_delta"`
 	VcsRefTime                    MetricConfig `mapstructure:"vcs.ref.time"`
 	VcsRepositoryCount            MetricConfig `mapstructure:"vcs.repository.count"`
+	WorkItemAge                   MetricConfig `mapstructure:"work_item.age"`
+	WorkItemCount                 MetricConfig `mapstructure:"work_item.count"`
+	WorkItemCycleTime             MetricConfig `mapstructure:"work_item.cycle_time"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
@@ -86,6 +89,15 @@ func DefaultMetricsConfig() MetricsConfig {
 			Enabled: true,
 		},
 		VcsRepositoryCount: MetricConfig{
+			Enabled: true,
+		},
+		WorkItemAge: MetricConfig{
+			Enabled: true,
+		},
+		WorkItemCount: MetricConfig{
+			Enabled: true,
+		},
+		WorkItemCycleTime: MetricConfig{
 			Enabled: true,
 		},
 	}
