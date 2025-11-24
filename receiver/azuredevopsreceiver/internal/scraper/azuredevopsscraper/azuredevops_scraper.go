@@ -56,13 +56,6 @@ type WorkItemBatchResult struct {
 	Value []WorkItem `json:"value"`
 }
 
-// workItemMetricKey is used as a map key for tracking work item metrics
-type workItemMetricKey struct {
-	workItemType string
-	state        string
-	project      string
-}
-
 type azuredevopsScraper struct {
 	client   *http.Client
 	cfg      *Config
