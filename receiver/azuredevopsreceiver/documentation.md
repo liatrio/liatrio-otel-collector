@@ -286,8 +286,6 @@ metrics:
 
 ### vcs.contributor.count
 
-**⚠️ NOT IMPLEMENTED** - This metric is defined but not currently scraped due to API performance concerns.
-
 The number of unique contributors to a repository.
 
 | Unit | Metric Type | Value Type |
