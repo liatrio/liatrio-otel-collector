@@ -112,7 +112,10 @@ func (ados *azuredevopsScraper) executeWIQLQuery(ctx context.Context, org, proje
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("WIQL query failed with status %d (unable to read response body: %w)", resp.StatusCode, err)
+		}
 		return nil, fmt.Errorf("WIQL query failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
@@ -161,7 +164,10 @@ func (ados *azuredevopsScraper) getWorkItemsBatch(ctx context.Context, org, proj
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("get work items failed with status %d (unable to read response body: %w)", resp.StatusCode, err)
+		}
 		return nil, fmt.Errorf("get work items failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
