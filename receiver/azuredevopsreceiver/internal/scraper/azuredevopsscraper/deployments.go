@@ -219,6 +219,7 @@ func (ados *azuredevopsScraper) fetchDeployments(ctx context.Context, org, proje
 
 // extractServiceName extracts the service name from a deployment's release name
 // Assumes release name format: "ServiceName <version/build>"
+// API Reference: https://learn.microsoft.com/en-us/rest/api/azure/devops/release/deployments/list#releaseReference
 func extractServiceName(deployment Deployment) string {
 	releaseName := deployment.Release.Name
 	if releaseName == "" {
