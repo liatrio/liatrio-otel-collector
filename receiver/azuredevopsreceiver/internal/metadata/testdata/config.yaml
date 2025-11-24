@@ -1,9 +1,9 @@
 default:
 all_set:
   metrics:
-    deploy.deployment.count:
+    deploy.deployment.average_duration:
       enabled: true
-    deploy.deployment.duration:
+    deploy.deployment.count:
       enabled: true
     deploy.deployment.last_timestamp:
       enabled: true
@@ -42,9 +42,9 @@ all_set:
       enabled: true
 none_set:
   metrics:
-    deploy.deployment.count:
+    deploy.deployment.average_duration:
       enabled: false
-    deploy.deployment.duration:
+    deploy.deployment.count:
       enabled: false
     deploy.deployment.last_timestamp:
       enabled: false

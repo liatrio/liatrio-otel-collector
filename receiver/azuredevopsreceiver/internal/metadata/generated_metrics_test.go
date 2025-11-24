@@ -70,11 +70,11 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordDeployDeploymentCountDataPoint(ts, 1, "service.name-val", "deployment.environment.name-val", AttributeDeploymentStatusSucceeded)
+			mb.RecordDeployDeploymentAverageDurationDataPoint(ts, 1, "service.name-val", "deployment.environment.name-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordDeployDeploymentDurationDataPoint(ts, 1, "service.name-val", "deployment.environment.name-val")
+			mb.RecordDeployDeploymentCountDataPoint(ts, 1, "service.name-val", "deployment.environment.name-val", AttributeDeploymentStatusSucceeded)
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -160,6 +160,24 @@ func TestMetricsBuilder(t *testing.T) {
 			validatedMetrics := make(map[string]bool)
 			for i := 0; i < ms.Len(); i++ {
 				switch ms.At(i).Name() {
+				case "deploy.deployment.average_duration":
+					assert.False(t, validatedMetrics["deploy.deployment.average_duration"], "Found a duplicate in the metrics slice: deploy.deployment.average_duration")
+					validatedMetrics["deploy.deployment.average_duration"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "Average deployment duration for a given service and environment over the deployment_lookback_days period.", ms.At(i).Description())
+					assert.Equal(t, "s", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("service.name")
+					assert.True(t, ok)
+					assert.Equal(t, "service.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("deployment.environment.name")
+					assert.True(t, ok)
+					assert.Equal(t, "deployment.environment.name-val", attrVal.Str())
 				case "deploy.deployment.count":
 					assert.False(t, validatedMetrics["deploy.deployment.count"], "Found a duplicate in the metrics slice: deploy.deployment.count")
 					validatedMetrics["deploy.deployment.count"] = true
@@ -183,24 +201,6 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("deployment.status")
 					assert.True(t, ok)
 					assert.Equal(t, "succeeded", attrVal.Str())
-				case "deploy.deployment.duration":
-					assert.False(t, validatedMetrics["deploy.deployment.duration"], "Found a duplicate in the metrics slice: deploy.deployment.duration")
-					validatedMetrics["deploy.deployment.duration"] = true
-					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
-					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
-					assert.Equal(t, "Average deployment duration for a given service and environment.", ms.At(i).Description())
-					assert.Equal(t, "s", ms.At(i).Unit())
-					dp := ms.At(i).Gauge().DataPoints().At(0)
-					assert.Equal(t, start, dp.StartTimestamp())
-					assert.Equal(t, ts, dp.Timestamp())
-					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
-					assert.Equal(t, int64(1), dp.IntValue())
-					attrVal, ok := dp.Attributes().Get("service.name")
-					assert.True(t, ok)
-					assert.Equal(t, "service.name-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("deployment.environment.name")
-					assert.True(t, ok)
-					assert.Equal(t, "deployment.environment.name-val", attrVal.Str())
 				case "deploy.deployment.last_timestamp":
 					assert.False(t, validatedMetrics["deploy.deployment.last_timestamp"], "Found a duplicate in the metrics slice: deploy.deployment.last_timestamp")
 					validatedMetrics["deploy.deployment.last_timestamp"] = true

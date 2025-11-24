@@ -214,9 +214,9 @@ metrics:
       aggregation: cumulative
       monotonic: true
     attributes: [service.name, deployment.environment.name, deployment.status]
-  deploy.deployment.duration:
+  deploy.deployment.average_duration:
     enabled: true
-    description: Average deployment duration for a given service and environment.
+    description: Average deployment duration for a given service and environment over the deployment_lookback_days period.
     unit: s
     gauge:
       value_type: int

@@ -12,6 +12,21 @@ metrics:
     enabled: false
 ```
 
+### deploy.deployment.average_duration
+
+Average deployment duration for a given service and environment over the deployment_lookback_days period.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| s | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| service.name | Logical name of the service being deployed. | Any Str | false |
+| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | false |
+
 ### deploy.deployment.count
 
 The number of deployments by service, environment, and status.
@@ -27,21 +42,6 @@ The number of deployments by service, environment, and status.
 | service.name | Logical name of the service being deployed. | Any Str | false |
 | deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | false |
 | deployment.status | The status of the deployment. | Str: ``succeeded``, ``failed`` | false |
-
-### deploy.deployment.duration
-
-Average deployment duration for a given service and environment.
-
-| Unit | Metric Type | Value Type |
-| ---- | ----------- | ---------- |
-| s | Gauge | Int |
-
-#### Attributes
-
-| Name | Description | Values | Optional |
-| ---- | ----------- | ------ | -------- |
-| service.name | Logical name of the service being deployed. | Any Str | false |
-| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | false |
 
 ### deploy.deployment.last_timestamp
 

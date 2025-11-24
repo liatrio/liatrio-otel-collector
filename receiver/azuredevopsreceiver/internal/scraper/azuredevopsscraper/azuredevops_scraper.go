@@ -373,7 +373,7 @@ func (ados *azuredevopsScraper) recordDeploymentMetrics(now pcommon.Timestamp, d
 				sum += d
 			}
 			avgDuration := sum / int64(len(durationList))
-			ados.mb.RecordDeployDeploymentDurationDataPoint(now, avgDuration, key.Service, key.Environment)
+			ados.mb.RecordDeployDeploymentAverageDurationDataPoint(now, avgDuration, key.Service, key.Environment)
 		}
 	}
 

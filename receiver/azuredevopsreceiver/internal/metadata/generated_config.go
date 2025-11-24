@@ -28,31 +28,31 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for azuredevops metrics.
 type MetricsConfig struct {
-	DeployDeploymentCount         MetricConfig `mapstructure:"deploy.deployment.count"`
-	DeployDeploymentDuration      MetricConfig `mapstructure:"deploy.deployment.duration"`
-	DeployDeploymentLastTimestamp MetricConfig `mapstructure:"deploy.deployment.last_timestamp"`
-	VcsChangeCount                MetricConfig `mapstructure:"vcs.change.count"`
-	VcsChangeDuration             MetricConfig `mapstructure:"vcs.change.duration"`
-	VcsChangeTimeToApproval       MetricConfig `mapstructure:"vcs.change.time_to_approval"`
-	VcsChangeTimeToMerge          MetricConfig `mapstructure:"vcs.change.time_to_merge"`
-	VcsCodeCoverage               MetricConfig `mapstructure:"vcs.code_coverage"`
-	VcsContributorCount           MetricConfig `mapstructure:"vcs.contributor.count"`
-	VcsRefCount                   MetricConfig `mapstructure:"vcs.ref.count"`
-	VcsRefLinesDelta              MetricConfig `mapstructure:"vcs.ref.lines_delta"`
-	VcsRefRevisionsDelta          MetricConfig `mapstructure:"vcs.ref.revisions_delta"`
-	VcsRefTime                    MetricConfig `mapstructure:"vcs.ref.time"`
-	VcsRepositoryCount            MetricConfig `mapstructure:"vcs.repository.count"`
-	WorkItemAge                   MetricConfig `mapstructure:"work_item.age"`
-	WorkItemCount                 MetricConfig `mapstructure:"work_item.count"`
-	WorkItemCycleTime             MetricConfig `mapstructure:"work_item.cycle_time"`
+	DeployDeploymentAverageDuration MetricConfig `mapstructure:"deploy.deployment.average_duration"`
+	DeployDeploymentCount           MetricConfig `mapstructure:"deploy.deployment.count"`
+	DeployDeploymentLastTimestamp   MetricConfig `mapstructure:"deploy.deployment.last_timestamp"`
+	VcsChangeCount                  MetricConfig `mapstructure:"vcs.change.count"`
+	VcsChangeDuration               MetricConfig `mapstructure:"vcs.change.duration"`
+	VcsChangeTimeToApproval         MetricConfig `mapstructure:"vcs.change.time_to_approval"`
+	VcsChangeTimeToMerge            MetricConfig `mapstructure:"vcs.change.time_to_merge"`
+	VcsCodeCoverage                 MetricConfig `mapstructure:"vcs.code_coverage"`
+	VcsContributorCount             MetricConfig `mapstructure:"vcs.contributor.count"`
+	VcsRefCount                     MetricConfig `mapstructure:"vcs.ref.count"`
+	VcsRefLinesDelta                MetricConfig `mapstructure:"vcs.ref.lines_delta"`
+	VcsRefRevisionsDelta            MetricConfig `mapstructure:"vcs.ref.revisions_delta"`
+	VcsRefTime                      MetricConfig `mapstructure:"vcs.ref.time"`
+	VcsRepositoryCount              MetricConfig `mapstructure:"vcs.repository.count"`
+	WorkItemAge                     MetricConfig `mapstructure:"work_item.age"`
+	WorkItemCount                   MetricConfig `mapstructure:"work_item.count"`
+	WorkItemCycleTime               MetricConfig `mapstructure:"work_item.cycle_time"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		DeployDeploymentCount: MetricConfig{
+		DeployDeploymentAverageDuration: MetricConfig{
 			Enabled: true,
 		},
-		DeployDeploymentDuration: MetricConfig{
+		DeployDeploymentCount: MetricConfig{
 			Enabled: true,
 		},
 		DeployDeploymentLastTimestamp: MetricConfig{
