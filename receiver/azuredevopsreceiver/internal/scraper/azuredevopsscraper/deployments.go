@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -18,6 +19,53 @@ const (
 	vsrmBaseURL = "https://vsrm.dev.azure.com"
 	apiVersion  = "7.1"
 )
+
+// NullableTime handles Azure DevOps timestamps that may be null, zero values, missing timezone, or have fractional seconds
+// It fails gracefully by logging errors and using zero time instead of failing the entire unmarshaling
+type NullableTime struct {
+	time.Time
+}
+
+// UnmarshalJSON implements custom unmarshaling for Azure DevOps timestamps
+func (nt *NullableTime) UnmarshalJSON(data []byte) error {
+	str := strings.Trim(string(data), "\"")
+
+	// Handle null, empty, or zero time values
+	if str == "" || str == "null" || str == "0001-01-01T00:00:00" || strings.HasPrefix(str, "0001-01-01") {
+		nt.Time = time.Time{}
+		return nil
+	}
+
+	// Azure DevOps timestamp formats to try in order of likelihood
+	formats := []string{
+		time.RFC3339Nano,              // "2006-01-02T15:04:05.999999999Z07:00" - with nanoseconds and timezone
+		time.RFC3339,                  // "2006-01-02T15:04:05Z07:00" - with timezone
+		"2006-01-02T15:04:05.9999999", // Without timezone, with nanoseconds (Azure DevOps common format)
+		"2006-01-02T15:04:05.999999",  // Without timezone, with microseconds
+		"2006-01-02T15:04:05.999",     // Without timezone, with milliseconds
+		"2006-01-02T15:04:05",         // Without timezone, no fractional seconds
+	}
+
+	var lastErr error
+	for _, format := range formats {
+		t, err := time.Parse(format, str)
+		if err == nil {
+			// If no timezone indicator in string, assume UTC
+			if !strings.Contains(str, "Z") && !strings.Contains(str, "+") && !strings.ContainsAny(str[len(str)-6:], "+-") {
+				nt.Time = t.UTC()
+			} else {
+				nt.Time = t
+			}
+			return nil
+		}
+		lastErr = err
+	}
+
+	// Log the error but don't fail - use zero time and continue processing
+	log.Printf("WARNING: Unable to parse Azure DevOps timestamp %q (error: %v). Using zero time and continuing.", str, lastErr)
+	nt.Time = time.Time{}
+	return nil
+}
 
 // ReleaseDefinition represents a release pipeline definition
 type ReleaseDefinition struct {
@@ -47,10 +95,10 @@ type ReleaseDefinitionDetail struct {
 // API Reference: https://learn.microsoft.com/en-us/rest/api/azure/devops/release/deployments/list
 // Response schema: https://learn.microsoft.com/en-us/rest/api/azure/devops/release/deployments/list#deployment
 type Deployment struct {
-	ID               int       `json:"id"`
-	DeploymentStatus string    `json:"deploymentStatus"` // Possible values: "undefined", "notDeployed", "inProgress", "succeeded", "failed", "partiallySucceeded"
-	StartedOn        time.Time `json:"startedOn"`
-	CompletedOn      time.Time `json:"completedOn"`
+	ID               int          `json:"id"`
+	DeploymentStatus string       `json:"deploymentStatus"` // Possible values: "undefined", "notDeployed", "inProgress", "succeeded", "failed", "partiallySucceeded"
+	StartedOn        NullableTime `json:"startedOn"`
+	CompletedOn      NullableTime `json:"completedOn"`
 	Release          struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`

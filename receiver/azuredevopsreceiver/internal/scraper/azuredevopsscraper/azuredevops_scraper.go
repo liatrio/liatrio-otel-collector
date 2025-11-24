@@ -330,7 +330,7 @@ func (ados *azuredevopsScraper) recordDeploymentMetrics(now pcommon.Timestamp, d
 
 		// Track duration for succeeded deployments
 		if status == "succeeded" && !deployment.StartedOn.IsZero() && !deployment.CompletedOn.IsZero() {
-			duration := int64(deployment.CompletedOn.Sub(deployment.StartedOn).Seconds())
+			duration := int64(deployment.CompletedOn.Time.Sub(deployment.StartedOn.Time).Seconds())
 			durationKey := deploymentDurationKey{
 				Service:     service,
 				Environment: environment,
