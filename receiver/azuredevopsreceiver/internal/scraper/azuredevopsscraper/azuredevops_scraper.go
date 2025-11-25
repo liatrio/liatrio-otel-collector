@@ -311,13 +311,23 @@ func (ados *azuredevopsScraper) recordDeploymentMetrics(now pcommon.Timestamp, d
 
 	for _, deployment := range deployments {
 		service := extractServiceName(deployment)
-		status := deployment.DeploymentStatus
+		rawStatus := deployment.DeploymentStatus
 
-		// Only process completed deployments (succeeded or failed)
-		// Skip in-progress deployments as they don't align with OTel semantic conventions
-		normalizedStatus := strings.ToLower(strings.TrimSpace(status))
-		if normalizedStatus != "succeeded" && normalizedStatus != "failed" {
+		// Only process completed deployments with final outcomes
+		// Skip in-progress/undefined as they don't represent final outcomes
+		// Include notDeployed as it represents a deployment failure (queued but never executed)
+		normalizedStatus := strings.ToLower(strings.TrimSpace(rawStatus))
+		if normalizedStatus == "inprogress" || normalizedStatus == "undefined" {
+			ados.logger.Sugar().Debugf("Skipping deployment ID %d with non-final status: %q (service: %s)", deployment.ID, rawStatus, service)
 			continue
+		}
+
+		// Map partiallySucceeded and any other non-success status to "failed"
+		var status string
+		if normalizedStatus == "succeeded" {
+			status = "succeeded"
+		} else {
+			status = "failed"
 		}
 
 		// Count deployments
