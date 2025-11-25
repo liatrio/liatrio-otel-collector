@@ -61,11 +61,6 @@ func (ados *azuredevopsScraper) fetchWorkItems(ctx context.Context, org, project
 		}
 
 		allWorkItems = append(allWorkItems, workItems...)
-
-		// Small delay between batches to avoid rate limiting
-		if end < len(workItemIDs) {
-			time.Sleep(200 * time.Millisecond)
-		}
 	}
 
 	ados.logger.Sugar().Infof("Fetched %d work items", len(allWorkItems))
