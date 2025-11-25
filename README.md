@@ -90,6 +90,72 @@ To configure the GitHub Scraper you will need to make the following changes to
 
 4) Set environment variables: `GITHUB_ORG`, `GITHUB_USER`, and `GITHUB_PAT`
 
+### Configure Azure DevOps Scraper (using Bearer Token Auth Extension)
+
+To configure the Azure DevOps Scraper you will need to make the following changes to
+[config/config.yaml][2]:
+
+1) Uncomment/add `extensions.bearertokenauth/azuredevops` section
+
+    ```yaml
+    bearertokenauth/azuredevops:
+        token: ${env:ADO_PAT}
+    ```
+
+2) Uncomment/add `receivers.azuredevops.scrapers.azuredevops` section
+
+    ```yaml
+    azuredevops:
+        initial_delay: 1s
+        collection_interval: 60s
+        scrapers:
+            azuredevops:
+                organization: ${env:ADO_ORG}
+                project: ${env:ADO_PROJECT}
+                base_url: "https://dev.azure.com"
+                limit_pull_requests: 30
+
+                # Optional: Enable code coverage with caching
+                enable_code_coverage: true
+                code_coverage_cache_ttl: 10  # minutes
+
+                # Optional: Deployment metrics
+                deployment_pipeline_name: ${env:ADO_DEPLOYMENT_PIPELINE}
+                deployment_stage_name: ${env:ADO_DEPLOYMENT_STAGE}
+                deployment_lookback_days: 30
+
+                # Optional: Work item metrics
+                work_item_types:
+                  - "User Story"
+                  - "Bug"
+                  - "Feature"
+                work_item_lookback_days: 30
+
+                auth:
+                    authenticator: bearertokenauth/azuredevops
+    ```
+
+3) Add `bearertokenauth/azuredevops` to the `service.extensions` list
+
+    ```yaml
+    extensions: [health_check, pprof, zpages, bearertokenauth/azuredevops]
+    ```
+
+4) Set environment variables: `ADO_ORG`, `ADO_PROJECT`, and `ADO_PAT`
+
+5) **Create Azure DevOps Personal Access Token (PAT)** with the following scopes:
+   - **Code (Read)** - Required for VCS metrics (repos, branches, PRs)
+   - **Build (Read)** - Required for code coverage metrics
+   - **Release (Read)** - Required for deployment metrics (optional)
+   - **Work Items (Read)** - Required for work item metrics (optional)
+
+   To create a PAT:
+   - Go to Azure DevOps → User Settings → Personal Access Tokens
+   - Click "New Token"
+   - Select the required scopes listed above
+   - Set expiration and save the token securely
+
+For more details, see [receiver/azuredevopsreceiver/README.md](receiver/azuredevopsreceiver/README.md)
 
 ### Configure GitLab Processor
 
