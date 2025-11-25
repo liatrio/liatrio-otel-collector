@@ -76,9 +76,7 @@ receivers:
                 deployment_lookback_days: 30
                 
                 # Optional: Work item metrics configuration
-                work_item_types:
-                  - "User Story"
-                  - "Bug"
+                work_items_enabled: true
                 work_item_lookback_days: 30
                 
                 auth:
@@ -108,8 +106,10 @@ To enable deployment metrics scraping from Azure DevOps Release Management API, 
 
 To enable work item metrics scraping from Azure DevOps Work Items API, configure the following parameters:
 
-- `work_item_types`: Array of work item types to track (e.g., "User Story", "Bug", "Task") (optional - if not set or empty, work item metrics are disabled)
-- `work_item_lookback_days`: Number of days of work item history to fetch on first scrape (optional, default: 30)
+- `work_items_enabled`: Set to `true` to enable work item metrics (optional, default: false)
+- `work_item_lookback_days`: Number of days of work item history to fetch (optional, default: 30)
+
+When enabled, all work item types in the project will be scraped. Filtering can be done in a downstream processor or backend.
 
 Work item metrics include:
 - **Cycle Time**: Time from creation to closure for completed work items

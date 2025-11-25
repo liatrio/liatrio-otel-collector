@@ -16,26 +16,16 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
-// fetchWorkItems fetches work items from Azure DevOps using WIQL query
-func (ados *azuredevopsScraper) fetchWorkItems(ctx context.Context, org, project string, workItemTypes []string, lookbackDays int) ([]WorkItem, error) {
+// fetchWorkItems fetches all work items from Azure DevOps using WIQL query
+func (ados *azuredevopsScraper) fetchWorkItems(ctx context.Context, org, project string, lookbackDays int) ([]WorkItem, error) {
 	// Default to 30 days if not specified
 	if lookbackDays <= 0 {
 		lookbackDays = 30
 	}
 
-	// Default work item types if not specified
-	if len(workItemTypes) == 0 {
-		workItemTypes = []string{"User Story", "Bug"}
-	}
-
-	// Build WIQL query
-	workItemTypeList := make([]string, len(workItemTypes))
-	for i, wit := range workItemTypes {
-		workItemTypeList[i] = fmt.Sprintf("'%s'", wit)
-	}
-
-	wiql := fmt.Sprintf(`SELECT [System.Id] FROM WorkItems WHERE [System.WorkItemType] IN (%s) AND [System.ChangedDate] >= @StartOfDay('-%dd')`,
-		strings.Join(workItemTypeList, ", "),
+	// Build WIQL query - fetch all work items modified in the lookback period
+	// No type filtering; filtering can be done in downstream processors or backend
+	wiql := fmt.Sprintf(`SELECT [System.Id] FROM WorkItems WHERE [System.ChangedDate] >= @StartOfDay('-%dd')`,
 		lookbackDays,
 	)
 

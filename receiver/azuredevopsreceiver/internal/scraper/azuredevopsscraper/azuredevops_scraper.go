@@ -247,9 +247,9 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 		}
 	}
 
-	// Scrape work item metrics if configured
-	if len(ados.cfg.WorkItemTypes) > 0 || ados.cfg.WorkItemLookbackDays > 0 {
-		workItems, err := ados.fetchWorkItems(ctx, ados.cfg.Organization, ados.cfg.Project, ados.cfg.WorkItemTypes, ados.cfg.WorkItemLookbackDays)
+	// Scrape work item metrics if enabled
+	if ados.cfg.WorkItemsEnabled {
+		workItems, err := ados.fetchWorkItems(ctx, ados.cfg.Organization, ados.cfg.Project, ados.cfg.WorkItemLookbackDays)
 		if err != nil {
 			ados.logger.Sugar().Errorf("error fetching work items: %v", err)
 		} else {
