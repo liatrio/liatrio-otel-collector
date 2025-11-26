@@ -12,6 +12,53 @@ metrics:
     enabled: false
 ```
 
+### deploy.deployment.average_duration
+
+Average deployment duration for a given service and environment over the deployment_lookback_days period.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| s | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| service.name | Logical name of the service being deployed. | Any Str | false |
+| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | false |
+
+### deploy.deployment.count
+
+The number of deployments by service, environment, and status.
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic |
+| ---- | ----------- | ---------- | ----------------------- | --------- |
+| {deployment} | Sum | Int | Unspecified | true |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| service.name | Logical name of the service being deployed. | Any Str | false |
+| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | false |
+| deployment.status | The status of the deployment. | Str: ``succeeded``, ``failed`` | false |
+
+### deploy.deployment.last_timestamp
+
+Unix timestamp of the last completed deployment for a service, environment, and status.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| s | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| service.name | Logical name of the service being deployed. | Any Str | false |
+| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | false |
+| deployment.status | The status of the deployment. | Str: ``succeeded``, ``failed`` | false |
+
 ### vcs.change.count
 
 The number of changes (pull requests) in a repository, categorized by their state (either open or merged).
@@ -179,6 +226,53 @@ The number of repositories in an organization.
 | Unit | Metric Type | Value Type |
 | ---- | ----------- | ---------- |
 | {repository} | Gauge | Int |
+
+### work_item.age
+
+Time since work item creation for items that are not yet closed, in seconds.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| s | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | false |
+| work_item.state | The current state of the work item (New, Active, Resolved, Closed, etc.). | Any Str | false |
+| project.name | The name of the Azure DevOps project. | Any Str | false |
+
+### work_item.count
+
+The number of work items by type and state.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| {work_item} | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | false |
+| work_item.state | The current state of the work item (New, Active, Resolved, Closed, etc.). | Any Str | false |
+| project.name | The name of the Azure DevOps project. | Any Str | false |
+
+### work_item.cycle_time
+
+Time from work item creation to closure in seconds. Only recorded for closed work items.
+
+| Unit | Metric Type | Value Type |
+| ---- | ----------- | ---------- |
+| s | Gauge | Int |
+
+#### Attributes
+
+| Name | Description | Values | Optional |
+| ---- | ----------- | ------ | -------- |
+| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | false |
+| project.name | The name of the Azure DevOps project. | Any Str | false |
 
 ## Optional Metrics
 

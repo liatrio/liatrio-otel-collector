@@ -13,6 +13,32 @@ import (
 	conventions "go.opentelemetry.io/otel/semconv/v1.37.0"
 )
 
+// AttributeDeploymentStatus specifies the value deployment.status attribute.
+type AttributeDeploymentStatus int
+
+const (
+	_ AttributeDeploymentStatus = iota
+	AttributeDeploymentStatusSucceeded
+	AttributeDeploymentStatusFailed
+)
+
+// String returns the string representation of the AttributeDeploymentStatus.
+func (av AttributeDeploymentStatus) String() string {
+	switch av {
+	case AttributeDeploymentStatusSucceeded:
+		return "succeeded"
+	case AttributeDeploymentStatusFailed:
+		return "failed"
+	}
+	return ""
+}
+
+// MapAttributeDeploymentStatus is a helper map of string to AttributeDeploymentStatus attribute value.
+var MapAttributeDeploymentStatus = map[string]AttributeDeploymentStatus{
+	"succeeded": AttributeDeploymentStatusSucceeded,
+	"failed":    AttributeDeploymentStatusFailed,
+}
+
 // AttributeVcsChangeState specifies the value vcs.change.state attribute.
 type AttributeVcsChangeState int
 
@@ -144,6 +170,15 @@ var MapAttributeVcsRevisionDeltaDirection = map[string]AttributeVcsRevisionDelta
 }
 
 var MetricsInfo = metricsInfo{
+	DeployDeploymentAverageDuration: metricInfo{
+		Name: "deploy.deployment.average_duration",
+	},
+	DeployDeploymentCount: metricInfo{
+		Name: "deploy.deployment.count",
+	},
+	DeployDeploymentLastTimestamp: metricInfo{
+		Name: "deploy.deployment.last_timestamp",
+	},
 	VcsChangeCount: metricInfo{
 		Name: "vcs.change.count",
 	},
@@ -177,24 +212,199 @@ var MetricsInfo = metricsInfo{
 	VcsRepositoryCount: metricInfo{
 		Name: "vcs.repository.count",
 	},
+	WorkItemAge: metricInfo{
+		Name: "work_item.age",
+	},
+	WorkItemCount: metricInfo{
+		Name: "work_item.count",
+	},
+	WorkItemCycleTime: metricInfo{
+		Name: "work_item.cycle_time",
+	},
 }
 
 type metricsInfo struct {
-	VcsChangeCount          metricInfo
-	VcsChangeDuration       metricInfo
-	VcsChangeTimeToApproval metricInfo
-	VcsChangeTimeToMerge    metricInfo
-	VcsCodeCoverage         metricInfo
-	VcsContributorCount     metricInfo
-	VcsRefCount             metricInfo
-	VcsRefLinesDelta        metricInfo
-	VcsRefRevisionsDelta    metricInfo
-	VcsRefTime              metricInfo
-	VcsRepositoryCount      metricInfo
+	DeployDeploymentAverageDuration metricInfo
+	DeployDeploymentCount           metricInfo
+	DeployDeploymentLastTimestamp   metricInfo
+	VcsChangeCount                  metricInfo
+	VcsChangeDuration               metricInfo
+	VcsChangeTimeToApproval         metricInfo
+	VcsChangeTimeToMerge            metricInfo
+	VcsCodeCoverage                 metricInfo
+	VcsContributorCount             metricInfo
+	VcsRefCount                     metricInfo
+	VcsRefLinesDelta                metricInfo
+	VcsRefRevisionsDelta            metricInfo
+	VcsRefTime                      metricInfo
+	VcsRepositoryCount              metricInfo
+	WorkItemAge                     metricInfo
+	WorkItemCount                   metricInfo
+	WorkItemCycleTime               metricInfo
 }
 
 type metricInfo struct {
 	Name string
+}
+
+type metricDeployDeploymentAverageDuration struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills deploy.deployment.average_duration metric with initial data.
+func (m *metricDeployDeploymentAverageDuration) init() {
+	m.data.SetName("deploy.deployment.average_duration")
+	m.data.SetDescription("Average deployment duration for a given service and environment over the deployment_lookback_days period.")
+	m.data.SetUnit("s")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricDeployDeploymentAverageDuration) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("service.name", serviceNameAttributeValue)
+	dp.Attributes().PutStr("deployment.environment.name", deploymentEnvironmentNameAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricDeployDeploymentAverageDuration) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricDeployDeploymentAverageDuration) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricDeployDeploymentAverageDuration(cfg MetricConfig) metricDeployDeploymentAverageDuration {
+	m := metricDeployDeploymentAverageDuration{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricDeployDeploymentCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills deploy.deployment.count metric with initial data.
+func (m *metricDeployDeploymentCount) init() {
+	m.data.SetName("deploy.deployment.count")
+	m.data.SetDescription("The number of deployments by service, environment, and status.")
+	m.data.SetUnit("{deployment}")
+	m.data.SetEmptySum()
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityUnspecified)
+	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricDeployDeploymentCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string, deploymentStatusAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("service.name", serviceNameAttributeValue)
+	dp.Attributes().PutStr("deployment.environment.name", deploymentEnvironmentNameAttributeValue)
+	dp.Attributes().PutStr("deployment.status", deploymentStatusAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricDeployDeploymentCount) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricDeployDeploymentCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricDeployDeploymentCount(cfg MetricConfig) metricDeployDeploymentCount {
+	m := metricDeployDeploymentCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricDeployDeploymentLastTimestamp struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills deploy.deployment.last_timestamp metric with initial data.
+func (m *metricDeployDeploymentLastTimestamp) init() {
+	m.data.SetName("deploy.deployment.last_timestamp")
+	m.data.SetDescription("Unix timestamp of the last completed deployment for a service, environment, and status.")
+	m.data.SetUnit("s")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricDeployDeploymentLastTimestamp) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string, deploymentStatusAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("service.name", serviceNameAttributeValue)
+	dp.Attributes().PutStr("deployment.environment.name", deploymentEnvironmentNameAttributeValue)
+	dp.Attributes().PutStr("deployment.status", deploymentStatusAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricDeployDeploymentLastTimestamp) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricDeployDeploymentLastTimestamp) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricDeployDeploymentLastTimestamp(cfg MetricConfig) metricDeployDeploymentLastTimestamp {
+	m := metricDeployDeploymentLastTimestamp{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
 }
 
 type metricVcsChangeCount struct {
@@ -792,27 +1002,191 @@ func newMetricVcsRepositoryCount(cfg MetricConfig) metricVcsRepositoryCount {
 	return m
 }
 
+type metricWorkItemAge struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills work_item.age metric with initial data.
+func (m *metricWorkItemAge) init() {
+	m.data.SetName("work_item.age")
+	m.data.SetDescription("Time since work item creation for items that are not yet closed, in seconds.")
+	m.data.SetUnit("s")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricWorkItemAge) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, workItemStateAttributeValue string, projectNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("work_item.type", workItemTypeAttributeValue)
+	dp.Attributes().PutStr("work_item.state", workItemStateAttributeValue)
+	dp.Attributes().PutStr("project.name", projectNameAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricWorkItemAge) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricWorkItemAge) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricWorkItemAge(cfg MetricConfig) metricWorkItemAge {
+	m := metricWorkItemAge{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricWorkItemCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills work_item.count metric with initial data.
+func (m *metricWorkItemCount) init() {
+	m.data.SetName("work_item.count")
+	m.data.SetDescription("The number of work items by type and state.")
+	m.data.SetUnit("{work_item}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricWorkItemCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, workItemStateAttributeValue string, projectNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("work_item.type", workItemTypeAttributeValue)
+	dp.Attributes().PutStr("work_item.state", workItemStateAttributeValue)
+	dp.Attributes().PutStr("project.name", projectNameAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricWorkItemCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricWorkItemCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricWorkItemCount(cfg MetricConfig) metricWorkItemCount {
+	m := metricWorkItemCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricWorkItemCycleTime struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills work_item.cycle_time metric with initial data.
+func (m *metricWorkItemCycleTime) init() {
+	m.data.SetName("work_item.cycle_time")
+	m.data.SetDescription("Time from work item creation to closure in seconds. Only recorded for closed work items.")
+	m.data.SetUnit("s")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricWorkItemCycleTime) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, projectNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("work_item.type", workItemTypeAttributeValue)
+	dp.Attributes().PutStr("project.name", projectNameAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricWorkItemCycleTime) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricWorkItemCycleTime) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricWorkItemCycleTime(cfg MetricConfig) metricWorkItemCycleTime {
+	m := metricWorkItemCycleTime{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
-	config                         MetricsBuilderConfig // config of the metrics builder.
-	startTime                      pcommon.Timestamp    // start time that will be applied to all recorded data points.
-	metricsCapacity                int                  // maximum observed number of metrics per resource.
-	metricsBuffer                  pmetric.Metrics      // accumulates metrics data before emitting.
-	buildInfo                      component.BuildInfo  // contains version information.
-	resourceAttributeIncludeFilter map[string]filter.Filter
-	resourceAttributeExcludeFilter map[string]filter.Filter
-	metricVcsChangeCount           metricVcsChangeCount
-	metricVcsChangeDuration        metricVcsChangeDuration
-	metricVcsChangeTimeToApproval  metricVcsChangeTimeToApproval
-	metricVcsChangeTimeToMerge     metricVcsChangeTimeToMerge
-	metricVcsCodeCoverage          metricVcsCodeCoverage
-	metricVcsContributorCount      metricVcsContributorCount
-	metricVcsRefCount              metricVcsRefCount
-	metricVcsRefLinesDelta         metricVcsRefLinesDelta
-	metricVcsRefRevisionsDelta     metricVcsRefRevisionsDelta
-	metricVcsRefTime               metricVcsRefTime
-	metricVcsRepositoryCount       metricVcsRepositoryCount
+	config                                MetricsBuilderConfig // config of the metrics builder.
+	startTime                             pcommon.Timestamp    // start time that will be applied to all recorded data points.
+	metricsCapacity                       int                  // maximum observed number of metrics per resource.
+	metricsBuffer                         pmetric.Metrics      // accumulates metrics data before emitting.
+	buildInfo                             component.BuildInfo  // contains version information.
+	resourceAttributeIncludeFilter        map[string]filter.Filter
+	resourceAttributeExcludeFilter        map[string]filter.Filter
+	metricDeployDeploymentAverageDuration metricDeployDeploymentAverageDuration
+	metricDeployDeploymentCount           metricDeployDeploymentCount
+	metricDeployDeploymentLastTimestamp   metricDeployDeploymentLastTimestamp
+	metricVcsChangeCount                  metricVcsChangeCount
+	metricVcsChangeDuration               metricVcsChangeDuration
+	metricVcsChangeTimeToApproval         metricVcsChangeTimeToApproval
+	metricVcsChangeTimeToMerge            metricVcsChangeTimeToMerge
+	metricVcsCodeCoverage                 metricVcsCodeCoverage
+	metricVcsContributorCount             metricVcsContributorCount
+	metricVcsRefCount                     metricVcsRefCount
+	metricVcsRefLinesDelta                metricVcsRefLinesDelta
+	metricVcsRefRevisionsDelta            metricVcsRefRevisionsDelta
+	metricVcsRefTime                      metricVcsRefTime
+	metricVcsRepositoryCount              metricVcsRepositoryCount
+	metricWorkItemAge                     metricWorkItemAge
+	metricWorkItemCount                   metricWorkItemCount
+	metricWorkItemCycleTime               metricWorkItemCycleTime
 }
 
 // MetricBuilderOption applies changes to default metrics builder.
@@ -834,23 +1208,29 @@ func WithStartTime(startTime pcommon.Timestamp) MetricBuilderOption {
 }
 func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, options ...MetricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
-		config:                         mbc,
-		startTime:                      pcommon.NewTimestampFromTime(time.Now()),
-		metricsBuffer:                  pmetric.NewMetrics(),
-		buildInfo:                      settings.BuildInfo,
-		metricVcsChangeCount:           newMetricVcsChangeCount(mbc.Metrics.VcsChangeCount),
-		metricVcsChangeDuration:        newMetricVcsChangeDuration(mbc.Metrics.VcsChangeDuration),
-		metricVcsChangeTimeToApproval:  newMetricVcsChangeTimeToApproval(mbc.Metrics.VcsChangeTimeToApproval),
-		metricVcsChangeTimeToMerge:     newMetricVcsChangeTimeToMerge(mbc.Metrics.VcsChangeTimeToMerge),
-		metricVcsCodeCoverage:          newMetricVcsCodeCoverage(mbc.Metrics.VcsCodeCoverage),
-		metricVcsContributorCount:      newMetricVcsContributorCount(mbc.Metrics.VcsContributorCount),
-		metricVcsRefCount:              newMetricVcsRefCount(mbc.Metrics.VcsRefCount),
-		metricVcsRefLinesDelta:         newMetricVcsRefLinesDelta(mbc.Metrics.VcsRefLinesDelta),
-		metricVcsRefRevisionsDelta:     newMetricVcsRefRevisionsDelta(mbc.Metrics.VcsRefRevisionsDelta),
-		metricVcsRefTime:               newMetricVcsRefTime(mbc.Metrics.VcsRefTime),
-		metricVcsRepositoryCount:       newMetricVcsRepositoryCount(mbc.Metrics.VcsRepositoryCount),
-		resourceAttributeIncludeFilter: make(map[string]filter.Filter),
-		resourceAttributeExcludeFilter: make(map[string]filter.Filter),
+		config:                                mbc,
+		startTime:                             pcommon.NewTimestampFromTime(time.Now()),
+		metricsBuffer:                         pmetric.NewMetrics(),
+		buildInfo:                             settings.BuildInfo,
+		metricDeployDeploymentAverageDuration: newMetricDeployDeploymentAverageDuration(mbc.Metrics.DeployDeploymentAverageDuration),
+		metricDeployDeploymentCount:           newMetricDeployDeploymentCount(mbc.Metrics.DeployDeploymentCount),
+		metricDeployDeploymentLastTimestamp:   newMetricDeployDeploymentLastTimestamp(mbc.Metrics.DeployDeploymentLastTimestamp),
+		metricVcsChangeCount:                  newMetricVcsChangeCount(mbc.Metrics.VcsChangeCount),
+		metricVcsChangeDuration:               newMetricVcsChangeDuration(mbc.Metrics.VcsChangeDuration),
+		metricVcsChangeTimeToApproval:         newMetricVcsChangeTimeToApproval(mbc.Metrics.VcsChangeTimeToApproval),
+		metricVcsChangeTimeToMerge:            newMetricVcsChangeTimeToMerge(mbc.Metrics.VcsChangeTimeToMerge),
+		metricVcsCodeCoverage:                 newMetricVcsCodeCoverage(mbc.Metrics.VcsCodeCoverage),
+		metricVcsContributorCount:             newMetricVcsContributorCount(mbc.Metrics.VcsContributorCount),
+		metricVcsRefCount:                     newMetricVcsRefCount(mbc.Metrics.VcsRefCount),
+		metricVcsRefLinesDelta:                newMetricVcsRefLinesDelta(mbc.Metrics.VcsRefLinesDelta),
+		metricVcsRefRevisionsDelta:            newMetricVcsRefRevisionsDelta(mbc.Metrics.VcsRefRevisionsDelta),
+		metricVcsRefTime:                      newMetricVcsRefTime(mbc.Metrics.VcsRefTime),
+		metricVcsRepositoryCount:              newMetricVcsRepositoryCount(mbc.Metrics.VcsRepositoryCount),
+		metricWorkItemAge:                     newMetricWorkItemAge(mbc.Metrics.WorkItemAge),
+		metricWorkItemCount:                   newMetricWorkItemCount(mbc.Metrics.WorkItemCount),
+		metricWorkItemCycleTime:               newMetricWorkItemCycleTime(mbc.Metrics.WorkItemCycleTime),
+		resourceAttributeIncludeFilter:        make(map[string]filter.Filter),
+		resourceAttributeExcludeFilter:        make(map[string]filter.Filter),
 	}
 	if mbc.ResourceAttributes.VcsOwnerName.MetricsInclude != nil {
 		mb.resourceAttributeIncludeFilter["vcs.owner.name"] = filter.CreateFilter(mbc.ResourceAttributes.VcsOwnerName.MetricsInclude)
@@ -934,6 +1314,9 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	ils.Scope().SetName(ScopeName)
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
+	mb.metricDeployDeploymentAverageDuration.emit(ils.Metrics())
+	mb.metricDeployDeploymentCount.emit(ils.Metrics())
+	mb.metricDeployDeploymentLastTimestamp.emit(ils.Metrics())
 	mb.metricVcsChangeCount.emit(ils.Metrics())
 	mb.metricVcsChangeDuration.emit(ils.Metrics())
 	mb.metricVcsChangeTimeToApproval.emit(ils.Metrics())
@@ -945,6 +1328,9 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	mb.metricVcsRefRevisionsDelta.emit(ils.Metrics())
 	mb.metricVcsRefTime.emit(ils.Metrics())
 	mb.metricVcsRepositoryCount.emit(ils.Metrics())
+	mb.metricWorkItemAge.emit(ils.Metrics())
+	mb.metricWorkItemCount.emit(ils.Metrics())
+	mb.metricWorkItemCycleTime.emit(ils.Metrics())
 
 	for _, op := range options {
 		op.apply(rm)
@@ -974,6 +1360,21 @@ func (mb *MetricsBuilder) Emit(options ...ResourceMetricsOption) pmetric.Metrics
 	metrics := mb.metricsBuffer
 	mb.metricsBuffer = pmetric.NewMetrics()
 	return metrics
+}
+
+// RecordDeployDeploymentAverageDurationDataPoint adds a data point to deploy.deployment.average_duration metric.
+func (mb *MetricsBuilder) RecordDeployDeploymentAverageDurationDataPoint(ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string) {
+	mb.metricDeployDeploymentAverageDuration.recordDataPoint(mb.startTime, ts, val, serviceNameAttributeValue, deploymentEnvironmentNameAttributeValue)
+}
+
+// RecordDeployDeploymentCountDataPoint adds a data point to deploy.deployment.count metric.
+func (mb *MetricsBuilder) RecordDeployDeploymentCountDataPoint(ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string, deploymentStatusAttributeValue AttributeDeploymentStatus) {
+	mb.metricDeployDeploymentCount.recordDataPoint(mb.startTime, ts, val, serviceNameAttributeValue, deploymentEnvironmentNameAttributeValue, deploymentStatusAttributeValue.String())
+}
+
+// RecordDeployDeploymentLastTimestampDataPoint adds a data point to deploy.deployment.last_timestamp metric.
+func (mb *MetricsBuilder) RecordDeployDeploymentLastTimestampDataPoint(ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string, deploymentStatusAttributeValue AttributeDeploymentStatus) {
+	mb.metricDeployDeploymentLastTimestamp.recordDataPoint(mb.startTime, ts, val, serviceNameAttributeValue, deploymentEnvironmentNameAttributeValue, deploymentStatusAttributeValue.String())
 }
 
 // RecordVcsChangeCountDataPoint adds a data point to vcs.change.count metric.
@@ -1029,6 +1430,21 @@ func (mb *MetricsBuilder) RecordVcsRefTimeDataPoint(ts pcommon.Timestamp, val in
 // RecordVcsRepositoryCountDataPoint adds a data point to vcs.repository.count metric.
 func (mb *MetricsBuilder) RecordVcsRepositoryCountDataPoint(ts pcommon.Timestamp, val int64) {
 	mb.metricVcsRepositoryCount.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordWorkItemAgeDataPoint adds a data point to work_item.age metric.
+func (mb *MetricsBuilder) RecordWorkItemAgeDataPoint(ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, workItemStateAttributeValue string, projectNameAttributeValue string) {
+	mb.metricWorkItemAge.recordDataPoint(mb.startTime, ts, val, workItemTypeAttributeValue, workItemStateAttributeValue, projectNameAttributeValue)
+}
+
+// RecordWorkItemCountDataPoint adds a data point to work_item.count metric.
+func (mb *MetricsBuilder) RecordWorkItemCountDataPoint(ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, workItemStateAttributeValue string, projectNameAttributeValue string) {
+	mb.metricWorkItemCount.recordDataPoint(mb.startTime, ts, val, workItemTypeAttributeValue, workItemStateAttributeValue, projectNameAttributeValue)
+}
+
+// RecordWorkItemCycleTimeDataPoint adds a data point to work_item.cycle_time metric.
+func (mb *MetricsBuilder) RecordWorkItemCycleTimeDataPoint(ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, projectNameAttributeValue string) {
+	mb.metricWorkItemCycleTime.recordDataPoint(mb.startTime, ts, val, workItemTypeAttributeValue, projectNameAttributeValue)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,
