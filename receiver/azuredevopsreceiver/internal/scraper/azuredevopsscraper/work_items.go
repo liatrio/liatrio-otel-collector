@@ -183,19 +183,29 @@ func getWorkItemStringField(wi WorkItem, fieldName string) string {
 }
 
 // getWorkItemTimeField safely extracts a time field from a work item
+// Uses NullableTime parsing logic to handle various Azure DevOps timestamp formats
 func getWorkItemTimeField(wi WorkItem, fieldName string) (time.Time, bool) {
 	val, ok := getWorkItemField(wi, fieldName)
 	if !ok {
 		return time.Time{}, false
 	}
-	if str, ok := val.(string); ok {
-		t, err := time.Parse(time.RFC3339, str)
-		if err != nil {
-			return time.Time{}, false
-		}
-		return t, true
+	str, ok := val.(string)
+	if !ok {
+		return time.Time{}, false
 	}
-	return time.Time{}, false
+
+	// Use NullableTime to parse the timestamp - it handles multiple formats
+	var nt NullableTime
+	if err := nt.UnmarshalJSON([]byte(`"` + str + `"`)); err != nil {
+		return time.Time{}, false
+	}
+
+	// Check if the result is a zero time (which indicates null/empty/invalid)
+	if nt.Time.IsZero() {
+		return time.Time{}, false
+	}
+
+	return nt.Time, true
 }
 
 // recordWorkItemMetrics processes work items and records metrics
