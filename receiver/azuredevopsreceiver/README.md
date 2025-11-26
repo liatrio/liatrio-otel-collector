@@ -34,7 +34,7 @@ traces based on the events.
 
 ## Getting Started
 
-The collection interval is common to all scrapers and is set to 30 seconds by default.
+The collection interval is common to all scrapers and is set to 30 seconds by default. However, **we strongly recommend increasing this to 15-60 minutes** depending on your project size to avoid Azure DevOps API rate limiting. See the [API Rate Limits](#api-rate-limits-and-performance-optimization) section for detailed guidance.
 
 > Note: Generally speaking, if the vendor allows for anonymous API calls, then you
 > won't have to configure any authentication, but you may only see public repositories
@@ -43,7 +43,7 @@ The collection interval is common to all scrapers and is set to 30 seconds by de
 ```yaml
 azuredevops:
     initial_delay: <duration>
-    collection_interval: <duration> #default = 30s recommended 300s
+    collection_interval: <duration> # default = 30s, recommended = 900s-3600s (15-60 min)
     scrapers:
         azuredevops:
         ...
@@ -58,8 +58,8 @@ extensions:
 
 receivers:
     azuredevops:
-        initial_delay: 1s
-        collection_interval: 60s
+        initial_delay: 10s
+        collection_interval: 1800s  # 30 minutes recommended for medium/large projects
         scrapers:
             azuredevops:
                 metrics:
@@ -67,7 +67,7 @@ receivers:
                         enabled: true
                 organization: myfancyorg
                 project: myproject
-                limit_pull_requests: 30 #Limit querying merged PRs to the last 30 days
+                limit_pull_requests: 30 # Limit querying merged PRs to the last 30 days
                 base_url: "https://dev.azure.com"
                 
                 # Optional: Deployment metrics configuration
@@ -92,7 +92,7 @@ service:
 
 ### Deployment Metrics
 
-To enable deployment metrics scraping from Azure DevOps Release Management API, configure the following parameters:
+To enable deployment metrics scraping from the [Azure DevOps Release Management API][ado-release-api], configure the following parameters:
 
 - `deployment_pipeline_name`: Name of the Release Pipeline to scrape (optional - if not set, deployment metrics are disabled)
 - `deployment_stage_name`: Name of the Environment/Stage to track (optional - if not set, deployment metrics are disabled)
@@ -102,14 +102,16 @@ To enable deployment metrics scraping from Azure DevOps Release Management API, 
 
 **Note:** Your Azure DevOps PAT must have **Release (Read)** permissions in addition to **Code (Read)** to scrape deployment metrics.
 
+[ado-release-api]: https://learn.microsoft.com/en-us/rest/api/azure/devops/release/deployments/list
+
 ### Work Item Metrics
 
-To enable work item metrics scraping from Azure DevOps Work Items API, configure the following parameters:
+To enable work item metrics scraping from the [Azure DevOps Work Items API][ado-wit-api], configure the following parameters:
 
 - `work_items_enabled`: Set to `true` to enable work item metrics (optional, default: false)
 - `work_item_lookback_days`: Number of days of work item history to fetch (optional, default: 30)
 
-When enabled, all work item types in the project will be scraped. Filtering can be done in a downstream processor or backend.
+When enabled, all work item types in the project will be scraped using [WIQL queries][ado-wiql]. Filtering can be done in a downstream processor or backend.
 
 Work item metrics include:
 - **Cycle Time**: Time from creation to closure for completed work items
@@ -117,6 +119,98 @@ Work item metrics include:
 - **Count**: Number of work items by type and state
 
 **Note:** Your Azure DevOps PAT must have **Work Items (Read)** permissions in addition to **Code (Read)** to scrape work item metrics.
+
+[ado-wit-api]: https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/list
+[ado-wiql]: https://learn.microsoft.com/en-us/azure/devops/boards/queries/wiql-syntax
+
+### API Rate Limits and Performance Optimization
+
+Azure DevOps enforces [API rate limits][ado-rate-limits] that can significantly impact scraping performance, especially for organizations with many repositories. Understanding these limits and configuring the scraper appropriately is crucial for reliable metrics collection.
+
+#### Azure DevOps API Limits
+
+Azure DevOps applies rate limiting based on:
+- **Requests per second**: Varies by API endpoint and authentication method
+- **Total requests per minute**: Typically 200-400 requests per minute for authenticated users
+- **Burst limits**: Short bursts may be allowed but sustained high request rates trigger throttling
+
+When rate-limited, the Azure DevOps API returns HTTP 429 (Too Many Requests) responses, causing delays as the scraper retries. This manifests as:
+- Individual API calls taking 10-60+ seconds
+- Total scrape times of 10-30+ minutes for large projects
+- Inconsistent scrape durations between cycles
+
+#### API Calls Per Scrape
+
+The scraper uses the following Azure DevOps APIs per scrape cycle:
+
+| Operation | API | Calls Per Scrape |
+|-----------|-----|------------------|
+| List repositories | [Repositories API][ado-repos-api] | 1 |
+| List branches (per repo) | [Refs API][ado-refs-api] | 1 × repos |
+| Get initial commit (per branch) | [Commits API][ado-commits-api] | 1 × branches |
+| Get latest build (per repo) | [Builds API][ado-builds-api] | 1 × repos |
+| Get code coverage (per repo) | [Code Coverage API][ado-coverage-api] | 1 × repos |
+| List pull requests (per repo) | [Pull Requests API][ado-pr-api] | 1-N × repos |
+| List deployments | [Deployments API][ado-release-api] | 1-N |
+| Query work items | [WIQL API][ado-wiql] | 1-N |
+
+**Example**: A project with 60 repos and ~5 branches per repo could make:
+- 60 (repos) + 60 (branches) + 240 (initial commits) + 60 (builds) + 60 (coverage) + 60 (PRs) = **540+ API calls per scrape**
+
+[ado-rate-limits]: https://learn.microsoft.com/en-us/azure/devops/integrate/concepts/rate-limits
+[ado-repos-api]: https://learn.microsoft.com/en-us/rest/api/azure/devops/git/repositories/list
+[ado-refs-api]: https://learn.microsoft.com/en-us/rest/api/azure/devops/git/refs/list
+[ado-commits-api]: https://learn.microsoft.com/en-us/rest/api/azure/devops/git/commits/get-commits
+[ado-builds-api]: https://learn.microsoft.com/en-us/rest/api/azure/devops/build/builds/list
+[ado-coverage-api]: https://learn.microsoft.com/en-us/rest/api/azure/devops/test/code-coverage/get-build-code-coverage
+[ado-pr-api]: https://learn.microsoft.com/en-us/rest/api/azure/devops/git/pull-requests/get-pull-requests
+
+#### Recommended Configuration by Project Size
+
+| Project Size | Repos | Recommended Interval | Concurrency |
+|--------------|-------|---------------------|-------------|
+| Small | < 20 | 5-15 minutes | 5-10 |
+| Medium | 20-100 | 15-30 minutes | 3-5 |
+| Large | 100-500 | 30-60 minutes | 2-3 |
+| Enterprise | 500+ | 60+ minutes | 1-2 |
+
+**Example configuration for large projects:**
+
+```yaml
+azuredevops:
+    initial_delay: 30s
+    collection_interval: 1800s  # 30 minutes
+    retry_on_failure:
+        enabled: true
+        initial_interval: 5s
+        max_interval: 60s
+        max_elapsed_time: 300s
+    scrapers:
+        azuredevops:
+            timeout: 180s  # 3 minutes for slow API responses
+            concurrency_limit: 3
+            limit_pull_requests: 14  # reduce PR lookback
+```
+
+#### Optimization Strategies
+
+1. **Increase collection interval**: For DORA metrics, 30-60 minute intervals are typically sufficient. Real-time metrics are not necessary for engineering effectiveness tracking.
+2. **Reduce concurrency**: Lower `concurrency_limit` to avoid triggering rate limits
+3. **Limit PR lookback**: Reduce `limit_pull_requests` to query fewer days of PR history
+4. **Use search queries**: If available, use `search_query` to filter to specific repositories
+
+### Concurrency Control
+
+To avoid Azure DevOps API rate limiting, the scraper can limit concurrent API requests via the `concurrency_limit` configuration:
+
+```yaml
+azuredevops:
+    scrapers:
+        azuredevops:
+            concurrency_limit: 3  # lower for large projects to avoid rate limiting
+```
+
+Lower values reduce the chance of rate limiting but increase total scrape time. For projects with 100+ repositories, consider using `concurrency_limit: 2` or `concurrency_limit: 1`.
 
 A Grafana Dashboard exists on the marketplace for metrics from this receiver
 and can be found
