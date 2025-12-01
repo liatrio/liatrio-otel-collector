@@ -2,20 +2,20 @@ module github.com/liatrio/liatrio-otel-collector/internal/tools
 
 go 1.23.0
 
-toolchain go1.24.0
+toolchain go1.25.4
 
 require (
-	github.com/Khan/genqlient v0.8.0
-	github.com/golangci/golangci-lint v1.64.5
+	github.com/Khan/genqlient v0.8.1
+	github.com/golangci/golangci-lint v1.64.8
 	github.com/google/osv-scanner v1.9.2
-	github.com/securego/gosec/v2 v2.22.1
-	go.opentelemetry.io/build-tools/crosslink v0.18.0
-	go.opentelemetry.io/build-tools/multimod v0.18.0
-	go.opentelemetry.io/collector/cmd/builder v0.132.0
-	go.opentelemetry.io/collector/cmd/mdatagen v0.132.0
-	golang.org/x/tools v0.35.0
+	github.com/securego/gosec/v2 v2.22.10
+	go.opentelemetry.io/build-tools/crosslink v0.29.0
+	go.opentelemetry.io/build-tools/multimod v0.29.0
+	go.opentelemetry.io/collector/cmd/builder v0.141.0
+	go.opentelemetry.io/collector/cmd/mdatagen v0.141.0
+	golang.org/x/tools v0.39.0
 	golang.org/x/vuln v1.1.4
-	honnef.co/go/tools v0.6.0
+	honnef.co/go/tools v0.6.1
 )
 
 require (
