@@ -96,7 +96,8 @@ func (gtr *githubTracesReceiver) Start(ctx context.Context, host component.Host)
 	router.HandleFunc(gtr.cfg.WebHook.Path, gtr.handleReq)
 
 	// webhook server standup and configuration
-	gtr.server, err = gtr.cfg.WebHook.ServerConfig.ToServer(ctx, host, gtr.settings.TelemetrySettings, router)
+	extensions := host.GetExtensions()
+	gtr.server, err = gtr.cfg.WebHook.ServerConfig.ToServer(ctx, extensions, gtr.settings.TelemetrySettings, router)
 	if err != nil {
 		return err
 	}
