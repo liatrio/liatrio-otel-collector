@@ -80,32 +80,57 @@ attributes:
       - ahead
       - behind
   # Work item attributes
-  work_item.type:
-    description: The type of work item (User Story, Bug, Task, etc.).
-    type: string
   work_item.state:
     description: The current state of the work item (New, Active, Resolved, Closed, etc.).
     type: string
+  work_item.type:
+    description: The type of work item (User Story, Bug, Task, etc.).
+    type: string
 
 metrics:
-  vcs.repository.count:
+  deploy.deployment.average_duration:
     enabled: true
-    description: The number of repositories in an organization.
-    unit: "{repository}"
+    description: Average deployment duration for a given service and environment over the deployment_lookback_days period.
+    stability:
+      level: development
+    unit: s
     gauge:
       value_type: int
-    attributes: []
-  vcs.ref.count:
+    attributes: [service.name, deployment.environment.name]
+  deploy.deployment.count:
     enabled: true
-    description: The number of refs of type branch in a repository.
-    unit: "{ref}"
+    description: The number of deployments by service, environment, and status.
+    stability:
+      level: development
+    unit: "{deployment}"
+    sum:
+      value_type: int
+      aggregation: cumulative
+      monotonic: true
+    attributes: [service.name, deployment.environment.name, deployment.status]
+  deploy.deployment.last_timestamp:
+    enabled: true
+    description: Unix timestamp of the last completed deployment for a service, environment, and status.
+    stability:
+      level: development
+    unit: s
     gauge:
       value_type: int
-    attributes:
-      [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.type]
-  vcs.ref.time:
+    attributes: [service.name, deployment.environment.name, deployment.status]
+  vcs.change.count:
+    description: The number of changes (pull requests) in a repository, categorized by their state (either open or merged).
+    stability:
+      level: development
     enabled: true
-    description: Time a ref (branch) created from the default branch (trunk) has existed. The `vcs.ref.type` attribute will always be `branch`.
+    gauge:
+      value_type: int
+    unit: "{change}"
+    attributes: [vcs.repository.url.full, vcs.change.state, vcs.repository.name, vcs.repository.id]
+  vcs.change.duration:
+    enabled: true
+    description: The time duration a change (pull request/merge request/changelist) has been in an open state.
+    stability:
+      level: development
     unit: s
     gauge:
       value_type: int
@@ -115,41 +140,33 @@ metrics:
         vcs.repository.name,
         vcs.repository.id,
         vcs.ref.head.name,
-        vcs.ref.type,
+        vcs.change.state,
       ]
-  vcs.ref.revisions_delta:
+  vcs.change.time_to_approval:
     enabled: true
-    description: The number of revisions (commits) a ref (branch) is ahead/behind the branch from trunk (default).
-    unit: "{revision}"
+    description: The amount of time it took a change (pull request) to go from open to approved.
+    stability:
+      level: development
+    unit: s
     gauge:
       value_type: int
     attributes:
-      [
-        vcs.repository.url.full,
-        vcs.repository.name,
-        vcs.repository.id,
-        vcs.ref.head.name,
-        vcs.ref.type,
-        vcs.revision_delta.direction,
-      ]
-  vcs.ref.lines_delta:
+      [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
+  vcs.change.time_to_merge:
     enabled: true
-    description: The number of lines added/removed in a ref (branch) relative to the default branch (trunk).
-    unit: "{line}"
+    description: The amount of time it took a change (pull request) to go from open to merged.
+    stability:
+      level: development
+    unit: s
     gauge:
       value_type: int
     attributes:
-      [
-        vcs.repository.url.full,
-        vcs.repository.name,
-        vcs.repository.id,
-        vcs.ref.head.name,
-        vcs.ref.type,
-        vcs.line_change.type,
-      ]
+      [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
   vcs.code_coverage:
     enabled: true
     description: The code coverage percentage of a ref (branch).
+    stability:
+      level: development
     unit: "%"
     gauge:
       value_type: int
@@ -164,13 +181,61 @@ metrics:
   vcs.contributor.count:
     enabled: false
     description: The number of unique contributors to a repository.
+    stability:
+      level: development
     unit: "{contributor}"
     gauge:
       value_type: int
     attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id]
-  vcs.change.duration:
+  vcs.ref.count:
     enabled: true
-    description: The time duration a change (pull request/merge request/changelist) has been in an open state.
+    description: The number of refs of type branch in a repository.
+    stability:
+      level: development
+    unit: "{ref}"
+    gauge:
+      value_type: int
+    attributes:
+      [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.type]
+  vcs.ref.lines_delta:
+    enabled: true
+    description: The number of lines added/removed in a ref (branch) relative to the default branch (trunk).
+    stability:
+      level: development
+    unit: "{line}"
+    gauge:
+      value_type: int
+    attributes:
+      [
+        vcs.repository.url.full,
+        vcs.repository.name,
+        vcs.repository.id,
+        vcs.ref.head.name,
+        vcs.ref.type,
+        vcs.line_change.type,
+      ]
+  vcs.ref.revisions_delta:
+    enabled: true
+    description: The number of revisions (commits) a ref (branch) is ahead/behind the branch from trunk (default).
+    stability:
+      level: development
+    unit: "{revision}"
+    gauge:
+      value_type: int
+    attributes:
+      [
+        vcs.repository.url.full,
+        vcs.repository.name,
+        vcs.repository.id,
+        vcs.ref.head.name,
+        vcs.ref.type,
+        vcs.revision_delta.direction,
+      ]
+  vcs.ref.time:
+    enabled: true
+    description: Time a ref (branch) created from the default branch (trunk) has existed. The `vcs.ref.type` attribute will always be `branch`.
+    stability:
+      level: development
     unit: s
     gauge:
       value_type: int
@@ -180,67 +245,25 @@ metrics:
         vcs.repository.name,
         vcs.repository.id,
         vcs.ref.head.name,
-        vcs.change.state,
+        vcs.ref.type,
       ]
-  vcs.change.time_to_merge:
+  vcs.repository.count:
     enabled: true
-    description: The amount of time it took a change (pull request) to go from open to merged.
-    unit: s
+    description: The number of repositories in an organization.
+    stability:
+      level: development
+    unit: "{repository}"
     gauge:
       value_type: int
-    attributes:
-      [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
-  vcs.change.time_to_approval:
-    enabled: true
-    description: The amount of time it took a change (pull request) to go from open to approved.
-    unit: s
-    gauge:
-      value_type: int
-    attributes:
-      [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
-  vcs.change.count:
-    description: The number of changes (pull requests) in a repository, categorized by their state (either open or merged).
-    enabled: true
-    gauge:
-      value_type: int
-    unit: "{change}"
-    attributes: [vcs.repository.url.full, vcs.change.state, vcs.repository.name, vcs.repository.id]
-  deploy.deployment.count:
-    enabled: true
-    description: The number of deployments by service, environment, and status.
-    unit: "{deployment}"
-    sum:
-      value_type: int
-      aggregation: cumulative
-      monotonic: true
-    attributes: [service.name, deployment.environment.name, deployment.status]
-  deploy.deployment.average_duration:
-    enabled: true
-    description: Average deployment duration for a given service and environment over the deployment_lookback_days period.
-    unit: s
-    gauge:
-      value_type: int
-    attributes: [service.name, deployment.environment.name]
-  deploy.deployment.last_timestamp:
-    enabled: true
-    description: Unix timestamp of the last completed deployment for a service, environment, and status.
-    unit: s
-    gauge:
-      value_type: int
-    attributes: [service.name, deployment.environment.name, deployment.status]
-  work_item.cycle_time:
-    enabled: true
-    description: Time from work item creation to closure in seconds. Only recorded for closed work items.
-    unit: s
-    gauge:
-      value_type: int
-    attributes: [work_item.type, project.name]
+    attributes: []
   # Work item metrics follow a similar pattern to VCS and deployment metrics
   # Note: There are no official OTel semantic conventions for work items yet,
   # so we follow the established pattern from vcs.* and deploy.* namespaces
   work_item.age:
     enabled: true
     description: Time since work item creation for items that are not yet closed, in seconds.
+    stability:
+      level: development
     unit: s
     gauge:
       value_type: int
@@ -248,10 +271,21 @@ metrics:
   work_item.count:
     enabled: true
     description: The number of work items by type and state.
+    stability:
+      level: development
     unit: "{work_item}"
     gauge:
       value_type: int
     attributes: [work_item.type, work_item.state, project.name]
+  work_item.cycle_time:
+    enabled: true
+    description: Time from work item creation to closure in seconds. Only recorded for closed work items.
+    stability:
+      level: development
+    unit: s
+    gauge:
+      value_type: int
+    attributes: [work_item.type, project.name]
 
 tests:
   config:
