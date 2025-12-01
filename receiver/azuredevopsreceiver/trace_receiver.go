@@ -93,7 +93,8 @@ func (atr *azuredevopsTracesReceiver) Start(ctx context.Context, host component.
 	// setup webhook route for traces
 	router.HandleFunc(atr.cfg.WebHook.Path, atr.handleReq)
 
-	atr.server, err = atr.cfg.WebHook.ServerConfig.ToServer(ctx, host, atr.settings.TelemetrySettings, router)
+	extensions := host.GetExtensions()
+	atr.server, err = atr.cfg.WebHook.ServerConfig.ToServer(ctx, extensions, atr.settings.TelemetrySettings, router)
 	if err != nil {
 		return err
 	}

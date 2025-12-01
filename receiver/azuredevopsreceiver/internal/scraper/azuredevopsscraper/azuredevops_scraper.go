@@ -67,7 +67,8 @@ type azuredevopsScraper struct {
 
 func (ados *azuredevopsScraper) start(ctx context.Context, host component.Host) (err error) {
 	ados.logger.Sugar().Info("Starting the Azure DevOps scraper")
-	ados.client, err = ados.cfg.ToClient(ctx, host, ados.settings)
+	extensions := host.GetExtensions()
+	ados.client, err = ados.cfg.ToClient(ctx, extensions, ados.settings)
 	return
 }
 
