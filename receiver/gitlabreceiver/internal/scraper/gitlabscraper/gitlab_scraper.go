@@ -35,7 +35,14 @@ type gitlabScraper struct {
 func (gls *gitlabScraper) start(ctx context.Context, host component.Host) (err error) {
 	gls.logger.Sugar().Info("Starting the scraper inside scraper.go")
 	// TODO: Fix the ToClient configuration
-	extensions := host.GetExtensions()
+
+	// Initialize extensions as nil, which is safe to pass to ToClient when host is nil
+	// The OpenTelemetry client will handle the nil extensions case appropriately
+	var extensions map[component.ID]component.Component
+	if host != nil {
+		extensions = host.GetExtensions()
+	}
+
 	gls.client, err = gls.cfg.ToClient(ctx, extensions, gls.settings)
 	return
 }

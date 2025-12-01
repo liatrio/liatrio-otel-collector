@@ -67,7 +67,14 @@ type azuredevopsScraper struct {
 
 func (ados *azuredevopsScraper) start(ctx context.Context, host component.Host) (err error) {
 	ados.logger.Sugar().Info("Starting the Azure DevOps scraper")
-	extensions := host.GetExtensions()
+
+	// Initialize extensions as nil, which is safe to pass to ToClient when host is nil
+	// The OpenTelemetry client will handle the nil extensions case appropriately
+	var extensions map[component.ID]component.Component
+	if host != nil {
+		extensions = host.GetExtensions()
+	}
+
 	ados.client, err = ados.cfg.ToClient(ctx, extensions, ados.settings)
 	return
 }
