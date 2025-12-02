@@ -93,7 +93,14 @@ func (atr *azuredevopsTracesReceiver) Start(ctx context.Context, host component.
 	// setup webhook route for traces
 	router.HandleFunc(atr.cfg.WebHook.Path, atr.handleReq)
 
-	atr.server, err = atr.cfg.WebHook.ServerConfig.ToServer(ctx, host, atr.settings.TelemetrySettings, router)
+	// Initialize extensions as nil, which is safe to pass to ToClient when host is nil
+	// The OpenTelemetry client will handle the nil extensions case appropriately
+	var extensions map[component.ID]component.Component
+	if host != nil {
+		extensions = host.GetExtensions()
+	}
+
+	atr.server, err = atr.cfg.WebHook.ServerConfig.ToServer(ctx, extensions, atr.settings.TelemetrySettings, router)
 	if err != nil {
 		return err
 	}

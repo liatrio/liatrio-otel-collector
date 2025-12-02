@@ -34,7 +34,15 @@ type githubScraper struct {
 
 func (ghs *githubScraper) start(ctx context.Context, host component.Host) (err error) {
 	ghs.logger.Sugar().Info("starting the GitHub scraper")
-	ghs.client, err = ghs.cfg.ToClient(ctx, host, ghs.settings)
+
+	// Initialize extensions as nil, which is safe to pass to ToClient when host is nil
+	// The OpenTelemetry client will handle the nil extensions case appropriately
+	var extensions map[component.ID]component.Component
+	if host != nil {
+		extensions = host.GetExtensions()
+	}
+
+	ghs.client, err = ghs.cfg.ToClient(ctx, extensions, ghs.settings)
 	return
 }
 

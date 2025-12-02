@@ -95,8 +95,15 @@ func (gtr *githubTracesReceiver) Start(ctx context.Context, host component.Host)
 	// setup webhook route for traces
 	router.HandleFunc(gtr.cfg.WebHook.Path, gtr.handleReq)
 
+	// Initialize extensions as nil, which is safe to pass to ToClient when host is nil
+	// The OpenTelemetry client will handle the nil extensions case appropriately
+	var extensions map[component.ID]component.Component
+	if host != nil {
+		extensions = host.GetExtensions()
+	}
+
 	// webhook server standup and configuration
-	gtr.server, err = gtr.cfg.WebHook.ServerConfig.ToServer(ctx, host, gtr.settings.TelemetrySettings, router)
+	gtr.server, err = gtr.cfg.WebHook.ServerConfig.ToServer(ctx, extensions, gtr.settings.TelemetrySettings, router)
 	if err != nil {
 		return err
 	}
