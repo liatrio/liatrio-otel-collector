@@ -37,7 +37,7 @@ jobs:
         with:
           # go version must be quoted on version  1.21+ or else setup action
           # will pull down version 1.2 instead of 1.21
-          go-version: "1.24"
+          go-version: "1.25"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
