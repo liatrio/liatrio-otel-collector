@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
@@ -135,7 +135,7 @@ jobs:
       id-token: write
     steps:
       - name: Clone repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
 
@@ -192,14 +192,14 @@ jobs:
       id-token: write
     steps:
       - name: Get Octo STS Token
-        uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
+        uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05
         id: octo-sts
         with:
           scope: ${{ github.repository }}
           identity: semantic-release
 
       - name: Clone repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           token: ${{ steps.octo-sts.outputs.token }}
           fetch-depth: 0
@@ -209,7 +209,7 @@ jobs:
 
       - name: Get next version
         id: get_next_version
-        uses: thenativeweb/get-next-version@29245d291b9f64a41d76f9b41683610bb4ffeccc # 2.6.3
+        uses: thenativeweb/get-next-version@067dc4602577f4f61a51c3f4664552283a228c60 # 2.7.1
         with:
           prefix: v # optional, defaults to ''
 
