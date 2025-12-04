@@ -1,6 +1,6 @@
 module github.com/liatrio/otel-compgen
 
-go 1.23
+go 1.24
 
 require (
 	github.com/spf13/cobra v1.9.1
