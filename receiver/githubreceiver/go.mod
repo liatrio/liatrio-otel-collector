@@ -8,8 +8,8 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v69 v69.2.0
 	github.com/gorilla/mux v1.8.1
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.141.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.141.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.145.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.145.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.47.0
 	go.opentelemetry.io/collector/component/componentstatus v0.141.0
@@ -21,7 +21,7 @@ require (
 	go.opentelemetry.io/collector/consumer/consumertest v0.141.0
 	go.opentelemetry.io/collector/filter v0.141.0
 	go.opentelemetry.io/collector/otelcol/otelcoltest v0.141.0
-	go.opentelemetry.io/collector/pdata v1.47.0
+	go.opentelemetry.io/collector/pdata v1.51.0
 	go.opentelemetry.io/collector/pipeline v1.47.0
 	go.opentelemetry.io/collector/receiver v1.47.0
 	go.opentelemetry.io/collector/receiver/receiverhelper v0.141.0
@@ -53,7 +53,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect
-	github.com/hashicorp/go-version v1.7.0 // indirect
+	github.com/hashicorp/go-version v1.8.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.1 // indirect
@@ -66,7 +66,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.141.0 // indirect
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.145.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
@@ -109,12 +109,12 @@ require (
 	go.opentelemetry.io/collector/extension/extensioncapabilities v0.141.0 // indirect
 	go.opentelemetry.io/collector/extension/extensionmiddleware v0.141.0 // indirect
 	go.opentelemetry.io/collector/extension/extensiontest v0.141.0 // indirect
-	go.opentelemetry.io/collector/featuregate v1.47.0 // indirect
+	go.opentelemetry.io/collector/featuregate v1.51.0 // indirect
 	go.opentelemetry.io/collector/internal/fanoutconsumer v0.141.0 // indirect
 	go.opentelemetry.io/collector/internal/telemetry v0.141.0 // indirect
 	go.opentelemetry.io/collector/otelcol v0.141.0 // indirect
-	go.opentelemetry.io/collector/pdata/pprofile v0.141.0 // indirect
-	go.opentelemetry.io/collector/pdata/testdata v0.141.0 // indirect
+	go.opentelemetry.io/collector/pdata/pprofile v0.145.0 // indirect
+	go.opentelemetry.io/collector/pdata/testdata v0.145.0 // indirect
 	go.opentelemetry.io/collector/pdata/xpdata v0.141.0 // indirect
 	go.opentelemetry.io/collector/pipeline/xpipeline v0.141.0 // indirect
 	go.opentelemetry.io/collector/processor v1.47.0 // indirect
@@ -153,9 +153,9 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20251022142026-3a174f9686a8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
-	google.golang.org/grpc v1.77.0 // indirect
-	google.golang.org/protobuf v1.36.10 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20251029180050-ab9386a59fda // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251222181119-0a764e51fe1b // indirect
+	google.golang.org/grpc v1.78.0 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
