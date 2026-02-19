@@ -172,7 +172,7 @@ Extend the receiver factory to support the logs signal and implement log record 
 
 ---
 
-### [ ] 4.0 Implement Pipeline Metrics Scraper with Configuration
+### [x] 4.0 Implement Pipeline Metrics Scraper with Configuration
 
 Create the main scraper logic that orchestrates fetching pipeline runs, extracting jobs, and emitting log records. Add configuration parameters to control the feature.
 
@@ -186,7 +186,7 @@ Create the main scraper logic that orchestrates fetching pipeline runs, extracti
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Add pipeline metrics configuration parameters
+- [x] 4.1 Add pipeline metrics configuration parameters
   - Modify `receiver/azuredevopsreceiver/internal/scraper/azuredevopsscraper/config.go`
   - Add `PipelineMetricsEnabled bool` field
   - Add `PipelineLookbackDays int` field (default 30)
@@ -195,7 +195,7 @@ Create the main scraper logic that orchestrates fetching pipeline runs, extracti
   - Add `IncludeReleasePipelines bool` field (default true)
   - Add mapstructure tags for YAML configuration
   
-- [ ] 4.2 Implement main pipeline scraping orchestration
+- [x] 4.2 Implement main pipeline scraping orchestration
   - Modify `receiver/azuredevopsreceiver/internal/scraper/azuredevopsscraper/azuredevops_scraper.go`
   - Add `scrapePipelineMetrics` method to azuredevopsScraper struct
   - Calculate lookback time window based on `PipelineLookbackDays`
@@ -203,20 +203,20 @@ Create the main scraper logic that orchestrates fetching pipeline runs, extracti
   - For each run, call `fetchBuildTimeline` to get jobs
   - Extract jobs and create log records
   
-- [ ] 4.3 Integrate pipeline scraping into main scrape method
+- [x] 4.3 Integrate pipeline scraping into main scrape method
   - Modify the main `scrape` method in `azuredevops_scraper.go`
   - Add conditional check for `PipelineMetricsEnabled`
   - Call `scrapePipelineMetrics` if enabled
   - Handle errors gracefully without failing entire scrape
   - Add logging for scrape progress and results
   
-- [ ] 4.4 Implement logs emission
+- [x] 4.4 Implement logs emission
   - Create method to emit plog.Logs from job records
   - Batch job log records into a single plog.Logs object
   - Return logs from scraper for consumption by logs pipeline
   - Handle empty results gracefully
   
-- [ ] 4.5 Update example configuration
+- [x] 4.5 Update example configuration
   - Modify `config/config.yaml` to add pipeline metrics section
   - Add commented example configuration with all new parameters
   - Document parameter meanings and recommended values

@@ -37,6 +37,12 @@ receivers:
         # search_query: ${env:SEARCH_QUERY} #Recommended optional query override
         auth:
           authenticator: bearertokenauth/azuredevops
+        
+        # Pipeline Metrics Configuration (emits logs for pipeline jobs)
+        # pipeline_metrics_enabled: true
+        # pipeline_lookback_days: 30  # How many days of pipeline history to fetch
+        # include_build_pipelines: true  # Include build/CI pipelines
+        # include_release_pipelines: true  # Include release/CD pipelines (future)
     webhook:
       endpoint: 0.0.0.0:8088
       path: /

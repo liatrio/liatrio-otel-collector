@@ -13,11 +13,11 @@ receivers:
         organization: ${env:ADO_ORG}
         project: ${env:ADO_PROJECT}
         base_url: https://dev.azure.com
-        # Pipeline metrics configuration (will be implemented in later tasks)
-        # pipeline_metrics_enabled: true
-        # pipeline_lookback_days: 30
-        # include_build_pipelines: true
-        # include_release_pipelines: true
+        # Pipeline metrics configuration 
+        pipeline_metrics_enabled: true
+        pipeline_lookback_days: 7  
+        include_build_pipelines: true
+        include_release_pipelines: false
         auth:
           authenticator: bearertokenauth/azuredevops
     webhook:

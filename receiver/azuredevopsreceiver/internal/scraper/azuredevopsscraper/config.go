@@ -50,6 +50,22 @@ type Config struct {
 	// WorkItemLookbackDays specifies how many days back to fetch work item history
 	// Defaults to 30 days if not set
 	WorkItemLookbackDays int `mapstructure:"work_item_lookback_days"`
+
+	// PipelineMetricsEnabled enables scraping of pipeline job metrics as logs
+	// When enabled, fetches pipeline runs and emits job-level log records
+	PipelineMetricsEnabled bool `mapstructure:"pipeline_metrics_enabled"`
+
+	// PipelineLookbackDays specifies how many days back to fetch pipeline run history
+	// Defaults to 30 days if not set
+	PipelineLookbackDays int `mapstructure:"pipeline_lookback_days"`
+
+	// IncludeBuildPipelines controls whether to scrape build pipeline metrics
+	// Defaults to true
+	IncludeBuildPipelines bool `mapstructure:"include_build_pipelines"`
+
+	// IncludeReleasePipelines controls whether to scrape release pipeline metrics
+	// Defaults to true (currently not implemented, reserved for future use)
+	IncludeReleasePipelines bool `mapstructure:"include_release_pipelines"`
 }
 
 var _ internal.Config = (*Config)(nil)
