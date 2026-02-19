@@ -1,0 +1,18 @@
+apiVersion: 1
+
+datasources:
+  - name: OpenSearch
+    type: grafana-opensearch-datasource
+    access: proxy
+    url: http://opensearch:9200
+    isDefault: true
+    editable: true
+    jsonData:
+      database: otel-logs
+      flavor: opensearch
+      logLevelField: severity
+      logMessageField: body
+      pplEnabled: true
+      timeField: '@timestamp'
+      version: '2.0.0'
+    secureJsonData: {}

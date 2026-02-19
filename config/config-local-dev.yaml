@@ -1,0 +1,108 @@
+---
+extensions:
+  bearertokenauth/azuredevops:
+    token: ${env:ADO_PAT}
+
+receivers:
+  # Azure DevOps receiver for pipeline metrics
+  azuredevops:
+    initial_delay: 10s
+    collection_interval: 900s  # 15 minutes for pipeline metrics
+    scrapers:
+      azuredevops:
+        organization: ${env:ADO_ORG}
+        project: ${env:ADO_PROJECT}
+        base_url: https://dev.azure.com
+        # Pipeline metrics configuration (will be implemented in later tasks)
+        # pipeline_metrics_enabled: true
+        # pipeline_lookback_days: 30
+        # include_build_pipelines: true
+        # include_release_pipelines: true
+        auth:
+          authenticator: bearertokenauth/azuredevops
+    webhook:
+      endpoint: 0.0.0.0:8088
+      path: /
+      health_path: /healthcheck
+
+  # OTLP receiver for accepting logs from the collector itself
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Batch processor for efficient data handling
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+
+  # Transform processor for log body parsing
+  transform/body:
+    error_mode: ignore
+    log_statements:
+      - set(log.body, ParseJSON(log.body)) where log.body != nil
+
+exporters:
+  # Debug exporter for troubleshooting
+  debug:
+    verbosity: detailed
+    sampling_initial: 5
+    sampling_thereafter: 100
+
+  # OpenSearch exporter for logs
+  opensearch:
+    http:
+      endpoint: http://opensearch:9200
+      timeout: 30s
+    logs_index: otel-logs
+    dataset: pipeline-metrics
+    namespace: azuredevops
+
+  # Prometheus exporter for metrics
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: otel
+    const_labels:
+      environment: local-dev
+
+  # OTLP HTTP exporter (for future use with other backends)
+  otlphttp/opensearch:
+    endpoint: http://opensearch:9200
+    tls:
+      insecure: true
+
+service:
+  extensions: [bearertokenauth/azuredevops]
+  
+  pipelines:
+    # Metrics pipeline
+    metrics:
+      receivers: [azuredevops]
+      processors: [memory_limiter, batch]
+      exporters: [debug, prometheus]
+    
+    # Logs pipeline for pipeline metrics
+    logs:
+      receivers: [azuredevops, otlp]
+      processors: [memory_limiter, transform/body, batch]
+      exporters: [debug, opensearch]
+    
+    # Traces pipeline for webhook events
+    traces:
+      receivers: [azuredevops]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
+
+  telemetry:
+    logs:
+      level: debug
+    metrics:
+      address: 0.0.0.0:8888
