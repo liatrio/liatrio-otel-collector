@@ -75,7 +75,7 @@ Set up a complete local development stack with OpenSearch, Grafana, Prometheus, 
 
 ---
 
-### [ ] 2.0 Implement Builds API Integration and Data Structures
+### [x] 2.0 Implement Builds API Integration and Data Structures
 
 Create the foundational API integration for Azure DevOps Builds API to fetch pipeline runs and job details. This task establishes the data models and API client methods needed for all subsequent work.
 
@@ -89,32 +89,32 @@ Create the foundational API integration for Azure DevOps Builds API to fetch pip
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Create data structures for Builds API responses
+- [x] 2.1 Create data structures for Builds API responses
   - Create `BuildRun` struct in `receiver/azuredevopsreceiver/internal/scraper/azuredevopsscraper/builds.go`
   - Create `BuildTimeline` struct for job/task details
   - Create `BuildTimelineRecord` struct for individual jobs
   - Add JSON tags matching Azure DevOps API response format
   - Use `NullableTime` for timestamp fields (follow existing pattern from deployments.go)
   
-- [ ] 2.2 Implement `fetchBuildRuns` method
+- [x] 2.2 Implement `fetchBuildRuns` method
   - Add method to fetch builds from Azure DevOps Builds API
   - Endpoint: `GET https://dev.azure.com/{org}/{project}/_apis/build/builds`
   - Query parameters: `minTime`, `statusFilter=completed`, `$top=100`
   - Implement pagination using continuation tokens
   - Add error handling and retry logic for rate limiting
   
-- [ ] 2.3 Implement `fetchBuildTimeline` method
+- [x] 2.3 Implement `fetchBuildTimeline` method
   - Add method to fetch job details for a specific build
   - Endpoint: `GET https://dev.azure.com/{org}/{project}/_apis/build/builds/{buildId}/timeline`
   - Parse timeline records to extract job information
   - Filter for job-type records (exclude task-level details)
   
-- [ ] 2.4 Implement status mapping helper
+- [x] 2.4 Implement status mapping helper
   - Create `mapBuildStatus` function to normalize Azure DevOps statuses
   - Map: `succeeded` → succeeded, `failed`/`partiallySucceeded` → failed, `canceled` → canceled
   - Handle edge cases and unknown statuses
   
-- [ ] 2.5 Add unit tests for API integration
+- [x] 2.5 Add unit tests for API integration
   - Create `builds_test.go` with test cases
   - Test `TestFetchBuildRuns` with mock API responses
   - Test `TestFetchBuildTimeline` with sample timeline data
