@@ -15,6 +15,8 @@ type ScraperFactory interface {
 	CreateDefaultConfig() Config
 	// Create a scraper based on the configuration passed or return an error if not valid.
 	CreateMetricsScraper(ctx context.Context, params receiver.Settings, cfg Config) (scraper.Metrics, error)
+	// Create a logs scraper based on the configuration passed or return an error if not valid.
+	CreateLogsScraper(ctx context.Context, params receiver.Settings, cfg Config) (scraper.Logs, error)
 }
 
 type Config any

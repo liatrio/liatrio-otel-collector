@@ -47,3 +47,17 @@ func (f *Factory) CreateMetricsScraper(
 		scraper.WithStart(s.start),
 	)
 }
+
+func (f *Factory) CreateLogsScraper(
+	ctx context.Context,
+	params receiver.Settings,
+	cfg internal.Config,
+) (scraper.Logs, error) {
+	conf := cfg.(*Config)
+	s := newAzureDevOpsScraper(ctx, params, conf)
+
+	return scraper.NewLogs(
+		s.scrapeLogs,
+		scraper.WithStart(s.start),
+	)
+}

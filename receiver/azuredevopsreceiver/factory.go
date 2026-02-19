@@ -45,6 +45,7 @@ func NewFactory() receiver.Factory {
 		createDefaultConfig,
 		receiver.WithMetrics(createMetricsReceiver, metadata.MetricsStability),
 		receiver.WithTraces(createTracesReceiver, metadata.TracesStability),
+		receiver.WithLogs(createLogsReceiver, metadata.LogsStability),
 	)
 }
 
@@ -113,6 +114,47 @@ func createTracesReceiver(
 		return nil, errors.New("no nextConsumer provided")
 	}
 	return newTracesReceiver(set, rCfg, nextConsumer)
+}
+
+// createLogsReceiver creates a logs receiver based on provided config.
+func createLogsReceiver(
+	ctx context.Context,
+	params receiver.Settings,
+	cfg component.Config,
+	consumer consumer.Logs,
+) (receiver.Logs, error) {
+	// check that the configuration is valid
+	conf, ok := cfg.(*Config)
+	if !ok {
+		return nil, errConfigNotValid
+	}
+
+	// Create logs scraper directly
+	var logsScraper scraper.Logs
+	for key, scraperCfg := range conf.Scrapers {
+		factory := scraperFactories[key]
+		if factory == nil {
+			return nil, fmt.Errorf("factory not found for scraper %q", key)
+		}
+
+		var err error
+		logsScraper, err = factory.CreateLogsScraper(ctx, params, scraperCfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create logs scraper %q: %w", key, err)
+		}
+		break // Only use first scraper for now
+	}
+
+	if logsScraper == nil {
+		return nil, errors.New("no logs scraper configured")
+	}
+
+	// NewLogsController creates a controller that will scrape logs
+	return scraperhelper.NewLogsController(
+		&conf.ControllerConfig,
+		params,
+		consumer,
+	)
 }
 
 func createAddScraperOpts(

@@ -123,7 +123,7 @@ Create the foundational API integration for Azure DevOps Builds API to fetch pip
 
 ---
 
-### [ ] 3.0 Add OpenTelemetry Logs Support to Azure DevOps Receiver
+### [x] 3.0 Add OpenTelemetry Logs Support to Azure DevOps Receiver
 
 Extend the receiver factory to support the logs signal and implement log record creation from pipeline job data. This enables the receiver to emit logs alongside existing metrics and traces.
 
@@ -137,19 +137,19 @@ Extend the receiver factory to support the logs signal and implement log record 
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Add logs receiver support to factory
+- [x] 3.1 Add logs receiver support to factory
   - Modify `receiver/azuredevopsreceiver/factory.go`
   - Add `receiver.WithLogs(createLogsReceiver, metadata.LogsStability)` to factory
   - Implement `createLogsReceiver` function following existing patterns
   - Update `internal/metadata/generated_status.go` if needed for logs stability
   
-- [ ] 3.2 Create log record builder for pipeline jobs
+- [x] 3.2 Create log record builder for pipeline jobs
   - Create `receiver/azuredevopsreceiver/internal/scraper/azuredevopsscraper/logs.go`
   - Implement `createLogRecordFromJob` function
   - Use `plog.NewLogs()` and `plog.LogRecord` for log creation
   - Set log body to descriptive message (e.g., "Pipeline job completed")
   
-- [ ] 3.3 Implement job-to-log attribute mapping
+- [x] 3.3 Implement job-to-log attribute mapping
   - Create `jobToLogAttributes` helper function
   - Map all 17+ required fields to log attributes:
     - job_name, pipeline_name, pipeline_id, pipeline_run_id, stage_name
@@ -159,11 +159,11 @@ Extend the receiver factory to support the logs signal and implement log record 
     - repository_name, repository_url, commit_sha
   - Set log severity based on status (INFO/ERROR/WARN)
   
-- [ ] 3.4 Add resource attributes for logs
+- [x] 3.4 Add resource attributes for logs
   - Set resource attributes: vcs.provider.name, vcs.owner.name, azuredevops.project
   - Follow existing resource builder pattern from metrics scraper
   
-- [ ] 3.5 Create unit tests for log creation
+- [x] 3.5 Create unit tests for log creation
   - Create `logs_test.go` with test cases
   - Test `TestCreateLogRecordFromJob` with sample job data
   - Test `TestJobToLogAttributes` verifies all fields are mapped
