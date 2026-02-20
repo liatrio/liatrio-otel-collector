@@ -230,7 +230,7 @@ Create the main scraper logic that orchestrates fetching pipeline runs, extracti
 
 ---
 
-### [ ] 5.0 Implement Grafana Dashboard for Pipeline Metrics
+### [x] 5.0 Implement Grafana Dashboard for Pipeline Metrics
 
 Create a Grafana dashboard that visualizes pipeline job metrics including duration trends, success rates, and job-level performance analysis.
 
@@ -245,41 +245,41 @@ Create a Grafana dashboard that visualizes pipeline job metrics including durati
 
 #### 5.0 Tasks
 
-- [ ] 5.1 Create base dashboard JSON structure
+- [x] 5.1 Create base dashboard JSON structure
   - Create `grafana/dashboards/pipeline-metrics.json`
   - Set up dashboard metadata (title, tags, timezone)
   - Configure dashboard variables for filtering (pipeline name, branch, etc.)
   - Set time range picker configuration
   
-- [ ] 5.2 Create "Job Duration Over Time" panel
+- [x] 5.2 Create "Job Duration Over Time" panel
   - Add time series panel showing job duration trends
   - OpenSearch query: aggregate duration_seconds by job_name over time
   - Configure visualization: line chart with multiple series
   - Add thresholds for slow jobs (e.g., >300 seconds)
   
-- [ ] 5.3 Create "Pipeline Success Rate" panel
+- [x] 5.3 Create "Pipeline Success Rate" panel
   - Add stat panel showing percentage of successful jobs
   - OpenSearch query: calculate ratio of succeeded vs total jobs
   - Configure visualization: percentage gauge or stat
   - Color coding: green for >90%, yellow for 70-90%, red for <70%
   
-- [ ] 5.4 Create "Top 10 Slowest Jobs" panel
+- [x] 5.4 Create "Top 10 Slowest Jobs" panel
   - Add table panel showing jobs with highest average duration
   - OpenSearch query: aggregate avg(duration_seconds) grouped by job_name
   - Sort by duration descending, limit 10
   - Include columns: job_name, pipeline_name, avg_duration, last_run
   
-- [ ] 5.5 Create "Job Status Distribution" panel
+- [x] 5.5 Create "Job Status Distribution" panel
   - Add pie chart or bar chart showing job status breakdown
   - OpenSearch query: count jobs grouped by status
   - Show succeeded, failed, canceled counts
   
-- [ ] 5.6 Add dashboard to Grafana provisioning
+- [x] 5.6 Add dashboard to Grafana provisioning
   - Create `grafana/provisioning/dashboards/dashboards.yaml`
   - Configure dashboard provider to load from `grafana/dashboards/` directory
   - Update docker-compose.yml to mount dashboard files
   
-- [ ] 5.7 Test dashboard with sample data
+- [x] 5.7 Test dashboard with sample data
   - Verify dashboard loads in Grafana
   - Test all panels render correctly
   - Test variable filters work as expected
