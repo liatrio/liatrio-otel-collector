@@ -129,7 +129,7 @@ func createLogsReceiver(
 		return nil, errConfigNotValid
 	}
 
-	// Create logs scraper directly
+	// Create logs scraper
 	var logsScraper scraper.Logs
 	for key, scraperCfg := range conf.Scrapers {
 		factory := scraperFactories[key]
@@ -149,12 +149,14 @@ func createLogsReceiver(
 		return nil, errors.New("no logs scraper configured")
 	}
 
-	// NewLogsController creates a controller that will scrape logs
-	return scraperhelper.NewLogsController(
-		&conf.ControllerConfig,
-		params,
-		consumer,
-	)
+	// Create a simple logs receiver wrapper
+	return &simpleLogsReceiver{
+		scraper:      logsScraper,
+		consumer:     consumer,
+		settings:     params,
+		initialDelay: conf.ControllerConfig.InitialDelay,
+		interval:     conf.ControllerConfig.CollectionInterval,
+	}, nil
 }
 
 func createAddScraperOpts(

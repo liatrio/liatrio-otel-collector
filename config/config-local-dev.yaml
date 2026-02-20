@@ -60,8 +60,9 @@ exporters:
   # OpenSearch exporter for logs
   opensearch:
     http:
-      endpoint: http://opensearch:9200
-      timeout: 30s
+      endpoint: http://localhost:9200
+      tls:
+        insecure: true
     logs_index: otel-logs
     dataset: pipeline-metrics
     namespace: azuredevops
@@ -105,4 +106,4 @@ service:
     logs:
       level: debug
     metrics:
-      address: 0.0.0.0:8888
+      level: detailed

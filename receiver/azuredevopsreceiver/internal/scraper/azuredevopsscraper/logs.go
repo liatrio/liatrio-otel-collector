@@ -14,11 +14,11 @@ import (
 
 // scrapeLogs scrapes pipeline metrics and emits them as logs
 func (ados *azuredevopsScraper) scrapeLogs(ctx context.Context) (plog.Logs, error) {
-	ados.logger.Sugar().Debug("scrapeLogs called - starting pipeline metrics scraping")
+	ados.logger.Sugar().Info("scrapeLogs called - starting pipeline metrics scraping")
 
 	// Check if pipeline metrics are enabled
 	if !ados.cfg.PipelineMetricsEnabled {
-		ados.logger.Sugar().Debug("Pipeline metrics disabled, skipping")
+		ados.logger.Sugar().Info("Pipeline metrics disabled, skipping")
 		return plog.NewLogs(), nil
 	}
 
@@ -203,9 +203,12 @@ func jobToLogAttributes(buildRun *BuildRun, job *BuildTimelineRecord, attrs pcom
 	attrs.PutStr("vcs.repository.url", buildRun.Repository.URL)
 
 	// Trigger information
-	attrs.PutStr("pipeline.triggered_by", buildRun.RequestedFor.DisplayName)
-	attrs.PutStr("pipeline.triggered_by.email", buildRun.RequestedFor.UniqueName)
-	attrs.PutStr("pipeline.trigger_reason", buildRun.Reason)
+	if buildRun.RequestedFor.DisplayName != "" {
+		attrs.PutStr("pipeline.triggered_by_name", buildRun.RequestedFor.DisplayName)
+		if buildRun.RequestedFor.UniqueName != "" {
+			attrs.PutStr("pipeline.triggered_by_email", buildRun.RequestedFor.UniqueName)
+		}
+	}
 
 	// Agent/worker information
 	if job.WorkerName != "" {
