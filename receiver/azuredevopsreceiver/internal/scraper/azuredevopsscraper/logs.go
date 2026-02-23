@@ -30,11 +30,21 @@ func (ados *azuredevopsScraper) scrapeLogs(ctx context.Context) (plog.Logs, erro
 
 	logs := plog.NewLogs()
 
-	// Only scrape build pipelines for now (release pipelines reserved for future)
+	// Scrape build pipelines if enabled
 	if ados.cfg.IncludeBuildPipelines {
 		err := ados.scrapeBuildPipelineMetrics(ctx, logs)
 		if err != nil {
 			ados.logger.Sugar().Errorf("Error scraping build pipeline metrics: %v", err)
+			// Don't return error, continue with what we have
+		}
+	}
+
+	// Scrape release pipelines if enabled
+	ados.logger.Sugar().Infof("IncludeReleasePipelines config value: %v", ados.cfg.IncludeReleasePipelines)
+	if ados.cfg.IncludeReleasePipelines {
+		err := ados.scrapeReleasePipelineMetrics(ctx, logs)
+		if err != nil {
+			ados.logger.Sugar().Errorf("Error scraping release pipeline metrics: %v", err)
 			// Don't return error, continue with what we have
 		}
 	}

@@ -16,8 +16,9 @@ receivers:
         # Pipeline metrics configuration 
         pipeline_metrics_enabled: true
         pipeline_lookback_days: 7  
+        max_pipeline_runs: 0  # 0 = unlimited (fetch all with pagination), or set a limit like 1000
         include_build_pipelines: true
-        include_release_pipelines: false
+        include_release_pipelines: true
         auth:
           authenticator: bearertokenauth/azuredevops
     webhook:
