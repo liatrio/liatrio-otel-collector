@@ -18,8 +18,9 @@ import (
 
 // Release represents a release execution
 type Release struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID        int          `json:"id"`
+	Name      string       `json:"name"`
+	CreatedOn NullableTime `json:"createdOn"`
 }
 
 // ReleaseEnvironmentDetail represents detailed environment info with deploy steps
@@ -98,12 +99,11 @@ func (ados *azuredevopsScraper) scrapeReleasePipelineMetrics(ctx context.Context
 
 	ados.logger.Sugar().Infof("Found %d release definitions", len(releaseDefinitions))
 
+	jobCount := 0
 	taskCount := 0
 
 	// For each release definition, fetch deployments
 	for _, releaseDef := range releaseDefinitions {
-		ados.logger.Sugar().Debugf("Fetching deployments for release definition: %s (ID: %d)", releaseDef.Name, releaseDef.ID)
-
 		// Fetch releases for this definition
 		releases, err := ados.fetchReleases(ctx, releaseDef.ID, minTime)
 		if err != nil {
@@ -128,6 +128,18 @@ func (ados *azuredevopsScraper) scrapeReleasePipelineMetrics(ctx context.Context
 					for _, phase := range deployStep.ReleaseDeployPhases {
 						// Process each deployment job
 						for _, deployJob := range phase.DeploymentJobs {
+							// Create job-level log record
+							jobLogRecord := ados.createReleaseJobLogRecord(
+								releaseDef,
+								release,
+								env,
+								deployStep,
+								phase,
+								&deployJob,
+							)
+							jobLogRecord.CopyTo(logs.ResourceLogs().AppendEmpty().ScopeLogs().AppendEmpty().LogRecords().AppendEmpty())
+							jobCount++
+
 							// Create log records for each task
 							for _, task := range deployJob.Tasks {
 								logRecord := ados.createReleaseTaskLogRecord(
@@ -148,6 +160,7 @@ func (ados *azuredevopsScraper) scrapeReleasePipelineMetrics(ctx context.Context
 		}
 	}
 
+	ados.logger.Sugar().Infof("Scraped %d release pipeline job log records", jobCount)
 	ados.logger.Sugar().Infof("Scraped %d release pipeline task log records", taskCount)
 	return nil
 }
@@ -161,6 +174,9 @@ func (ados *azuredevopsScraper) fetchReleaseDefinitions(ctx context.Context) ([]
 
 	params := url.Values{}
 	params.Add("api-version", apiVersion)
+	if ados.cfg.ReleaseNameCriteria != nil {
+		params.Add("searchText", ados.cfg.ReleaseNameCriteria)
+	}
 
 	fullURL := fmt.Sprintf("%s?%s", apiURL, params.Encode())
 
@@ -192,7 +208,7 @@ func (ados *azuredevopsScraper) fetchReleaseDefinitions(ctx context.Context) ([]
 func (ados *azuredevopsScraper) fetchReleases(ctx context.Context, definitionID int, minTime time.Time) ([]Release, error) {
 	var allReleases []Release
 	top := 50
-	skip := 0
+	continuationToken := ""
 	maxRuns := ados.cfg.MaxPipelineRuns
 
 	for {
@@ -204,9 +220,10 @@ func (ados *azuredevopsScraper) fetchReleases(ctx context.Context, definitionID 
 		params := url.Values{}
 		params.Add("api-version", apiVersion)
 		params.Add("definitionId", fmt.Sprintf("%d", definitionID))
-		params.Add("minCreatedTime", minTime.Format(time.RFC3339))
 		params.Add("$top", fmt.Sprintf("%d", top))
-		params.Add("$skip", fmt.Sprintf("%d", skip))
+		if continuationToken != "" {
+			params.Add("continuationToken", continuationToken)
+		}
 
 		fullURL := fmt.Sprintf("%s?%s", apiURL, params.Encode())
 
@@ -226,6 +243,9 @@ func (ados *azuredevopsScraper) fetchReleases(ctx context.Context, definitionID 
 			return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
 		}
 
+		// Check for continuation token in response headers
+		continuationToken = resp.Header.Get("x-ms-continuationtoken")
+
 		body, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
@@ -240,10 +260,22 @@ func (ados *azuredevopsScraper) fetchReleases(ctx context.Context, definitionID 
 			return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 		}
 
-		allReleases = append(allReleases, result.Value...)
+		pageSize := len(result.Value)
 
-		// Stop if no more results or hit limit
-		if result.Count < top {
+		// Filter releases by time and check if we should stop
+		filteredCount := 0
+		shouldStop := false
+		for _, release := range result.Value {
+			if !release.CreatedOn.Time.IsZero() && release.CreatedOn.Time.Before(minTime) {
+				shouldStop = true
+				break
+			}
+			allReleases = append(allReleases, release)
+			filteredCount++
+		}
+
+		// Stop if no results, no continuation token, or found releases outside time window
+		if pageSize == 0 || continuationToken == "" || shouldStop {
 			break
 		}
 
@@ -251,8 +283,6 @@ func (ados *azuredevopsScraper) fetchReleases(ctx context.Context, definitionID 
 			allReleases = allReleases[:maxRuns]
 			break
 		}
-
-		skip += top
 	}
 
 	return allReleases, nil
@@ -296,6 +326,45 @@ func (ados *azuredevopsScraper) fetchReleaseEnvironments(ctx context.Context, re
 	}
 
 	return result.Environments, nil
+}
+
+// createReleaseJobLogRecord creates a log record for a release job
+func (ados *azuredevopsScraper) createReleaseJobLogRecord(
+	releaseDef ReleaseDefinition,
+	release Release,
+	env ReleaseEnvironmentDetail,
+	deployStep DeployStep,
+	phase DeployPhase,
+	deployJob *DeploymentJob,
+) plog.LogRecord {
+	logRecord := plog.NewLogRecord()
+
+	// Set timestamp to job finish time
+	if !deployJob.Job.FinishTime.Time.IsZero() {
+		logRecord.SetTimestamp(pcommon.NewTimestampFromTime(deployJob.Job.FinishTime.Time))
+	} else if !deployJob.Job.DateEnded.Time.IsZero() {
+		logRecord.SetTimestamp(pcommon.NewTimestampFromTime(deployJob.Job.DateEnded.Time))
+	} else {
+		logRecord.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+	}
+
+	logRecord.SetObservedTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+
+	// Set severity based on job status
+	severity := mapReleaseTaskStatusToSeverity(deployJob.Job.Status)
+	logRecord.SetSeverityNumber(severity)
+	logRecord.SetSeverityText(deployJob.Job.Status)
+
+	// Set body
+	logRecord.Body().SetStr(fmt.Sprintf("Release job '%s' %s", deployJob.Job.Name, deployJob.Job.Status))
+
+	// Set attributes
+	attrs := logRecord.Attributes()
+	releaseJobToLogAttributes(releaseDef, release, env, deployStep, phase, deployJob, attrs)
+
+	logRecord.SetDroppedAttributesCount(0)
+
+	return logRecord
 }
 
 // createReleaseTaskLogRecord creates a log record for a release task
@@ -387,6 +456,7 @@ func releaseTaskToLogAttributes(
 	attrs.PutInt("phase.rank", int64(phase.Rank))
 
 	// Task info
+	attrs.PutStr("record.type", "task")
 	attrs.PutInt("task.id", int64(task.ID))
 	attrs.PutStr("task.name", task.Name)
 	attrs.PutStr("task.timeline_record_id", task.TimelineRecordID)
@@ -438,6 +508,94 @@ func releaseTaskToLogAttributes(
 
 	// Status attribute for compatibility
 	attrs.PutStr("status", task.Status)
+}
+
+// releaseJobToLogAttributes maps release job fields to log attributes
+func releaseJobToLogAttributes(
+	releaseDef ReleaseDefinition,
+	release Release,
+	env ReleaseEnvironmentDetail,
+	deployStep DeployStep,
+	phase DeployPhase,
+	deployJob *DeploymentJob,
+	attrs pcommon.Map,
+) {
+	// Data stream attributes
+	dataStream := attrs.PutEmptyMap("data_stream")
+	dataStream.PutStr("type", "record")
+	dataStream.PutStr("dataset", "pipeline-metrics")
+	dataStream.PutStr("namespace", "azuredevops")
+
+	// App/Release Definition info
+	attrs.PutStr("app.name", releaseDef.Name)
+	attrs.PutInt("release.definition.id", int64(releaseDef.ID))
+
+	// Release info
+	attrs.PutStr("release.name", release.Name)
+	attrs.PutInt("release.id", int64(release.ID))
+
+	// Environment info
+	attrs.PutStr("environment.name", env.Name)
+	attrs.PutInt("environment.id", int64(env.ID))
+	attrs.PutStr("environment.status", env.Status)
+
+	// Deployment info
+	attrs.PutInt("deployment.id", int64(deployStep.DeploymentID))
+	attrs.PutInt("deployment.attempt", int64(deployStep.Attempt))
+	attrs.PutStr("deployment.reason", deployStep.Reason)
+	attrs.PutStr("deployment.status", deployStep.Status)
+
+	// Phase/Stage info
+	attrs.PutStr("phase.name", phase.Name)
+	attrs.PutStr("phase.id", phase.PhaseID)
+	attrs.PutStr("phase.type", phase.PhaseType)
+	attrs.PutStr("phase.status", phase.Status)
+	attrs.PutInt("phase.rank", int64(phase.Rank))
+
+	// Job info
+	attrs.PutStr("record.type", "job")
+	attrs.PutInt("job.id", int64(deployJob.Job.ID))
+	attrs.PutStr("job.name", deployJob.Job.Name)
+	attrs.PutStr("job.timeline_record_id", deployJob.Job.TimelineRecordID)
+	attrs.PutStr("job.status", deployJob.Job.Status)
+	attrs.PutInt("job.rank", int64(deployJob.Job.Rank))
+
+	if deployJob.Job.AgentName != "" {
+		attrs.PutStr("agent.name", deployJob.Job.AgentName)
+	}
+
+	// Timing info
+	var startTime, endTime time.Time
+	if !deployJob.Job.StartTime.Time.IsZero() {
+		startTime = deployJob.Job.StartTime.Time
+		attrs.PutStr("job.start_time", startTime.Format(time.RFC3339))
+	} else if !deployJob.Job.DateStarted.Time.IsZero() {
+		startTime = deployJob.Job.DateStarted.Time
+		attrs.PutStr("job.start_time", startTime.Format(time.RFC3339))
+	}
+
+	if !deployJob.Job.FinishTime.Time.IsZero() {
+		endTime = deployJob.Job.FinishTime.Time
+		attrs.PutStr("job.end_time", endTime.Format(time.RFC3339))
+	} else if !deployJob.Job.DateEnded.Time.IsZero() {
+		endTime = deployJob.Job.DateEnded.Time
+		attrs.PutStr("job.end_time", endTime.Format(time.RFC3339))
+	}
+
+	// Calculate job duration
+	if !startTime.IsZero() && !endTime.IsZero() {
+		duration := endTime.Sub(startTime).Seconds()
+		attrs.PutDouble("job.duration_seconds", duration)
+	}
+
+	// Calculate queue time (from deploy step queued to job started)
+	if !deployStep.QueuedOn.Time.IsZero() && !startTime.IsZero() {
+		queueTime := startTime.Sub(deployStep.QueuedOn.Time).Seconds()
+		attrs.PutDouble("job.queue_time_seconds", queueTime)
+	}
+
+	// Status attribute for compatibility
+	attrs.PutStr("status", deployJob.Job.Status)
 }
 
 // mapReleaseTaskStatusToSeverity maps release task status to OTel severity

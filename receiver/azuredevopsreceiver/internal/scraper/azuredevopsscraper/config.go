@@ -52,11 +52,12 @@ type Config struct {
 	WorkItemLookbackDays int `mapstructure:"work_item_lookback_days"`
 
 	// Pipeline metrics configuration
-	PipelineMetricsEnabled  bool `mapstructure:"pipeline_metrics_enabled"`
-	PipelineLookbackDays    int  `mapstructure:"pipeline_lookback_days"`
-	MaxPipelineRuns         int  `mapstructure:"max_pipeline_runs"` // Maximum number of pipeline runs to fetch (0 = unlimited with pagination)
-	IncludeBuildPipelines   bool `mapstructure:"include_build_pipelines"`
-	IncludeReleasePipelines bool `mapstructure:"include_release_pipelines"`
+	PipelineMetricsEnabled  bool   `mapstructure:"pipeline_metrics_enabled"`
+	PipelineLookbackDays    int    `mapstructure:"pipeline_lookback_days"`
+	MaxPipelineRuns         int    `mapstructure:"max_pipeline_runs"` // Maximum number of pipeline runs to fetch (0 = unlimited with pagination)
+	IncludeBuildPipelines   bool   `mapstructure:"include_build_pipelines"`
+	IncludeReleasePipelines bool   `mapstructure:"include_release_pipelines"`
+	ReleaseNameCriteria     string `mapstructure:"release_name_criteria"`
 
 	// IncludeReleasePipelines controls whether to scrape release pipeline metrics
 	// Defaults to true (currently not implemented, reserved for future use)
