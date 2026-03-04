@@ -10,7 +10,7 @@
       "program": "${workspaceFolder}/build",
       "args": [
         "--config",
-        "../config/config.yaml"
+        "../config/config-local-dev.yaml"
       ],
       "envFile": "${workspaceFolder}/.debug.env"
     }

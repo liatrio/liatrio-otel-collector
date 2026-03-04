@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -436,6 +437,7 @@ func releaseTaskToLogAttributes(
 	// Release info
 	attrs.PutStr("release.name", release.Name)
 	attrs.PutInt("release.id", int64(release.ID))
+	attrs.PutStr("release.version", extractReleaseVersion(release.Name))
 
 	// Environment info
 	attrs.PutStr("environment.name", env.Name)
@@ -533,6 +535,7 @@ func releaseJobToLogAttributes(
 	// Release info
 	attrs.PutStr("release.name", release.Name)
 	attrs.PutInt("release.id", int64(release.ID))
+	attrs.PutStr("release.version", extractReleaseVersion(release.Name))
 
 	// Environment info
 	attrs.PutStr("environment.name", env.Name)
@@ -614,4 +617,12 @@ func mapReleaseTaskStatusToSeverity(status string) plog.SeverityNumber {
 	default:
 		return plog.SeverityNumberUnspecified
 	}
+}
+
+// extractReleaseVersion extracts version from release name (e.g., "1.2.3-4567 (8)" -> "1.2.3-4567")
+func extractReleaseVersion(releaseName string) string {
+	if idx := strings.Index(releaseName, " ("); idx != -1 {
+		return strings.TrimSpace(releaseName[:idx])
+	}
+	return releaseName
 }
