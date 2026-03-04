@@ -174,7 +174,7 @@ func (ados *azuredevopsScraper) fetchReleaseDefinitions(ctx context.Context) ([]
 
 	params := url.Values{}
 	params.Add("api-version", apiVersion)
-	if ados.cfg.ReleaseNameCriteria != nil {
+	if len(ados.cfg.ReleaseNameCriteria) > 0 {
 		params.Add("searchText", ados.cfg.ReleaseNameCriteria)
 	}
 
