@@ -131,7 +131,7 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 	limiter := make(chan struct{}, max)
 
 	// Process each repository
-	for _, repo := range repos {
+	for i, repo := range repos {
 		wg.Add(1)
 		repo := repo
 
@@ -142,6 +142,10 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 				<-limiter
 				wg.Done()
 			}()
+
+			if (i+1)%25 == 0 {
+				ados.logger.Sugar().Infof("Progress: processed %d/%d repositories in Azure DevOps project %s in org %s", i+1, len(repos), ados.cfg.Project, ados.cfg.Organization)
+			}
 
 			// Get branches for this repository
 			branches, err := ados.getBranches(ctx, ados.cfg.Project, repo.ID)
@@ -185,7 +189,7 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 				if err != nil {
 					ados.logger.Sugar().Errorf("error getting code coverage for build '%s': %v", latestBuildId, err)
 				}
-				ados.logger.Sugar().Infof("Recording '%d%%' code coverage for build '%s' in repo '%s'", coveragePercentage, latestBuildId, repo.Name)
+				ados.logger.Sugar().Debugf("Recording '%d%%' code coverage for build '%s' in repo '%s'", coveragePercentage, latestBuildId, repo.Name)
 				ados.mb.RecordVcsCodeCoverageDataPoint(
 					now,
 					coveragePercentage,

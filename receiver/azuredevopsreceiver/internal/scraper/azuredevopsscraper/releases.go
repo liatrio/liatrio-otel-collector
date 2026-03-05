@@ -104,7 +104,12 @@ func (ados *azuredevopsScraper) scrapeReleasePipelineMetrics(ctx context.Context
 	taskCount := 0
 
 	// For each release definition, fetch deployments
-	for _, releaseDef := range releaseDefinitions {
+	for i, releaseDef := range releaseDefinitions {
+
+		if (i+1)%25 == 0 {
+			ados.logger.Sugar().Infof("Progress: processed %d/%d release definitions", i+1, len(releaseDefinitions))
+		}
+
 		// Fetch releases for this definition
 		releases, err := ados.fetchReleases(ctx, releaseDef.ID, minTime)
 		if err != nil {

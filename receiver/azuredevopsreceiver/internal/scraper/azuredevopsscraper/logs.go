@@ -86,7 +86,12 @@ func (ados *azuredevopsScraper) scrapeBuildPipelineMetrics(ctx context.Context, 
 
 	// Process each build run
 	jobCount := 0
-	for _, buildRun := range buildRuns {
+	for i, buildRun := range buildRuns {
+		// Log progress every 100 build runs
+		if (i+1)%100 == 0 {
+			ados.logger.Sugar().Infof("Progress: processed %d/%d build runs", i+1, len(buildRuns))
+		}
+
 		// Fetch timeline to get job details
 		timeline, err := ados.fetchBuildTimeline(ctx, buildRun.ID)
 		if err != nil {
