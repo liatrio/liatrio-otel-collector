@@ -2,6 +2,7 @@ apiVersion: 1
 
 datasources:
   - name: OpenSearch
+    uid: opensearch
     type: grafana-opensearch-datasource
     access: proxy
     url: http://opensearch:9200
@@ -13,6 +14,6 @@ datasources:
       logLevelField: severity
       logMessageField: body
       pplEnabled: true
-      timeField: '@timestamp'
-      version: '2.0.0'
+      timeField: "@timestamp"
+      version: "2.0.0"
     secureJsonData: {}

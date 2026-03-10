@@ -93,7 +93,10 @@
       "id": 1,
       "options": {
         "legend": {
-          "calcs": ["mean", "max"],
+          "calcs": [
+            "mean",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -105,8 +108,19 @@
       },
       "targets": [
         {
-          "alias": "{{job.name}}",
+          "alias": "{{attributes.job.name.keyword}}",
           "bucketAggs": [
+            {
+              "field": "attributes.job.name.keyword",
+              "id": "3",
+              "settings": {
+                "min_doc_count": 1,
+                "order": "desc",
+                "orderBy": "1",
+                "size": "10"
+              },
+              "type": "terms"
+            },
             {
               "field": "@timestamp",
               "id": "2",
@@ -120,12 +134,12 @@
           ],
           "metrics": [
             {
-              "field": "job.duration_seconds",
+              "field": "attributes.job.duration_seconds",
               "id": "1",
               "type": "avg"
             }
           ],
-          "query": "pipeline.name:$pipeline AND vcs.ref.name:$branch",
+          "query": "attributes.pipeline.name:$pipeline AND attributes.vcs.ref.name:$branch",
           "refId": "A",
           "timeField": "@timestamp"
         }
@@ -144,8 +158,8 @@
             "mode": "thresholds"
           },
           "mappings": [],
-          "max": 100,
           "min": 0,
+          "max": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -154,16 +168,20 @@
                 "value": null
               },
               {
+                "color": "orange",
+                "value": 0.7
+              },
+              {
                 "color": "yellow",
-                "value": 70
+                "value": 0.85
               },
               {
                 "color": "green",
-                "value": 90
+                "value": 0.95
               }
             ]
           },
-          "unit": "percent"
+          "unit": "percentunit"
         },
         "overrides": []
       },
@@ -178,50 +196,84 @@
         "orientation": "auto",
         "reduceOptions": {
           "values": false,
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": ""
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "text": {}
+        "showThresholdMarkers": true
       },
       "pluginVersion": "9.5.0",
       "targets": [
         {
-          "bucketAggs": [],
+          "alias": "Succeeded",
+          "bucketAggs": [
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "1M",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
           "metrics": [
             {
               "id": "1",
-              "pipelineAgg": "1",
-              "settings": {
-                "script": "params.succeeded / params.total * 100"
-              },
-              "type": "bucket_script",
-              "pipelineVariables": [
-                {
-                  "name": "succeeded",
-                  "pipelineAgg": "2"
-                },
-                {
-                  "name": "total",
-                  "pipelineAgg": "3"
-                }
-              ]
-            },
-            {
-              "field": "status",
-              "id": "2",
-              "type": "count"
-            },
-            {
-              "field": "status",
-              "id": "3",
               "type": "count"
             }
           ],
-          "query": "pipeline.name:$pipeline AND vcs.ref.name:$branch AND status:succeeded",
+          "query": "attributes.status:succeeded AND attributes.pipeline.name:$pipeline AND attributes.vcs.ref.name:$branch",
           "refId": "A",
           "timeField": "@timestamp"
+        },
+        {
+          "alias": "Total",
+          "bucketAggs": [
+            {
+              "field": "@timestamp",
+              "id": "3",
+              "settings": {
+                "interval": "1M",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "attributes.pipeline.name:$pipeline AND attributes.vcs.ref.name:$branch",
+          "refId": "B",
+          "timeField": "@timestamp"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "seriesToColumns",
+          "options": {
+            "byField": "Time"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Success Rate",
+            "mode": "binary",
+            "binary": {
+              "left": "Succeeded",
+              "right": "Total",
+              "operator": "/"
+            },
+            "replaceFields": true
+          }
         }
       ],
       "title": "Pipeline Success Rate",
@@ -295,7 +347,9 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true,
@@ -311,7 +365,7 @@
         {
           "bucketAggs": [
             {
-              "field": "job.name.keyword",
+              "field": "attributes.job.name.keyword",
               "id": "2",
               "settings": {
                 "min_doc_count": 1,
@@ -324,12 +378,12 @@
           ],
           "metrics": [
             {
-              "field": "job.duration_seconds",
+              "field": "attributes.job.duration_seconds",
               "id": "1",
               "type": "avg"
             }
           ],
-          "query": "pipeline.name:$pipeline AND vcs.ref.name:$branch",
+          "query": "attributes.pipeline.name:$pipeline AND attributes.vcs.ref.name:$branch",
           "refId": "A",
           "timeField": "@timestamp"
         }
@@ -342,8 +396,8 @@
             "excludeByName": {},
             "indexByName": {},
             "renameByName": {
-              "Average job.duration_seconds": "avg_duration",
-              "job.name.keyword": "job.name"
+              "Average attributes.job.duration_seconds": "avg_duration",
+              "attributes.job.name.keyword": "job.name"
             }
           }
         }
@@ -429,9 +483,19 @@
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "values": ["value", "percent"]
+          "values": [
+            "value",
+            "percent"
+          ]
         },
         "pieType": "donut",
+        "reduceOptions": {
+          "values": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/Count/"
+        },
         "tooltip": {
           "mode": "single",
           "sort": "none"
@@ -442,7 +506,7 @@
         {
           "bucketAggs": [
             {
-              "field": "status.keyword",
+              "field": "attributes.status.keyword",
               "id": "2",
               "settings": {
                 "min_doc_count": 1,
@@ -459,7 +523,7 @@
               "type": "count"
             }
           ],
-          "query": "pipeline.name:$pipeline AND vcs.ref.name:$branch",
+          "query": "attributes.pipeline.name:$pipeline AND attributes.vcs.ref.name:$branch",
           "refId": "A",
           "timeField": "@timestamp"
         }
@@ -560,7 +624,9 @@
       "id": 5,
       "options": {
         "legend": {
-          "calcs": ["sum"],
+          "calcs": [
+            "sum"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -572,20 +638,10 @@
       },
       "targets": [
         {
-          "alias": "{{term status.keyword}}",
+          "alias": "{{attributes.status.keyword}}",
           "bucketAggs": [
             {
-              "field": "@timestamp",
-              "id": "2",
-              "settings": {
-                "interval": "auto",
-                "min_doc_count": 0,
-                "trimEdges": 0
-              },
-              "type": "date_histogram"
-            },
-            {
-              "field": "status.keyword",
+              "field": "attributes.status.keyword",
               "id": "3",
               "settings": {
                 "min_doc_count": 1,
@@ -594,6 +650,16 @@
                 "size": "5"
               },
               "type": "terms"
+            },
+            {
+              "field": "@timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "1d",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
             }
           ],
           "metrics": [
@@ -602,7 +668,7 @@
               "type": "count"
             }
           ],
-          "query": "pipeline.name:$pipeline AND vcs.ref.name:$branch",
+          "query": "attributes.pipeline.name:$pipeline AND attributes.vcs.ref.name:$branch",
           "refId": "A",
           "timeField": "@timestamp"
         }
@@ -642,7 +708,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "job.name"
+              "options": "job"
             },
             "properties": [
               {
@@ -654,7 +720,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "pipeline.name"
+              "options": "pipeline"
             },
             "properties": [
               {
@@ -706,12 +772,28 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "job.duration_seconds"
+              "options": "duration"
             },
             "properties": [
               {
                 "id": "unit",
                 "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "timestamp"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              },
+              {
+                "id": "custom.width",
+                "value": 180
               }
             ]
           }
@@ -729,7 +811,9 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true,
@@ -753,7 +837,7 @@
               "type": "raw_document"
             }
           ],
-          "query": "pipeline.name:$pipeline AND vcs.ref.name:$branch",
+          "query": "attributes.pipeline.name:$pipeline AND attributes.vcs.ref.name:$branch",
           "refId": "A",
           "timeField": "@timestamp"
         }
@@ -764,31 +848,98 @@
           "id": "extractFields",
           "options": {
             "format": "json",
-            "source": "_source"
+            "source": "A"
+          }
+        },
+        {
+          "id": "extractFields",
+          "options": {
+            "format": "json",
+            "source": "attributes"
           }
         },
         {
           "id": "organize",
           "options": {
             "excludeByName": {
+              "A": true,
               "_id": true,
               "_index": true,
-              "_source": true,
               "_type": true,
+              "attributes": true,
+              "body": true,
+              "severity": true,
+              "instrumentationScope": true,
+              "resource": true,
+              "observedTimestamp": true,
+              "data_stream": true,
+              "job.attempt": true,
+              "job.error_count": true,
               "job.id": true,
               "job.identifier": true,
+              "job.order": true,
+              "job.queue_time_seconds": true,
+              "job.result": true,
+              "job.start_time": true,
+              "job.end_time": true,
+              "job.state": true,
+              "job.warning_count": true,
+              "job.worker_name": true,
+              "pipeline.id": true,
               "pipeline.run.id": true,
-              "vcs.repository.id": true
+              "pipeline.run.number": true,
+              "pipeline.run.url": true,
+              "pipeline.triggered_by_email": true,
+              "pipeline.triggered_by_name": true,
+              "stage.id": true,
+              "stage.name": true,
+              "vcs.ref.revision": true,
+              "vcs.repository.id": true,
+              "vcs.repository.name": true,
+              "vcs.repository.url": true
             },
-            "indexByName": {},
+            "indexByName": {
+              "pipeline.name": 0,
+              "@timestamp": 1,
+              "job.name": 2,
+              "status": 3,
+              "job.duration_seconds": 4,
+              "vcs.ref.name": 5
+            },
             "renameByName": {
-              "@timestamp": "timestamp",
-              "job.duration_seconds": "duration",
-              "job.name": "job",
               "pipeline.name": "pipeline",
+              "@timestamp": "timestamp",
+              "job.name": "job",
               "status": "status",
+              "job.duration_seconds": "duration",
               "vcs.ref.name": "branch"
             }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "timestamp",
+                "destinationType": "string"
+              },
+              {
+                "targetField": "duration",
+                "destinationType": "number"
+              }
+            ]
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "timestamp",
+                "destinationType": "time"
+              }
+            ]
           }
         }
       ],
@@ -884,13 +1035,24 @@
       "pluginVersion": "12.3.3",
       "targets": [
         {
-          "alias": "Job Duration",
+          "alias": "{{attributes.pipeline.name.keyword}}",
           "bucketAggs": [
+            {
+              "field": "attributes.pipeline.name.keyword",
+              "id": "3",
+              "settings": {
+                "min_doc_count": 1,
+                "order": "desc",
+                "orderBy": "1",
+                "size": "10"
+              },
+              "type": "terms"
+            },
             {
               "field": "@timestamp",
               "id": "2",
               "settings": {
-                "interval": "auto",
+                "interval": "1d",
                 "min_doc_count": 0,
                 "trimEdges": 0
               },
@@ -904,72 +1066,72 @@
               "type": "avg"
             }
           ],
-          "query": "attributes.job.name:\"Job\"",
+          "query": "attributes.pipeline.name:$pipeline AND attributes.vcs.ref.name:$branch",
           "refId": "A",
           "timeField": "@timestamp"
         }
       ],
-      "title": "Job Duration Trend - 'Job'",
+      "title": "Avg Job Duration by Pipeline",
       "type": "timeseries"
     }
   ],
   "refresh": "30s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["azure-devops", "pipelines", "ci-cd"],
+  "tags": [
+    "azure-devops",
+    "pipelines",
+    "ci-cd"
+  ],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": false,
-          "text": "*",
-          "value": "*"
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-opensearch-datasource",
+          "uid": "opensearch"
         },
         "hide": 0,
         "includeAll": true,
+        "allValue": "*",
         "label": "Pipeline",
         "multi": false,
         "name": "pipeline",
         "options": [],
-        "query": {
-          "query": "",
-          "refId": "OpenSearchVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 1,
+        "query": "{\"find\": \"terms\", \"field\": \"attributes.pipeline.name.keyword\"}",
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 0,
-        "type": "query",
-        "datasource": {
-          "type": "grafana-opensearch-datasource",
-          "uid": "opensearch"
-        }
+        "sort": 1,
+        "type": "query"
       },
       {
         "current": {
-          "selected": false,
-          "text": "*",
-          "value": "*"
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "grafana-opensearch-datasource",
+          "uid": "opensearch"
         },
         "hide": 0,
         "includeAll": true,
+        "allValue": "*",
         "label": "Branch",
         "multi": false,
         "name": "branch",
         "options": [],
-        "query": {
-          "query": "",
-          "refId": "OpenSearchVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 1,
+        "query": "{\"find\": \"terms\", \"field\": \"attributes.vcs.ref.name.keyword\"}",
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 0,
-        "type": "query",
-        "datasource": {
-          "type": "grafana-opensearch-datasource",
-          "uid": "opensearch"
-        }
+        "sort": 1,
+        "type": "query"
       }
     ]
   },
@@ -978,7 +1140,14 @@
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": ["30s", "1m", "5m", "15m", "30m", "1h"]
+    "refresh_intervals": [
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h"
+    ]
   },
   "timezone": "browser",
   "title": "Azure DevOps Pipeline Metrics",
