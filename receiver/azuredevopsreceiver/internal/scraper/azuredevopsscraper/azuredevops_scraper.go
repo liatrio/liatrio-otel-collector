@@ -110,7 +110,7 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 	needsBranches := m.VcsRefCount.Enabled || m.VcsRefTime.Enabled
 	needsCodeCoverage := m.VcsCodeCoverage.Enabled
 	needsPullRequests := m.VcsChangeCount.Enabled || m.VcsChangeDuration.Enabled ||
-		m.VcsChangeTimeToMerge.Enabled || m.VcsChangeTimeToApproval.Enabled
+		m.VcsChangeTimeToMerge.Enabled
 	needsRepoLoop := needsBranches || needsCodeCoverage || needsPullRequests
 	needsDeployments := m.DeployDeploymentCount.Enabled || m.DeployDeploymentAverageDuration.Enabled ||
 		m.DeployDeploymentLastTimestamp.Enabled
