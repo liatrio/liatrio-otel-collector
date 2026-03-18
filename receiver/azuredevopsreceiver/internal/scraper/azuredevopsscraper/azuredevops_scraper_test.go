@@ -18,6 +18,34 @@ import (
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
 
+const singleRepoResponse = `{
+	"value": [
+		{
+			"id": "repo-1",
+			"name": "test-repo",
+			"webUrl": "https://dev.azure.com/test-org/test-project/_git/test-repo",
+			"defaultBranch": "refs/heads/main"
+		}
+	]
+}`
+
+const singleRepoDetailedResponse = `{
+	"value": [
+		{
+			"id": "repo-1",
+			"name": "test-repo",
+			"url": "https://dev.azure.com/test-org/test-project/_apis/git/repositories/repo-1",
+			"webUrl": "https://dev.azure.com/test-org/test-project/_git/test-repo",
+			"defaultBranch": "refs/heads/main",
+			"size": 1024,
+			"project": {
+				"id": "project-1",
+				"name": "test-project"
+			}
+		}
+	]
+}`
+
 func TestNewAzureDevOpsScraper(t *testing.T) {
 	cfg := &Config{
 		Organization:      "test-org",
@@ -77,24 +105,6 @@ func setupMockServer(t *testing.T, handlers map[string]func(w http.ResponseWrite
 }
 
 func TestScrapeSuccess(t *testing.T) {
-	// Mock responses
-	repositoriesResponse := `{
-		"value": [
-			{
-				"id": "repo-1",
-				"name": "test-repo",
-				"url": "https://dev.azure.com/test-org/test-project/_apis/git/repositories/repo-1",
-				"webUrl": "https://dev.azure.com/test-org/test-project/_git/test-repo",
-				"defaultBranch": "refs/heads/main",
-				"size": 1024,
-				"project": {
-					"id": "project-1",
-					"name": "test-project"
-				}
-			}
-		]
-	}`
-
 	branchesResponse := `{
 		"value": [
 			{
@@ -142,7 +152,7 @@ func TestScrapeSuccess(t *testing.T) {
 		"/test-org/test-project/_apis/git/repositories": func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, repositoriesResponse)
+			fmt.Fprint(w, singleRepoDetailedResponse)
 		},
 		"/test-org/test-project/_apis/git/repositories/repo-1/refs": func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
@@ -228,29 +238,11 @@ func TestScrapeRepositoriesError(t *testing.T) {
 }
 
 func TestGetRepositoriesSuccess(t *testing.T) {
-	repositoriesResponse := `{
-		"value": [
-			{
-				"id": "repo-1",
-				"name": "test-repo",
-				"url": "https://dev.azure.com/test-org/test-project/_apis/git/repositories/repo-1",
-				"webUrl": "https://dev.azure.com/test-org/test-project/_git/test-repo",
-				"defaultBranch": "refs/heads/main",
-				"size": 1024,
-				"project": {
-					"id": "project-1",
-					"name": "test-project"
-				}
-			}
-		]
-	}`
-
 	handlers := map[string]func(w http.ResponseWriter, r *http.Request){
 		"/test-org/test-project/_apis/git/repositories": func(w http.ResponseWriter, r *http.Request) {
-
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, repositoriesResponse)
+			fmt.Fprint(w, singleRepoDetailedResponse)
 		},
 	}
 
@@ -563,17 +555,6 @@ func TestScrapeWithConcurrencyLimit(t *testing.T) {
 }
 
 func TestScrapeWithBranchMetrics(t *testing.T) {
-	repositoriesResponse := `{
-		"value": [
-			{
-				"id": "repo-1",
-				"name": "test-repo",
-				"webUrl": "https://dev.azure.com/test-org/test-project/_git/test-repo",
-				"defaultBranch": "refs/heads/main"
-			}
-		]
-	}`
-
 	branchesResponse := `{
 		"value": [
 			{
@@ -602,7 +583,7 @@ func TestScrapeWithBranchMetrics(t *testing.T) {
 	handlers := map[string]func(w http.ResponseWriter, r *http.Request){
 		"/test-org/test-project/_apis/git/repositories": func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			fmt.Fprint(w, repositoriesResponse)
+			fmt.Fprint(w, singleRepoResponse)
 		},
 		"/test-org/test-project/_apis/git/repositories/repo-1/refs": func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
@@ -726,22 +707,190 @@ func TestMakeRequestWithoutBaseUrlModifier(t *testing.T) {
 	resp.Body.Close()
 }
 
+// allMetricsDisabled returns a MetricsBuilderConfig with every metric disabled.
+func allMetricsDisabled() metadata.MetricsBuilderConfig {
+	return metadata.MetricsBuilderConfig{
+		Metrics:            metadata.MetricsConfig{},
+		ResourceAttributes: metadata.DefaultResourceAttributesConfig(),
+	}
+}
+
+func TestScrapeSkipsReposWhenAllRepoMetricsDisabled(t *testing.T) {
+	reposCalled := false
+
+	handlers := map[string]func(w http.ResponseWriter, r *http.Request){
+		"/test-org/test-project/_apis/git/repositories": func(w http.ResponseWriter, r *http.Request) {
+			reposCalled = true
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"value": []}`)
+		},
+	}
+
+	server := setupMockServer(t, handlers)
+	defer server.Close()
+
+	cfg := &Config{
+		Organization:             "test-org",
+		Project:                  "test-project",
+		BaseURL:                  server.URL,
+		MetricsBuilderConfig:     allMetricsDisabled(),
+		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
+	}
+
+	settings := receivertest.NewNopSettings(metadata.Type)
+	scraper := newAzureDevOpsScraper(context.Background(), settings, cfg)
+	scraper.client = &http.Client{}
+
+	metrics, err := scraper.scrape(context.Background())
+	require.NoError(t, err)
+	assert.NotNil(t, metrics)
+	assert.False(t, reposCalled, "repositories endpoint should not be called when all repo metrics are disabled")
+}
+
+func TestScrapeOnlyRepoCountSkipsPerRepoAPIs(t *testing.T) {
+	branchesCalled := false
+	prsCalled := false
+
+	handlers := map[string]func(w http.ResponseWriter, r *http.Request){
+		"/test-org/test-project/_apis/git/repositories": func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, singleRepoResponse)
+		},
+		"/test-org/test-project/_apis/git/repositories/repo-1/refs": func(w http.ResponseWriter, r *http.Request) {
+			branchesCalled = true
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"value": []}`)
+		},
+		"/test-org/test-project/_apis/git/repositories/repo-1/pullrequests": func(w http.ResponseWriter, r *http.Request) {
+			prsCalled = true
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"value": []}`)
+		},
+	}
+
+	server := setupMockServer(t, handlers)
+	defer server.Close()
+
+	mbCfg := allMetricsDisabled()
+	mbCfg.Metrics.VcsRepositoryCount = metadata.MetricConfig{Enabled: true}
+
+	cfg := &Config{
+		Organization:             "test-org",
+		Project:                  "test-project",
+		BaseURL:                  server.URL,
+		MetricsBuilderConfig:     mbCfg,
+		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
+	}
+
+	settings := receivertest.NewNopSettings(metadata.Type)
+	scraper := newAzureDevOpsScraper(context.Background(), settings, cfg)
+	scraper.client = &http.Client{}
+
+	metrics, err := scraper.scrape(context.Background())
+	require.NoError(t, err)
+	assert.NotNil(t, metrics)
+	assert.Greater(t, metrics.MetricCount(), 0, "should have repository count metric")
+	assert.False(t, branchesCalled, "branches endpoint should not be called when only repo count is enabled")
+	assert.False(t, prsCalled, "pull requests endpoint should not be called when only repo count is enabled")
+}
+
+func TestScrapeOnlyBranchMetricsSkipsPRs(t *testing.T) {
+	prsCalled := false
+	branchesCalled := false
+
+	handlers := map[string]func(w http.ResponseWriter, r *http.Request){
+		"/test-org/test-project/_apis/git/repositories": func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, singleRepoResponse)
+		},
+		"/test-org/test-project/_apis/git/repositories/repo-1/refs": func(w http.ResponseWriter, r *http.Request) {
+			branchesCalled = true
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"value": [{"name": "refs/heads/main", "objectId": "abc123"}]}`)
+		},
+		"/test-org/test-project/_apis/git/repositories/repo-1/pullrequests": func(w http.ResponseWriter, r *http.Request) {
+			prsCalled = true
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"value": []}`)
+		},
+	}
+
+	server := setupMockServer(t, handlers)
+	defer server.Close()
+
+	mbCfg := allMetricsDisabled()
+	mbCfg.Metrics.VcsRefCount = metadata.MetricConfig{Enabled: true}
+
+	cfg := &Config{
+		Organization:             "test-org",
+		Project:                  "test-project",
+		BaseURL:                  server.URL,
+		MetricsBuilderConfig:     mbCfg,
+		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
+	}
+
+	settings := receivertest.NewNopSettings(metadata.Type)
+	scraper := newAzureDevOpsScraper(context.Background(), settings, cfg)
+	scraper.client = &http.Client{}
+
+	metrics, err := scraper.scrape(context.Background())
+	require.NoError(t, err)
+	assert.NotNil(t, metrics)
+	assert.True(t, branchesCalled, "branches endpoint should be called when branch metrics are enabled")
+	assert.False(t, prsCalled, "pull requests endpoint should not be called when only branch metrics are enabled")
+}
+
+func TestScrapeOnlyPRMetricsSkipsBranches(t *testing.T) {
+	branchesCalled := false
+	prsCalled := false
+
+	handlers := map[string]func(w http.ResponseWriter, r *http.Request){
+		"/test-org/test-project/_apis/git/repositories": func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, singleRepoResponse)
+		},
+		"/test-org/test-project/_apis/git/repositories/repo-1/refs": func(w http.ResponseWriter, r *http.Request) {
+			branchesCalled = true
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"value": []}`)
+		},
+		"/test-org/test-project/_apis/git/repositories/repo-1/pullrequests": func(w http.ResponseWriter, r *http.Request) {
+			prsCalled = true
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"value": []}`)
+		},
+	}
+
+	server := setupMockServer(t, handlers)
+	defer server.Close()
+
+	mbCfg := allMetricsDisabled()
+	mbCfg.Metrics.VcsChangeCount = metadata.MetricConfig{Enabled: true}
+
+	cfg := &Config{
+		Organization:             "test-org",
+		Project:                  "test-project",
+		BaseURL:                  server.URL,
+		MetricsBuilderConfig:     mbCfg,
+		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
+	}
+
+	settings := receivertest.NewNopSettings(metadata.Type)
+	scraper := newAzureDevOpsScraper(context.Background(), settings, cfg)
+	scraper.client = &http.Client{}
+
+	metrics, err := scraper.scrape(context.Background())
+	require.NoError(t, err)
+	assert.NotNil(t, metrics)
+	assert.False(t, branchesCalled, "branches endpoint should not be called when only PR metrics are enabled")
+	assert.True(t, prsCalled, "pull requests endpoint should be called when PR metrics are enabled")
+}
+
 func TestScrapeWithPullRequestMetrics(t *testing.T) {
 	// Test with realistic timestamps to verify time calculations
 	now := time.Now()
 	creationTime := now.Add(-2 * time.Hour)
 	closedTime := now.Add(-1 * time.Hour)
-
-	repositoriesResponse := `{
-		"value": [
-			{
-				"id": "repo-1",
-				"name": "test-repo",
-				"webUrl": "https://dev.azure.com/test-org/test-project/_git/test-repo",
-				"defaultBranch": "refs/heads/main"
-			}
-		]
-	}`
 
 	branchesResponse := `{"value": []}`
 
@@ -766,7 +915,7 @@ func TestScrapeWithPullRequestMetrics(t *testing.T) {
 	handlers := map[string]func(w http.ResponseWriter, r *http.Request){
 		"/test-org/test-project/_apis/git/repositories": func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			fmt.Fprint(w, repositoriesResponse)
+			fmt.Fprint(w, singleRepoResponse)
 		},
 		"/test-org/test-project/_apis/git/repositories/repo-1/refs": func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
