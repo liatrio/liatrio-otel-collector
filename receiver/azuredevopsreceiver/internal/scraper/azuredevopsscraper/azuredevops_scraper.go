@@ -186,7 +186,9 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 								// Calculate branch age by finding the initial commit that diverged from default branch
 								commit, err := ados.getInitialCommit(ctx, ados.cfg.Project, repo.ID, repo.DefaultBranch, branch.Name)
 								if err != nil {
-									ados.logger.Sugar().Errorf("error getting initial commit for repo '%s' and branch '%s': %v", repo.Name, branch.Name, err)
+									ados.logger.Sugar().Errorf(
+									"error getting initial commit for repo '%s' and branch '%s': %v",
+									repo.Name, branch.Name, err)
 								}
 
 								if commit != nil {
@@ -210,7 +212,9 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 							if err != nil {
 								ados.logger.Sugar().Errorf("error getting code coverage for build '%s': %v", latestBuildId, err)
 							}
-							ados.logger.Sugar().Infof("Recording '%d%%' code coverage for build '%s' in repo '%s'", coveragePercentage, latestBuildId, repo.Name)
+							ados.logger.Sugar().Infof(
+							"Recording '%d%%' code coverage for build '%s' in repo '%s'",
+							coveragePercentage, latestBuildId, repo.Name)
 							ados.mb.RecordVcsCodeCoverageDataPoint(
 								now,
 								coveragePercentage,
