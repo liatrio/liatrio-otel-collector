@@ -215,6 +215,7 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 							ados.logger.Sugar().Infof(
 								"Recording '%d%%' code coverage for build '%s' in repo '%s'",
 								coveragePercentage, latestBuildId, repo.Name)
+							mux.Lock()
 							ados.mb.RecordVcsCodeCoverageDataPoint(
 								now,
 								coveragePercentage,
@@ -224,6 +225,7 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 								repo.DefaultBranch,
 								metadata.AttributeVcsRefHeadTypeBranch,
 							)
+							mux.Unlock()
 						}
 					} // end needsCodeCoverage
 
