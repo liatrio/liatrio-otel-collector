@@ -102,7 +102,7 @@ metrics:
     description: The number of deployments by service, environment, and status.
     stability:
       level: development
-    unit: "{deployment}"
+    unit: '{deployment}'
     sum:
       value_type: int
       aggregation: cumulative
@@ -124,7 +124,7 @@ metrics:
     enabled: true
     gauge:
       value_type: int
-    unit: "{change}"
+    unit: '{change}'
     attributes: [vcs.repository.url.full, vcs.change.state, vcs.repository.name, vcs.repository.id]
   vcs.change.duration:
     enabled: true
@@ -134,14 +134,8 @@ metrics:
     unit: s
     gauge:
       value_type: int
-    attributes:
-      [
-        vcs.repository.url.full,
-        vcs.repository.name,
-        vcs.repository.id,
-        vcs.ref.head.name,
-        vcs.change.state,
-      ]
+    attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.change.state]
+  # Note: vcs.change.time_to_approval is not yet implemented in the ADO scraper
   vcs.change.time_to_approval:
     enabled: true
     description: The amount of time it took a change (pull request) to go from open to approved.
@@ -150,8 +144,7 @@ metrics:
     unit: s
     gauge:
       value_type: int
-    attributes:
-      [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
+    attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
   vcs.change.time_to_merge:
     enabled: true
     description: The amount of time it took a change (pull request) to go from open to merged.
@@ -160,30 +153,22 @@ metrics:
     unit: s
     gauge:
       value_type: int
-    attributes:
-      [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
+    attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
   vcs.code_coverage:
     enabled: true
     description: The code coverage percentage of a ref (branch).
     stability:
       level: development
-    unit: "%"
+    unit: '%'
     gauge:
       value_type: int
-    attributes:
-      [
-        vcs.repository.url.full,
-        vcs.repository.name,
-        vcs.repository.id,
-        vcs.ref.head.name,
-        vcs.ref.head.type,
-      ]
+    attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.head.type]
   vcs.contributor.count:
     enabled: false
     description: The number of unique contributors to a repository.
     stability:
       level: development
-    unit: "{contributor}"
+    unit: '{contributor}'
     gauge:
       value_type: int
     attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id]
@@ -192,45 +177,28 @@ metrics:
     description: The number of refs of type branch in a repository.
     stability:
       level: development
-    unit: "{ref}"
+    unit: '{ref}'
     gauge:
       value_type: int
-    attributes:
-      [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.type]
+    attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.type]
   vcs.ref.lines_delta:
     enabled: true
     description: The number of lines added/removed in a ref (branch) relative to the default branch (trunk).
     stability:
       level: development
-    unit: "{line}"
+    unit: '{line}'
     gauge:
       value_type: int
-    attributes:
-      [
-        vcs.repository.url.full,
-        vcs.repository.name,
-        vcs.repository.id,
-        vcs.ref.head.name,
-        vcs.ref.type,
-        vcs.line_change.type,
-      ]
+    attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.type, vcs.line_change.type]
   vcs.ref.revisions_delta:
     enabled: true
     description: The number of revisions (commits) a ref (branch) is ahead/behind the branch from trunk (default).
     stability:
       level: development
-    unit: "{revision}"
+    unit: '{revision}'
     gauge:
       value_type: int
-    attributes:
-      [
-        vcs.repository.url.full,
-        vcs.repository.name,
-        vcs.repository.id,
-        vcs.ref.head.name,
-        vcs.ref.type,
-        vcs.revision_delta.direction,
-      ]
+    attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.type, vcs.revision_delta.direction]
   vcs.ref.time:
     enabled: true
     description: Time a ref (branch) created from the default branch (trunk) has existed. The `vcs.ref.type` attribute will always be `branch`.
@@ -239,20 +207,13 @@ metrics:
     unit: s
     gauge:
       value_type: int
-    attributes:
-      [
-        vcs.repository.url.full,
-        vcs.repository.name,
-        vcs.repository.id,
-        vcs.ref.head.name,
-        vcs.ref.type,
-      ]
+    attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.type]
   vcs.repository.count:
     enabled: true
     description: The number of repositories in an organization.
     stability:
       level: development
-    unit: "{repository}"
+    unit: '{repository}'
     gauge:
       value_type: int
     attributes: []
@@ -273,7 +234,7 @@ metrics:
     description: The number of work items by type and state.
     stability:
       level: development
-    unit: "{work_item}"
+    unit: '{work_item}'
     gauge:
       value_type: int
     attributes: [work_item.type, work_item.state, project.name]
