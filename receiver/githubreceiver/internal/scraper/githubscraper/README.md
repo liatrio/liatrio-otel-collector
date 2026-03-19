@@ -5,7 +5,7 @@
 The GitHub scraper is reliant on limitations found within GitHub's REST and
 GraphQL APIs. The following limitations are known:
 
-* The original creation date of a branch is not available via either of the
+- The original creation date of a branch is not available via either of the
   APIs. GitSCM (the tool) does provide Ref creation time however this is not
   exposed. As such, we're forced to calculate the age by looking to see if any
   changes have been made to the branch, using that commit as the time from
@@ -13,10 +13,10 @@ GraphQL APIs. The following limitations are known:
   now and the first commit on a new branch. It also means that we don't have
   ages for branches that have been created from trunk but have not had any
   changes made to them.
-* It's possible that some queries may run against a branch that has been
+- It's possible that some queries may run against a branch that has been
   deleted. This is unlikely due to the speed of the requests, however,
   possible.
-* Both APIs have primary and secondary rate limits applied to them. The default
+- Both APIs have primary and secondary rate limits applied to them. The default
   rate limit for GraphQL API is 5,000 points per hour when authenticated with a
   GitHub Personal Access Token (PAT). If using the [GitHub App Auth
   extension][ghext] then your rate limit increases to 10,000. The receiver on
@@ -69,7 +69,6 @@ formula). A sensible default is `300s`.
 
 ## Branch Data Limitations
 
-
 Due to the limitations of the GitHub GraphQL and REST APIs, some data retrieved
 may not be as expected. Notably there are spots in the code which link to this
 section that make decisions based on these limitations.
@@ -80,7 +79,7 @@ place of `AheadBy` and vice versa. This is a byproduct of the `getBranchData`
 query which returns all the refs (branches) from a given repository and the
 comparison to the default branch (trunk). Comparing it here reduces the need
 to make a query that gets all the names of the refs (branches), and then queries
-against each branch. 
+against each branch.
 
 Another such byproduct of this method is the skipping of metric creation if the
 branch is the default branch (trunk) or if no changes have been made to the

@@ -6,17 +6,18 @@ The GitLab Processor is a custom [OpenTelemetry (OTel) Collector](https://opente
 
 > **Note:** Pipeline enrichment is currently the only implemented feature. The processor is designed for future extensibility to support additional GitLab-related log enrichment use cases.
 
-
 ## Features
+
 - (Currently implemented) Fetches pipeline [include](https://docs.gitlab.com/ci/yaml/includes) information from GitLab for any log record containing repository and revision attributes.
 - Enriches log records with include name and version metadata
   - Example (component include): `component.<component_path>.version = <version>`
-- Other supported include types: 
+- Other supported include types:
   - **local includes**,
-  - **file includes**. 
+  - **file includes**.
 - Designed for future extensibility to support additional GitLab log enrichment features beyond pipeline processing.
 
 ## How It Works
+
 1. For each log record, checks for the presence of:
    - `vcs.repository.name` (the full GitLab repository path)
    - `vcs.ref.head.revision` (the commit SHA or revision)
@@ -27,9 +28,11 @@ The GitLab Processor is a custom [OpenTelemetry (OTel) Collector](https://opente
 4. If required attributes are missing, or an error occurs, the processor logs the error and continues.
 
 ## Example Use Case
+
 Organizations using GitLab pipelines can use this processor to automatically annotate pipeline logs with precise component and version information, enabling better debugging, auditing, and compliance tracking for CI/CD workflows.
 
 ## Configuration Example
+
 Below is an example of how to use the GitLab Pipeline Processor in your OTel Collector configuration:
 
 ```yaml
@@ -55,8 +58,10 @@ service:
 ```
 
 ## Requirements
+
 - OpenTelemetry Collector
 - Access to the GitLab GraphQL API (ensure the token provided has appropriate permissions)
 
 ## License
+
 This processor is distributed under the Apache 2.0 License.

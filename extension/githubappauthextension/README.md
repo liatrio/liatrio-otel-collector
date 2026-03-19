@@ -41,16 +41,16 @@ Receiver][gpr].
    supported by the [GitProvider Receiver][gpr]. Below is an example screenshot
    of what permissions needed by the [GitProvider Receiver][gpr].
 
-![perms-1](./docs/repo-perms-1.png)
-![perms-2](./docs/repo-perms-2.png)
-![perms-3](./docs/repo-perms-3.png)
+   ![perms-1](./docs/repo-perms-1.png)
+   ![perms-2](./docs/repo-perms-2.png)
+   ![perms-3](./docs/repo-perms-3.png)
 
 3. Install the App in step 21 to your desired location. If using the
    [GitProvider Receiver][gpr] it is easiest to install organization or user
    account wide. If you choose to install only on select repositories, ensure
    that your query in the GitHub Scraper section will only return the
    repositories you have installed within your app.
-4. Click create as in step 22. 
+4. Click create as in step 22.
 5. Navigate to your newly created GitHub App on the **General** tab and
    retrieve the `App ID`. This will be used by your extension configuration.
 6. While on this tab, scroll to the bottom of the app and generate a private
