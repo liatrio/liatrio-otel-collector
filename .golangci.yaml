@@ -1,6 +1,6 @@
 ---
 run:
-  go: "1.24"
+  go: '1.24'
   timeout: 10m
   allow-parallel-runners: true
 
