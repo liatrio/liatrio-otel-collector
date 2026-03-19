@@ -114,7 +114,7 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 	needsRepoLoop := needsBranches || needsCodeCoverage || needsPullRequests
 	needsDeployments := m.DeployDeploymentCount.Enabled || m.DeployDeploymentAverageDuration.Enabled ||
 		m.DeployDeploymentLastTimestamp.Enabled
-	needsWorkItems := m.WorkItemAge.Enabled || m.WorkItemCount.Enabled || m.WorkItemCycleTime.Enabled
+	needsWorkItems := m.WorkItemAge.Enabled || m.WorkItemCount.Enabled || m.WorkItemCycleTime.Enabled || m.WorkItemTagCount.Enabled
 	needsRepos := m.VcsRepositoryCount.Enabled || needsRepoLoop
 
 	if !needsRepos {

@@ -135,6 +135,10 @@ func TestMetricsBuilder(t *testing.T) {
 			allMetricsCount++
 			mb.RecordWorkItemCycleTimeDataPoint(ts, 1, "work_item.type-val", "project.name-val")
 
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordWorkItemTagCountDataPoint(ts, 1, "work_item.tag-val", "work_item.type-val", "project.name-val")
+
 			rb := mb.NewResourceBuilder()
 			rb.SetVcsOwnerName("vcs.owner.name-val")
 			rb.SetVcsProviderName("vcs.provider.name-val")
@@ -547,6 +551,27 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
 					attrVal, ok := dp.Attributes().Get("work_item.type")
+					assert.True(t, ok)
+					assert.Equal(t, "work_item.type-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("project.name")
+					assert.True(t, ok)
+					assert.Equal(t, "project.name-val", attrVal.Str())
+				case "work_item.tag.count":
+					assert.False(t, validatedMetrics["work_item.tag.count"], "Found a duplicate in the metrics slice: work_item.tag.count")
+					validatedMetrics["work_item.tag.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The number of work items with a given tag, broken down by work item type.", ms.At(i).Description())
+					assert.Equal(t, "{work_item}", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("work_item.tag")
+					assert.True(t, ok)
+					assert.Equal(t, "work_item.tag-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("work_item.type")
 					assert.True(t, ok)
 					assert.Equal(t, "work_item.type-val", attrVal.Str())
 					attrVal, ok = dp.Attributes().Get("project.name")

@@ -45,6 +45,7 @@ type MetricsConfig struct {
 	WorkItemAge                     MetricConfig `mapstructure:"work_item.age"`
 	WorkItemCount                   MetricConfig `mapstructure:"work_item.count"`
 	WorkItemCycleTime               MetricConfig `mapstructure:"work_item.cycle_time"`
+	WorkItemTagCount                MetricConfig `mapstructure:"work_item.tag.count"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
@@ -98,6 +99,9 @@ func DefaultMetricsConfig() MetricsConfig {
 			Enabled: true,
 		},
 		WorkItemCycleTime: MetricConfig{
+			Enabled: true,
+		},
+		WorkItemTagCount: MetricConfig{
 			Enabled: true,
 		},
 	}

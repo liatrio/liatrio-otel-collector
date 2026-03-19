@@ -1,0 +1,5 @@
+---
+# Exclude documentation.md files from linting because they are auto-generated
+# by mdatagen and cannot be manually fixed without being overwritten.
+ignores:
+  - '**/documentation.md'

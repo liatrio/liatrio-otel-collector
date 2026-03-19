@@ -44,6 +44,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					WorkItemAge:                     MetricConfig{Enabled: true},
 					WorkItemCount:                   MetricConfig{Enabled: true},
 					WorkItemCycleTime:               MetricConfig{Enabled: true},
+					WorkItemTagCount:                MetricConfig{Enabled: true},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					VcsOwnerName:    ResourceAttributeConfig{Enabled: true},
@@ -72,6 +73,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					WorkItemAge:                     MetricConfig{Enabled: false},
 					WorkItemCount:                   MetricConfig{Enabled: false},
 					WorkItemCycleTime:               MetricConfig{Enabled: false},
+					WorkItemTagCount:                MetricConfig{Enabled: false},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					VcsOwnerName:    ResourceAttributeConfig{Enabled: false},

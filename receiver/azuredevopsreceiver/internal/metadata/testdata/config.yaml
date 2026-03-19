@@ -1,3 +1,4 @@
+---
 default:
 all_set:
   metrics:
@@ -34,6 +35,8 @@ all_set:
     work_item.count:
       enabled: true
     work_item.cycle_time:
+      enabled: true
+    work_item.tag.count:
       enabled: true
   resource_attributes:
     vcs.owner.name:
@@ -76,6 +79,8 @@ none_set:
       enabled: false
     work_item.cycle_time:
       enabled: false
+    work_item.tag.count:
+      enabled: false
   resource_attributes:
     vcs.owner.name:
       enabled: false
@@ -86,18 +91,18 @@ filter_set_include:
     vcs.owner.name:
       enabled: true
       metrics_include:
-        - regexp: ".*"
+        - regexp: .*
     vcs.provider.name:
       enabled: true
       metrics_include:
-        - regexp: ".*"
+        - regexp: .*
 filter_set_exclude:
   resource_attributes:
     vcs.owner.name:
       enabled: true
       metrics_exclude:
-        - strict: "vcs.owner.name-val"
+        - strict: vcs.owner.name-val
     vcs.provider.name:
       enabled: true
       metrics_exclude:
-        - strict: "vcs.provider.name-val"
+        - strict: vcs.provider.name-val

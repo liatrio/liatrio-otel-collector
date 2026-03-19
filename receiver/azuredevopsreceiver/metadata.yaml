@@ -83,6 +83,9 @@ attributes:
   work_item.state:
     description: The current state of the work item (New, Active, Resolved, Closed, etc.).
     type: string
+  work_item.tag:
+    description: A tag applied to the work item (e.g., P1-Urgent, Feature, Blocked).
+    type: string
   work_item.type:
     description: The type of work item (User Story, Bug, Task, etc.).
     type: string
@@ -247,6 +250,15 @@ metrics:
     gauge:
       value_type: int
     attributes: [work_item.type, project.name]
+  work_item.tag.count:
+    enabled: true
+    description: The number of work items with a given tag, broken down by work item type.
+    stability:
+      level: development
+    unit: '{work_item}'
+    gauge:
+      value_type: int
+    attributes: [work_item.tag, work_item.type, project.name]
 
 tests:
   config:
