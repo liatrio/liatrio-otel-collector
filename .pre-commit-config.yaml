@@ -14,13 +14,13 @@ repos:
         types: [file]     # override `types: [json]`
         files: \.(json|json.tpl)$
         args: [--autofix, --no-sort-keys]
-        stages: [commit]
+        stages: [pre-commit]
 
   - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
     rev: 0.2.1   # or other specific tag
     hooks:
       - id: yamlfmt
-        stages: [commit]
+        stages: [pre-commit]
         args: [--mapping, '2', --offset, '2', --sequence, '4']
         # Exclude mdatagen-generated testdata configs; yamlfmt reformats them
         # in a way that conflicts with `make generate`, causing CI failures.
@@ -33,7 +33,7 @@ repos:
         entry: bash -c 'BEFORE=$(git diff); make generate; AFTER=$(git diff); if [ "$BEFORE" != "$AFTER" ]; then echo ""; echo "make generate produced
           new changes — stage them and commit again"; exit 1; fi'
         language: system
-        stages: [commit]
+        stages: [pre-commit]
         pass_filenames: false
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
