@@ -250,15 +250,17 @@ func (ados *azuredevopsScraper) recordWorkItemMetrics(nowTimestamp pcommon.Times
 		}
 		counts[workItemType][state]++
 
-		// Track tag counts (filtered by allowlist if configured)
-		for _, tag := range parseWorkItemTags(wi) {
-			if len(ados.cfg.WorkItemTagAllowlist) > 0 && !slices.Contains(ados.cfg.WorkItemTagAllowlist, tag) {
-				continue
+		// Track tag counts (only when an allowlist is configured to prevent cardinality explosion)
+		if len(ados.cfg.WorkItemTagAllowlist) > 0 {
+			for _, tag := range parseWorkItemTags(wi) {
+				if !slices.Contains(ados.cfg.WorkItemTagAllowlist, tag) {
+					continue
+				}
+				if tagCounts[tag] == nil {
+					tagCounts[tag] = make(map[string]int)
+				}
+				tagCounts[tag][workItemType]++
 			}
-			if tagCounts[tag] == nil {
-				tagCounts[tag] = make(map[string]int)
-			}
-			tagCounts[tag][workItemType]++
 		}
 
 		// Get created date
