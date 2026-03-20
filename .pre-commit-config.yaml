@@ -15,6 +15,8 @@ repos:
         files: \.(json|json.tpl)$
         args: [--autofix, --no-sort-keys]
         stages: [pre-commit]
+        # VSCode config files use JSONC (JSON with comments) which isn't valid JSON.
+        exclude: \.vscode/
 
   - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
     rev: 0.2.1   # or other specific tag
