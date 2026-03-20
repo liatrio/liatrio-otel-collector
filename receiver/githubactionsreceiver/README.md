@@ -149,7 +149,7 @@ repository to create webhooks in that repository.
 receive the webhook payload in.
     * Select `application/json`, which will deliver the JSON payload directly
       as the body of the `POST` request.
-7. Optionally (recomended), under "Secret", type a string to use as a secret
+7. Optionally (recommended), under "Secret", type a string to use as a secret
 key. You should choose a random string of text with high entropy. You can use
 the webhook secret to limit incoming requests to only those originating from
 GitHub.
