@@ -55,7 +55,8 @@ generate:
 
 .PHONY: check-generate
 check-generate:
-	@BEFORE=$$(git status --porcelain=v1 --untracked-files=all); \
+	@set -e; \
+	BEFORE=$$(git status --porcelain=v1 --untracked-files=all); \
 	$(MAKE) generate > /dev/null 2>&1; \
 	AFTER=$$(git status --porcelain=v1 --untracked-files=all); \
 	if [ "$$BEFORE" != "$$AFTER" ]; then \
