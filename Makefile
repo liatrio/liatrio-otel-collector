@@ -53,6 +53,17 @@ lint-all:
 generate:
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) gen"
 
+.PHONY: check-generate
+check-generate:
+	@BEFORE=$$(git status --porcelain=v1 --untracked-files=all); \
+	$(MAKE) generate; \
+	AFTER=$$(git status --porcelain=v1 --untracked-files=all); \
+	if [ "$$BEFORE" != "$$AFTER" ]; then \
+		echo ""; \
+		echo "make generate produced new changes — stage them and commit again"; \
+		exit 1; \
+	fi
+
 .PHONY: test-all
 test-all:
 	$(MAKE) for-all DIRS="$(PKG_DIRS)" CMD="$(MAKE) test"

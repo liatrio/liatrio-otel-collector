@@ -30,8 +30,7 @@ repos:
     hooks:
       - id: make-generate
         name: make generate
-        entry: bash -c 'BEFORE=$(git diff); make generate; AFTER=$(git diff); if [ "$BEFORE" != "$AFTER" ]; then echo ""; echo "make generate produced
-          new changes — stage them and commit again"; exit 1; fi'
+        entry: make check-generate
         language: system
         stages: [pre-commit]
         pass_filenames: false
