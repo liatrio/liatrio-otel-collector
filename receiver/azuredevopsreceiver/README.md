@@ -78,6 +78,10 @@ receivers:
                 # Optional: Work item metrics configuration
                 work_items_enabled: true
                 work_item_lookback_days: 30
+                work_item_tag_allowlist:
+                    - "P1-Urgent"
+                    - "Blocked"
+                    - "Feature"
                 
                 auth:
                     authenticator: bearertokenauth/azuredevops
@@ -110,6 +114,7 @@ To enable work item metrics scraping from the [Azure DevOps Work Items API][ado-
 
 - `work_items_enabled`: Set to `true` to enable work item metrics (optional, default: false)
 - `work_item_lookback_days`: Number of days of work item history to fetch (optional, default: 30)
+- `work_item_tag_allowlist`: List of tags to track via `work_item.tag.count` (optional, default: empty). When empty, no tag metrics are emitted. Only tags listed here will be tracked. This prevents cardinality explosion from arbitrary tags.
 
 When enabled, all work item types in the project will be scraped using [WIQL queries][ado-wiql]. Filtering can be done in a downstream processor or backend.
 
@@ -117,6 +122,7 @@ Work item metrics include:
 - **Cycle Time**: Time from creation to closure for completed work items
 - **Age**: Time since creation for open work items
 - **Count**: Number of work items by type and state
+- **Tag Count**: Number of work items per tag (opt-in, requires `work_item_tag_allowlist`)
 
 **Note:** Your Azure DevOps PAT must have **Work Items (Read)** permissions in addition to **Code (Read)** to scrape work item metrics.
 
