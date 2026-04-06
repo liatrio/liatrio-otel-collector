@@ -76,8 +76,14 @@
       "tree_id": "3b96a448f3efb1b621fe356f6cc65f41c9c0cbe4",
       "message": "fix: updating readme",
       "timestamp": "2023-10-13T09:30:37Z",
-      "author": { "name": "Kristof Kowalski", "email": "k@ko.wal.ski" },
-      "committer": { "name": "Kristof Kowalski", "email": "k@ko.wal.ski" }
+      "author": {
+        "name": "Kristof Kowalski",
+        "email": "k@ko.wal.ski"
+      },
+      "committer": {
+        "name": "Kristof Kowalski",
+        "email": "k@ko.wal.ski"
+      }
     },
     "repository": {
       "id": 701962619,

@@ -3,3 +3,7 @@
 # by mdatagen and cannot be manually fixed without being overwritten.
 ignores:
   - '**/documentation.md'
+config:
+  # Disabled — markdown files routinely contain URLs, badges, and tables that
+  # exceed 80 characters and cannot be reasonably wrapped.
+  MD013: false
