@@ -35,6 +35,8 @@ all_set:
       enabled: true
     work_item.cycle_time:
       enabled: true
+    work_item.tag.count:
+      enabled: true
   resource_attributes:
     vcs.owner.name:
       enabled: true
@@ -75,6 +77,8 @@ none_set:
     work_item.count:
       enabled: false
     work_item.cycle_time:
+      enabled: false
+    work_item.tag.count:
       enabled: false
   resource_attributes:
     vcs.owner.name:

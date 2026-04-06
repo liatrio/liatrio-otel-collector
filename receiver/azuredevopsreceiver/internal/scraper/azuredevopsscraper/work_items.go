@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -135,7 +136,7 @@ func (ados *azuredevopsScraper) getWorkItemsBatch(ctx context.Context, org, proj
 	params := url.Values{}
 	params.Set("ids", idsParam)
 	params.Set("api-version", apiVersion)
-	params.Set("fields", "System.Id,System.WorkItemType,System.State,System.CreatedDate,Microsoft.VSTS.Common.ClosedDate,System.Title")
+	params.Set("fields", "System.Id,System.WorkItemType,System.State,System.CreatedDate,Microsoft.VSTS.Common.ClosedDate,System.Title,System.Tags")
 
 	req, err := http.NewRequestWithContext(ctx, "GET", urlPath+"?"+params.Encode(), nil)
 	if err != nil {
@@ -208,11 +209,32 @@ func getWorkItemTimeField(wi WorkItem, fieldName string) (time.Time, bool) {
 	return nt.Time, true
 }
 
+// parseWorkItemTags splits the semicolon-separated System.Tags field into
+// individual trimmed tag strings.
+func parseWorkItemTags(wi WorkItem) []string {
+	raw := getWorkItemStringField(wi, "System.Tags")
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ";")
+	tags := make([]string, 0, len(parts))
+	for _, p := range parts {
+		t := strings.TrimSpace(p)
+		if t != "" {
+			tags = append(tags, t)
+		}
+	}
+	return tags
+}
+
 // recordWorkItemMetrics processes work items and records metrics
 func (ados *azuredevopsScraper) recordWorkItemMetrics(nowTimestamp pcommon.Timestamp, workItems []WorkItem, project string) {
 	now := nowTimestamp.AsTime()
 	// Track counts by type and state
 	counts := make(map[string]map[string]int) // type -> state -> count
+
+	// Track counts by tag and type
+	tagCounts := make(map[string]map[string]int) // tag -> type -> count
 
 	for _, wi := range workItems {
 		workItemType := getWorkItemStringField(wi, "System.WorkItemType")
@@ -227,6 +249,19 @@ func (ados *azuredevopsScraper) recordWorkItemMetrics(nowTimestamp pcommon.Times
 			counts[workItemType] = make(map[string]int)
 		}
 		counts[workItemType][state]++
+
+		// Track tag counts (only when an allowlist is configured to prevent cardinality explosion)
+		if len(ados.cfg.WorkItemTagAllowlist) > 0 {
+			for _, tag := range parseWorkItemTags(wi) {
+				if !slices.Contains(ados.cfg.WorkItemTagAllowlist, tag) {
+					continue
+				}
+				if tagCounts[tag] == nil {
+					tagCounts[tag] = make(map[string]int)
+				}
+				tagCounts[tag][workItemType]++
+			}
+		}
 
 		// Get created date
 		createdDate, hasCreated := getWorkItemTimeField(wi, "System.CreatedDate")
@@ -259,7 +294,7 @@ func (ados *azuredevopsScraper) recordWorkItemMetrics(nowTimestamp pcommon.Times
 		}
 	}
 
-	// Record counts
+	// Record counts by type and state
 	for workItemType, states := range counts {
 		for state, count := range states {
 			ados.mb.RecordWorkItemCountDataPoint(
@@ -267,6 +302,19 @@ func (ados *azuredevopsScraper) recordWorkItemMetrics(nowTimestamp pcommon.Times
 				int64(count),
 				workItemType,
 				state,
+				project,
+			)
+		}
+	}
+
+	// Record counts by tag and type
+	for tag, types := range tagCounts {
+		for workItemType, count := range types {
+			ados.mb.RecordWorkItemTagCountDataPoint(
+				nowTimestamp,
+				int64(count),
+				tag,
+				workItemType,
 				project,
 			)
 		}

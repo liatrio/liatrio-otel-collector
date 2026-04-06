@@ -221,6 +221,9 @@ var MetricsInfo = metricsInfo{
 	WorkItemCycleTime: metricInfo{
 		Name: "work_item.cycle_time",
 	},
+	WorkItemTagCount: metricInfo{
+		Name: "work_item.tag.count",
+	},
 }
 
 type metricsInfo struct {
@@ -241,6 +244,7 @@ type metricsInfo struct {
 	WorkItemAge                     metricInfo
 	WorkItemCount                   metricInfo
 	WorkItemCycleTime               metricInfo
+	WorkItemTagCount                metricInfo
 }
 
 type metricInfo struct {
@@ -1160,6 +1164,59 @@ func newMetricWorkItemCycleTime(cfg MetricConfig) metricWorkItemCycleTime {
 	return m
 }
 
+type metricWorkItemTagCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills work_item.tag.count metric with initial data.
+func (m *metricWorkItemTagCount) init() {
+	m.data.SetName("work_item.tag.count")
+	m.data.SetDescription("The number of work items with a given tag, broken down by work item type.")
+	m.data.SetUnit("{work_item}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricWorkItemTagCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, workItemTagAttributeValue string, workItemTypeAttributeValue string, projectNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("work_item.tag", workItemTagAttributeValue)
+	dp.Attributes().PutStr("work_item.type", workItemTypeAttributeValue)
+	dp.Attributes().PutStr("project.name", projectNameAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricWorkItemTagCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricWorkItemTagCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricWorkItemTagCount(cfg MetricConfig) metricWorkItemTagCount {
+	m := metricWorkItemTagCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
@@ -1187,6 +1244,7 @@ type MetricsBuilder struct {
 	metricWorkItemAge                     metricWorkItemAge
 	metricWorkItemCount                   metricWorkItemCount
 	metricWorkItemCycleTime               metricWorkItemCycleTime
+	metricWorkItemTagCount                metricWorkItemTagCount
 }
 
 // MetricBuilderOption applies changes to default metrics builder.
@@ -1229,6 +1287,7 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, opt
 		metricWorkItemAge:                     newMetricWorkItemAge(mbc.Metrics.WorkItemAge),
 		metricWorkItemCount:                   newMetricWorkItemCount(mbc.Metrics.WorkItemCount),
 		metricWorkItemCycleTime:               newMetricWorkItemCycleTime(mbc.Metrics.WorkItemCycleTime),
+		metricWorkItemTagCount:                newMetricWorkItemTagCount(mbc.Metrics.WorkItemTagCount),
 		resourceAttributeIncludeFilter:        make(map[string]filter.Filter),
 		resourceAttributeExcludeFilter:        make(map[string]filter.Filter),
 	}
@@ -1331,6 +1390,7 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	mb.metricWorkItemAge.emit(ils.Metrics())
 	mb.metricWorkItemCount.emit(ils.Metrics())
 	mb.metricWorkItemCycleTime.emit(ils.Metrics())
+	mb.metricWorkItemTagCount.emit(ils.Metrics())
 
 	for _, op := range options {
 		op.apply(rm)
@@ -1445,6 +1505,11 @@ func (mb *MetricsBuilder) RecordWorkItemCountDataPoint(ts pcommon.Timestamp, val
 // RecordWorkItemCycleTimeDataPoint adds a data point to work_item.cycle_time metric.
 func (mb *MetricsBuilder) RecordWorkItemCycleTimeDataPoint(ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, projectNameAttributeValue string) {
 	mb.metricWorkItemCycleTime.recordDataPoint(mb.startTime, ts, val, workItemTypeAttributeValue, projectNameAttributeValue)
+}
+
+// RecordWorkItemTagCountDataPoint adds a data point to work_item.tag.count metric.
+func (mb *MetricsBuilder) RecordWorkItemTagCountDataPoint(ts pcommon.Timestamp, val int64, workItemTagAttributeValue string, workItemTypeAttributeValue string, projectNameAttributeValue string) {
+	mb.metricWorkItemTagCount.recordDataPoint(mb.startTime, ts, val, workItemTagAttributeValue, workItemTypeAttributeValue, projectNameAttributeValue)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

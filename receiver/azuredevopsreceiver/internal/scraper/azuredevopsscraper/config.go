@@ -50,6 +50,11 @@ type Config struct {
 	// WorkItemLookbackDays specifies how many days back to fetch work item history
 	// Defaults to 30 days if not set
 	WorkItemLookbackDays int `mapstructure:"work_item_lookback_days"`
+
+	// WorkItemTagAllowlist restricts which tags emit work_item.tag.count metrics.
+	// When empty (default), no tag metrics are emitted to prevent cardinality explosion
+	// from arbitrary tags. Only tags listed here will be tracked.
+	WorkItemTagAllowlist []string `mapstructure:"work_item_tag_allowlist"`
 }
 
 var _ internal.Config = (*Config)(nil)

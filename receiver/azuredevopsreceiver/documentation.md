@@ -274,6 +274,22 @@ Time from work item creation to closure in seconds. Only recorded for closed wor
 | work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | Recommended |
 | project.name | The name of the Azure DevOps project. | Any Str | Recommended |
 
+### work_item.tag.count
+
+The number of work items with a given tag, broken down by work item type.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {work_item} | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level |
+| ---- | ----------- | ------ | -------- |
+| work_item.tag | A tag applied to the work item (e.g., P1-Urgent, Feature, Blocked). | Any Str | Recommended |
+| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | Recommended |
+| project.name | The name of the Azure DevOps project. | Any Str | Recommended |
+
 ## Optional Metrics
 
 The following metrics are not emitted by default. Each of them can be enabled by applying the following configuration:

@@ -76,6 +76,12 @@ func (ados *azuredevopsScraper) start(ctx context.Context, host component.Host) 
 	}
 
 	ados.client, err = ados.cfg.ToClient(ctx, extensions, ados.settings)
+
+	if ados.cfg.MetricsBuilderConfig.Metrics.WorkItemTagCount.Enabled && len(ados.cfg.WorkItemTagAllowlist) == 0 {
+		ados.logger.Sugar().Warn("work_item.tag.count is enabled but work_item_tag_allowlist is empty — no tag " +
+			"metrics will be emitted. Add tags to the allowlist to track them.")
+	}
+
 	return
 }
 
@@ -114,7 +120,7 @@ func (ados *azuredevopsScraper) scrape(ctx context.Context) (pmetric.Metrics, er
 	needsRepoLoop := needsBranches || needsCodeCoverage || needsPullRequests
 	needsDeployments := m.DeployDeploymentCount.Enabled || m.DeployDeploymentAverageDuration.Enabled ||
 		m.DeployDeploymentLastTimestamp.Enabled
-	needsWorkItems := m.WorkItemAge.Enabled || m.WorkItemCount.Enabled || m.WorkItemCycleTime.Enabled
+	needsWorkItems := m.WorkItemAge.Enabled || m.WorkItemCount.Enabled || m.WorkItemCycleTime.Enabled || m.WorkItemTagCount.Enabled
 	needsRepos := m.VcsRepositoryCount.Enabled || needsRepoLoop
 
 	if !needsRepos {
