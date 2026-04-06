@@ -1,3 +1,4 @@
+---
 resourceSpans:
   - resource:
       attributes:
@@ -36,7 +37,7 @@ resourceSpans:
             stringValue: https://github.com/open-telemetry/open-telemetry-otel-collector/actions/runs/14460881260
         - key: cicd.pipeline.run.id
           value:
-            intValue: "14460881260"
+            intValue: '14460881260'
         - key: cicd.pipeline.run.status
           value:
             stringValue: failure
@@ -46,15 +47,15 @@ resourceSpans:
     scopeSpans:
       - scope: {}
         spans:
-          - endTimeUnixNano: "1744837827000000000"
+          - endTimeUnixNano: '1744837827000000000'
             kind: 2
             links:
-              - spanId: ""
+              - spanId: ''
                 traceId: 3ab150c94bf95169f4958bc860bddc3b
             name: build-and-test
-            parentSpanId: ""
+            parentSpanId: ''
             spanId: aba151af7cfbcf0f
-            startTimeUnixNano: "1744837733000000000"
+            startTimeUnixNano: '1744837733000000000'
             status:
               code: 2
               message: failure

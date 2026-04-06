@@ -14,14 +14,28 @@ repos:
         types: [file]     # override `types: [json]`
         files: \.(json|json.tpl)$
         args: [--autofix, --no-sort-keys]
-        stages: [commit]
+        stages: [pre-commit]
+        # VSCode config files use JSONC (JSON with comments) which isn't valid JSON.
+        exclude: \.vscode/
 
   - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
     rev: 0.2.1   # or other specific tag
     hooks:
       - id: yamlfmt
-        stages: [commit]
+        stages: [pre-commit]
         args: [--mapping, '2', --offset, '2', --sequence, '4']
+        # Exclude mdatagen-generated testdata configs; yamlfmt reformats them
+        # in a way that conflicts with `make generate`, causing CI failures.
+        exclude: internal/metadata/testdata/config\.yaml$
+
+  - repo: local
+    hooks:
+      - id: make-generate
+        name: make generate
+        entry: make check-generate
+        language: system
+        stages: [pre-commit]
+        pass_filenames: false
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.9.2

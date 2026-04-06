@@ -1,13 +1,14 @@
+---
 resourceLogs:
   - resource: {}
     scopeLogs:
       - scope: {}
         logRecords:
-          - timeUnixNano: "1647436595447000000"
-            severityText: "info"
+          - timeUnixNano: '1647436595447000000'
+            severityText: info
             body:
-              stringValue: "Pipeline execution started"
+              stringValue: Pipeline execution started
             attributes:
-              - key: "vcs.ref.head.revision"
+              - key: vcs.ref.head.revision
                 value:
-                  stringValue: "abc123"
+                  stringValue: abc123

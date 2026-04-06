@@ -1,3 +1,4 @@
+---
 receivers:
   github:
     initial_delay: 1s
@@ -6,10 +7,10 @@ receivers:
       scraper:
     webhook:
       endpoint: localhost:8080
-      read_timeout: "500ms"
-      write_timeout: "500ms"
-      path: "some/path"
-      health_path: "health/path"
+      read_timeout: 500ms
+      write_timeout: 500ms
+      path: some/path
+      health_path: health/path
       required_headers:
         key: value-present
 
@@ -20,10 +21,10 @@ receivers:
       scraper:
     webhook:
       endpoint: localhost:8080
-      read_timeout: "500ms"
-      write_timeout: "500ms"
-      path: "some/path"
-      health_path: "health/path"
+      read_timeout: 500ms
+      write_timeout: 500ms
+      path: some/path
+      health_path: health/path
       required_headers:
         key: value-present
 

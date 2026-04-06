@@ -1,3 +1,4 @@
+---
 resourceMetrics:
   - resource:
       attributes:
@@ -13,9 +14,9 @@ resourceMetrics:
           - description: The number of repositories in an organization.
             gauge:
               dataPoints:
-                - asInt: "0"
-                  startTimeUnixNano: "1000000"
-                  timeUnixNano: "2000000"
+                - asInt: '0'
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
             name: vcs.repository.count
             unit: '{repository}'
         scope:

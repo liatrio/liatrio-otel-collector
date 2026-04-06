@@ -19,7 +19,9 @@
     "name": "pre-commit",
     "steps": [],
     "check_run_url": "https://api.github.com/repos/foo/webhook-testing/check-runs/17556730984",
-    "labels": ["ubuntu-latest"],
+    "labels": [
+      "ubuntu-latest"
+    ],
     "runner_id": null,
     "runner_name": null,
     "runner_group_id": null,

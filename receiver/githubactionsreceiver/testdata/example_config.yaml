@@ -1,3 +1,4 @@
+---
 receivers:
   githubactions:
     # secret: my-secret
@@ -5,8 +6,8 @@ receivers:
     # service_name_prefix: foo- // ignored if custom_service_name set
     # service_name_suffix: -bar // ignored if custom_service_name set
     cors:
-      allowed_origins: ["*"]
-      allowed_headers: ["*"]
+      allowed_origins: ['*']
+      allowed_headers: ['*']
 
 processors:
   batch:

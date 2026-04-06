@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD033 MD041 -->
 ---
 
 <p align="center">
@@ -18,6 +19,7 @@
   </a>
 </p>
 
+<!-- markdownlint-enable MD033 MD041 -->
 ---
 
 # liatrio-otel-collector
@@ -301,12 +303,12 @@ a `build-config.yaml` file.
 
 ### References & Useful Resources
 
-* [builder command - go.opentelemetry.io/collector/cmd/builder - Go Packages][3]
-* [Building a Trace Receiver][4]
-* [Building a custom collector][5]
-* [otel4devs/builder-config.yaml at main · rquedas/otel4devs][6]
-* [opentelemetry-collector-contrib/receiver/activedirectorydsreceiver at main · open-telemetry/opentelemetry-collector-contrib][7]
-* [opentelemetry-collector-contrib/extension/basicauthextension at main · open-telemetry/opentelemetry-collector-contrib][8]
+- [builder command - go.opentelemetry.io/collector/cmd/builder - Go Packages][3]
+- [Building a Trace Receiver][4]
+- [Building a custom collector][5]
+- [otel4devs/builder-config.yaml at main · rquedas/otel4devs][6]
+- [opentelemetry-collector-contrib/receiver/activedirectorydsreceiver at main · open-telemetry/opentelemetry-collector-contrib][7]
+- [opentelemetry-collector-contrib/extension/basicauthextension at main · open-telemetry/opentelemetry-collector-contrib][8]
 
 [0]: #configure-github-scraper
 [1]: #configure-gitlab-scraper
