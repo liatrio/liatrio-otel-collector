@@ -52,7 +52,8 @@ type Config struct {
 	WorkItemLookbackDays int `mapstructure:"work_item_lookback_days"`
 
 	// WorkItemTagAllowlist restricts which tags emit work_item.tag.count metrics.
-	// When empty (default), all tags are tracked. When non-empty, only listed tags are tracked.
+	// When empty (default), no tag metrics are emitted to prevent cardinality explosion
+	// from arbitrary tags. Only tags listed here will be tracked.
 	WorkItemTagAllowlist []string `mapstructure:"work_item_tag_allowlist"`
 }
 
