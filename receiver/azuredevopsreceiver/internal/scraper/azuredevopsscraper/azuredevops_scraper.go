@@ -78,7 +78,8 @@ func (ados *azuredevopsScraper) start(ctx context.Context, host component.Host) 
 	ados.client, err = ados.cfg.ToClient(ctx, extensions, ados.settings)
 
 	if ados.cfg.MetricsBuilderConfig.Metrics.WorkItemTagCount.Enabled && len(ados.cfg.WorkItemTagAllowlist) == 0 {
-		ados.logger.Sugar().Warn("work_item.tag.count is enabled but work_item_tag_allowlist is empty — no tag metrics will be emitted. Add tags to the allowlist to track them.")
+		ados.logger.Sugar().Warn("work_item.tag.count is enabled but work_item_tag_allowlist is empty — no tag " +
+			"metrics will be emitted. Add tags to the allowlist to track them.")
 	}
 
 	return
