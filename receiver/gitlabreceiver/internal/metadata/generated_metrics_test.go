@@ -107,6 +107,18 @@ func TestMetricsBuilder(t *testing.T) {
 			allMetricsCount++
 			mb.RecordVcsRepositoryCountDataPoint(ts, 1)
 
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordVcsTerraformModuleConsumerDataPoint(ts, 1, "vcs.terraform.module.name-val", "vcs.terraform.module.system-val", "vcs.terraform.consumer.project.name-val", "vcs.terraform.consumer.project.url-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordVcsTerraformModuleConsumerCountDataPoint(ts, 1, "vcs.terraform.module.name-val", "vcs.terraform.module.system-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordVcsTerraformModuleCountDataPoint(ts, 1)
+
 			rb := mb.NewResourceBuilder()
 			rb.SetOrganizationName("organization.name-val")
 			rb.SetVcsVendorName("vcs.vendor.name-val")
@@ -379,6 +391,60 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
 					assert.Equal(t, "The number of repositories in an organization.", ms.At(i).Description())
 					assert.Equal(t, "{repository}", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+				case "vcs.terraform.module.consumer":
+					assert.False(t, validatedMetrics["vcs.terraform.module.consumer"], "Found a duplicate in the metrics slice: vcs.terraform.module.consumer")
+					validatedMetrics["vcs.terraform.module.consumer"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "A consuming project of a Terraform module. Value is always 1, attributes identify the consumer.", ms.At(i).Description())
+					assert.Equal(t, "{consumer}", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("vcs.terraform.module.name")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.terraform.module.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.terraform.module.system")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.terraform.module.system-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.terraform.consumer.project.name")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.terraform.consumer.project.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.terraform.consumer.project.url")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.terraform.consumer.project.url-val", attrVal.Str())
+				case "vcs.terraform.module.consumer.count":
+					assert.False(t, validatedMetrics["vcs.terraform.module.consumer.count"], "Found a duplicate in the metrics slice: vcs.terraform.module.consumer.count")
+					validatedMetrics["vcs.terraform.module.consumer.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The number of distinct projects consuming a Terraform module.", ms.At(i).Description())
+					assert.Equal(t, "{consumer}", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("vcs.terraform.module.name")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.terraform.module.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.terraform.module.system")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.terraform.module.system-val", attrVal.Str())
+				case "vcs.terraform.module.count":
+					assert.False(t, validatedMetrics["vcs.terraform.module.count"], "Found a duplicate in the metrics slice: vcs.terraform.module.count")
+					validatedMetrics["vcs.terraform.module.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The number of Terraform modules published in the group registry.", ms.At(i).Description())
+					assert.Equal(t, "{module}", ms.At(i).Unit())
 					dp := ms.At(i).Gauge().DataPoints().At(0)
 					assert.Equal(t, start, dp.StartTimestamp())
 					assert.Equal(t, ts, dp.Timestamp())

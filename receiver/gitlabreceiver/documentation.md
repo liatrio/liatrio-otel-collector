@@ -165,6 +165,46 @@ The number of repositories in an organization.
 | ---- | ----------- | ---------- | --------- |
 | {repository} | Gauge | Int | Development |
 
+### vcs.terraform.module.consumer
+
+A consuming project of a Terraform module. Value is always 1, attributes identify the consumer.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {consumer} | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level |
+| ---- | ----------- | ------ | -------- |
+| vcs.terraform.module.name | The name of the Terraform module in the registry. | Any Str | Recommended |
+| vcs.terraform.module.system | The system (provider) of the Terraform module in the registry. | Any Str | Recommended |
+| vcs.terraform.consumer.project.name | The name of the project consuming a Terraform module. | Any Str | Recommended |
+| vcs.terraform.consumer.project.url | The URL of the project consuming a Terraform module. | Any Str | Recommended |
+
+### vcs.terraform.module.consumer.count
+
+The number of distinct projects consuming a Terraform module.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {consumer} | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level |
+| ---- | ----------- | ------ | -------- |
+| vcs.terraform.module.name | The name of the Terraform module in the registry. | Any Str | Recommended |
+| vcs.terraform.module.system | The system (provider) of the Terraform module in the registry. | Any Str | Recommended |
+
+### vcs.terraform.module.count
+
+The number of Terraform modules published in the group registry.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {module} | Gauge | Int | Development |
+
 ## Optional Metrics
 
 The following metrics are not emitted by default. Each of them can be enabled by applying the following configuration:

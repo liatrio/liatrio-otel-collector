@@ -79,6 +79,69 @@ service:
 A Grafana Dashboard exists on the marketplace for metrics from this receiver
 and can be found on the [Grafana Dashboard Marketplace](https://grafana.com/grafana/dashboards/20976-engineering-effectiveness-metrics/).
 
+## Terraform Module Adoption Scraper
+
+The `gitlab_terraform` scraper tracks adoption of Terraform modules published in your GitLab group's Terraform Module Registry. It auto-discovers published modules and uses the GitLab Search API to find which projects reference them.
+
+### Configuration
+
+```yaml
+extensions:
+    bearertokenauth/gitlab:
+        token: ${env:GL_PAT}
+
+receivers:
+    gitlab:
+        initial_delay: 1s
+        collection_interval: 300s
+        scrapers:
+            gitlab_terraform:
+                gitlab_org: mygroup
+                concurrency_limit: 5
+                endpoint: "https://selfmanagedenterpriseserver.com"
+                auth:
+                    authenticator: bearertokenauth/gitlab
+
+service:
+    extensions: [bearertokenauth/gitlab]
+    pipelines:
+        metrics:
+            receivers: [gitlab]
+            processors: []
+            exporters: [prometheus]
+```
+
+> Note: The Search API with `scope=blobs` requires Advanced Search (Elasticsearch)
+> to be enabled on the GitLab instance.
+
+### Emitted Metrics
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `vcs.terraform.module.count` | Gauge | Total number of Terraform modules published in the group registry |
+| `vcs.terraform.module.consumer.count` | Gauge | Number of distinct projects consuming a specific module (attributes: `vcs.terraform.module.name`, `vcs.terraform.module.system`) |
+| `vcs.terraform.module.consumer` | Gauge | One data point per consumer project (attributes: `vcs.terraform.module.name`, `vcs.terraform.module.system`, `vcs.terraform.consumer.project.name`, `vcs.terraform.consumer.project.url`) |
+
+### Sample PromQL Queries
+
+**How many consumers does each module have?**
+
+```promql
+sort_desc(vcs_terraform_module_consumer_count)
+```
+
+**Which projects use a specific module?**
+
+```promql
+vcs_terraform_module_consumer{vcs_terraform_module_name="my-vpc"}
+```
+
+**Rank modules by adoption:**
+
+```promql
+sort_desc(sum by (vcs_terraform_module_name)(vcs_terraform_module_consumer_count))
+```
+
 ## Scraping
 
 > Important:

@@ -12,6 +12,12 @@ receivers:
     scrapers:
       gitlab:
 
+  gitlab/terraform:
+    initial_delay: 1s
+    collection_interval: 60s
+    scrapers:
+      gitlab_terraform:
+
 processors:
   nop:
 
@@ -21,6 +27,6 @@ exporters:
 service:
   pipelines:
     metrics:
-      receivers: [gitlab, gitlab/customname]
+      receivers: [gitlab, gitlab/customname, gitlab/terraform]
       processors: [nop]
       exporters: [nop]

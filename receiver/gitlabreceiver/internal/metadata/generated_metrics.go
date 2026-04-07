@@ -148,19 +148,31 @@ var MetricsInfo = metricsInfo{
 	VcsRepositoryCount: metricInfo{
 		Name: "vcs.repository.count",
 	},
+	VcsTerraformModuleConsumer: metricInfo{
+		Name: "vcs.terraform.module.consumer",
+	},
+	VcsTerraformModuleConsumerCount: metricInfo{
+		Name: "vcs.terraform.module.consumer.count",
+	},
+	VcsTerraformModuleCount: metricInfo{
+		Name: "vcs.terraform.module.count",
+	},
 }
 
 type metricsInfo struct {
-	VcsChangeCount          metricInfo
-	VcsChangeDuration       metricInfo
-	VcsChangeTimeToApproval metricInfo
-	VcsChangeTimeToMerge    metricInfo
-	VcsContributorCount     metricInfo
-	VcsRefCount             metricInfo
-	VcsRefLinesDelta        metricInfo
-	VcsRefRevisionsDelta    metricInfo
-	VcsRefTime              metricInfo
-	VcsRepositoryCount      metricInfo
+	VcsChangeCount                  metricInfo
+	VcsChangeDuration               metricInfo
+	VcsChangeTimeToApproval         metricInfo
+	VcsChangeTimeToMerge            metricInfo
+	VcsContributorCount             metricInfo
+	VcsRefCount                     metricInfo
+	VcsRefLinesDelta                metricInfo
+	VcsRefRevisionsDelta            metricInfo
+	VcsRefTime                      metricInfo
+	VcsRepositoryCount              metricInfo
+	VcsTerraformModuleConsumer      metricInfo
+	VcsTerraformModuleConsumerCount metricInfo
+	VcsTerraformModuleCount         metricInfo
 }
 
 type metricInfo struct {
@@ -710,26 +722,184 @@ func newMetricVcsRepositoryCount(cfg MetricConfig) metricVcsRepositoryCount {
 	return m
 }
 
+type metricVcsTerraformModuleConsumer struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills vcs.terraform.module.consumer metric with initial data.
+func (m *metricVcsTerraformModuleConsumer) init() {
+	m.data.SetName("vcs.terraform.module.consumer")
+	m.data.SetDescription("A consuming project of a Terraform module. Value is always 1, attributes identify the consumer.")
+	m.data.SetUnit("{consumer}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricVcsTerraformModuleConsumer) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsTerraformModuleNameAttributeValue string, vcsTerraformModuleSystemAttributeValue string, vcsTerraformConsumerProjectNameAttributeValue string, vcsTerraformConsumerProjectURLAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("vcs.terraform.module.name", vcsTerraformModuleNameAttributeValue)
+	dp.Attributes().PutStr("vcs.terraform.module.system", vcsTerraformModuleSystemAttributeValue)
+	dp.Attributes().PutStr("vcs.terraform.consumer.project.name", vcsTerraformConsumerProjectNameAttributeValue)
+	dp.Attributes().PutStr("vcs.terraform.consumer.project.url", vcsTerraformConsumerProjectURLAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricVcsTerraformModuleConsumer) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricVcsTerraformModuleConsumer) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricVcsTerraformModuleConsumer(cfg MetricConfig) metricVcsTerraformModuleConsumer {
+	m := metricVcsTerraformModuleConsumer{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricVcsTerraformModuleConsumerCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills vcs.terraform.module.consumer.count metric with initial data.
+func (m *metricVcsTerraformModuleConsumerCount) init() {
+	m.data.SetName("vcs.terraform.module.consumer.count")
+	m.data.SetDescription("The number of distinct projects consuming a Terraform module.")
+	m.data.SetUnit("{consumer}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricVcsTerraformModuleConsumerCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsTerraformModuleNameAttributeValue string, vcsTerraformModuleSystemAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("vcs.terraform.module.name", vcsTerraformModuleNameAttributeValue)
+	dp.Attributes().PutStr("vcs.terraform.module.system", vcsTerraformModuleSystemAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricVcsTerraformModuleConsumerCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricVcsTerraformModuleConsumerCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricVcsTerraformModuleConsumerCount(cfg MetricConfig) metricVcsTerraformModuleConsumerCount {
+	m := metricVcsTerraformModuleConsumerCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricVcsTerraformModuleCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills vcs.terraform.module.count metric with initial data.
+func (m *metricVcsTerraformModuleCount) init() {
+	m.data.SetName("vcs.terraform.module.count")
+	m.data.SetDescription("The number of Terraform modules published in the group registry.")
+	m.data.SetUnit("{module}")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricVcsTerraformModuleCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricVcsTerraformModuleCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricVcsTerraformModuleCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricVcsTerraformModuleCount(cfg MetricConfig) metricVcsTerraformModuleCount {
+	m := metricVcsTerraformModuleCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
-	config                         MetricsBuilderConfig // config of the metrics builder.
-	startTime                      pcommon.Timestamp    // start time that will be applied to all recorded data points.
-	metricsCapacity                int                  // maximum observed number of metrics per resource.
-	metricsBuffer                  pmetric.Metrics      // accumulates metrics data before emitting.
-	buildInfo                      component.BuildInfo  // contains version information.
-	resourceAttributeIncludeFilter map[string]filter.Filter
-	resourceAttributeExcludeFilter map[string]filter.Filter
-	metricVcsChangeCount           metricVcsChangeCount
-	metricVcsChangeDuration        metricVcsChangeDuration
-	metricVcsChangeTimeToApproval  metricVcsChangeTimeToApproval
-	metricVcsChangeTimeToMerge     metricVcsChangeTimeToMerge
-	metricVcsContributorCount      metricVcsContributorCount
-	metricVcsRefCount              metricVcsRefCount
-	metricVcsRefLinesDelta         metricVcsRefLinesDelta
-	metricVcsRefRevisionsDelta     metricVcsRefRevisionsDelta
-	metricVcsRefTime               metricVcsRefTime
-	metricVcsRepositoryCount       metricVcsRepositoryCount
+	config                                MetricsBuilderConfig // config of the metrics builder.
+	startTime                             pcommon.Timestamp    // start time that will be applied to all recorded data points.
+	metricsCapacity                       int                  // maximum observed number of metrics per resource.
+	metricsBuffer                         pmetric.Metrics      // accumulates metrics data before emitting.
+	buildInfo                             component.BuildInfo  // contains version information.
+	resourceAttributeIncludeFilter        map[string]filter.Filter
+	resourceAttributeExcludeFilter        map[string]filter.Filter
+	metricVcsChangeCount                  metricVcsChangeCount
+	metricVcsChangeDuration               metricVcsChangeDuration
+	metricVcsChangeTimeToApproval         metricVcsChangeTimeToApproval
+	metricVcsChangeTimeToMerge            metricVcsChangeTimeToMerge
+	metricVcsContributorCount             metricVcsContributorCount
+	metricVcsRefCount                     metricVcsRefCount
+	metricVcsRefLinesDelta                metricVcsRefLinesDelta
+	metricVcsRefRevisionsDelta            metricVcsRefRevisionsDelta
+	metricVcsRefTime                      metricVcsRefTime
+	metricVcsRepositoryCount              metricVcsRepositoryCount
+	metricVcsTerraformModuleConsumer      metricVcsTerraformModuleConsumer
+	metricVcsTerraformModuleConsumerCount metricVcsTerraformModuleConsumerCount
+	metricVcsTerraformModuleCount         metricVcsTerraformModuleCount
 }
 
 // MetricBuilderOption applies changes to default metrics builder.
@@ -751,22 +921,25 @@ func WithStartTime(startTime pcommon.Timestamp) MetricBuilderOption {
 }
 func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, options ...MetricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
-		config:                         mbc,
-		startTime:                      pcommon.NewTimestampFromTime(time.Now()),
-		metricsBuffer:                  pmetric.NewMetrics(),
-		buildInfo:                      settings.BuildInfo,
-		metricVcsChangeCount:           newMetricVcsChangeCount(mbc.Metrics.VcsChangeCount),
-		metricVcsChangeDuration:        newMetricVcsChangeDuration(mbc.Metrics.VcsChangeDuration),
-		metricVcsChangeTimeToApproval:  newMetricVcsChangeTimeToApproval(mbc.Metrics.VcsChangeTimeToApproval),
-		metricVcsChangeTimeToMerge:     newMetricVcsChangeTimeToMerge(mbc.Metrics.VcsChangeTimeToMerge),
-		metricVcsContributorCount:      newMetricVcsContributorCount(mbc.Metrics.VcsContributorCount),
-		metricVcsRefCount:              newMetricVcsRefCount(mbc.Metrics.VcsRefCount),
-		metricVcsRefLinesDelta:         newMetricVcsRefLinesDelta(mbc.Metrics.VcsRefLinesDelta),
-		metricVcsRefRevisionsDelta:     newMetricVcsRefRevisionsDelta(mbc.Metrics.VcsRefRevisionsDelta),
-		metricVcsRefTime:               newMetricVcsRefTime(mbc.Metrics.VcsRefTime),
-		metricVcsRepositoryCount:       newMetricVcsRepositoryCount(mbc.Metrics.VcsRepositoryCount),
-		resourceAttributeIncludeFilter: make(map[string]filter.Filter),
-		resourceAttributeExcludeFilter: make(map[string]filter.Filter),
+		config:                                mbc,
+		startTime:                             pcommon.NewTimestampFromTime(time.Now()),
+		metricsBuffer:                         pmetric.NewMetrics(),
+		buildInfo:                             settings.BuildInfo,
+		metricVcsChangeCount:                  newMetricVcsChangeCount(mbc.Metrics.VcsChangeCount),
+		metricVcsChangeDuration:               newMetricVcsChangeDuration(mbc.Metrics.VcsChangeDuration),
+		metricVcsChangeTimeToApproval:         newMetricVcsChangeTimeToApproval(mbc.Metrics.VcsChangeTimeToApproval),
+		metricVcsChangeTimeToMerge:            newMetricVcsChangeTimeToMerge(mbc.Metrics.VcsChangeTimeToMerge),
+		metricVcsContributorCount:             newMetricVcsContributorCount(mbc.Metrics.VcsContributorCount),
+		metricVcsRefCount:                     newMetricVcsRefCount(mbc.Metrics.VcsRefCount),
+		metricVcsRefLinesDelta:                newMetricVcsRefLinesDelta(mbc.Metrics.VcsRefLinesDelta),
+		metricVcsRefRevisionsDelta:            newMetricVcsRefRevisionsDelta(mbc.Metrics.VcsRefRevisionsDelta),
+		metricVcsRefTime:                      newMetricVcsRefTime(mbc.Metrics.VcsRefTime),
+		metricVcsRepositoryCount:              newMetricVcsRepositoryCount(mbc.Metrics.VcsRepositoryCount),
+		metricVcsTerraformModuleConsumer:      newMetricVcsTerraformModuleConsumer(mbc.Metrics.VcsTerraformModuleConsumer),
+		metricVcsTerraformModuleConsumerCount: newMetricVcsTerraformModuleConsumerCount(mbc.Metrics.VcsTerraformModuleConsumerCount),
+		metricVcsTerraformModuleCount:         newMetricVcsTerraformModuleCount(mbc.Metrics.VcsTerraformModuleCount),
+		resourceAttributeIncludeFilter:        make(map[string]filter.Filter),
+		resourceAttributeExcludeFilter:        make(map[string]filter.Filter),
 	}
 	if mbc.ResourceAttributes.OrganizationName.MetricsInclude != nil {
 		mb.resourceAttributeIncludeFilter["organization.name"] = filter.CreateFilter(mbc.ResourceAttributes.OrganizationName.MetricsInclude)
@@ -860,6 +1033,9 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	mb.metricVcsRefRevisionsDelta.emit(ils.Metrics())
 	mb.metricVcsRefTime.emit(ils.Metrics())
 	mb.metricVcsRepositoryCount.emit(ils.Metrics())
+	mb.metricVcsTerraformModuleConsumer.emit(ils.Metrics())
+	mb.metricVcsTerraformModuleConsumerCount.emit(ils.Metrics())
+	mb.metricVcsTerraformModuleCount.emit(ils.Metrics())
 
 	for _, op := range options {
 		op.apply(rm)
@@ -939,6 +1115,21 @@ func (mb *MetricsBuilder) RecordVcsRefTimeDataPoint(ts pcommon.Timestamp, val in
 // RecordVcsRepositoryCountDataPoint adds a data point to vcs.repository.count metric.
 func (mb *MetricsBuilder) RecordVcsRepositoryCountDataPoint(ts pcommon.Timestamp, val int64) {
 	mb.metricVcsRepositoryCount.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordVcsTerraformModuleConsumerDataPoint adds a data point to vcs.terraform.module.consumer metric.
+func (mb *MetricsBuilder) RecordVcsTerraformModuleConsumerDataPoint(ts pcommon.Timestamp, val int64, vcsTerraformModuleNameAttributeValue string, vcsTerraformModuleSystemAttributeValue string, vcsTerraformConsumerProjectNameAttributeValue string, vcsTerraformConsumerProjectURLAttributeValue string) {
+	mb.metricVcsTerraformModuleConsumer.recordDataPoint(mb.startTime, ts, val, vcsTerraformModuleNameAttributeValue, vcsTerraformModuleSystemAttributeValue, vcsTerraformConsumerProjectNameAttributeValue, vcsTerraformConsumerProjectURLAttributeValue)
+}
+
+// RecordVcsTerraformModuleConsumerCountDataPoint adds a data point to vcs.terraform.module.consumer.count metric.
+func (mb *MetricsBuilder) RecordVcsTerraformModuleConsumerCountDataPoint(ts pcommon.Timestamp, val int64, vcsTerraformModuleNameAttributeValue string, vcsTerraformModuleSystemAttributeValue string) {
+	mb.metricVcsTerraformModuleConsumerCount.recordDataPoint(mb.startTime, ts, val, vcsTerraformModuleNameAttributeValue, vcsTerraformModuleSystemAttributeValue)
+}
+
+// RecordVcsTerraformModuleCountDataPoint adds a data point to vcs.terraform.module.count metric.
+func (mb *MetricsBuilder) RecordVcsTerraformModuleCountDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricVcsTerraformModuleCount.recordDataPoint(mb.startTime, ts, val)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

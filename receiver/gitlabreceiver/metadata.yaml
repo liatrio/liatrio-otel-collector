@@ -59,6 +59,18 @@ attributes:
     enum:
       - ahead
       - behind
+  vcs.terraform.consumer.project.name:
+    description: The name of the project consuming a Terraform module.
+    type: string
+  vcs.terraform.consumer.project.url:
+    description: The URL of the project consuming a Terraform module.
+    type: string
+  vcs.terraform.module.name:
+    description: The name of the Terraform module in the registry.
+    type: string
+  vcs.terraform.module.system:
+    description: The system (provider) of the Terraform module in the registry.
+    type: string
 
 metrics:
   vcs.change.count:
@@ -148,6 +160,33 @@ metrics:
     stability:
       level: development
     unit: '{repository}'
+    gauge:
+      value_type: int
+    attributes: []
+  vcs.terraform.module.consumer:
+    enabled: true
+    description: A consuming project of a Terraform module. Value is always 1, attributes identify the consumer.
+    stability:
+      level: development
+    unit: '{consumer}'
+    gauge:
+      value_type: int
+    attributes: [vcs.terraform.module.name, vcs.terraform.module.system, vcs.terraform.consumer.project.name, vcs.terraform.consumer.project.url]
+  vcs.terraform.module.consumer.count:
+    enabled: true
+    description: The number of distinct projects consuming a Terraform module.
+    stability:
+      level: development
+    unit: '{consumer}'
+    gauge:
+      value_type: int
+    attributes: [vcs.terraform.module.name, vcs.terraform.module.system]
+  vcs.terraform.module.count:
+    enabled: true
+    description: The number of Terraform modules published in the group registry.
+    stability:
+      level: development
+    unit: '{module}'
     gauge:
       value_type: int
     attributes: []

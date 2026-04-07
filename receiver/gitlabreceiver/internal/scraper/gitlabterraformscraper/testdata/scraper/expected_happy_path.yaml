@@ -1,0 +1,76 @@
+---
+resourceMetrics:
+  - resource:
+      attributes:
+        - key: organization.name
+          value:
+            stringValue: testgroup
+        - key: vcs.vendor.name
+          value:
+            stringValue: gitlab
+    schemaUrl: https://opentelemetry.io/schemas/1.27.0
+    scopeMetrics:
+      - metrics:
+          - description: A consuming project of a Terraform module. Value is always 1, attributes identify the consumer.
+            gauge:
+              dataPoints:
+                - asInt: '1'
+                  attributes:
+                    - key: vcs.terraform.consumer.project.name
+                      value:
+                        stringValue: testgroup/another-app
+                    - key: vcs.terraform.consumer.project.url
+                      value:
+                        stringValue: https://gitlab.com/testgroup/another-app
+                    - key: vcs.terraform.module.name
+                      value:
+                        stringValue: my-vpc
+                    - key: vcs.terraform.module.system
+                      value:
+                        stringValue: aws
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
+                - asInt: '1'
+                  attributes:
+                    - key: vcs.terraform.consumer.project.name
+                      value:
+                        stringValue: testgroup/consumer-app
+                    - key: vcs.terraform.consumer.project.url
+                      value:
+                        stringValue: https://gitlab.com/testgroup/consumer-app
+                    - key: vcs.terraform.module.name
+                      value:
+                        stringValue: my-vpc
+                    - key: vcs.terraform.module.system
+                      value:
+                        stringValue: aws
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
+            name: vcs.terraform.module.consumer
+            unit: '{consumer}'
+          - description: The number of distinct projects consuming a Terraform module.
+            gauge:
+              dataPoints:
+                - asInt: '2'
+                  attributes:
+                    - key: vcs.terraform.module.name
+                      value:
+                        stringValue: my-vpc
+                    - key: vcs.terraform.module.system
+                      value:
+                        stringValue: aws
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
+            name: vcs.terraform.module.consumer.count
+            unit: '{consumer}'
+          - description: The number of Terraform modules published in the group registry.
+            gauge:
+              dataPoints:
+                - asInt: '1'
+                  startTimeUnixNano: '1000000'
+                  timeUnixNano: '2000000'
+            name: vcs.terraform.module.count
+            unit: '{module}'
+        scope:
+          name: github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver
+          version: latest

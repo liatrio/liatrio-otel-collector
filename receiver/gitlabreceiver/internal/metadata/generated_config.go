@@ -28,16 +28,19 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for gitlab metrics.
 type MetricsConfig struct {
-	VcsChangeCount          MetricConfig `mapstructure:"vcs.change.count"`
-	VcsChangeDuration       MetricConfig `mapstructure:"vcs.change.duration"`
-	VcsChangeTimeToApproval MetricConfig `mapstructure:"vcs.change.time_to_approval"`
-	VcsChangeTimeToMerge    MetricConfig `mapstructure:"vcs.change.time_to_merge"`
-	VcsContributorCount     MetricConfig `mapstructure:"vcs.contributor.count"`
-	VcsRefCount             MetricConfig `mapstructure:"vcs.ref.count"`
-	VcsRefLinesDelta        MetricConfig `mapstructure:"vcs.ref.lines_delta"`
-	VcsRefRevisionsDelta    MetricConfig `mapstructure:"vcs.ref.revisions_delta"`
-	VcsRefTime              MetricConfig `mapstructure:"vcs.ref.time"`
-	VcsRepositoryCount      MetricConfig `mapstructure:"vcs.repository.count"`
+	VcsChangeCount                  MetricConfig `mapstructure:"vcs.change.count"`
+	VcsChangeDuration               MetricConfig `mapstructure:"vcs.change.duration"`
+	VcsChangeTimeToApproval         MetricConfig `mapstructure:"vcs.change.time_to_approval"`
+	VcsChangeTimeToMerge            MetricConfig `mapstructure:"vcs.change.time_to_merge"`
+	VcsContributorCount             MetricConfig `mapstructure:"vcs.contributor.count"`
+	VcsRefCount                     MetricConfig `mapstructure:"vcs.ref.count"`
+	VcsRefLinesDelta                MetricConfig `mapstructure:"vcs.ref.lines_delta"`
+	VcsRefRevisionsDelta            MetricConfig `mapstructure:"vcs.ref.revisions_delta"`
+	VcsRefTime                      MetricConfig `mapstructure:"vcs.ref.time"`
+	VcsRepositoryCount              MetricConfig `mapstructure:"vcs.repository.count"`
+	VcsTerraformModuleConsumer      MetricConfig `mapstructure:"vcs.terraform.module.consumer"`
+	VcsTerraformModuleConsumerCount MetricConfig `mapstructure:"vcs.terraform.module.consumer.count"`
+	VcsTerraformModuleCount         MetricConfig `mapstructure:"vcs.terraform.module.count"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
@@ -70,6 +73,15 @@ func DefaultMetricsConfig() MetricsConfig {
 			Enabled: true,
 		},
 		VcsRepositoryCount: MetricConfig{
+			Enabled: true,
+		},
+		VcsTerraformModuleConsumer: MetricConfig{
+			Enabled: true,
+		},
+		VcsTerraformModuleConsumerCount: MetricConfig{
+			Enabled: true,
+		},
+		VcsTerraformModuleCount: MetricConfig{
 			Enabled: true,
 		},
 	}

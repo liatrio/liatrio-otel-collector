@@ -21,6 +21,12 @@ all_set:
       enabled: true
     vcs.repository.count:
       enabled: true
+    vcs.terraform.module.consumer:
+      enabled: true
+    vcs.terraform.module.consumer.count:
+      enabled: true
+    vcs.terraform.module.count:
+      enabled: true
   resource_attributes:
     organization.name:
       enabled: true
@@ -47,6 +53,12 @@ none_set:
     vcs.ref.time:
       enabled: false
     vcs.repository.count:
+      enabled: false
+    vcs.terraform.module.consumer:
+      enabled: false
+    vcs.terraform.module.consumer.count:
+      enabled: false
+    vcs.terraform.module.count:
       enabled: false
   resource_attributes:
     organization.name:
