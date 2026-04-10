@@ -158,9 +158,8 @@ func (gcs *gitlabCatalogScraper) scrape(ctx context.Context) (pmetric.Metrics, e
 					}
 
 					mux.Lock()
-					for compName, resourcePath := range paths {
-						fullName := resourcePath + "/" + compName
-						componentProjectCount[fullName]++
+					for fullComponentPath, resourcePath := range paths {
+						componentProjectCount[fullComponentPath]++
 						resourcePaths[resourcePath] = true
 					}
 					mux.Unlock()

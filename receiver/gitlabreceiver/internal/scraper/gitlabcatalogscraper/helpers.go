@@ -94,7 +94,8 @@ type catalogResourceInfo struct {
 }
 
 // getComponentResourcePaths fetches a project's .gitlab-ci.yml and extracts
-// a map of component name → catalog resource path from the component: include lines.
+// a map of full component path → catalog resource path from the component: include lines.
+// e.g., "components/opentofu/fmt" → "components/opentofu"
 func (gcs *gitlabCatalogScraper) getComponentResourcePaths(restClient *gitlab.Client, projectPath string) (map[string]string, error) {
 	result := make(map[string]string)
 
@@ -130,9 +131,8 @@ func (gcs *gitlabCatalogScraper) getComponentResourcePaths(restClient *gitlab.Cl
 			continue
 		}
 		resourcePath := fullComponentPath[:lastSlash]
-		compName := fullComponentPath[lastSlash+1:]
 
-		result[compName] = resourcePath
+		result[fullComponentPath] = resourcePath
 	}
 
 	return result, nil
