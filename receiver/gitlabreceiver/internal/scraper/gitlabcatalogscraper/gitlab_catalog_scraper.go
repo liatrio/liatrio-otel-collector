@@ -5,6 +5,7 @@ package gitlabcatalogscraper
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"sync"
@@ -73,19 +74,19 @@ func (gcs *gitlabCatalogScraper) scrape(ctx context.Context) (pmetric.Metrics, e
 
 		graphCURL, err = url.JoinPath(gcs.cfg.ClientConfig.Endpoint, "api/graphql")
 		if err != nil {
-			gcs.logger.Sugar().Errorf("error: %v", err)
+			return pmetric.NewMetrics(), fmt.Errorf("invalid endpoint for GraphQL URL: %w", err)
 		}
 
 		restCURL, err = url.JoinPath(gcs.cfg.ClientConfig.Endpoint, "/")
 		if err != nil {
-			gcs.logger.Sugar().Errorf("error: %v", err)
+			return pmetric.NewMetrics(), fmt.Errorf("invalid endpoint for REST URL: %w", err)
 		}
 	}
 
 	graphClient := graphql.NewClient(graphCURL, gcs.client)
 	restClient, err := gitlab.NewClient("", gitlab.WithHTTPClient(gcs.client), gitlab.WithBaseURL(restCURL))
 	if err != nil {
-		gcs.logger.Sugar().Errorf("error creating REST client: %v", err)
+		return pmetric.NewMetrics(), fmt.Errorf("error creating REST client: %w", err)
 	}
 
 	var mux sync.Mutex
