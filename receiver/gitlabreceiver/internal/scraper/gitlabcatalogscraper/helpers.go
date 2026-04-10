@@ -138,6 +138,19 @@ func (gcs *gitlabCatalogScraper) getComponentResourcePaths(restClient *gitlab.Cl
 	return result, nil
 }
 
+// classifyGraphQLError determines if a GraphQL error is permanent (server
+// returned a definitive error) or transient (network issue, should retry).
+func classifyGraphQLError(err error) error {
+	errMsg := err.Error()
+	// GraphQL responses with "input:" prefixes are server-side validation
+	// errors that won't succeed on retry.
+	if strings.Contains(errMsg, "input:") {
+		return backoff.Permanent(err)
+	}
+	// Let backoff retry transient errors (timeouts, connection resets, etc.)
+	return err
+}
+
 // getCatalogResourceByPath fetches a catalog resource's details by its full path.
 func (gcs *gitlabCatalogScraper) getCatalogResourceByPath(ctx context.Context, client graphql.Client, fullPath string) (*catalogResourceInfo, error) {
 	var result *catalogResourceInfo
@@ -145,7 +158,7 @@ func (gcs *gitlabCatalogScraper) getCatalogResourceByPath(ctx context.Context, c
 	operation := func() (string, error) {
 		resp, err := getCatalogResource(ctx, client, fullPath)
 		if err != nil {
-			return "", backoff.Permanent(err)
+			return "", classifyGraphQLError(err)
 		}
 
 		result = &catalogResourceInfo{
@@ -173,7 +186,7 @@ func (gcs *gitlabCatalogScraper) getProjectComponentUsages(ctx context.Context, 
 		operation := func() (string, error) {
 			resp, err := getProjectComponentUsages(ctx, client, projectPath, cursor)
 			if err != nil {
-				return "", backoff.Permanent(err)
+				return "", classifyGraphQLError(err)
 			}
 
 			if len(resp.Project.ComponentUsages.Nodes) == 0 && !resp.Project.ComponentUsages.PageInfo.HasNextPage {
