@@ -70,6 +70,22 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
+			mb.RecordGitlabCatalogComponentProjectCountDataPoint(ts, 1, "gitlab.catalog.component.name-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordGitlabCatalogProjectUsageCountDataPoint(ts, 1, "vcs.repository.url.full-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordGitlabCatalogResourceStarCountDataPoint(ts, 1, "gitlab.catalog.resource.name-val", "gitlab.catalog.resource.full_path-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordGitlabCatalogResourceUsageCountDataPoint(ts, 1, "gitlab.catalog.resource.name-val", "gitlab.catalog.resource.full_path-val")
+
+			defaultMetricsCount++
+			allMetricsCount++
 			mb.RecordVcsChangeCountDataPoint(ts, 1, "vcs.repository.url.full-val", AttributeVcsChangeStateOpen, "vcs.repository.name-val", "vcs.repository.id-val")
 
 			defaultMetricsCount++
@@ -132,6 +148,72 @@ func TestMetricsBuilder(t *testing.T) {
 			validatedMetrics := make(map[string]bool)
 			for i := 0; i < ms.Len(); i++ {
 				switch ms.At(i).Name() {
+				case "gitlab.catalog.component.project_count":
+					assert.False(t, validatedMetrics["gitlab.catalog.component.project_count"], "Found a duplicate in the metrics slice: gitlab.catalog.component.project_count")
+					validatedMetrics["gitlab.catalog.component.project_count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The number of projects in the organization using a specific CI/CD Catalog component.", ms.At(i).Description())
+					assert.Equal(t, "{project}", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("gitlab.catalog.component.name")
+					assert.True(t, ok)
+					assert.Equal(t, "gitlab.catalog.component.name-val", attrVal.Str())
+				case "gitlab.catalog.project_usage.count":
+					assert.False(t, validatedMetrics["gitlab.catalog.project_usage.count"], "Found a duplicate in the metrics slice: gitlab.catalog.project_usage.count")
+					validatedMetrics["gitlab.catalog.project_usage.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The number of CI/CD Catalog components used by a project.", ms.At(i).Description())
+					assert.Equal(t, "{component}", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("vcs.repository.url.full")
+					assert.True(t, ok)
+					assert.Equal(t, "vcs.repository.url.full-val", attrVal.Str())
+				case "gitlab.catalog.resource.star_count":
+					assert.False(t, validatedMetrics["gitlab.catalog.resource.star_count"], "Found a duplicate in the metrics slice: gitlab.catalog.resource.star_count")
+					validatedMetrics["gitlab.catalog.resource.star_count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The number of stars on a CI/CD Catalog resource.", ms.At(i).Description())
+					assert.Equal(t, "{star}", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("gitlab.catalog.resource.name")
+					assert.True(t, ok)
+					assert.Equal(t, "gitlab.catalog.resource.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("gitlab.catalog.resource.full_path")
+					assert.True(t, ok)
+					assert.Equal(t, "gitlab.catalog.resource.full_path-val", attrVal.Str())
+				case "gitlab.catalog.resource.usage_count":
+					assert.False(t, validatedMetrics["gitlab.catalog.resource.usage_count"], "Found a duplicate in the metrics slice: gitlab.catalog.resource.usage_count")
+					validatedMetrics["gitlab.catalog.resource.usage_count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
+					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
+					assert.Equal(t, "The number of projects using a CI/CD Catalog resource in the last 30 days.", ms.At(i).Description())
+					assert.Equal(t, "{usage}", ms.At(i).Unit())
+					dp := ms.At(i).Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+					attrVal, ok := dp.Attributes().Get("gitlab.catalog.resource.name")
+					assert.True(t, ok)
+					assert.Equal(t, "gitlab.catalog.resource.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("gitlab.catalog.resource.full_path")
+					assert.True(t, ok)
+					assert.Equal(t, "gitlab.catalog.resource.full_path-val", attrVal.Str())
 				case "vcs.change.count":
 					assert.False(t, validatedMetrics["vcs.change.count"], "Found a duplicate in the metrics slice: vcs.change.count")
 					validatedMetrics["vcs.change.count"] = true

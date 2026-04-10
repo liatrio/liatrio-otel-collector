@@ -12,6 +12,64 @@ metrics:
     enabled: false
 ```
 
+### gitlab.catalog.component.project_count
+
+The number of projects in the organization using a specific CI/CD Catalog component.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {project} | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level |
+| ---- | ----------- | ------ | -------- |
+| gitlab.catalog.component.name | The name of a component within a CI/CD Catalog resource. | Any Str | Recommended |
+
+### gitlab.catalog.project_usage.count
+
+The number of CI/CD Catalog components used by a project.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {component} | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level |
+| ---- | ----------- | ------ | -------- |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended |
+
+### gitlab.catalog.resource.star_count
+
+The number of stars on a CI/CD Catalog resource.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {star} | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level |
+| ---- | ----------- | ------ | -------- |
+| gitlab.catalog.resource.name | The name of the CI/CD Catalog resource. | Any Str | Recommended |
+| gitlab.catalog.resource.full_path | The full path of the CI/CD Catalog resource project. | Any Str | Recommended |
+
+### gitlab.catalog.resource.usage_count
+
+The number of projects using a CI/CD Catalog resource in the last 30 days.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {usage} | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level |
+| ---- | ----------- | ------ | -------- |
+| gitlab.catalog.resource.name | The name of the CI/CD Catalog resource. | Any Str | Recommended |
+| gitlab.catalog.resource.full_path | The full path of the CI/CD Catalog resource project. | Any Str | Recommended |
+
 ### vcs.change.count
 
 The number of changes (pull requests) in a repository, categorized by their state (either open or merged).

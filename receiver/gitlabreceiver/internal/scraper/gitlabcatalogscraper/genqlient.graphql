@@ -1,0 +1,27 @@
+query getCatalogResource($fullPath: ID!) {
+  ciCatalogResource(fullPath: $fullPath) {
+    name
+    fullPath
+    starCount
+    last30DayUsageCount
+  }
+}
+
+query getProjectComponentUsages(
+  $fullPath: ID!
+  # @genqlient(pointer: true)
+  $after: String
+) {
+  project(fullPath: $fullPath) {
+    componentUsages(first: 100, after: $after) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      # @genqlient(typename: "ComponentUsageNode")
+      nodes {
+        name
+      }
+    }
+  }
+}

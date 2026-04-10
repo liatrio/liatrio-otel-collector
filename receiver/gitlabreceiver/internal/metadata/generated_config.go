@@ -28,20 +28,36 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for gitlab metrics.
 type MetricsConfig struct {
-	VcsChangeCount          MetricConfig `mapstructure:"vcs.change.count"`
-	VcsChangeDuration       MetricConfig `mapstructure:"vcs.change.duration"`
-	VcsChangeTimeToApproval MetricConfig `mapstructure:"vcs.change.time_to_approval"`
-	VcsChangeTimeToMerge    MetricConfig `mapstructure:"vcs.change.time_to_merge"`
-	VcsContributorCount     MetricConfig `mapstructure:"vcs.contributor.count"`
-	VcsRefCount             MetricConfig `mapstructure:"vcs.ref.count"`
-	VcsRefLinesDelta        MetricConfig `mapstructure:"vcs.ref.lines_delta"`
-	VcsRefRevisionsDelta    MetricConfig `mapstructure:"vcs.ref.revisions_delta"`
-	VcsRefTime              MetricConfig `mapstructure:"vcs.ref.time"`
-	VcsRepositoryCount      MetricConfig `mapstructure:"vcs.repository.count"`
+	GitlabCatalogComponentProjectCount MetricConfig `mapstructure:"gitlab.catalog.component.project_count"`
+	GitlabCatalogProjectUsageCount     MetricConfig `mapstructure:"gitlab.catalog.project_usage.count"`
+	GitlabCatalogResourceStarCount     MetricConfig `mapstructure:"gitlab.catalog.resource.star_count"`
+	GitlabCatalogResourceUsageCount    MetricConfig `mapstructure:"gitlab.catalog.resource.usage_count"`
+	VcsChangeCount                     MetricConfig `mapstructure:"vcs.change.count"`
+	VcsChangeDuration                  MetricConfig `mapstructure:"vcs.change.duration"`
+	VcsChangeTimeToApproval            MetricConfig `mapstructure:"vcs.change.time_to_approval"`
+	VcsChangeTimeToMerge               MetricConfig `mapstructure:"vcs.change.time_to_merge"`
+	VcsContributorCount                MetricConfig `mapstructure:"vcs.contributor.count"`
+	VcsRefCount                        MetricConfig `mapstructure:"vcs.ref.count"`
+	VcsRefLinesDelta                   MetricConfig `mapstructure:"vcs.ref.lines_delta"`
+	VcsRefRevisionsDelta               MetricConfig `mapstructure:"vcs.ref.revisions_delta"`
+	VcsRefTime                         MetricConfig `mapstructure:"vcs.ref.time"`
+	VcsRepositoryCount                 MetricConfig `mapstructure:"vcs.repository.count"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
+		GitlabCatalogComponentProjectCount: MetricConfig{
+			Enabled: true,
+		},
+		GitlabCatalogProjectUsageCount: MetricConfig{
+			Enabled: true,
+		},
+		GitlabCatalogResourceStarCount: MetricConfig{
+			Enabled: true,
+		},
+		GitlabCatalogResourceUsageCount: MetricConfig{
+			Enabled: true,
+		},
 		VcsChangeCount: MetricConfig{
 			Enabled: true,
 		},
