@@ -29,6 +29,8 @@ func (gcs *gitlabCatalogScraper) getProjects(ctx context.Context, restClient *gi
 	var projectList []gitlabProject
 
 	operation := func() (string, error) {
+		var localProjects []gitlabProject
+
 		for nextPage := 1; nextPage > 0; {
 			projects, res, err := restClient.Groups.ListGroupProjects(gcs.cfg.GitLabOrg, &gitlab.ListGroupProjectsOptions{
 				IncludeSubGroups: gitlab.Ptr(false),
@@ -52,7 +54,7 @@ func (gcs *gitlabCatalogScraper) getProjects(ctx context.Context, restClient *gi
 			}
 
 			for _, p := range projects {
-				projectList = append(projectList, gitlabProject{
+				localProjects = append(localProjects, gitlabProject{
 					Name: p.Name,
 					ID:   strconv.Itoa(p.ID),
 					Path: p.PathWithNamespace,
@@ -70,6 +72,8 @@ func (gcs *gitlabCatalogScraper) getProjects(ctx context.Context, restClient *gi
 				nextPage = 0
 			}
 		}
+
+		projectList = localProjects
 		return "success", nil
 	}
 
