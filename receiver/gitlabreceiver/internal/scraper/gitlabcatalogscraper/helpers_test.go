@@ -129,7 +129,9 @@ func MockServer(responses *responses) *http.ServeMux {
 			for projectPath, config := range ciResp.configs {
 				expectedPrefix := fmt.Sprintf("/api/v4/projects/%s/repository/files/", projectPath)
 				if len(r.URL.Path) >= len(expectedPrefix) && r.URL.Path[:len(expectedPrefix)] == expectedPrefix {
-					_, _ = w.Write([]byte(config))
+					if _, err := w.Write([]byte(config)); err != nil {
+						fmt.Printf("error writing response: %v", err)
+					}
 					return
 				}
 			}

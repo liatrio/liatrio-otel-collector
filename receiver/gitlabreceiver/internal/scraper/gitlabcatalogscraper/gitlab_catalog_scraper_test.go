@@ -42,13 +42,20 @@ func TestScrape(t *testing.T) {
 			server: MockServer(&responses{
 				catalogResourceResponse: catalogResourceResponse{
 					resources: map[string]getCatalogResourceCiCatalogResource{
-						"components/secret-detection": {Name: "Secret Detection", FullPath: "components/secret-detection", StarCount: 50, Last30DayUsageCount: 8000},
-						"components/opentofu":         {Name: "OpenTofu", FullPath: "components/opentofu", StarCount: 161, Last30DayUsageCount: 5445},
+						"components/secret-detection": {
+							Name: "Secret Detection", FullPath: "components/secret-detection",
+							StarCount: 50, Last30DayUsageCount: 8000,
+						},
+						"components/opentofu": {
+							Name: "OpenTofu", FullPath: "components/opentofu",
+							StarCount: 161, Last30DayUsageCount: 5445,
+						},
 					},
 				},
 				ciConfigResponse: ciConfigResponse{
 					configs: map[string]string{
-						"my-app": "include:\n  - component: gitlab.com/components/secret-detection/sast@2.3.0\n  - component: gitlab.com/components/opentofu/fmt@4.5.0\n",
+						"my-app": "include:\n  - component: gitlab.com/components/secret-detection/sast@2.3.0\n" +
+							"  - component: gitlab.com/components/opentofu/fmt@4.5.0\n",
 					},
 				},
 				projectResponse: projectResponse{
