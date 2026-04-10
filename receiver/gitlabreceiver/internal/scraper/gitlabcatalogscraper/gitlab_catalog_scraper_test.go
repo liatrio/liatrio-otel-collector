@@ -93,7 +93,10 @@ func TestScrape(t *testing.T) {
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
 
-			cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+			cfg := &Config{
+				MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
+				ConcurrencyLimit:     5,
+			}
 
 			gcs := newGitLabCatalogScraper(context.Background(), receivertest.NewNopSettings(metadata.Type), cfg)
 			gcs.cfg.GitLabOrg = "project"

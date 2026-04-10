@@ -4,6 +4,8 @@
 package gitlabcatalogscraper
 
 import (
+	"errors"
+
 	"go.opentelemetry.io/collector/config/confighttp"
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal"
@@ -19,4 +21,11 @@ type Config struct {
 	GitLabOrg string `mapstructure:"gitlab_org"`
 	// ConcurrencyLimit controls the maximum number of concurrent API requests.
 	ConcurrencyLimit int `mapstructure:"concurrency_limit"`
+}
+
+func (cfg *Config) Validate() error {
+	if cfg.ConcurrencyLimit < 1 {
+		return errors.New("concurrency_limit must be at least 1")
+	}
+	return nil
 }

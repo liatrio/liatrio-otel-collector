@@ -90,11 +90,7 @@ func (gcs *gitlabCatalogScraper) scrape(ctx context.Context) (pmetric.Metrics, e
 
 	var mux sync.Mutex
 
-	max := gcs.cfg.ConcurrencyLimit
-	if max <= 0 {
-		max = 5
-	}
-	limiter := make(chan struct{}, max)
+	limiter := make(chan struct{}, gcs.cfg.ConcurrencyLimit)
 
 	// Internal adoption: fetch org projects and their component usages
 	if gcs.cfg.GitLabOrg != "" {
