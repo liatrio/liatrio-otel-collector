@@ -3,7 +3,7 @@ all_set:
   metrics:
     gitlab.catalog.component.project_count:
       enabled: true
-    gitlab.catalog.project_usage.count:
+    gitlab.catalog.project.component_count:
       enabled: true
     gitlab.catalog.resource.star_count:
       enabled: true
@@ -38,7 +38,7 @@ none_set:
   metrics:
     gitlab.catalog.component.project_count:
       enabled: false
-    gitlab.catalog.project_usage.count:
+    gitlab.catalog.project.component_count:
       enabled: false
     gitlab.catalog.resource.star_count:
       enabled: false

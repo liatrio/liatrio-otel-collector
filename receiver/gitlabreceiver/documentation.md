@@ -26,7 +26,7 @@ The number of projects in the organization using a specific CI/CD Catalog compon
 | ---- | ----------- | ------ | -------- |
 | gitlab.catalog.component.name | The name of a component within a CI/CD Catalog resource. | Any Str | Recommended |
 
-### gitlab.catalog.project_usage.count
+### gitlab.catalog.project.component_count
 
 The number of CI/CD Catalog components used by a project.
 

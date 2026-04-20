@@ -79,7 +79,7 @@ metrics:
     gauge:
       value_type: int
     attributes: [gitlab.catalog.component.name]
-  gitlab.catalog.project_usage.count:
+  gitlab.catalog.project.component_count:
     enabled: true
     description: The number of CI/CD Catalog components used by a project.
     stability:

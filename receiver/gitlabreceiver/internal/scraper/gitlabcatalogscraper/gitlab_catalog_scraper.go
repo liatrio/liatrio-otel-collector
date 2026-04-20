@@ -123,7 +123,7 @@ func (gcs *gitlabCatalogScraper) scrape(ctx context.Context) (pmetric.Metrics, e
 					}
 
 					mux.Lock()
-					gcs.mb.RecordGitlabCatalogProjectUsageCountDataPoint(now, int64(len(usages)), project.URL)
+					gcs.mb.RecordGitlabCatalogProjectComponentCountDataPoint(now, int64(len(usages)), project.URL)
 					if len(usages) > 0 {
 						projectsWithComponents = append(projectsWithComponents, project)
 					}

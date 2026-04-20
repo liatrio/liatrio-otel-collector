@@ -28,7 +28,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
 					GitlabCatalogComponentProjectCount: MetricConfig{Enabled: true},
-					GitlabCatalogProjectUsageCount:     MetricConfig{Enabled: true},
+					GitlabCatalogProjectComponentCount: MetricConfig{Enabled: true},
 					GitlabCatalogResourceStarCount:     MetricConfig{Enabled: true},
 					GitlabCatalogResourceUsageCount:    MetricConfig{Enabled: true},
 					VcsChangeCount:                     MetricConfig{Enabled: true},
@@ -53,7 +53,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
 					GitlabCatalogComponentProjectCount: MetricConfig{Enabled: false},
-					GitlabCatalogProjectUsageCount:     MetricConfig{Enabled: false},
+					GitlabCatalogProjectComponentCount: MetricConfig{Enabled: false},
 					GitlabCatalogResourceStarCount:     MetricConfig{Enabled: false},
 					GitlabCatalogResourceUsageCount:    MetricConfig{Enabled: false},
 					VcsChangeCount:                     MetricConfig{Enabled: false},

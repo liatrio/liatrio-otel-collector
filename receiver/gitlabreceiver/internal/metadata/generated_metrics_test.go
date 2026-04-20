@@ -74,7 +74,7 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordGitlabCatalogProjectUsageCountDataPoint(ts, 1, "vcs.repository.url.full-val")
+			mb.RecordGitlabCatalogProjectComponentCountDataPoint(ts, 1, "vcs.repository.url.full-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -163,9 +163,9 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok := dp.Attributes().Get("gitlab.catalog.component.name")
 					assert.True(t, ok)
 					assert.Equal(t, "gitlab.catalog.component.name-val", attrVal.Str())
-				case "gitlab.catalog.project_usage.count":
-					assert.False(t, validatedMetrics["gitlab.catalog.project_usage.count"], "Found a duplicate in the metrics slice: gitlab.catalog.project_usage.count")
-					validatedMetrics["gitlab.catalog.project_usage.count"] = true
+				case "gitlab.catalog.project.component_count":
+					assert.False(t, validatedMetrics["gitlab.catalog.project.component_count"], "Found a duplicate in the metrics slice: gitlab.catalog.project.component_count")
+					validatedMetrics["gitlab.catalog.project.component_count"] = true
 					assert.Equal(t, pmetric.MetricTypeGauge, ms.At(i).Type())
 					assert.Equal(t, 1, ms.At(i).Gauge().DataPoints().Len())
 					assert.Equal(t, "The number of CI/CD Catalog components used by a project.", ms.At(i).Description())

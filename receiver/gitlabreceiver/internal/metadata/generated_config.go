@@ -29,7 +29,7 @@ func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
 // MetricsConfig provides config for gitlab metrics.
 type MetricsConfig struct {
 	GitlabCatalogComponentProjectCount MetricConfig `mapstructure:"gitlab.catalog.component.project_count"`
-	GitlabCatalogProjectUsageCount     MetricConfig `mapstructure:"gitlab.catalog.project_usage.count"`
+	GitlabCatalogProjectComponentCount MetricConfig `mapstructure:"gitlab.catalog.project.component_count"`
 	GitlabCatalogResourceStarCount     MetricConfig `mapstructure:"gitlab.catalog.resource.star_count"`
 	GitlabCatalogResourceUsageCount    MetricConfig `mapstructure:"gitlab.catalog.resource.usage_count"`
 	VcsChangeCount                     MetricConfig `mapstructure:"vcs.change.count"`
@@ -49,7 +49,7 @@ func DefaultMetricsConfig() MetricsConfig {
 		GitlabCatalogComponentProjectCount: MetricConfig{
 			Enabled: true,
 		},
-		GitlabCatalogProjectUsageCount: MetricConfig{
+		GitlabCatalogProjectComponentCount: MetricConfig{
 			Enabled: true,
 		},
 		GitlabCatalogResourceStarCount: MetricConfig{

@@ -40,7 +40,7 @@ resourceMetrics:
                         stringValue: https://gitlab.com/project/my-app
                   startTimeUnixNano: '1000000'
                   timeUnixNano: '2000000'
-            name: gitlab.catalog.project_usage.count
+            name: gitlab.catalog.project.component_count
             unit: '{component}'
           - description: The number of stars on a CI/CD Catalog resource.
             gauge:
