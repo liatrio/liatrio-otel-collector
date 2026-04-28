@@ -20,6 +20,15 @@ resource_attributes:
     type: string
 
 attributes:
+  gitlab.catalog.component.name:
+    description: The name of a component within a CI/CD Catalog resource.
+    type: string
+  gitlab.catalog.resource.full_path:
+    description: The full path of the CI/CD Catalog resource project.
+    type: string
+  gitlab.catalog.resource.name:
+    description: The name of the CI/CD Catalog resource.
+    type: string
   vcs.change.id:
     description: The unique identifier of the VCS change (pull request).
     type: string
@@ -61,6 +70,42 @@ attributes:
       - behind
 
 metrics:
+  gitlab.catalog.component.project_count:
+    enabled: true
+    description: The number of projects in the organization using a specific CI/CD Catalog component.
+    stability:
+      level: development
+    unit: '{project}'
+    gauge:
+      value_type: int
+    attributes: [gitlab.catalog.component.name]
+  gitlab.catalog.project.component_count:
+    enabled: true
+    description: The number of CI/CD Catalog components used by a project.
+    stability:
+      level: development
+    unit: '{component}'
+    gauge:
+      value_type: int
+    attributes: [vcs.repository.url.full]
+  gitlab.catalog.resource.star_count:
+    enabled: true
+    description: The number of stars on a CI/CD Catalog resource.
+    stability:
+      level: development
+    unit: '{star}'
+    gauge:
+      value_type: int
+    attributes: [gitlab.catalog.resource.name, gitlab.catalog.resource.full_path]
+  gitlab.catalog.resource.usage_count:
+    enabled: true
+    description: The number of projects using a CI/CD Catalog resource in the last 30 days.
+    stability:
+      level: development
+    unit: '{usage}'
+    gauge:
+      value_type: int
+    attributes: [gitlab.catalog.resource.name, gitlab.catalog.resource.full_path]
   vcs.change.count:
     description: The number of changes (pull requests) in a repository, categorized by their state (either open or merged).
     stability:

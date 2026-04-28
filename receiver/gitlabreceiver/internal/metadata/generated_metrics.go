@@ -118,6 +118,18 @@ var MapAttributeVcsRevisionDeltaDirection = map[string]AttributeVcsRevisionDelta
 }
 
 var MetricsInfo = metricsInfo{
+	GitlabCatalogComponentProjectCount: metricInfo{
+		Name: "gitlab.catalog.component.project_count",
+	},
+	GitlabCatalogProjectComponentCount: metricInfo{
+		Name: "gitlab.catalog.project.component_count",
+	},
+	GitlabCatalogResourceStarCount: metricInfo{
+		Name: "gitlab.catalog.resource.star_count",
+	},
+	GitlabCatalogResourceUsageCount: metricInfo{
+		Name: "gitlab.catalog.resource.usage_count",
+	},
 	VcsChangeCount: metricInfo{
 		Name: "vcs.change.count",
 	},
@@ -151,20 +163,230 @@ var MetricsInfo = metricsInfo{
 }
 
 type metricsInfo struct {
-	VcsChangeCount          metricInfo
-	VcsChangeDuration       metricInfo
-	VcsChangeTimeToApproval metricInfo
-	VcsChangeTimeToMerge    metricInfo
-	VcsContributorCount     metricInfo
-	VcsRefCount             metricInfo
-	VcsRefLinesDelta        metricInfo
-	VcsRefRevisionsDelta    metricInfo
-	VcsRefTime              metricInfo
-	VcsRepositoryCount      metricInfo
+	GitlabCatalogComponentProjectCount metricInfo
+	GitlabCatalogProjectComponentCount metricInfo
+	GitlabCatalogResourceStarCount     metricInfo
+	GitlabCatalogResourceUsageCount    metricInfo
+	VcsChangeCount                     metricInfo
+	VcsChangeDuration                  metricInfo
+	VcsChangeTimeToApproval            metricInfo
+	VcsChangeTimeToMerge               metricInfo
+	VcsContributorCount                metricInfo
+	VcsRefCount                        metricInfo
+	VcsRefLinesDelta                   metricInfo
+	VcsRefRevisionsDelta               metricInfo
+	VcsRefTime                         metricInfo
+	VcsRepositoryCount                 metricInfo
 }
 
 type metricInfo struct {
 	Name string
+}
+
+type metricGitlabCatalogComponentProjectCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills gitlab.catalog.component.project_count metric with initial data.
+func (m *metricGitlabCatalogComponentProjectCount) init() {
+	m.data.SetName("gitlab.catalog.component.project_count")
+	m.data.SetDescription("The number of projects in the organization using a specific CI/CD Catalog component.")
+	m.data.SetUnit("{project}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricGitlabCatalogComponentProjectCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, gitlabCatalogComponentNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("gitlab.catalog.component.name", gitlabCatalogComponentNameAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricGitlabCatalogComponentProjectCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricGitlabCatalogComponentProjectCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricGitlabCatalogComponentProjectCount(cfg MetricConfig) metricGitlabCatalogComponentProjectCount {
+	m := metricGitlabCatalogComponentProjectCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricGitlabCatalogProjectComponentCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills gitlab.catalog.project.component_count metric with initial data.
+func (m *metricGitlabCatalogProjectComponentCount) init() {
+	m.data.SetName("gitlab.catalog.project.component_count")
+	m.data.SetDescription("The number of CI/CD Catalog components used by a project.")
+	m.data.SetUnit("{component}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricGitlabCatalogProjectComponentCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("vcs.repository.url.full", vcsRepositoryURLFullAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricGitlabCatalogProjectComponentCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricGitlabCatalogProjectComponentCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricGitlabCatalogProjectComponentCount(cfg MetricConfig) metricGitlabCatalogProjectComponentCount {
+	m := metricGitlabCatalogProjectComponentCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricGitlabCatalogResourceStarCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills gitlab.catalog.resource.star_count metric with initial data.
+func (m *metricGitlabCatalogResourceStarCount) init() {
+	m.data.SetName("gitlab.catalog.resource.star_count")
+	m.data.SetDescription("The number of stars on a CI/CD Catalog resource.")
+	m.data.SetUnit("{star}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricGitlabCatalogResourceStarCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, gitlabCatalogResourceNameAttributeValue string, gitlabCatalogResourceFullPathAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("gitlab.catalog.resource.name", gitlabCatalogResourceNameAttributeValue)
+	dp.Attributes().PutStr("gitlab.catalog.resource.full_path", gitlabCatalogResourceFullPathAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricGitlabCatalogResourceStarCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricGitlabCatalogResourceStarCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricGitlabCatalogResourceStarCount(cfg MetricConfig) metricGitlabCatalogResourceStarCount {
+	m := metricGitlabCatalogResourceStarCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricGitlabCatalogResourceUsageCount struct {
+	data     pmetric.Metric // data buffer for generated metric.
+	config   MetricConfig   // metric config provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills gitlab.catalog.resource.usage_count metric with initial data.
+func (m *metricGitlabCatalogResourceUsageCount) init() {
+	m.data.SetName("gitlab.catalog.resource.usage_count")
+	m.data.SetDescription("The number of projects using a CI/CD Catalog resource in the last 30 days.")
+	m.data.SetUnit("{usage}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricGitlabCatalogResourceUsageCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, gitlabCatalogResourceNameAttributeValue string, gitlabCatalogResourceFullPathAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+	dp.Attributes().PutStr("gitlab.catalog.resource.name", gitlabCatalogResourceNameAttributeValue)
+	dp.Attributes().PutStr("gitlab.catalog.resource.full_path", gitlabCatalogResourceFullPathAttributeValue)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricGitlabCatalogResourceUsageCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricGitlabCatalogResourceUsageCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricGitlabCatalogResourceUsageCount(cfg MetricConfig) metricGitlabCatalogResourceUsageCount {
+	m := metricGitlabCatalogResourceUsageCount{config: cfg}
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
 }
 
 type metricVcsChangeCount struct {
@@ -713,23 +935,27 @@ func newMetricVcsRepositoryCount(cfg MetricConfig) metricVcsRepositoryCount {
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
-	config                         MetricsBuilderConfig // config of the metrics builder.
-	startTime                      pcommon.Timestamp    // start time that will be applied to all recorded data points.
-	metricsCapacity                int                  // maximum observed number of metrics per resource.
-	metricsBuffer                  pmetric.Metrics      // accumulates metrics data before emitting.
-	buildInfo                      component.BuildInfo  // contains version information.
-	resourceAttributeIncludeFilter map[string]filter.Filter
-	resourceAttributeExcludeFilter map[string]filter.Filter
-	metricVcsChangeCount           metricVcsChangeCount
-	metricVcsChangeDuration        metricVcsChangeDuration
-	metricVcsChangeTimeToApproval  metricVcsChangeTimeToApproval
-	metricVcsChangeTimeToMerge     metricVcsChangeTimeToMerge
-	metricVcsContributorCount      metricVcsContributorCount
-	metricVcsRefCount              metricVcsRefCount
-	metricVcsRefLinesDelta         metricVcsRefLinesDelta
-	metricVcsRefRevisionsDelta     metricVcsRefRevisionsDelta
-	metricVcsRefTime               metricVcsRefTime
-	metricVcsRepositoryCount       metricVcsRepositoryCount
+	config                                   MetricsBuilderConfig // config of the metrics builder.
+	startTime                                pcommon.Timestamp    // start time that will be applied to all recorded data points.
+	metricsCapacity                          int                  // maximum observed number of metrics per resource.
+	metricsBuffer                            pmetric.Metrics      // accumulates metrics data before emitting.
+	buildInfo                                component.BuildInfo  // contains version information.
+	resourceAttributeIncludeFilter           map[string]filter.Filter
+	resourceAttributeExcludeFilter           map[string]filter.Filter
+	metricGitlabCatalogComponentProjectCount metricGitlabCatalogComponentProjectCount
+	metricGitlabCatalogProjectComponentCount metricGitlabCatalogProjectComponentCount
+	metricGitlabCatalogResourceStarCount     metricGitlabCatalogResourceStarCount
+	metricGitlabCatalogResourceUsageCount    metricGitlabCatalogResourceUsageCount
+	metricVcsChangeCount                     metricVcsChangeCount
+	metricVcsChangeDuration                  metricVcsChangeDuration
+	metricVcsChangeTimeToApproval            metricVcsChangeTimeToApproval
+	metricVcsChangeTimeToMerge               metricVcsChangeTimeToMerge
+	metricVcsContributorCount                metricVcsContributorCount
+	metricVcsRefCount                        metricVcsRefCount
+	metricVcsRefLinesDelta                   metricVcsRefLinesDelta
+	metricVcsRefRevisionsDelta               metricVcsRefRevisionsDelta
+	metricVcsRefTime                         metricVcsRefTime
+	metricVcsRepositoryCount                 metricVcsRepositoryCount
 }
 
 // MetricBuilderOption applies changes to default metrics builder.
@@ -751,22 +977,26 @@ func WithStartTime(startTime pcommon.Timestamp) MetricBuilderOption {
 }
 func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, options ...MetricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
-		config:                         mbc,
-		startTime:                      pcommon.NewTimestampFromTime(time.Now()),
-		metricsBuffer:                  pmetric.NewMetrics(),
-		buildInfo:                      settings.BuildInfo,
-		metricVcsChangeCount:           newMetricVcsChangeCount(mbc.Metrics.VcsChangeCount),
-		metricVcsChangeDuration:        newMetricVcsChangeDuration(mbc.Metrics.VcsChangeDuration),
-		metricVcsChangeTimeToApproval:  newMetricVcsChangeTimeToApproval(mbc.Metrics.VcsChangeTimeToApproval),
-		metricVcsChangeTimeToMerge:     newMetricVcsChangeTimeToMerge(mbc.Metrics.VcsChangeTimeToMerge),
-		metricVcsContributorCount:      newMetricVcsContributorCount(mbc.Metrics.VcsContributorCount),
-		metricVcsRefCount:              newMetricVcsRefCount(mbc.Metrics.VcsRefCount),
-		metricVcsRefLinesDelta:         newMetricVcsRefLinesDelta(mbc.Metrics.VcsRefLinesDelta),
-		metricVcsRefRevisionsDelta:     newMetricVcsRefRevisionsDelta(mbc.Metrics.VcsRefRevisionsDelta),
-		metricVcsRefTime:               newMetricVcsRefTime(mbc.Metrics.VcsRefTime),
-		metricVcsRepositoryCount:       newMetricVcsRepositoryCount(mbc.Metrics.VcsRepositoryCount),
-		resourceAttributeIncludeFilter: make(map[string]filter.Filter),
-		resourceAttributeExcludeFilter: make(map[string]filter.Filter),
+		config:                                   mbc,
+		startTime:                                pcommon.NewTimestampFromTime(time.Now()),
+		metricsBuffer:                            pmetric.NewMetrics(),
+		buildInfo:                                settings.BuildInfo,
+		metricGitlabCatalogComponentProjectCount: newMetricGitlabCatalogComponentProjectCount(mbc.Metrics.GitlabCatalogComponentProjectCount),
+		metricGitlabCatalogProjectComponentCount: newMetricGitlabCatalogProjectComponentCount(mbc.Metrics.GitlabCatalogProjectComponentCount),
+		metricGitlabCatalogResourceStarCount:     newMetricGitlabCatalogResourceStarCount(mbc.Metrics.GitlabCatalogResourceStarCount),
+		metricGitlabCatalogResourceUsageCount:    newMetricGitlabCatalogResourceUsageCount(mbc.Metrics.GitlabCatalogResourceUsageCount),
+		metricVcsChangeCount:                     newMetricVcsChangeCount(mbc.Metrics.VcsChangeCount),
+		metricVcsChangeDuration:                  newMetricVcsChangeDuration(mbc.Metrics.VcsChangeDuration),
+		metricVcsChangeTimeToApproval:            newMetricVcsChangeTimeToApproval(mbc.Metrics.VcsChangeTimeToApproval),
+		metricVcsChangeTimeToMerge:               newMetricVcsChangeTimeToMerge(mbc.Metrics.VcsChangeTimeToMerge),
+		metricVcsContributorCount:                newMetricVcsContributorCount(mbc.Metrics.VcsContributorCount),
+		metricVcsRefCount:                        newMetricVcsRefCount(mbc.Metrics.VcsRefCount),
+		metricVcsRefLinesDelta:                   newMetricVcsRefLinesDelta(mbc.Metrics.VcsRefLinesDelta),
+		metricVcsRefRevisionsDelta:               newMetricVcsRefRevisionsDelta(mbc.Metrics.VcsRefRevisionsDelta),
+		metricVcsRefTime:                         newMetricVcsRefTime(mbc.Metrics.VcsRefTime),
+		metricVcsRepositoryCount:                 newMetricVcsRepositoryCount(mbc.Metrics.VcsRepositoryCount),
+		resourceAttributeIncludeFilter:           make(map[string]filter.Filter),
+		resourceAttributeExcludeFilter:           make(map[string]filter.Filter),
 	}
 	if mbc.ResourceAttributes.OrganizationName.MetricsInclude != nil {
 		mb.resourceAttributeIncludeFilter["organization.name"] = filter.CreateFilter(mbc.ResourceAttributes.OrganizationName.MetricsInclude)
@@ -850,6 +1080,10 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	ils.Scope().SetName(ScopeName)
 	ils.Scope().SetVersion(mb.buildInfo.Version)
 	ils.Metrics().EnsureCapacity(mb.metricsCapacity)
+	mb.metricGitlabCatalogComponentProjectCount.emit(ils.Metrics())
+	mb.metricGitlabCatalogProjectComponentCount.emit(ils.Metrics())
+	mb.metricGitlabCatalogResourceStarCount.emit(ils.Metrics())
+	mb.metricGitlabCatalogResourceUsageCount.emit(ils.Metrics())
 	mb.metricVcsChangeCount.emit(ils.Metrics())
 	mb.metricVcsChangeDuration.emit(ils.Metrics())
 	mb.metricVcsChangeTimeToApproval.emit(ils.Metrics())
@@ -889,6 +1123,26 @@ func (mb *MetricsBuilder) Emit(options ...ResourceMetricsOption) pmetric.Metrics
 	metrics := mb.metricsBuffer
 	mb.metricsBuffer = pmetric.NewMetrics()
 	return metrics
+}
+
+// RecordGitlabCatalogComponentProjectCountDataPoint adds a data point to gitlab.catalog.component.project_count metric.
+func (mb *MetricsBuilder) RecordGitlabCatalogComponentProjectCountDataPoint(ts pcommon.Timestamp, val int64, gitlabCatalogComponentNameAttributeValue string) {
+	mb.metricGitlabCatalogComponentProjectCount.recordDataPoint(mb.startTime, ts, val, gitlabCatalogComponentNameAttributeValue)
+}
+
+// RecordGitlabCatalogProjectComponentCountDataPoint adds a data point to gitlab.catalog.project.component_count metric.
+func (mb *MetricsBuilder) RecordGitlabCatalogProjectComponentCountDataPoint(ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string) {
+	mb.metricGitlabCatalogProjectComponentCount.recordDataPoint(mb.startTime, ts, val, vcsRepositoryURLFullAttributeValue)
+}
+
+// RecordGitlabCatalogResourceStarCountDataPoint adds a data point to gitlab.catalog.resource.star_count metric.
+func (mb *MetricsBuilder) RecordGitlabCatalogResourceStarCountDataPoint(ts pcommon.Timestamp, val int64, gitlabCatalogResourceNameAttributeValue string, gitlabCatalogResourceFullPathAttributeValue string) {
+	mb.metricGitlabCatalogResourceStarCount.recordDataPoint(mb.startTime, ts, val, gitlabCatalogResourceNameAttributeValue, gitlabCatalogResourceFullPathAttributeValue)
+}
+
+// RecordGitlabCatalogResourceUsageCountDataPoint adds a data point to gitlab.catalog.resource.usage_count metric.
+func (mb *MetricsBuilder) RecordGitlabCatalogResourceUsageCountDataPoint(ts pcommon.Timestamp, val int64, gitlabCatalogResourceNameAttributeValue string, gitlabCatalogResourceFullPathAttributeValue string) {
+	mb.metricGitlabCatalogResourceUsageCount.recordDataPoint(mb.startTime, ts, val, gitlabCatalogResourceNameAttributeValue, gitlabCatalogResourceFullPathAttributeValue)
 }
 
 // RecordVcsChangeCountDataPoint adds a data point to vcs.change.count metric.

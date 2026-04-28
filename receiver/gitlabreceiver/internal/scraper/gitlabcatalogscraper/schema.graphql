@@ -1,0 +1,72 @@
+schema {
+  query: Query
+}
+
+"""
+Pagination information conforming to the Relay specification.
+"""
+type PageInfo {
+  "When paginating forwards, the cursor to continue."
+  endCursor: String
+  "When paginating forwards, are there more items?"
+  hasNextPage: Boolean!
+}
+
+"""
+A CI/CD Catalog resource.
+"""
+type CiCatalogResource {
+  "Name of the catalog resource."
+  name: String
+  "Full path of the catalog resource project."
+  fullPath: ID
+  "Number of times the catalog resource has been starred."
+  starCount: Int!
+  "Number of projects using this resource in pipelines in the last 30 days."
+  last30DayUsageCount: Int!
+}
+
+"""
+A CI/CD component usage record for a project.
+"""
+type CiComponentUsage {
+  "Name of the component."
+  name: String
+}
+
+"""
+The connection type for CiComponentUsage.
+"""
+type CiComponentUsageConnection {
+  "A list of nodes."
+  nodes: [CiComponentUsage]
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+}
+
+"""
+A GitLab project.
+"""
+type Project {
+  "CI/CD Catalog components used by this project."
+  componentUsages(
+    "Returns the elements in the list that come after the specified cursor."
+    after: String,
+    "Returns the first _n_ elements from the list."
+    first: Int
+  ): CiComponentUsageConnection
+}
+
+type Query {
+  "A single CI/CD Catalog resource by full path."
+  ciCatalogResource(
+    "Full path of the catalog resource project."
+    fullPath: ID!
+  ): CiCatalogResource
+
+  "Find a project."
+  project(
+    "The full path of the project."
+    fullPath: ID!
+  ): Project
+}
