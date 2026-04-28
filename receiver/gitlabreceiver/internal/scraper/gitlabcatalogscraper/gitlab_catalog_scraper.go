@@ -94,111 +94,109 @@ func (gcs *gitlabCatalogScraper) scrape(ctx context.Context) (pmetric.Metrics, e
 	limiter := make(chan struct{}, gcs.cfg.ConcurrencyLimit)
 
 	// Internal adoption: fetch org projects and their component usages
-	if gcs.cfg.GitLabOrg != "" {
-		projectList, err := gcs.getProjects(ctx, restClient)
-		if err != nil {
-			gcs.logger.Sugar().Errorf("error fetching projects: %v", err)
-		} else {
-			// Step 1: Query componentUsages per project to record per-project counts
-			// and identify which projects use components
-			projectsWithComponents := []gitlabProject{}
+	projectList, err := gcs.getProjects(ctx, restClient)
+	if err != nil {
+		gcs.logger.Sugar().Errorf("error fetching projects: %v", err)
+	} else {
+		// Step 1: Query componentUsages per project to record per-project counts
+		// and identify which projects use components
+		projectsWithComponents := []gitlabProject{}
 
-			var wg sync.WaitGroup
+		var wg sync.WaitGroup
 
-			for _, project := range projectList {
-				project := project
-				wg.Add(1)
-				limiter <- struct{}{}
+		for _, project := range projectList {
+			project := project
+			wg.Add(1)
+			limiter <- struct{}{}
 
-				go func() {
-					defer func() {
-						<-limiter
-						wg.Done()
-					}()
-
-					usages, err := gcs.getProjectComponentUsages(ctx, graphClient, project.Path)
-					if err != nil {
-						gcs.logger.Sugar().Errorf("error fetching component usages for project '%s': %v", project.Path, err)
-						return
-					}
-
-					mux.Lock()
-					gcs.mb.RecordGitlabCatalogProjectComponentCountDataPoint(now, int64(len(usages)), project.URL)
-					if len(usages) > 0 {
-						projectsWithComponents = append(projectsWithComponents, project)
-					}
-					mux.Unlock()
+			go func() {
+				defer func() {
+					<-limiter
+					wg.Done()
 				}()
-			}
 
-			wg.Wait()
+				usages, err := gcs.getProjectComponentUsages(ctx, graphClient, project.Path)
+				if err != nil {
+					gcs.logger.Sugar().Errorf("error fetching component usages for project '%s': %v", project.Path, err)
+					return
+				}
 
-			// Step 2: Fetch CI configs for projects that use components
-			// Parse full component paths to avoid bare name collisions
-			// (e.g., components/go/test vs components/ruby/test)
-			componentProjectCount := make(map[string]int)
-			resourcePaths := make(map[string]bool)
-
-			var wg2 sync.WaitGroup
-			for _, project := range projectsWithComponents {
-				project := project
-				wg2.Add(1)
-				limiter <- struct{}{}
-
-				go func() {
-					defer func() {
-						<-limiter
-						wg2.Done()
-					}()
-
-					paths, err := gcs.getComponentResourcePaths(restClient, project.Path)
-					if err != nil {
-						gcs.logger.Sugar().Warnf("could not fetch CI config for project '%s': %v", project.Path, err)
-						return
-					}
-
-					mux.Lock()
-					for fullComponentPath, resourcePath := range paths {
-						componentProjectCount[fullComponentPath]++
-						resourcePaths[resourcePath] = true
-					}
-					mux.Unlock()
-				}()
-			}
-			wg2.Wait()
-
-			// Step 3: Record component adoption counts using full paths
-			for fullName, count := range componentProjectCount {
-				gcs.mb.RecordGitlabCatalogComponentProjectCountDataPoint(now, int64(count), fullName)
-			}
-
-			// Step 4: Look up catalog resource details by exact path
-			var wg3 sync.WaitGroup
-			for resourcePath := range resourcePaths {
-				resourcePath := resourcePath
-				wg3.Add(1)
-				limiter <- struct{}{}
-
-				go func() {
-					defer func() {
-						<-limiter
-						wg3.Done()
-					}()
-
-					resource, err := gcs.getCatalogResourceByPath(ctx, graphClient, resourcePath)
-					if err != nil {
-						gcs.logger.Sugar().Warnf("could not fetch catalog resource '%s': %v", resourcePath, err)
-						return
-					}
-
-					mux.Lock()
-					gcs.mb.RecordGitlabCatalogResourceStarCountDataPoint(now, int64(resource.StarCount), resource.Name, resource.FullPath)
-					gcs.mb.RecordGitlabCatalogResourceUsageCountDataPoint(now, int64(resource.Last30DayUsageCount), resource.Name, resource.FullPath)
-					mux.Unlock()
-				}()
-			}
-			wg3.Wait()
+				mux.Lock()
+				gcs.mb.RecordGitlabCatalogProjectComponentCountDataPoint(now, int64(len(usages)), project.URL)
+				if len(usages) > 0 {
+					projectsWithComponents = append(projectsWithComponents, project)
+				}
+				mux.Unlock()
+			}()
 		}
+
+		wg.Wait()
+
+		// Step 2: Fetch CI configs for projects that use components
+		// Parse full component paths to avoid bare name collisions
+		// (e.g., components/go/test vs components/ruby/test)
+		componentProjectCount := make(map[string]int)
+		resourcePaths := make(map[string]bool)
+
+		var wg2 sync.WaitGroup
+		for _, project := range projectsWithComponents {
+			project := project
+			wg2.Add(1)
+			limiter <- struct{}{}
+
+			go func() {
+				defer func() {
+					<-limiter
+					wg2.Done()
+				}()
+
+				paths, err := gcs.getComponentResourcePaths(restClient, project.Path)
+				if err != nil {
+					gcs.logger.Sugar().Warnf("could not fetch CI config for project '%s': %v", project.Path, err)
+					return
+				}
+
+				mux.Lock()
+				for fullComponentPath, resourcePath := range paths {
+					componentProjectCount[fullComponentPath]++
+					resourcePaths[resourcePath] = true
+				}
+				mux.Unlock()
+			}()
+		}
+		wg2.Wait()
+
+		// Step 3: Record component adoption counts using full paths
+		for fullName, count := range componentProjectCount {
+			gcs.mb.RecordGitlabCatalogComponentProjectCountDataPoint(now, int64(count), fullName)
+		}
+
+		// Step 4: Look up catalog resource details by exact path
+		var wg3 sync.WaitGroup
+		for resourcePath := range resourcePaths {
+			resourcePath := resourcePath
+			wg3.Add(1)
+			limiter <- struct{}{}
+
+			go func() {
+				defer func() {
+					<-limiter
+					wg3.Done()
+				}()
+
+				resource, err := gcs.getCatalogResourceByPath(ctx, graphClient, resourcePath)
+				if err != nil {
+					gcs.logger.Sugar().Warnf("could not fetch catalog resource '%s': %v", resourcePath, err)
+					return
+				}
+
+				mux.Lock()
+				gcs.mb.RecordGitlabCatalogResourceStarCountDataPoint(now, int64(resource.StarCount), resource.Name, resource.FullPath)
+				gcs.mb.RecordGitlabCatalogResourceUsageCountDataPoint(now, int64(resource.Last30DayUsageCount), resource.Name, resource.FullPath)
+				mux.Unlock()
+			}()
+		}
+		wg3.Wait()
 	}
 
 	gcs.rb.SetVcsVendorName("gitlab")

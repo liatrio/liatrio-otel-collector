@@ -24,6 +24,9 @@ type Config struct {
 }
 
 func (cfg *Config) Validate() error {
+	if cfg.GitLabOrg == "" {
+		return errors.New("gitlab_org is required")
+	}
 	if cfg.ConcurrencyLimit < 1 {
 		return errors.New("concurrency_limit must be at least 1")
 	}
