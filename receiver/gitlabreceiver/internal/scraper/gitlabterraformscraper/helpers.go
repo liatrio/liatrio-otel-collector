@@ -2,12 +2,15 @@ package gitlabterraformscraper
 
 import (
 	"context"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/cenkalti/backoff/v5"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
+
+var sourceLineRegex = regexp.MustCompile(`(?m)^\s*source\s*=\s*"([^"]*)"`)
 
 type terraformModule struct {
 	Name            string
@@ -128,6 +131,9 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 
 	// Filter to .tf files only and deduplicate by project ID.
 	// Exclude the module's own source project.
+	// Verify the match is on a `source = "..."` line referencing this module
+	// as a path segment — eliminates comments, descriptions, variable names,
+	// and substring matches against longer module names.
 	seen := make(map[int]bool)
 	var consumers []moduleConsumer
 	for _, blob := range allBlobs {
@@ -135,6 +141,9 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 			continue
 		}
 		if blob.ProjectID == module.SourceProjectID {
+			continue
+		}
+		if !matchesModuleSource(blob.Data, module.Name) {
 			continue
 		}
 		if !seen[blob.ProjectID] {
@@ -193,4 +202,21 @@ func parseModuleName(packageName string) (string, string) {
 		return parts[0], parts[1]
 	}
 	return packageName, "generic"
+}
+
+// matchesModuleSource reports whether data contains a `source = "..."` line
+// whose path references moduleName as a distinct segment. The module name must
+// be preceded by a path separator (`/` or `:`) or the start of the source
+// string, and followed by `/`, the end of the source string, or `.git`.
+func matchesModuleSource(data, moduleName string) bool {
+	if moduleName == "" {
+		return false
+	}
+	nameSegment := regexp.MustCompile(`(?:^|[/:])` + regexp.QuoteMeta(moduleName) + `(?:/|$|\.git)`)
+	for _, m := range sourceLineRegex.FindAllStringSubmatch(data, -1) {
+		if nameSegment.MatchString(m[1]) {
+			return true
+		}
+	}
+	return false
 }

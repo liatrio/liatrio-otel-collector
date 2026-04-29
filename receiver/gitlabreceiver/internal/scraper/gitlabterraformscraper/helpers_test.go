@@ -379,6 +379,100 @@ func TestSearchModuleConsumers(t *testing.T) {
 	}
 }
 
+func TestMatchesModuleSource(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		data       string
+		moduleName string
+		expected   bool
+	}{
+		{
+			desc:       "RegistryPath",
+			data:       `source = "gitlab.com/group/my-vpc/aws"`,
+			moduleName: "my-vpc",
+			expected:   true,
+		},
+		{
+			desc:       "RegistryShorthand",
+			data:       `source = "group/my-vpc/aws"`,
+			moduleName: "my-vpc",
+			expected:   true,
+		},
+		{
+			desc:       "GitURL",
+			data:       `source = "git::https://gitlab.com/group/my-vpc.git"`,
+			moduleName: "my-vpc",
+			expected:   true,
+		},
+		{
+			desc:       "Indented",
+			data:       "module \"vpc\" {\n  source = \"gitlab.com/group/my-vpc/aws\"\n  version = \"1.0.0\"\n}",
+			moduleName: "my-vpc",
+			expected:   true,
+		},
+		{
+			desc:       "ExtraSpaces",
+			data:       `   source   =   "gitlab.com/group/my-vpc/aws"`,
+			moduleName: "my-vpc",
+			expected:   true,
+		},
+		{
+			desc:       "CommentMentioningName",
+			data:       `# todo: try my-vpc someday`,
+			moduleName: "my-vpc",
+			expected:   false,
+		},
+		{
+			desc:       "DescriptionField",
+			data:       `description = "compatible with my-vpc module"`,
+			moduleName: "my-vpc",
+			expected:   false,
+		},
+		{
+			desc:       "VariableNameContainsModule",
+			data:       `variable "my_vpc_id" {}`,
+			moduleName: "my-vpc",
+			expected:   false,
+		},
+		{
+			desc:       "LongerModuleNameDoesNotMatch",
+			data:       `source = "gitlab.com/group/my-vpc-extended/aws"`,
+			moduleName: "my-vpc",
+			expected:   false,
+		},
+		{
+			desc:       "ShorterModuleNameDoesNotMatch",
+			data:       `source = "gitlab.com/group/my-vpc/aws"`,
+			moduleName: "vpc",
+			expected:   false,
+		},
+		{
+			desc:       "NameInTagsDoesNotMatch",
+			data:       `tags = { Name = "my-vpc" }`,
+			moduleName: "my-vpc",
+			expected:   false,
+		},
+		{
+			desc:       "EmptyModuleName",
+			data:       `source = "gitlab.com/group/my-vpc/aws"`,
+			moduleName: "",
+			expected:   false,
+		},
+		{
+			desc:       "MultipleSourcesOneMatches",
+			data:       "module \"a\" {\n  source = \"gitlab.com/group/other/aws\"\n}\nmodule \"b\" {\n  source = \"gitlab.com/group/my-vpc/aws\"\n}",
+			moduleName: "my-vpc",
+			expected:   true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			assert.Equal(t, tc.expected, matchesModuleSource(tc.data, tc.moduleName))
+		})
+	}
+}
+
 func TestParseModuleName(t *testing.T) {
 	testCases := []struct {
 		input          string
