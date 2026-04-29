@@ -120,7 +120,7 @@ service:
 |--------|------|-------------|
 | `vcs.terraform.module.count` | Gauge | Total number of Terraform modules published in the group registry |
 | `vcs.terraform.module.consumer.count` | Gauge | Number of distinct projects consuming a specific module (attributes: `vcs.terraform.module.name`, `vcs.terraform.module.system`) |
-| `vcs.terraform.module.consumer` | Gauge | One data point per consumer project (attributes: `vcs.terraform.module.name`, `vcs.terraform.module.system`, `vcs.terraform.consumer.project.name`, `vcs.terraform.consumer.project.url`) |
+| `vcs.terraform.module.consumer` | Gauge | One data point per consumer project (attributes: `vcs.terraform.module.name`, `vcs.terraform.module.system`, `vcs.repository.name`, `vcs.repository.url.full`) |
 
 ### Sample PromQL Queries
 

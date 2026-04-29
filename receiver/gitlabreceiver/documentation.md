@@ -237,8 +237,8 @@ A consuming project of a Terraform module. Value is always 1, attributes identif
 | ---- | ----------- | ------ | -------- |
 | vcs.terraform.module.name | The name of the Terraform module in the registry. | Any Str | Recommended |
 | vcs.terraform.module.system | The system (provider) of the Terraform module in the registry. | Any Str | Recommended |
-| vcs.terraform.consumer.project.name | The name of the project consuming a Terraform module. | Any Str | Recommended |
-| vcs.terraform.consumer.project.url | The URL of the project consuming a Terraform module. | Any Str | Recommended |
+| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended |
 
 ### vcs.terraform.module.consumer.count
 

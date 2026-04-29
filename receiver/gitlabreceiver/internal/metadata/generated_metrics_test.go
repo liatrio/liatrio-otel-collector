@@ -125,7 +125,7 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsTerraformModuleConsumerDataPoint(ts, 1, "vcs.terraform.module.name-val", "vcs.terraform.module.system-val", "vcs.terraform.consumer.project.name-val", "vcs.terraform.consumer.project.url-val")
+			mb.RecordVcsTerraformModuleConsumerDataPoint(ts, 1, "vcs.terraform.module.name-val", "vcs.terraform.module.system-val", "vcs.repository.name-val", "vcs.repository.url.full-val")
 
 			defaultMetricsCount++
 			allMetricsCount++
@@ -496,12 +496,12 @@ func TestMetricsBuilder(t *testing.T) {
 					attrVal, ok = dp.Attributes().Get("vcs.terraform.module.system")
 					assert.True(t, ok)
 					assert.Equal(t, "vcs.terraform.module.system-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("vcs.terraform.consumer.project.name")
+					attrVal, ok = dp.Attributes().Get("vcs.repository.name")
 					assert.True(t, ok)
-					assert.Equal(t, "vcs.terraform.consumer.project.name-val", attrVal.Str())
-					attrVal, ok = dp.Attributes().Get("vcs.terraform.consumer.project.url")
+					assert.Equal(t, "vcs.repository.name-val", attrVal.Str())
+					attrVal, ok = dp.Attributes().Get("vcs.repository.url.full")
 					assert.True(t, ok)
-					assert.Equal(t, "vcs.terraform.consumer.project.url-val", attrVal.Str())
+					assert.Equal(t, "vcs.repository.url.full-val", attrVal.Str())
 				case "vcs.terraform.module.consumer.count":
 					assert.False(t, validatedMetrics["vcs.terraform.module.consumer.count"], "Found a duplicate in the metrics slice: vcs.terraform.module.consumer.count")
 					validatedMetrics["vcs.terraform.module.consumer.count"] = true

@@ -16,10 +16,10 @@ resourceMetrics:
               dataPoints:
                 - asInt: '1'
                   attributes:
-                    - key: vcs.terraform.consumer.project.name
+                    - key: vcs.repository.name
                       value:
                         stringValue: testgroup/another-app
-                    - key: vcs.terraform.consumer.project.url
+                    - key: vcs.repository.url.full
                       value:
                         stringValue: https://gitlab.com/testgroup/another-app
                     - key: vcs.terraform.module.name
@@ -32,10 +32,10 @@ resourceMetrics:
                   timeUnixNano: '2000000'
                 - asInt: '1'
                   attributes:
-                    - key: vcs.terraform.consumer.project.name
+                    - key: vcs.repository.name
                       value:
                         stringValue: testgroup/consumer-app
-                    - key: vcs.terraform.consumer.project.url
+                    - key: vcs.repository.url.full
                       value:
                         stringValue: https://gitlab.com/testgroup/consumer-app
                     - key: vcs.terraform.module.name

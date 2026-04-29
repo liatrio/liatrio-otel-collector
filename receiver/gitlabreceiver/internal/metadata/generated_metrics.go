@@ -959,7 +959,7 @@ func (m *metricVcsTerraformModuleConsumer) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricVcsTerraformModuleConsumer) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsTerraformModuleNameAttributeValue string, vcsTerraformModuleSystemAttributeValue string, vcsTerraformConsumerProjectNameAttributeValue string, vcsTerraformConsumerProjectURLAttributeValue string) {
+func (m *metricVcsTerraformModuleConsumer) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsTerraformModuleNameAttributeValue string, vcsTerraformModuleSystemAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryURLFullAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -969,8 +969,8 @@ func (m *metricVcsTerraformModuleConsumer) recordDataPoint(start pcommon.Timesta
 	dp.SetIntValue(val)
 	dp.Attributes().PutStr("vcs.terraform.module.name", vcsTerraformModuleNameAttributeValue)
 	dp.Attributes().PutStr("vcs.terraform.module.system", vcsTerraformModuleSystemAttributeValue)
-	dp.Attributes().PutStr("vcs.terraform.consumer.project.name", vcsTerraformConsumerProjectNameAttributeValue)
-	dp.Attributes().PutStr("vcs.terraform.consumer.project.url", vcsTerraformConsumerProjectURLAttributeValue)
+	dp.Attributes().PutStr("vcs.repository.name", vcsRepositoryNameAttributeValue)
+	dp.Attributes().PutStr("vcs.repository.url.full", vcsRepositoryURLFullAttributeValue)
 }
 
 // updateCapacity saves max length of data point slices that will be used for the slice capacity.
@@ -1372,8 +1372,8 @@ func (mb *MetricsBuilder) RecordVcsRepositoryCountDataPoint(ts pcommon.Timestamp
 }
 
 // RecordVcsTerraformModuleConsumerDataPoint adds a data point to vcs.terraform.module.consumer metric.
-func (mb *MetricsBuilder) RecordVcsTerraformModuleConsumerDataPoint(ts pcommon.Timestamp, val int64, vcsTerraformModuleNameAttributeValue string, vcsTerraformModuleSystemAttributeValue string, vcsTerraformConsumerProjectNameAttributeValue string, vcsTerraformConsumerProjectURLAttributeValue string) {
-	mb.metricVcsTerraformModuleConsumer.recordDataPoint(mb.startTime, ts, val, vcsTerraformModuleNameAttributeValue, vcsTerraformModuleSystemAttributeValue, vcsTerraformConsumerProjectNameAttributeValue, vcsTerraformConsumerProjectURLAttributeValue)
+func (mb *MetricsBuilder) RecordVcsTerraformModuleConsumerDataPoint(ts pcommon.Timestamp, val int64, vcsTerraformModuleNameAttributeValue string, vcsTerraformModuleSystemAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryURLFullAttributeValue string) {
+	mb.metricVcsTerraformModuleConsumer.recordDataPoint(mb.startTime, ts, val, vcsTerraformModuleNameAttributeValue, vcsTerraformModuleSystemAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryURLFullAttributeValue)
 }
 
 // RecordVcsTerraformModuleConsumerCountDataPoint adds a data point to vcs.terraform.module.consumer.count metric.
