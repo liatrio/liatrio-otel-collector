@@ -23,6 +23,10 @@ func (gts *gitlabTerraformScraper) getModules(ctx context.Context, restClient *g
 	var modules []terraformModule
 
 	operation := func() (string, error) {
+		// Accumulate into a fresh slice on each attempt; if the operation
+		// fails partway through and is retried, we don't want stale entries
+		// from the previous attempt to leak into the final result.
+		var attemptModules []terraformModule
 		for nextPage := 1; nextPage > 0; {
 			packages, res, err := restClient.Packages.ListGroupPackages(gts.cfg.GitLabOrg, &gitlab.ListGroupPackagesOptions{
 				PackageType: gitlab.Ptr("terraform_module"),
@@ -40,7 +44,7 @@ func (gts *gitlabTerraformScraper) getModules(ctx context.Context, restClient *g
 
 			for _, p := range packages {
 				name, system := parseModuleName(p.Name)
-				modules = append(modules, terraformModule{
+				attemptModules = append(attemptModules, terraformModule{
 					Name:            name,
 					System:          system,
 					SourceProjectID: p.ProjectID,
@@ -57,6 +61,7 @@ func (gts *gitlabTerraformScraper) getModules(ctx context.Context, restClient *g
 				nextPage = 0
 			}
 		}
+		modules = attemptModules
 		return "success", nil
 	}
 
@@ -107,6 +112,9 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 	var allBlobs []*gitlab.Blob
 
 	operation := func() (string, error) {
+		// Accumulate into a fresh slice on each attempt; on retry we don't want
+		// blobs from a partial previous attempt leaking through.
+		var attemptBlobs []*gitlab.Blob
 		for nextPage := 1; nextPage > 0; {
 			blobs, res, err := restClient.Search.BlobsByGroup(gts.cfg.GitLabOrg, query, &gitlab.SearchOptions{
 				ListOptions: gitlab.ListOptions{
@@ -121,7 +129,7 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 				return "", backoff.Permanent(err)
 			}
 
-			allBlobs = append(allBlobs, blobs...)
+			attemptBlobs = append(attemptBlobs, blobs...)
 
 			nextPageHeader := res.Header.Get("x-next-page")
 			if len(nextPageHeader) > 0 {
@@ -133,6 +141,7 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 				nextPage = 0
 			}
 		}
+		allBlobs = attemptBlobs
 		return "success", nil
 	}
 
