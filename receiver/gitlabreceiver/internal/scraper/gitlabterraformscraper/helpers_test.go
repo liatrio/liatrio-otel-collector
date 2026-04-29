@@ -367,7 +367,7 @@ func TestSearchModuleConsumers(t *testing.T) {
 			client, err := gitlab.NewClient("", gitlab.WithBaseURL(server.URL))
 			require.NoError(t, err)
 
-			consumers, err := gts.searchModuleConsumers(context.Background(), client, tc.module)
+			consumers, err := gts.searchModuleConsumers(context.Background(), client, tc.module, true)
 
 			if tc.expectedErr {
 				assert.Error(t, err)

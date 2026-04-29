@@ -79,15 +79,41 @@ func (gts *gitlabTerraformScraper) scrape(ctx context.Context) (pmetric.Metrics,
 		return gts.mb.Emit(), err
 	}
 
-	// Discover all Terraform modules in the group registry
+	// Each metric corresponds to a tier of work; disable a metric in config to
+	// skip the API calls that feed it. Tiers are cumulative because each builds
+	// on the previous tier's data:
+	//   - module.count          : Packages API only
+	//   - module.consumer.count : + Search API per module
+	//   - module.consumer       : + Projects API per consumer (name/URL lookup)
+	metricsCfg := gts.cfg.MetricsBuilderConfig.Metrics
+	moduleCountEnabled := metricsCfg.VcsTerraformModuleCount.Enabled
+	consumerCountEnabled := metricsCfg.VcsTerraformModuleConsumerCount.Enabled
+	consumerEnabled := metricsCfg.VcsTerraformModuleConsumer.Enabled
+
+	// Tier 1: module discovery. Skip if no metric in this scraper is enabled.
+	if !moduleCountEnabled && !consumerCountEnabled && !consumerEnabled {
+		gts.rb.SetVcsVendorName("gitlab")
+		gts.rb.SetOrganizationName(gts.cfg.GitLabOrg)
+		return gts.mb.Emit(metadata.WithResource(gts.rb.Emit())), nil
+	}
+
 	modules, err := gts.getModules(ctx, restClient)
 	if err != nil {
 		gts.logger.Sugar().Errorf("error getting Terraform modules: %v", err)
 		return gts.mb.Emit(), err
 	}
 
-	// Record total module count
-	gts.mb.RecordVcsTerraformModuleCountDataPoint(now, int64(len(modules)))
+	if moduleCountEnabled {
+		gts.mb.RecordVcsTerraformModuleCountDataPoint(now, int64(len(modules)))
+	}
+
+	// Tiers 2 and 3: skip the consumer search work entirely when neither
+	// consumer metric is enabled.
+	if !consumerCountEnabled && !consumerEnabled {
+		gts.rb.SetVcsVendorName("gitlab")
+		gts.rb.SetOrganizationName(gts.cfg.GitLabOrg)
+		return gts.mb.Emit(metadata.WithResource(gts.rb.Emit())), nil
+	}
 
 	// Search for consumers of each module concurrently
 	var wg sync.WaitGroup
@@ -114,16 +140,20 @@ func (gts *gitlabTerraformScraper) scrape(ctx context.Context) (pmetric.Metrics,
 				wg.Done()
 			}()
 
-			consumers, err := gts.searchModuleConsumers(ctx, restClient, module)
+			consumers, err := gts.searchModuleConsumers(ctx, restClient, module, consumerEnabled)
 			if err != nil {
 				gts.logger.Sugar().Errorf("error searching consumers for module '%s/%s': %v", module.Name, module.System, err)
 				return
 			}
 
 			mux.Lock()
-			gts.mb.RecordVcsTerraformModuleConsumerCountDataPoint(now, int64(len(consumers)), module.Name, module.System)
-			for _, consumer := range consumers {
-				gts.mb.RecordVcsTerraformModuleConsumerDataPoint(now, int64(1), module.Name, module.System, consumer.ProjectName, consumer.ProjectURL)
+			if consumerCountEnabled {
+				gts.mb.RecordVcsTerraformModuleConsumerCountDataPoint(now, int64(len(consumers)), module.Name, module.System)
+			}
+			if consumerEnabled {
+				for _, consumer := range consumers {
+					gts.mb.RecordVcsTerraformModuleConsumerDataPoint(now, int64(1), module.Name, module.System, consumer.ProjectName, consumer.ProjectURL)
+				}
 			}
 			mux.Unlock()
 		}()

@@ -86,7 +86,12 @@ type moduleConsumer struct {
 	ProjectURL  string
 }
 
-func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, restClient *gitlab.Client, module terraformModule) ([]moduleConsumer, error) {
+// searchModuleConsumers finds projects in the configured group whose .tf
+// files reference the given module via a `source = "..."` line. When
+// resolveProjectInfo is true, each returned consumer also has its display
+// name and URL populated via a per-project API lookup; pass false to skip
+// that work when only the consumer count is needed.
+func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, restClient *gitlab.Client, module terraformModule, resolveProjectInfo bool) ([]moduleConsumer, error) {
 	// Build the search query with server-side filters:
 	//   - Quote the module name to force exact-token match (avoids the
 	//     Elasticsearch tokenizer splitting on hyphens, e.g. "my-vpc" → "my" "vpc").
@@ -158,17 +163,20 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 		}
 	}
 
-	// Resolve project names and URLs
-	for i, consumer := range consumers {
-		name, url, err := gts.getProjectInfo(restClient, consumer.ProjectID)
-		if err != nil {
-			gts.logger.Sugar().Warnf("could not resolve project info for ID %d: %v", consumer.ProjectID, err)
-			consumers[i].ProjectName = strconv.Itoa(consumer.ProjectID)
-			consumers[i].ProjectURL = ""
-			continue
+	// Resolve project names and URLs only when the caller needs them; otherwise
+	// skip a `GET /projects/:id` call per consumer.
+	if resolveProjectInfo {
+		for i, consumer := range consumers {
+			name, url, err := gts.getProjectInfo(restClient, consumer.ProjectID)
+			if err != nil {
+				gts.logger.Sugar().Warnf("could not resolve project info for ID %d: %v", consumer.ProjectID, err)
+				consumers[i].ProjectName = strconv.Itoa(consumer.ProjectID)
+				consumers[i].ProjectURL = ""
+				continue
+			}
+			consumers[i].ProjectName = name
+			consumers[i].ProjectURL = url
 		}
-		consumers[i].ProjectName = name
-		consumers[i].ProjectURL = url
 	}
 
 	return consumers, nil
