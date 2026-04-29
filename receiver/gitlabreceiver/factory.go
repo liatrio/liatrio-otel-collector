@@ -16,6 +16,7 @@ import (
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal"
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/metadata"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/scraper/gitlabcatalogscraper"
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/scraper/gitlabscraper"
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/scraper/gitlabterraformscraper"
 )
@@ -25,6 +26,7 @@ import (
 var (
 	scraperFactories = map[string]internal.ScraperFactory{
 		gitlabscraper.TypeStr:          &gitlabscraper.Factory{},
+		gitlabcatalogscraper.TypeStr:   &gitlabcatalogscraper.Factory{},
 		gitlabterraformscraper.TypeStr: &gitlabterraformscraper.Factory{},
 	}
 
