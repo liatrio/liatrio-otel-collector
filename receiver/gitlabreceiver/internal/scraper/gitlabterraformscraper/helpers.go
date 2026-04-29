@@ -176,7 +176,7 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 	// skip a `GET /projects/:id` call per consumer.
 	if resolveProjectInfo {
 		for i, consumer := range consumers {
-			name, url, err := gts.getProjectInfo(restClient, consumer.ProjectID)
+			name, url, err := gts.getProjectInfo(ctx, restClient, consumer.ProjectID)
 			if err != nil {
 				gts.logger.Sugar().Warnf("could not resolve project info for ID %d: %v", consumer.ProjectID, err)
 				consumers[i].ProjectName = strconv.Itoa(consumer.ProjectID)
@@ -191,7 +191,7 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 	return consumers, nil
 }
 
-func (gts *gitlabTerraformScraper) getProjectInfo(restClient *gitlab.Client, projectID int) (string, string, error) {
+func (gts *gitlabTerraformScraper) getProjectInfo(ctx context.Context, restClient *gitlab.Client, projectID int) (string, string, error) {
 	var project *gitlab.Project
 
 	operation := func() (string, error) {
@@ -206,7 +206,7 @@ func (gts *gitlabTerraformScraper) getProjectInfo(restClient *gitlab.Client, pro
 		return "success", nil
 	}
 
-	_, err := backoff.Retry(context.Background(), operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
+	_, err := backoff.Retry(ctx, operation, backoff.WithBackOff(backoff.NewExponentialBackOff()))
 	if err != nil {
 		return "", "", err
 	}
