@@ -133,13 +133,13 @@ sort_desc(vcs_terraform_module_consumer_count)
 **Which projects use a specific module?**
 
 ```promql
-vcs_terraform_module_consumer{vcs_terraform_module_name="my-vpc"}
+vcs_terraform_module_consumer{vcs_terraform_module_name="my-vpc",vcs_terraform_module_system="aws"}
 ```
 
 **Rank modules by adoption:**
 
 ```promql
-sort_desc(sum by (vcs_terraform_module_name)(vcs_terraform_module_consumer_count))
+sort_desc(sum by (vcs_terraform_module_name, vcs_terraform_module_system)(vcs_terraform_module_consumer_count))
 ```
 
 ## Scraping
