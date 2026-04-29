@@ -2,6 +2,7 @@ package gitlabterraformscraper
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -86,11 +87,17 @@ type moduleConsumer struct {
 }
 
 func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, restClient *gitlab.Client, module terraformModule) ([]moduleConsumer, error) {
-	// Search for the module name in .tf files across the group.
-	// We search by module name only (not name/system) because consumers may
+	// Build the search query with server-side filters:
+	//   - Quote the module name to force exact-token match (avoids the
+	//     Elasticsearch tokenizer splitting on hyphens, e.g. "my-vpc" → "my" "vpc").
+	//   - Require the term `source` to be present, since legitimate consumers
+	//     declare modules via `source = "..."`.
+	//   - Restrict to .tf files via the extension filter, eliminating hits in
+	//     READMEs, docs, and unrelated file types before they cross the wire.
+	// We match on module name only (not name/system) because consumers may
 	// reference modules via git URLs (e.g., git::https://.../module-name.git)
 	// rather than the registry format (name/system).
-	query := module.Name
+	query := fmt.Sprintf(`"%s" source extension:tf`, module.Name)
 
 	var allBlobs []*gitlab.Blob
 
@@ -129,17 +136,14 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 		return nil, err
 	}
 
-	// Filter to .tf files only and deduplicate by project ID.
-	// Exclude the module's own source project.
-	// Verify the match is on a `source = "..."` line referencing this module
-	// as a path segment — eliminates comments, descriptions, variable names,
-	// and substring matches against longer module names.
+	// Filter results: exclude the module's own source project, verify the match
+	// is on a `source = "..."` line referencing this module as a path segment
+	// (eliminates comments, descriptions, variable names, and substring matches
+	// against longer module names), then deduplicate by project ID. The .tf
+	// extension filter is applied server-side via the search query.
 	seen := make(map[int]bool)
 	var consumers []moduleConsumer
 	for _, blob := range allBlobs {
-		if !strings.HasSuffix(blob.Filename, ".tf") {
-			continue
-		}
 		if blob.ProjectID == module.SourceProjectID {
 			continue
 		}
