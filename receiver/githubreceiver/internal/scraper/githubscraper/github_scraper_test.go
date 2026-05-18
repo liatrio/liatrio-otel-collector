@@ -20,6 +20,8 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/receivertest"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 )
 
 func TestNewGitHubScraper(t *testing.T) {
@@ -373,4 +375,239 @@ func TestScrape(t *testing.T) {
 			}
 		})
 	}
+}
+
+// panicResponses builds a mock-server response set for a single repo whose
+// code-scan alert has a nil Rule. That nil triggers a runtime panic deep
+// inside the per-repo scrape goroutine (via mapSeverities), exercising the
+// recover() that the scrape goroutine installs.
+func panicResponses(repoName string) *responses {
+	return &responses{
+		scrape: true,
+		checkLoginResponse: loginResponse{
+			checkLogin: checkLoginResponse{
+				Organization: checkLoginOrganization{Login: "liatrio"},
+			},
+			responseCode: http.StatusOK,
+		},
+		searchRepoResponse: searchRepoResponse{
+			repos: []getRepoDataBySearchSearchSearchResultItemConnection{
+				{
+					RepositoryCount: 1,
+					Nodes: []SearchNode{
+						&SearchNodeRepository{Repo: Repo{Name: repoName}},
+					},
+					PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+						HasNextPage: false,
+					},
+				},
+			},
+			responseCode: http.StatusOK,
+		},
+		branchResponse: branchResponse{
+			branches: []getBranchDataRepositoryRefsRefConnection{
+				{
+					TotalCount: 0,
+					Nodes:      []BranchNode{},
+					PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+						HasNextPage: false,
+					},
+				},
+			},
+			responseCode: http.StatusOK,
+		},
+		prResponse: prResponse{
+			prs: []getPullRequestDataRepositoryPullRequestsPullRequestConnection{
+				{
+					PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
+						HasNextPage: false,
+					},
+					Nodes: []PullRequestNode{},
+				},
+			},
+			responseCode: http.StatusOK,
+		},
+		contribResponse: contribResponse{
+			contribs:     [][]*github.Contributor{{}},
+			responseCode: http.StatusOK,
+		},
+		depBotAlertResponse: depBotAlertResponse{
+			depBotsAlerts: []VulnerabilityAlerts{{Nodes: []CVENode{}}},
+			responseCode:  http.StatusOK,
+		},
+		codeScanAlertResponse: codeScanAlertResponse{
+			codeScanAlerts: [][]*github.Alert{
+				// alert with nil Rule causes mapSeverities to nil-deref
+				{{Rule: nil}},
+			},
+			responseCode: http.StatusOK,
+		},
+	}
+}
+
+// TestScrapeRecoversFromPanic asserts that a runtime panic inside a per-repo
+// scrape goroutine does not bring down the collector: scrape returns to its
+// caller and metrics recorded prior to the failing goroutine are still emitted.
+// Without recover() in place the panic propagates out of the goroutine and
+// crashes the test binary.
+func TestScrapeRecoversFromPanic(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	server := httptest.NewServer(MockServer(panicResponses("repo1")))
+	defer server.Close()
+
+	cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+	cfg.Metrics.VcsCveCount.Enabled = true
+
+	// Attach an observed logger so the test can confirm a panic was actually
+	// recovered. Without this guard, hardening the underlying nil-deref in
+	// mapSeverities would silently turn this test into a happy-path no-op
+	// that still passes.
+	core, recorded := observer.New(zap.ErrorLevel)
+	settings := receivertest.NewNopSettings(metadata.Type)
+	settings.Logger = zap.New(core)
+
+	ghs := newGitHubScraper(settings, cfg)
+	ghs.cfg.GitHubOrg = "liatrio"
+	ghs.cfg.ClientConfig.Endpoint = server.URL
+	ghs.cfg.ConcurrencyLimit = 1000
+
+	require.NoError(t, ghs.start(ctx, componenttest.NewNopHost()))
+
+	metrics, err := ghs.scrape(ctx)
+	require.NoError(t, err)
+
+	require.NotEmpty(t, recorded.FilterMessageSnippet("panic").All(),
+		"test no longer triggers a panic — recovery path is not being exercised")
+
+	// The repository count metric is recorded before the goroutine fan-out,
+	// so it must still be present after a panic is recovered.
+	require.Equal(t, 1, metrics.ResourceMetrics().Len())
+}
+
+// TestScrapeLogsRecoveredPanic asserts that a panic in a per-repo scrape
+// goroutine is logged as an error with the repo name and the recovered value
+// so operators can identify which repo failed without re-deriving it from a
+// stack trace.
+func TestScrapeLogsRecoveredPanic(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// The mock server hard-codes "/api/v3/repos/liatrio/repo1/..." for the
+	// REST endpoints, so the failing repo must be "repo1" for the code-scan
+	// path to hit our handler.
+	server := httptest.NewServer(MockServer(panicResponses("repo1")))
+	defer server.Close()
+
+	cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+	cfg.Metrics.VcsCveCount.Enabled = true
+
+	core, recorded := observer.New(zap.ErrorLevel)
+	settings := receivertest.NewNopSettings(metadata.Type)
+	settings.Logger = zap.New(core)
+
+	ghs := newGitHubScraper(settings, cfg)
+	ghs.cfg.GitHubOrg = "liatrio"
+	ghs.cfg.ClientConfig.Endpoint = server.URL
+	ghs.cfg.ConcurrencyLimit = 1000
+
+	require.NoError(t, ghs.start(ctx, componenttest.NewNopHost()))
+
+	_, err := ghs.scrape(ctx)
+	require.NoError(t, err)
+
+	entries := recorded.FilterMessageSnippet("panic").All()
+	require.Len(t, entries, 1, "expected exactly one recovery log entry")
+
+	fields := entries[0].ContextMap()
+	require.Equal(t, "repo1", fields["repo"], "log must identify the failing repo")
+	require.NotNil(t, fields["panic"], "log must carry the recovered value")
+}
+
+// TestScrapeDoesNotDeadlockAfterRecoveredPanic asserts that the per-repo
+// mutex is released when a goroutine panics. The original code took the lock
+// with mux.Lock() and released it manually near the end of the function, so a
+// panic between those points (now caught by recover()) leaves the mutex held
+// and any sibling goroutine deadlocks on its own mux.Lock(), which then hangs
+// wg.Wait() and the entire scrape call. The fix is to defer mux.Unlock().
+func TestScrapeDoesNotDeadlockAfterRecoveredPanic(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Two repos: repo1's code-scan alert has a nil Rule and panics inside
+	// the goroutine after mux.Lock(). repo2's REST endpoints are not
+	// registered by the mock (only /repos/liatrio/repo1/... is), so its
+	// calls 404 cleanly and the goroutine reaches its own mux.Lock().
+	r := panicResponses("repo1")
+	r.searchRepoResponse.repos = []getRepoDataBySearchSearchSearchResultItemConnection{
+		{
+			RepositoryCount: 2,
+			Nodes: []SearchNode{
+				&SearchNodeRepository{Repo: Repo{Name: "repo1"}},
+				&SearchNodeRepository{Repo: Repo{Name: "repo2"}},
+			},
+			PageInfo: getRepoDataBySearchSearchSearchResultItemConnectionPageInfo{
+				HasNextPage: false,
+			},
+		},
+	}
+	// Per-repo GraphQL responses are indexed by a page counter that
+	// advances on every request, so we need one entry per repo.
+	emptyBranches := getBranchDataRepositoryRefsRefConnection{
+		TotalCount: 0,
+		Nodes:      []BranchNode{},
+		PageInfo: getBranchDataRepositoryRefsRefConnectionPageInfo{
+			HasNextPage: false,
+		},
+	}
+	r.branchResponse.branches = []getBranchDataRepositoryRefsRefConnection{emptyBranches, emptyBranches}
+	emptyPRs := getPullRequestDataRepositoryPullRequestsPullRequestConnection{
+		PageInfo: getPullRequestDataRepositoryPullRequestsPullRequestConnectionPageInfo{
+			HasNextPage: false,
+		},
+		Nodes: []PullRequestNode{},
+	}
+	r.prResponse.prs = []getPullRequestDataRepositoryPullRequestsPullRequestConnection{emptyPRs, emptyPRs}
+	r.depBotAlertResponse.depBotsAlerts = []VulnerabilityAlerts{
+		{Nodes: []CVENode{}},
+		{Nodes: []CVENode{}},
+	}
+
+	server := httptest.NewServer(MockServer(r))
+	defer server.Close()
+
+	cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+	cfg.Metrics.VcsCveCount.Enabled = true
+
+	// Same guard as TestScrapeRecoversFromPanic: if the underlying panic
+	// trigger ever stops firing, the deadlock scenario no longer exists and
+	// this test would silently pass without exercising the deferred unlock.
+	core, recorded := observer.New(zap.ErrorLevel)
+	settings := receivertest.NewNopSettings(metadata.Type)
+	settings.Logger = zap.New(core)
+
+	ghs := newGitHubScraper(settings, cfg)
+	ghs.cfg.GitHubOrg = "liatrio"
+	ghs.cfg.ClientConfig.Endpoint = server.URL
+	// Force sequential execution so the second goroutine only starts after
+	// the first has panicked-and-recovered, removing any timing ambiguity.
+	ghs.cfg.ConcurrencyLimit = 1
+
+	require.NoError(t, ghs.start(ctx, componenttest.NewNopHost()))
+
+	done := make(chan struct{})
+	go func() {
+		_, _ = ghs.scrape(ctx)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("scrape deadlocked: recovered panic left the per-repo mutex locked")
+	}
+
+	require.NotEmpty(t, recorded.FilterMessageSnippet("panic").All(),
+		"test no longer triggers a panic — deferred-unlock path is not being exercised")
 }
