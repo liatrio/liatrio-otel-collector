@@ -1629,3 +1629,25 @@ func TestGetCVEs(t *testing.T) {
 		})
 	}
 }
+
+// Regression test for nil-pointer panic when go-github returns (nil, nil, err)
+// from ListAlertsForRepo — e.g. when the context is cancelled before the HTTP
+// response is received. Previously, getCodeScanAlerts read resp.StatusCode
+// without a nil check and crashed the entire collector pod.
+func TestGetCodeScanAlertsNilResponse(t *testing.T) {
+	factory := Factory{}
+	defaultConfig := factory.CreateDefaultConfig()
+	settings := receivertest.NewNopSettings(metadata.Type)
+	ghs := newGitHubScraper(settings, defaultConfig.(*Config))
+	ghs.cfg.GitHubOrg = "o"
+
+	rClient := github.NewClient(nil)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	assert.NotPanics(t, func() {
+		alerts := ghs.getCodeScanAlerts(ctx, rClient, "r")
+		assert.Nil(t, alerts)
+	})
+}
