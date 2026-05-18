@@ -505,6 +505,9 @@ func mapSeverities(
 	}
 
 	for _, alert := range alerts {
+		if alert.Rule == nil || alert.Rule.SecuritySeverityLevel == nil {
+			continue
+		}
 		if val, found := mapping[strings.ToUpper(*alert.Rule.SecuritySeverityLevel)]; found {
 			m[val]++
 		}

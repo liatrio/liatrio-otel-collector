@@ -1651,3 +1651,49 @@ func TestGetCodeScanAlertsNilResponse(t *testing.T) {
 		assert.Nil(t, alerts)
 	})
 }
+
+// Regression tests for nil-pointer panics in mapSeverities. GitHub's REST API
+// has been observed to omit Rule or its SecuritySeverityLevel on some alert
+// states; before the guard, the bare *alert.Rule.SecuritySeverityLevel
+// dereference crashed the entire collector pod. The mixed case also guards
+// against the nil-skip becoming an over-skip that drops well-formed alerts.
+func TestMapSeveritiesCodeScanAlerts(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		alerts   []*github.Alert
+		expected map[metadata.AttributeCveSeverity]int64
+	}{
+		{
+			desc:     "nil Rule is skipped",
+			alerts:   []*github.Alert{{Rule: nil}},
+			expected: map[metadata.AttributeCveSeverity]int64{},
+		},
+		{
+			desc:     "nil SecuritySeverityLevel is skipped",
+			alerts:   []*github.Alert{{Rule: &github.Rule{SecuritySeverityLevel: nil}}},
+			expected: map[metadata.AttributeCveSeverity]int64{},
+		},
+		{
+			desc: "valid alerts are counted alongside malformed ones",
+			alerts: []*github.Alert{
+				{Rule: nil},
+				{Rule: &github.Rule{SecuritySeverityLevel: nil}},
+				{Rule: &github.Rule{SecuritySeverityLevel: github.Ptr("HIGH")}},
+				{Rule: &github.Rule{SecuritySeverityLevel: github.Ptr("CRITICAL")}},
+			},
+			expected: map[metadata.AttributeCveSeverity]int64{
+				metadata.AttributeCveSeverityHigh:     1,
+				metadata.AttributeCveSeverityCritical: 1,
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			var got map[metadata.AttributeCveSeverity]int64
+			assert.NotPanics(t, func() {
+				got = mapSeverities(nil, tc.alerts)
+			})
+			assert.Equal(t, tc.expected, got)
+		})
+	}
+}
