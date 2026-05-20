@@ -597,8 +597,9 @@ func TestScrapeDoesNotDeadlockAfterRecoveredPanic(t *testing.T) {
 	require.NoError(t, ghs.start(ctx, componenttest.NewNopHost()))
 
 	done := make(chan struct{})
+	var scrapeErr error
 	go func() {
-		_, _ = ghs.scrape(ctx)
+		_, scrapeErr = ghs.scrape(ctx)
 		close(done)
 	}()
 
@@ -607,6 +608,7 @@ func TestScrapeDoesNotDeadlockAfterRecoveredPanic(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("scrape deadlocked: recovered panic left the per-repo mutex locked")
 	}
+	require.NoError(t, scrapeErr)
 
 	require.NotEmpty(t, recorded.FilterMessageSnippet("panic").All(),
 		"test no longer triggers a panic — deferred-unlock path is not being exercised")
