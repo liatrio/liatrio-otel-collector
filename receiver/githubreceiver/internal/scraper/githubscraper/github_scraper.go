@@ -130,6 +130,16 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				<-limiter
 				wg.Done()
 			}()
+			defer func() {
+				if r := recover(); r != nil {
+					ghs.logger.Error(
+						"recovered from panic in per-repo scrape goroutine",
+						zap.String("repo", name),
+						zap.Any("panic", r),
+						zap.Stack("stacktrace"),
+					)
+				}
+			}()
 
 			branches, count, err := ghs.getBranches(ctx, genClient, name, trunk)
 			if err != nil {
@@ -137,8 +147,12 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			}
 
 			// Create a mutual exclusion lock to prevent the recordDataPoint
-			// SetStartTimestamp call from having a nil pointer panic
+			// SetStartTimestamp call from having a nil pointer panic. The
+			// unlock is deferred so a panic in any of the helper calls below
+			// (caught by the recover() above) does not leak the lock and
+			// deadlock sibling per-repo goroutines.
 			mux.Lock()
+			defer mux.Unlock()
 
 			refType := metadata.AttributeVcsRefHeadTypeBranch
 			ghs.mb.RecordVcsRefCountDataPoint(now, int64(count), url, name, refType)
@@ -232,7 +246,6 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			ghs.mb.RecordVcsChangeCountDataPoint(now, int64(open), url, metadata.AttributeVcsChangeStateOpen, name)
 			ghs.mb.RecordVcsChangeCountDataPoint(now, int64(merged), url, metadata.AttributeVcsChangeStateMerged, name)
-			mux.Unlock()
 		}()
 	}
 
