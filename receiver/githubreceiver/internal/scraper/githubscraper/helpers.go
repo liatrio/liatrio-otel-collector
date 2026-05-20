@@ -463,7 +463,7 @@ func (ghs *githubScraper) getCodeScanAlerts(
 	for {
 		a, resp, err := rClient.CodeScanning.ListAlertsForRepo(ctx, ghs.cfg.GitHubOrg, repo, opt)
 		if err != nil {
-			if resp.StatusCode == 404 || resp.StatusCode == 403 {
+			if resp != nil && (resp.StatusCode == 404 || resp.StatusCode == 403) {
 				ghs.logger.Sugar().Debugf("%s repo does not have any alerts or does not have alerts enabled", repo)
 				break
 			}
@@ -505,6 +505,9 @@ func mapSeverities(
 	}
 
 	for _, alert := range alerts {
+		if alert.Rule == nil || alert.Rule.SecuritySeverityLevel == nil {
+			continue
+		}
 		if val, found := mapping[strings.ToUpper(*alert.Rule.SecuritySeverityLevel)]; found {
 			m[val]++
 		}
