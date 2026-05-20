@@ -1630,6 +1630,45 @@ func TestGetCVEs(t *testing.T) {
 	}
 }
 
+// Covers the 404/403 break path in getCodeScanAlerts, which previously
+// short-circuited without a nil check on resp. With the nil-guard added,
+// the response is non-nil and carries a real status, so we expect the
+// scraper to swallow the error and return nil alerts (not an error).
+func TestGetCodeScanAlertsRepoWithoutAlerts(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		statusCode int
+	}{
+		{desc: "404 not found", statusCode: http.StatusNotFound},
+		{desc: "403 forbidden", statusCode: http.StatusForbidden},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(tc.statusCode)
+			}))
+			defer server.Close()
+
+			factory := Factory{}
+			defaultConfig := factory.CreateDefaultConfig()
+			settings := receivertest.NewNopSettings(metadata.Type)
+			ghs := newGitHubScraper(settings, defaultConfig.(*Config))
+			ghs.cfg.GitHubOrg = "o"
+
+			rClient := github.NewClient(nil)
+			u, err := url.Parse(server.URL + "/api-v3" + "/")
+			assert.NoError(t, err)
+			rClient.BaseURL = u
+			rClient.UploadURL = u
+
+			assert.NotPanics(t, func() {
+				alerts := ghs.getCodeScanAlerts(context.Background(), rClient, "r")
+				assert.Nil(t, alerts)
+			})
+		})
+	}
+}
+
 // Regression test for nil-pointer panic when go-github returns (nil, nil, err)
 // from ListAlertsForRepo — e.g. when the context is cancelled before the HTTP
 // response is received. Previously, getCodeScanAlerts read resp.StatusCode
