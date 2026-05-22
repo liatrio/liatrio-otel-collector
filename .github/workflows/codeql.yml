@@ -49,17 +49,27 @@ jobs:
       # the root finds nothing. Walk each module's go.mod and build it
       # under CodeQL's tracer so every package gets extracted.
       #
-      # `go build ./...` compiles production code only — *_test.go files
-      # are skipped, leaving ~46% of this repo's Go source unscanned.
-      # `go test -count=1 -run='^$' ./...` compiles every test binary
-      # (tracer captures the compiles) but the empty-regex `-run`
-      # filter executes no test bodies. `-count=1` disables the test
-      # cache so compilation always happens. This mirrors upstream
-      # codeql-action autobuild's two-pass behavior.
-      #
       # CodeQL bundles its own Go SDK and prepends it to PATH, so no
       # actions/setup-go step is needed. Autobuild handles `go mod
       # download` automatically; manual mode has to do it explicitly.
+      #
+      # `go build ./...` compiles production code only; *_test.go files
+      # are skipped, leaving roughly half this repo's Go source unscanned.
+      # `go test ./...` is what triggers the CodeQL extractor's
+      # test-extraction mode (the extractor inspects the intercepted
+      # command name: build/install/run extract production only, test
+      # extracts both).
+      #
+      # Subtle: the test command MUST NOT pass any `go test`-specific
+      # flags (-count, -run, -list, etc.). The extractor's mimic mode
+      # forwards captured flags to an internal `go list -test=true`
+      # invocation; `go list` rejects test-only flags with "flag
+      # provided but not defined", and the test-extraction pass silently
+      # aborts (the build-only pass still succeeds, so the database ends
+      # up with production files only — exactly the 77/143 symptom).
+      # Pipe stdout to /dev/null and `|| true` so a flaky/long test
+      # doesn't fail the security scan; the existing test job already
+      # gates correctness.
       - name: Manual build (Go)
         if: matrix.language == 'go'
         shell: bash
@@ -77,7 +87,7 @@ jobs:
             (cd "$dir" && \
               go mod download && \
               go build ./... && \
-              go test -count=1 -run='^$' ./...)
+              go test ./... > /dev/null 2>&1 || true)
             echo "::endgroup::"
           done
 
