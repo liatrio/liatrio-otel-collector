@@ -26,7 +26,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [go, actions]
+        include:
+          - language: go
+            build-mode: manual
+          - language: actions
+            build-mode: none
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -37,11 +41,34 @@ jobs:
         uses: github/codeql-action/init@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3.35.5
         with:
           languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
           queries: security-and-quality
 
-      - name: Autobuild
+      # Multi-module layout: a stub root go.mod plus one go.mod per
+      # subdirectory and no go.work, so Autobuild's "go build ./..." at
+      # the root finds nothing. Walk each module's go.mod and build it
+      # under CodeQL's tracer so every package gets extracted.
+      #
+      # CodeQL bundles its own Go SDK and prepends it to PATH, so no
+      # actions/setup-go step is needed. Autobuild handles `go mod
+      # download` automatically; manual mode has to do it explicitly.
+      - name: Manual build (Go)
         if: matrix.language == 'go'
-        uses: github/codeql-action/autobuild@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3.35.5
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t modules < <(find . -name go.mod \
+            -not -path './.git/*' \
+            -not -path './.claude/*' \
+            -not -path './.tools/*' \
+            -not -path './vendor/*' \
+            -not -path './go.mod' \
+            -exec dirname {} \;)
+          for dir in "${modules[@]}"; do
+            echo "::group::go build $dir"
+            (cd "$dir" && go mod download && go build ./...)
+            echo "::endgroup::"
+          done
 
       - name: Analyze
         uses: github/codeql-action/analyze@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3.35.5
