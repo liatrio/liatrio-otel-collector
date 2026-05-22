@@ -62,6 +62,7 @@ jobs:
             -not -path './.claude/*' \
             -not -path './.tools/*' \
             -not -path './vendor/*' \
+            -not -path './go.mod' \
             -exec dirname {} \;)
           for dir in "${modules[@]}"; do
             echo "::group::go build $dir"
