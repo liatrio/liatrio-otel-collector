@@ -49,6 +49,14 @@ jobs:
       # the root finds nothing. Walk each module's go.mod and build it
       # under CodeQL's tracer so every package gets extracted.
       #
+      # `go build ./...` compiles production code only — *_test.go files
+      # are skipped, leaving ~46% of this repo's Go source unscanned.
+      # `go test -count=1 -run='^$' ./...` compiles every test binary
+      # (tracer captures the compiles) but the empty-regex `-run`
+      # filter executes no test bodies. `-count=1` disables the test
+      # cache so compilation always happens. This mirrors upstream
+      # codeql-action autobuild's two-pass behavior.
+      #
       # CodeQL bundles its own Go SDK and prepends it to PATH, so no
       # actions/setup-go step is needed. Autobuild handles `go mod
       # download` automatically; manual mode has to do it explicitly.
@@ -65,8 +73,11 @@ jobs:
             -not -path './go.mod' \
             -exec dirname {} \;)
           for dir in "${modules[@]}"; do
-            echo "::group::go build $dir"
-            (cd "$dir" && go mod download && go build ./...)
+            echo "::group::go build + test compile $dir"
+            (cd "$dir" && \
+              go mod download && \
+              go build ./... && \
+              go test -count=1 -run='^$' ./...)
             echo "::endgroup::"
           done
 
