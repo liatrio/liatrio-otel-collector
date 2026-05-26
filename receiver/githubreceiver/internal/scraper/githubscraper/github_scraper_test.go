@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -377,11 +378,12 @@ func TestScrape(t *testing.T) {
 	}
 }
 
-// panicResponses builds a mock-server response set for a single repo whose
-// code-scan alert has a nil Rule. That nil triggers a runtime panic deep
-// inside the per-repo scrape goroutine (via mapSeverities), exercising the
-// recover() that the scrape goroutine installs.
-func panicResponses(repoName string) *responses {
+// singleRepoResponses builds a happy-path mock-server response set for a
+// single repository. The panic-recovery tests below pair it with
+// panicRoundTripper to inject a synthetic panic from inside the per-repo
+// scrape goroutine, decoupling the recovery-path coverage from any specific
+// production nil-deref bug.
+func singleRepoResponses(repoName string) *responses {
 	return &responses{
 		scrape: true,
 		checkLoginResponse: loginResponse{
@@ -435,14 +437,28 @@ func panicResponses(repoName string) *responses {
 			depBotsAlerts: []VulnerabilityAlerts{{Nodes: []CVENode{}}},
 			responseCode:  http.StatusOK,
 		},
-		codeScanAlertResponse: codeScanAlertResponse{
-			codeScanAlerts: [][]*github.Alert{
-				// alert with nil Rule causes mapSeverities to nil-deref
-				{{Rule: nil}},
-			},
-			responseCode: http.StatusOK,
-		},
 	}
+}
+
+// panicRoundTripper wraps an inner http.RoundTripper and panics on any
+// request whose URL path contains trigger. It is the panic injector for the
+// recover()-path tests: the panic fires inside the per-repo scrape
+// goroutine's call to the GitHub client, which is exactly where the
+// production recover() must catch it.
+type panicRoundTripper struct {
+	inner   http.RoundTripper
+	trigger string
+}
+
+func (p *panicRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if strings.Contains(req.URL.Path, p.trigger) {
+		panic("synthetic test panic from panicRoundTripper: " + req.URL.Path)
+	}
+	inner := p.inner
+	if inner == nil {
+		inner = http.DefaultTransport
+	}
+	return inner.RoundTrip(req)
 }
 
 // TestScrapeRecoversFromPanic asserts that a runtime panic inside a per-repo
@@ -454,16 +470,15 @@ func TestScrapeRecoversFromPanic(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	server := httptest.NewServer(MockServer(panicResponses("repo1")))
+	server := httptest.NewServer(MockServer(singleRepoResponses("repo1")))
 	defer server.Close()
 
 	cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
 	cfg.Metrics.VcsCveCount.Enabled = true
 
 	// Attach an observed logger so the test can confirm a panic was actually
-	// recovered. Without this guard, hardening the underlying nil-deref in
-	// mapSeverities would silently turn this test into a happy-path no-op
-	// that still passes.
+	// recovered. Without this guard, removing the panic injector below would
+	// silently turn this test into a happy-path no-op that still passes.
 	core, recorded := observer.New(zap.ErrorLevel)
 	settings := receivertest.NewNopSettings(metadata.Type)
 	settings.Logger = zap.New(core)
@@ -474,6 +489,15 @@ func TestScrapeRecoversFromPanic(t *testing.T) {
 	ghs.cfg.ConcurrencyLimit = 1000
 
 	require.NoError(t, ghs.start(ctx, componenttest.NewNopHost()))
+
+	// Inject a synthetic panic from inside the per-repo scrape goroutine by
+	// wrapping the HTTP transport. The code-scanning REST call is the last
+	// per-repo HTTP request and runs after mux.Lock(), so the panic exercises
+	// both recover() and defer mux.Unlock() in github_scraper.go.
+	ghs.client.Transport = &panicRoundTripper{
+		inner:   ghs.client.Transport,
+		trigger: "/code-scanning/alerts",
+	}
 
 	metrics, err := ghs.scrape(ctx)
 	require.NoError(t, err)
@@ -495,9 +519,10 @@ func TestScrapeLogsRecoveredPanic(t *testing.T) {
 	defer cancel()
 
 	// The mock server hard-codes "/api/v3/repos/liatrio/repo1/..." for the
-	// REST endpoints, so the failing repo must be "repo1" for the code-scan
-	// path to hit our handler.
-	server := httptest.NewServer(MockServer(panicResponses("repo1")))
+	// REST endpoints, so the failing repo must be "repo1" so all per-repo
+	// HTTP calls are served (and so panicRoundTripper has a code-scanning
+	// request to match against).
+	server := httptest.NewServer(MockServer(singleRepoResponses("repo1")))
 	defer server.Close()
 
 	cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
@@ -513,6 +538,11 @@ func TestScrapeLogsRecoveredPanic(t *testing.T) {
 	ghs.cfg.ConcurrencyLimit = 1000
 
 	require.NoError(t, ghs.start(ctx, componenttest.NewNopHost()))
+
+	ghs.client.Transport = &panicRoundTripper{
+		inner:   ghs.client.Transport,
+		trigger: "/code-scanning/alerts",
+	}
 
 	_, err := ghs.scrape(ctx)
 	require.NoError(t, err)
@@ -535,11 +565,11 @@ func TestScrapeDoesNotDeadlockAfterRecoveredPanic(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Two repos: repo1's code-scan alert has a nil Rule and panics inside
-	// the goroutine after mux.Lock(). repo2's REST endpoints are not
-	// registered by the mock (only /repos/liatrio/repo1/... is), so its
-	// calls 404 cleanly and the goroutine reaches its own mux.Lock().
-	r := panicResponses("repo1")
+	// Two repos under ConcurrencyLimit=1 so they run sequentially. Both
+	// goroutines panic on their code-scanning HTTP call (see the
+	// panicRoundTripper installed below); the assertion is that repo2's
+	// mux.Lock() does not block on a lock leaked from repo1's panic.
+	r := singleRepoResponses("repo1")
 	r.searchRepoResponse.repos = []getRepoDataBySearchSearchSearchResultItemConnection{
 		{
 			RepositoryCount: 2,
@@ -595,6 +625,11 @@ func TestScrapeDoesNotDeadlockAfterRecoveredPanic(t *testing.T) {
 	ghs.cfg.ConcurrencyLimit = 1
 
 	require.NoError(t, ghs.start(ctx, componenttest.NewNopHost()))
+
+	ghs.client.Transport = &panicRoundTripper{
+		inner:   ghs.client.Transport,
+		trigger: "/code-scanning/alerts",
+	}
 
 	done := make(chan struct{})
 	var scrapeErr error
