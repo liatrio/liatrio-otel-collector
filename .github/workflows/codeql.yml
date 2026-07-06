@@ -1,0 +1,97 @@
+---
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '23 6 * * 1'
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: go
+            build-mode: manual
+          - language: actions
+            build-mode: none
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3.35.5
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: security-and-quality
+
+      # Multi-module layout: a stub root go.mod plus one go.mod per
+      # subdirectory and no go.work, so Autobuild's "go build ./..." at
+      # the root finds nothing. Walk each module's go.mod and build it
+      # under CodeQL's tracer so every package gets extracted.
+      #
+      # CodeQL bundles its own Go SDK and prepends it to PATH, so no
+      # actions/setup-go step is needed. Autobuild handles `go mod
+      # download` automatically; manual mode has to do it explicitly.
+      #
+      # `go build ./...` compiles production code only; *_test.go files
+      # are skipped, leaving roughly half this repo's Go source unscanned.
+      # `go test ./...` is what triggers the CodeQL extractor's
+      # test-extraction mode (the extractor inspects the intercepted
+      # command name: build/install/run extract production only, test
+      # extracts both).
+      #
+      # Subtle: the test command MUST NOT pass any `go test`-specific
+      # flags (-count, -run, -list, etc.). The extractor's mimic mode
+      # forwards captured flags to an internal `go list -test=true`
+      # invocation; `go list` rejects test-only flags with "flag
+      # provided but not defined", and the test-extraction pass silently
+      # aborts (the build-only pass still succeeds, so the database ends
+      # up with production files only — exactly the 77/143 symptom).
+      # Pipe stdout to /dev/null and `|| true` so a flaky/long test
+      # doesn't fail the security scan; the existing test job already
+      # gates correctness.
+      - name: Manual build (Go)
+        if: matrix.language == 'go'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t modules < <(find . -name go.mod \
+            -not -path './.git/*' \
+            -not -path './.claude/*' \
+            -not -path './.tools/*' \
+            -not -path './vendor/*' \
+            -not -path './go.mod' \
+            -exec dirname {} \;)
+          for dir in "${modules[@]}"; do
+            echo "::group::go build + test compile $dir"
+            (cd "$dir" && \
+              go mod download && \
+              go build ./... && \
+              go test ./... > /dev/null 2>&1 || true)
+            echo "::endgroup::"
+          done
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3.35.5
+        with:
+          category: /language:${{ matrix.language }}

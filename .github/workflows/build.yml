@@ -34,7 +34,6 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
-          ref: ${{ github.head_ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -84,7 +83,6 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
-          ref: ${{ github.head_ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -181,6 +179,9 @@ jobs:
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
 
   multimod-prepare-release:
     if: ${{ github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]' }}
