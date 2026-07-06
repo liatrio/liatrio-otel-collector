@@ -34,7 +34,7 @@ func (gts *gitlabTerraformScraper) getModules(ctx context.Context, restClient *g
 					Page:    nextPage,
 					PerPage: 100,
 				},
-			})
+			}, gitlab.WithContext(ctx))
 			if err != nil {
 				if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 {
 					return "", backoff.RetryAfter(60)
@@ -121,7 +121,7 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 					Page:    nextPage,
 					PerPage: 100,
 				},
-			})
+			}, gitlab.WithContext(ctx))
 			if err != nil {
 				if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 {
 					return "", backoff.RetryAfter(60)
@@ -196,7 +196,7 @@ func (gts *gitlabTerraformScraper) getProjectInfo(ctx context.Context, restClien
 
 	operation := func() (string, error) {
 		var err error
-		project, _, err = restClient.Projects.GetProject(projectID, nil)
+		project, _, err = restClient.Projects.GetProject(projectID, nil, gitlab.WithContext(ctx))
 		if err != nil {
 			if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 {
 				return "", backoff.RetryAfter(60)
