@@ -18,14 +18,16 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/metadata"
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/scraper/gitlabcatalogscraper"
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/scraper/gitlabscraper"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/scraper/gitlabterraformscraper"
 )
 
 // This file implements a factory for the gitlab receiver
 
 var (
 	scraperFactories = map[string]internal.ScraperFactory{
-		gitlabscraper.TypeStr:        &gitlabscraper.Factory{},
-		gitlabcatalogscraper.TypeStr: &gitlabcatalogscraper.Factory{},
+		gitlabscraper.TypeStr:          &gitlabscraper.Factory{},
+		gitlabcatalogscraper.TypeStr:   &gitlabcatalogscraper.Factory{},
+		gitlabterraformscraper.TypeStr: &gitlabterraformscraper.Factory{},
 	}
 
 	errConfigNotValid = errors.New("configuration is not valid for the gitlab receiver")

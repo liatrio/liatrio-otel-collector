@@ -18,6 +18,7 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal"
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/metadata"
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/scraper/gitlabscraper"
+	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/scraper/gitlabterraformscraper"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -33,7 +34,7 @@ func TestLoadConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	assert.Len(t, cfg.Receivers, 2)
+	assert.Len(t, cfg.Receivers, 3)
 
 	r0 := cfg.Receivers[component.NewID(metadata.Type)]
 	defaultConfiggitlabscraper := factory.CreateDefaultConfig()
@@ -55,6 +56,19 @@ func TestLoadConfig(t *testing.T) {
 	}
 
 	assert.Equal(t, expectedConfig, r1)
+
+	r2 := cfg.Receivers[component.NewIDWithName(metadata.Type, "terraform")].(*Config)
+	expectedTerraformConfig := &Config{
+		ControllerConfig: scraperhelper.ControllerConfig{
+			CollectionInterval: 60 * time.Second,
+			InitialDelay:       1 * time.Second,
+		},
+		Scrapers: map[string]internal.Config{
+			gitlabterraformscraper.TypeStr: (&gitlabterraformscraper.Factory{}).CreateDefaultConfig(),
+		},
+	}
+
+	assert.Equal(t, expectedTerraformConfig, r2)
 }
 
 func TestLoadInvalidConfig_NoScrapers(t *testing.T) {
