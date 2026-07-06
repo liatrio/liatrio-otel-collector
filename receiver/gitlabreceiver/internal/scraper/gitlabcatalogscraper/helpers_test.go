@@ -52,8 +52,8 @@ func MockServer(responses *responses) *http.ServeMux {
 		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 			return
 		}
-		switch {
-		case reqBody.OpName == "getCatalogResource":
+		switch reqBody.OpName {
+		case "getCatalogResource":
 			catalogResp := &responses.catalogResourceResponse
 			code := catalogResp.responseCode
 			if code == 0 {
@@ -76,7 +76,7 @@ func MockServer(responses *responses) *http.ServeMux {
 				}
 			}
 
-		case reqBody.OpName == "getProjectComponentUsages":
+		case "getProjectComponentUsages":
 			usageResp := &responses.componentUsagesResponse
 			w.WriteHeader(usageResp.responseCode)
 			if usageResp.responseCode == http.StatusOK {

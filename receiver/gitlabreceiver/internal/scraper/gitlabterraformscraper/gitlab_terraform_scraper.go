@@ -64,9 +64,9 @@ func (gts *gitlabTerraformScraper) scrape(ctx context.Context) (pmetric.Metrics,
 
 	// Build the REST client URL, supporting self-hosted GitLab instances
 	restCURL := "https://gitlab.com/"
-	if gts.cfg.ClientConfig.Endpoint != "" {
+	if gts.cfg.Endpoint != "" {
 		var err error
-		restCURL, err = url.JoinPath(gts.cfg.ClientConfig.Endpoint, "/")
+		restCURL, err = url.JoinPath(gts.cfg.Endpoint, "/")
 		if err != nil {
 			gts.logger.Sugar().Errorf("error building REST URL: %v", err)
 			return gts.mb.Emit(), err
@@ -85,7 +85,7 @@ func (gts *gitlabTerraformScraper) scrape(ctx context.Context) (pmetric.Metrics,
 	//   - module.count          : Packages API only
 	//   - module.consumer.count : + Search API per module
 	//   - module.consumer       : + Projects API per consumer (name/URL lookup)
-	metricsCfg := gts.cfg.MetricsBuilderConfig.Metrics
+	metricsCfg := gts.cfg.Metrics
 	moduleCountEnabled := metricsCfg.VcsTerraformModuleCount.Enabled
 	consumerCountEnabled := metricsCfg.VcsTerraformModuleConsumerCount.Enabled
 	consumerEnabled := metricsCfg.VcsTerraformModuleConsumer.Enabled

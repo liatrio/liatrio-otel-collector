@@ -71,7 +71,7 @@ func newTracesReceiver(
 }
 
 func (atr *azuredevopsTracesReceiver) Start(ctx context.Context, host component.Host) error {
-	endpoint := fmt.Sprintf("%s%s", atr.cfg.WebHook.ServerConfig.Endpoint, atr.cfg.WebHook.Path)
+	endpoint := fmt.Sprintf("%s%s", atr.cfg.WebHook.Endpoint, atr.cfg.WebHook.Path)
 	atr.logger.Info("Starting Azure DevOps WebHook receiving server", zap.String("endpoint", endpoint))
 
 	// noop if not nil. if start has not been called before these values should be nil.
@@ -79,7 +79,7 @@ func (atr *azuredevopsTracesReceiver) Start(ctx context.Context, host component.
 		return nil
 	}
 
-	ln, err := atr.cfg.WebHook.ServerConfig.ToListener(ctx)
+	ln, err := atr.cfg.WebHook.ToListener(ctx)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (atr *azuredevopsTracesReceiver) Start(ctx context.Context, host component.
 		extensions = host.GetExtensions()
 	}
 
-	atr.server, err = atr.cfg.WebHook.ServerConfig.ToServer(ctx, extensions, atr.settings.TelemetrySettings, router)
+	atr.server, err = atr.cfg.WebHook.ToServer(ctx, extensions, atr.settings.TelemetrySettings, router)
 	if err != nil {
 		return err
 	}

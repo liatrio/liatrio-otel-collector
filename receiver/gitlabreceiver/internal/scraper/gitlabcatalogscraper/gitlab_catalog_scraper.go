@@ -69,15 +69,15 @@ func (gcs *gitlabCatalogScraper) scrape(ctx context.Context) (pmetric.Metrics, e
 	graphCURL := "https://gitlab.com/api/graphql"
 	restCURL := "https://gitlab.com/"
 
-	if gcs.cfg.ClientConfig.Endpoint != "" {
+	if gcs.cfg.Endpoint != "" {
 		var err error
 
-		graphCURL, err = url.JoinPath(gcs.cfg.ClientConfig.Endpoint, "api/graphql")
+		graphCURL, err = url.JoinPath(gcs.cfg.Endpoint, "api/graphql")
 		if err != nil {
 			return pmetric.NewMetrics(), fmt.Errorf("invalid endpoint for GraphQL URL: %w", err)
 		}
 
-		restCURL, err = url.JoinPath(gcs.cfg.ClientConfig.Endpoint, "/")
+		restCURL, err = url.JoinPath(gcs.cfg.Endpoint, "/")
 		if err != nil {
 			return pmetric.NewMetrics(), fmt.Errorf("invalid endpoint for REST URL: %w", err)
 		}

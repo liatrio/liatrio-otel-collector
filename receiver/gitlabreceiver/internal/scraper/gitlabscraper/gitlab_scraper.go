@@ -82,15 +82,15 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 	graphCURL := "https://gitlab.com/api/graphql"
 	restCURL := "https://gitlab.com/"
 
-	if gls.cfg.ClientConfig.Endpoint != "" {
+	if gls.cfg.Endpoint != "" {
 		var err error
 
-		graphCURL, err = url.JoinPath(gls.cfg.ClientConfig.Endpoint, "api/graphql")
+		graphCURL, err = url.JoinPath(gls.cfg.Endpoint, "api/graphql")
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
 		}
 
-		restCURL, err = url.JoinPath(gls.cfg.ClientConfig.Endpoint, "/")
+		restCURL, err = url.JoinPath(gls.cfg.Endpoint, "/")
 		if err != nil {
 			gls.logger.Sugar().Errorf("error: %v", err)
 		}

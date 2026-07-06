@@ -67,12 +67,12 @@ func newTracesReceiver(
 func (gar *githubActionsReceiver) Start(ctx context.Context, host component.Host) error {
 	endpoint := fmt.Sprintf("%s%s", gar.config.Endpoint, gar.config.Path)
 	gar.logger.Info("Starting GithubActions server", zap.String("endpoint", endpoint))
-	ln, err := gar.config.ServerConfig.ToListener(ctx)
+	ln, err := gar.config.ToListener(ctx)
 	if err != nil {
 		return err
 	}
 
-	gar.server, err = gar.config.ServerConfig.ToServer(ctx, nil, gar.createSettings.TelemetrySettings, gar)
+	gar.server, err = gar.config.ToServer(ctx, nil, gar.createSettings.TelemetrySettings, gar)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (gar *githubActionsReceiver) Start(ctx context.Context, host component.Host
 	go func() {
 		defer gar.shutdownWG.Done()
 		if errHTTP := gar.server.Serve(ln); !errors.Is(errHTTP, http.ErrServerClosed) && errHTTP != nil {
-			gar.createSettings.TelemetrySettings.Logger.Error("Server closed with error", zap.Error(errHTTP))
+			gar.createSettings.Logger.Error("Server closed with error", zap.Error(errHTTP))
 		}
 	}()
 
