@@ -64,7 +64,7 @@ func run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = common.Tidy(modulePath)
+	err = common.Tidy(cmd.Context(), modulePath)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"io/fs"
 	"os"
@@ -15,8 +16,8 @@ type TemplateData struct {
 	PackageName string
 }
 
-func Tidy(path string) error {
-	cmd := exec.Command("go", "mod", "tidy", "-e")
+func Tidy(ctx context.Context, path string) error {
+	cmd := exec.CommandContext(ctx, "go", "mod", "tidy", "-e")
 	cmd.Dir = path
 	output, err := cmd.CombinedOutput()
 	if err != nil {

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,6 +10,8 @@ import (
 )
 
 func TestRun(t *testing.T) {
+	ReceiverCmd.SetContext(context.Background())
+
 	// Missing args
 	// Note that this should be impossible at runtime. We use `cobra.MinimumNArgs()`
 	// when building `ReceiverCmd` to enforce that the correct number of arguments
