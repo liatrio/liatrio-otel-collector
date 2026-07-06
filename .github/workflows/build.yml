@@ -26,7 +26,7 @@ jobs:
     if: github.ref != 'refs/heads/main' || ( github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]')
     strategy:
       matrix:
-        go: ['1.24']
+        go: ['1.26']
     name: lint
     runs-on: ubuntu-latest
     steps:
@@ -75,7 +75,7 @@ jobs:
     if: github.ref != 'refs/heads/main' || ( github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]')
     strategy:
       matrix:
-        go: ['1.24']
+        go: ['1.26']
     name: generate
     runs-on: ubuntu-latest
     steps:
@@ -116,7 +116,7 @@ jobs:
       matrix:
         GOOS: [darwin, linux, windows]
         GOARCH: [arm64, amd64, '386']
-        go: ['1.24']
+        go: ['1.26']
         exclude:
           - GOOS: darwin
             GOARCH: '386'
@@ -160,7 +160,7 @@ jobs:
     if: github.ref != 'refs/heads/main' || ( github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]')
     strategy:
       matrix:
-        go: ['1.24']
+        go: ['1.26']
     name: test
     runs-on: ubuntu-latest
     steps:

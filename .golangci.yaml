@@ -1,40 +1,47 @@
----
+version: "2"
 run:
-  go: '1.24'
-  timeout: 10m
+  go: "1.24"
   allow-parallel-runners: true
-
-linters-settings:
-  errcheck:
-    check-type-assertions: false
-    check-blank: true
-
-  lll:
-    # max line length, lines longer will be reported. Default is 120.
-    # '\t' is counted as 1 character by default, and can be changed with the tab-width option
-    line-length: 185
-    # tab width in spaces. Default to 1.
-    tab-width: 8
-
 linters:
-  disable-all: true
+  default: none
   enable:
-    - gofmt
     - errcheck
-    - goimports
-    - misspell
-    - noctx
-    - lll
+    - gosec
     - govet
     - ineffassign
-    - typecheck
-    - unused
-    - gosimple
+    - lll
+    - misspell
+    - noctx
     - staticcheck
-    - gosec
-
+    - unused
+  settings:
+    errcheck:
+      check-type-assertions: false
+      check-blank: true
+    lll:
+      line-length: 185
+      tab-width: 8
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   max-issues-per-linter: 0
-  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
   max-same-issues: 0
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
