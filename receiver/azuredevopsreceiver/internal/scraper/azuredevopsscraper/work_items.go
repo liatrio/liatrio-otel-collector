@@ -202,7 +202,7 @@ func getWorkItemTimeField(wi WorkItem, fieldName string) (time.Time, bool) {
 	}
 
 	// Check if the result is a zero time (which indicates null/empty/invalid)
-	if nt.Time.IsZero() {
+	if nt.IsZero() {
 		return time.Time{}, false
 	}
 

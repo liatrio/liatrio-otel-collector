@@ -100,7 +100,7 @@ func TestScrape(t *testing.T) {
 
 			gcs := newGitLabCatalogScraper(context.Background(), receivertest.NewNopSettings(metadata.Type), cfg)
 			gcs.cfg.GitLabOrg = "project"
-			gcs.cfg.ClientConfig.Endpoint = server.URL
+			gcs.cfg.Endpoint = server.URL
 
 			err := gcs.start(context.Background(), componenttest.NewNopHost())
 			require.NoError(t, err)

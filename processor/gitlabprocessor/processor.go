@@ -82,10 +82,10 @@ func (a *pipelineProcessor) getPipeCompAttrs(ctx context.Context, fullPath strin
 	// Enable the ability to override the endpoint for self-hosted gitlab instances
 	graphCURL := "https://gitlab.com/api/graphql"
 
-	if a.cfg.ClientConfig.Endpoint != "" {
+	if a.cfg.Endpoint != "" {
 		var err error
 
-		graphCURL, err = url.JoinPath(a.cfg.ClientConfig.Endpoint, "api/graphql")
+		graphCURL, err = url.JoinPath(a.cfg.Endpoint, "api/graphql")
 		if err != nil {
 			a.logger.Sugar().Errorf("error: %s", err.Error())
 		}

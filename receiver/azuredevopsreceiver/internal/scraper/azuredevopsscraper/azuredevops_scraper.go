@@ -77,7 +77,7 @@ func (ados *azuredevopsScraper) start(ctx context.Context, host component.Host) 
 
 	ados.client, err = ados.cfg.ToClient(ctx, extensions, ados.settings)
 
-	if ados.cfg.MetricsBuilderConfig.Metrics.WorkItemTagCount.Enabled && len(ados.cfg.WorkItemTagAllowlist) == 0 {
+	if ados.cfg.Metrics.WorkItemTagCount.Enabled && len(ados.cfg.WorkItemTagAllowlist) == 0 {
 		ados.logger.Sugar().Warn("work_item.tag.count is enabled but work_item_tag_allowlist is empty — no tag " +
 			"metrics will be emitted. Add tags to the allowlist to track them.")
 	}
@@ -370,11 +370,12 @@ func (ados *azuredevopsScraper) recordDeploymentMetrics(now pcommon.Timestamp, d
 
 		// Map partiallySucceeded and any other non-success status to "failed"
 		var status string
-		if normalizedStatus == "succeeded" {
+		switch normalizedStatus {
+		case "succeeded":
 			status = "succeeded"
-		} else if normalizedStatus == "partiallysucceeded" || normalizedStatus == "failed" || normalizedStatus == "notdeployed" {
+		case "partiallysucceeded", "failed", "notdeployed":
 			status = "failed"
-		} else {
+		default:
 			ados.logger.Sugar().Debugf("Skipping deployment ID %d with non-final status: %q (service: %s)", deployment.ID, rawStatus, service)
 			continue
 		}

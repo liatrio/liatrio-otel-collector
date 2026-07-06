@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,15 +11,16 @@ import (
 )
 
 func TestTidy(t *testing.T) {
+	ctx := context.Background()
 	dir := t.TempDir()
-	assert.Error(t, Tidy(dir))
+	assert.Error(t, Tidy(ctx, dir))
 
-	cmd := exec.Command("go", "mod", "init", "dummy")
+	cmd := exec.CommandContext(ctx, "go", "mod", "init", "dummy")
 	cmd.Dir = dir
 	_, err := cmd.Output()
 	assert.NoError(t, err)
 
-	assert.NoError(t, Tidy(dir))
+	assert.NoError(t, Tidy(ctx, dir))
 	assert.FileExists(t, filepath.Join(dir, "go.mod"))
 }
 

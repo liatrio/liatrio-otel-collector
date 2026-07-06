@@ -150,7 +150,7 @@ func TestScrape(t *testing.T) {
 
 			gts := newGitLabTerraformScraper(context.Background(), receivertest.NewNopSettings(metadata.Type), cfg)
 			gts.cfg.GitLabOrg = "testgroup"
-			gts.cfg.ClientConfig.Endpoint = server.URL
+			gts.cfg.Endpoint = server.URL
 
 			err := gts.start(context.Background(), componenttest.NewNopHost())
 			require.NoError(t, err)

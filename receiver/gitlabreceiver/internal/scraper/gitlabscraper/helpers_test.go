@@ -59,9 +59,9 @@ func MockServer(responses *responses) *http.ServeMux {
 		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 			return
 		}
-		switch {
+		switch reqBody.OpName {
 		// These OpNames need to be name of the GraphQL query as defined in genqlient.graphql
-		case reqBody.OpName == "getBranchNames":
+		case "getBranchNames":
 			branchResp := &responses.branchResponse
 			w.WriteHeader(branchResp.responseCode)
 			if branchResp.responseCode == http.StatusOK {
@@ -75,7 +75,7 @@ func MockServer(responses *responses) *http.ServeMux {
 					return
 				}
 			}
-		case reqBody.OpName == "getMergeRequests":
+		case "getMergeRequests":
 			mrResp := &responses.mrResponse
 			w.WriteHeader(mrResp.responseCode)
 			if mrResp.responseCode == http.StatusOK {

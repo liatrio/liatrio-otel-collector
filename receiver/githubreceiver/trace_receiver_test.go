@@ -75,7 +75,7 @@ func TestHealthCheck(t *testing.T) {
 	}()
 
 	w := httptest.NewRecorder()
-	r.handleHealthCheck(w, httptest.NewRequest(http.MethodGet, "http://localhost/health", nil))
+	r.handleHealthCheck(w, httptest.NewRequestWithContext(context.Background(), http.MethodGet, "http://localhost/health", nil))
 
 	response := w.Result()
 	require.Equal(t, http.StatusOK, response.StatusCode)
