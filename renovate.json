@@ -51,6 +51,18 @@
         "gomod",
         "ocb"
       ],
+      "matchPackageNames": [
+        "go.opentelemetry.io/collector**",
+        "github.com/open-telemetry/opentelemetry-collector-contrib/**"
+      ],
+      "groupName": "otel collector core & contrib deps",
+      "description": "OCB requires every component compiled into the distribution to share a compatible core collector version, so all go.opentelemetry.io/collector* and opentelemetry-collector-contrib/* deps (across manifest.yaml and every component go.mod) must be bumped together, not one-at-a-time"
+    },
+    {
+      "matchManagers": [
+        "gomod",
+        "ocb"
+      ],
       "matchFileNames": [
         "receiver/**",
         "go.mod"
