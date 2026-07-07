@@ -72,7 +72,8 @@
         "ocb"
       ],
       "matchPackageNames": [
-        "go.opentelemetry.io/collector**",
+        "go.opentelemetry.io/collector",
+        "go.opentelemetry.io/collector/**",
         "github.com/open-telemetry/opentelemetry-collector-contrib/**"
       ],
       "groupName": "otel collector core & contrib deps",
