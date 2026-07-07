@@ -187,11 +187,28 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 			gls.mb.RecordVcsContributorCountDataPoint(now, int64(contributorCount), url, path, projectID)
 			// gls.mb.RecordVcsRepositoryContributorCountDataPoint(now, int64(contributorCount), path)
 
+			// vcs.ref.lines_delta is a per-branch (ref-vs-trunk) quantity, not a
+			// per-MR one, but multiple MRs can share a source branch. Aggregate
+			// additions/deletions per branch across all MRs before recording so
+			// each branch produces exactly one datapoint per line-change-type,
+			// rather than relying on the metrics builder's lossy avg-merge of
+			// same-identity datapoints.
+			type lineDelta struct {
+				additions int
+				deletions int
+			}
+			lineDeltaByBranch := make(map[string]*lineDelta)
+			var branchOrder []string
+
 			for _, mr := range mrs {
-				//nolint:lll
-				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Additions), url, path, projectID, mr.SourceBranch, refType, metadata.AttributeVcsLineChangeTypeAdded)
-				//nolint:lll
-				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Deletions), url, path, projectID, mr.SourceBranch, refType, metadata.AttributeVcsLineChangeTypeRemoved)
+				delta, ok := lineDeltaByBranch[mr.SourceBranch]
+				if !ok {
+					delta = &lineDelta{}
+					lineDeltaByBranch[mr.SourceBranch] = delta
+					branchOrder = append(branchOrder, mr.SourceBranch)
+				}
+				delta.additions += mr.DiffStatsSummary.Additions
+				delta.deletions += mr.DiffStatsSummary.Deletions
 
 				// Checks if the merge request has been merged. This is done with IsZero() which tells us if the
 				// time is or isn't  January 1, year 1, 00:00:00 UTC, which is what null in graphql date values
@@ -203,6 +220,14 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 					mergedAge := int64(mr.MergedAt.Sub(mr.CreatedAt).Seconds())
 					gls.mb.RecordVcsChangeTimeToMergeDataPoint(now, mergedAge, mr.Iid, url, path, projectID, mr.SourceBranch)
 				}
+			}
+
+			for _, branch := range branchOrder {
+				delta := lineDeltaByBranch[branch]
+				//nolint:lll
+				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(delta.additions), url, path, projectID, branch, refType, metadata.AttributeVcsLineChangeTypeAdded)
+				//nolint:lll
+				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(delta.deletions), url, path, projectID, branch, refType, metadata.AttributeVcsLineChangeTypeRemoved)
 			}
 			mux.Unlock()
 		}()

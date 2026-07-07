@@ -85,7 +85,7 @@ resourceMetrics:
           - description: The number of lines added/removed in a ref (branch) relative to the default branch (trunk).
             gauge:
               dataPoints:
-                - asInt: "15"
+                - asInt: "30"
                   attributes:
                     - key: vcs.line_change.type
                       value:
@@ -107,7 +107,7 @@ resourceMetrics:
                         stringValue: ""
                   startTimeUnixNano: "1000000"
                   timeUnixNano: "2000000"
-                - asInt: "6"
+                - asInt: "13"
                   attributes:
                     - key: vcs.line_change.type
                       value:
