@@ -85,8 +85,11 @@ resourceMetrics:
           - description: The number of lines added/removed in a ref (branch) relative to the default branch (trunk).
             gauge:
               dataPoints:
-                - asInt: "15"
+                - asInt: "10"
                   attributes:
+                    - key: vcs.change.id
+                      value:
+                        stringValue: "1"
                     - key: vcs.line_change.type
                       value:
                         stringValue: added
@@ -107,8 +110,61 @@ resourceMetrics:
                         stringValue: ""
                   startTimeUnixNano: "1000000"
                   timeUnixNano: "2000000"
-                - asInt: "6"
+                - asInt: "5"
                   attributes:
+                    - key: vcs.change.id
+                      value:
+                        stringValue: "1"
+                    - key: vcs.line_change.type
+                      value:
+                        stringValue: removed
+                    - key: vcs.ref.head.name
+                      value:
+                        stringValue: feature-a
+                    - key: vcs.ref.head.type
+                      value:
+                        stringValue: branch
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
+                    - key: vcs.repository.name
+                      value:
+                        stringValue: project
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "20"
+                  attributes:
+                    - key: vcs.change.id
+                      value:
+                        stringValue: "2"
+                    - key: vcs.line_change.type
+                      value:
+                        stringValue: added
+                    - key: vcs.ref.head.name
+                      value:
+                        stringValue: feature-a
+                    - key: vcs.ref.head.type
+                      value:
+                        stringValue: branch
+                    - key: vcs.repository.id
+                      value:
+                        stringValue: "1"
+                    - key: vcs.repository.name
+                      value:
+                        stringValue: project
+                    - key: vcs.repository.url.full
+                      value:
+                        stringValue: ""
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+                - asInt: "8"
+                  attributes:
+                    - key: vcs.change.id
+                      value:
+                        stringValue: "2"
                     - key: vcs.line_change.type
                       value:
                         stringValue: removed

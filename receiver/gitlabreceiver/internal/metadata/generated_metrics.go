@@ -3,15 +3,14 @@
 package metadata
 
 import (
-	"slices"
-	"time"
-
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/filter"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/receiver"
 	conventions "go.opentelemetry.io/otel/semconv/v1.27.0"
+	"slices"
+	"time"
 )
 
 const (
@@ -168,7 +167,7 @@ var MetricsInfo = metricsInfo{
 	},
 	VcsRefLinesDelta: metricInfo{
 		Name:       "vcs.ref.lines_delta",
-		Attributes: []string{"vcs.repository.url.full", "vcs.repository.name", "vcs.repository.id", "vcs.ref.head.name", "vcs.ref.head.type", "vcs.line_change.type"},
+		Attributes: []string{"vcs.change.id", "vcs.repository.url.full", "vcs.repository.name", "vcs.repository.id", "vcs.ref.head.name", "vcs.ref.head.type", "vcs.line_change.type"},
 	},
 	VcsRefRevisionsDelta: metricInfo{
 		Name:       "vcs.ref.revisions_delta",
@@ -1195,7 +1194,7 @@ func (m *metricVcsRefLinesDelta) init() {
 	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
-func (m *metricVcsRefLinesDelta) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefHeadTypeAttributeValue string, vcsLineChangeTypeAttributeValue string) {
+func (m *metricVcsRefLinesDelta) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefHeadTypeAttributeValue string, vcsLineChangeTypeAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -1203,6 +1202,9 @@ func (m *metricVcsRefLinesDelta) recordDataPoint(start pcommon.Timestamp, ts pco
 	dp := pmetric.NewNumberDataPoint()
 	dp.SetStartTimestamp(start)
 	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, VcsRefLinesDeltaMetricAttributeKeyVcsChangeID) {
+		dp.Attributes().PutStr("vcs.change.id", vcsChangeIDAttributeValue)
+	}
 	if slices.Contains(m.config.EnabledAttributes, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull) {
 		dp.Attributes().PutStr("vcs.repository.url.full", vcsRepositoryURLFullAttributeValue)
 	}
@@ -2030,8 +2032,8 @@ func (mb *MetricsBuilder) RecordVcsRefCountDataPoint(ts pcommon.Timestamp, val i
 }
 
 // RecordVcsRefLinesDeltaDataPoint adds a data point to vcs.ref.lines_delta metric.
-func (mb *MetricsBuilder) RecordVcsRefLinesDeltaDataPoint(ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefHeadTypeAttributeValue AttributeVcsRefHeadType, vcsLineChangeTypeAttributeValue AttributeVcsLineChangeType) {
-	mb.metricVcsRefLinesDelta.recordDataPoint(mb.startTime, ts, val, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryIDAttributeValue, vcsRefHeadNameAttributeValue, vcsRefHeadTypeAttributeValue.String(), vcsLineChangeTypeAttributeValue.String())
+func (mb *MetricsBuilder) RecordVcsRefLinesDeltaDataPoint(ts pcommon.Timestamp, val int64, vcsChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefHeadTypeAttributeValue AttributeVcsRefHeadType, vcsLineChangeTypeAttributeValue AttributeVcsLineChangeType) {
+	mb.metricVcsRefLinesDelta.recordDataPoint(mb.startTime, ts, val, vcsChangeIDAttributeValue, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryIDAttributeValue, vcsRefHeadNameAttributeValue, vcsRefHeadTypeAttributeValue.String(), vcsLineChangeTypeAttributeValue.String())
 }
 
 // RecordVcsRefRevisionsDeltaDataPoint adds a data point to vcs.ref.revisions_delta metric.

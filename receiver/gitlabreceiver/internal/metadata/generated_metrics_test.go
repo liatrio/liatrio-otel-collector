@@ -152,9 +152,9 @@ func TestMetricsBuilder(t *testing.T) {
 			}
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsRefLinesDeltaDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val", AttributeVcsRefHeadTypeBranch, AttributeVcsLineChangeTypeAdded)
+			mb.RecordVcsRefLinesDeltaDataPoint(ts, 1, "vcs.change.id-val", "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val", AttributeVcsRefHeadTypeBranch, AttributeVcsLineChangeTypeAdded)
 			if tt.name == "reaggregate_set" {
-				mb.RecordVcsRefLinesDeltaDataPoint(ts, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.repository.id-val-2", "vcs.ref.head.name-val-2", AttributeVcsRefHeadTypeTag, AttributeVcsLineChangeTypeRemoved)
+				mb.RecordVcsRefLinesDeltaDataPoint(ts, 3, "vcs.change.id-val-2", "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.repository.id-val-2", "vcs.ref.head.name-val-2", AttributeVcsRefHeadTypeTag, AttributeVcsLineChangeTypeRemoved)
 			}
 			defaultMetricsCount++
 			allMetricsCount++
@@ -763,6 +763,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.Equal(t, ts, dp.Timestamp())
 						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 						assert.Equal(t, int64(1), dp.IntValue())
+						vcsChangeIDAttrVal, ok := dp.Attributes().Get("vcs.change.id")
+						assert.True(t, ok)
+						assert.Equal(t, "vcs.change.id-val", vcsChangeIDAttrVal.Str())
 						vcsRepositoryURLFullAttrVal, ok := dp.Attributes().Get("vcs.repository.url.full")
 						assert.True(t, ok)
 						assert.Equal(t, "vcs.repository.url.full-val", vcsRepositoryURLFullAttrVal.Str())
@@ -802,7 +805,9 @@ func TestMetricsBuilder(t *testing.T) {
 						case "max":
 							assert.Equal(t, int64(3), dp.IntValue())
 						}
-						_, ok := dp.Attributes().Get("vcs.repository.url.full")
+						_, ok := dp.Attributes().Get("vcs.change.id")
+						assert.False(t, ok)
+						_, ok = dp.Attributes().Get("vcs.repository.url.full")
 						assert.False(t, ok)
 						_, ok = dp.Attributes().Get("vcs.repository.name")
 						assert.False(t, ok)

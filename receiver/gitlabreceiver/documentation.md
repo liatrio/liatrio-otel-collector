@@ -171,6 +171,7 @@ The number of lines added/removed in a ref (branch) relative to the default bran
 
 | Name | Description | Values | Requirement Level | Semantic Convention |
 | ---- | ----------- | ------ | ----------------- | ------------------- |
+| vcs.change.id | The unique identifier of the VCS change (pull request). | Any Str | Recommended | - |
 | vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended | - |
 | vcs.repository.name | The name of the VCS repository. | Any Str | Recommended | - |
 | vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended | - |

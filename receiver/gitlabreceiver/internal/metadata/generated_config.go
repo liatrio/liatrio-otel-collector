@@ -516,6 +516,7 @@ func (ms *VcsRefCountMetricConfig) Validate() error {
 type VcsRefLinesDeltaMetricAttributeKey string
 
 const (
+	VcsRefLinesDeltaMetricAttributeKeyVcsChangeID          VcsRefLinesDeltaMetricAttributeKey = "vcs.change.id"
 	VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull VcsRefLinesDeltaMetricAttributeKey = "vcs.repository.url.full"
 	VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName    VcsRefLinesDeltaMetricAttributeKey = "vcs.repository.name"
 	VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID      VcsRefLinesDeltaMetricAttributeKey = "vcs.repository.id"
@@ -550,9 +551,9 @@ func (ms *VcsRefLinesDeltaMetricConfig) Unmarshal(parser *confmap.Conf) error {
 func (ms *VcsRefLinesDeltaMetricConfig) Validate() error {
 	for _, val := range ms.EnabledAttributes {
 		switch val {
-		case VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType:
+		case VcsRefLinesDeltaMetricAttributeKeyVcsChangeID, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType:
 		default:
-			return fmt.Errorf("metric vcs.ref.lines_delta doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.head.type, vcs.line_change.type]", val)
+			return fmt.Errorf("metric vcs.ref.lines_delta doesn't have an attribute %v, valid attributes: [vcs.change.id, vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.head.type, vcs.line_change.type]", val)
 		}
 	}
 
@@ -886,7 +887,7 @@ func DefaultMetricsConfig() MetricsConfig {
 		VcsRefLinesDelta: VcsRefLinesDeltaMetricConfig{
 			Enabled:             true,
 			AggregationStrategy: AggregationStrategyAvg,
-			EnabledAttributes:   []VcsRefLinesDeltaMetricAttributeKey{VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType},
+			EnabledAttributes:   []VcsRefLinesDeltaMetricAttributeKey{VcsRefLinesDeltaMetricAttributeKeyVcsChangeID, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType},
 		},
 		VcsRefRevisionsDelta: VcsRefRevisionsDeltaMetricConfig{
 			Enabled:             true,
