@@ -146,7 +146,7 @@ func TestScrape(t *testing.T) {
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
 
-			cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+			cfg := &Config{MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig()}
 
 			gts := newGitLabTerraformScraper(context.Background(), receivertest.NewNopSettings(metadata.Type), cfg)
 			gts.cfg.GitLabOrg = "testgroup"

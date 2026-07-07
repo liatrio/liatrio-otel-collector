@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/config/confighttp"
+	"go.opentelemetry.io/collector/config/confignet"
 )
 
 // only one validate check so far
@@ -24,7 +25,9 @@ func TestValidateConfig(t *testing.T) {
 			expect: errMissingEndpointFromConfig,
 			conf: Config{
 				ServerConfig: confighttp.ServerConfig{
-					Endpoint: "",
+					NetAddr: confignet.AddrConfig{
+						Endpoint: "",
+					},
 				},
 			},
 		},
@@ -33,7 +36,9 @@ func TestValidateConfig(t *testing.T) {
 			expect: nil,
 			conf: Config{
 				ServerConfig: confighttp.ServerConfig{
-					Endpoint: "localhost:8080",
+					NetAddr: confignet.AddrConfig{
+						Endpoint: "localhost:8080",
+					},
 				},
 				Secret: "mysecret",
 			},

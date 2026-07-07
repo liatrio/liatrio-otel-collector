@@ -45,7 +45,7 @@ func newTracesReceiver(
 	config *Config,
 	traceConsumer consumer.Traces,
 ) (*azuredevopsTracesReceiver, error) {
-	if config.WebHook.Endpoint == "" {
+	if config.WebHook.NetAddr.Endpoint == "" {
 		return nil, errMissingEndpoint
 	}
 
@@ -71,7 +71,7 @@ func newTracesReceiver(
 }
 
 func (atr *azuredevopsTracesReceiver) Start(ctx context.Context, host component.Host) error {
-	endpoint := fmt.Sprintf("%s%s", atr.cfg.WebHook.Endpoint, atr.cfg.WebHook.Path)
+	endpoint := fmt.Sprintf("%s%s", atr.cfg.WebHook.NetAddr.Endpoint, atr.cfg.WebHook.Path)
 	atr.logger.Info("Starting Azure DevOps WebHook receiving server", zap.String("endpoint", endpoint))
 
 	// noop if not nil. if start has not been called before these values should be nil.

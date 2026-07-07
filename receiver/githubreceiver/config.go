@@ -84,7 +84,7 @@ func (cfg *Config) Validate() error {
 		return errs
 	}
 
-	if cfg.WebHook.Endpoint == "" {
+	if cfg.WebHook.NetAddr.Endpoint == "" {
 		errs = multierr.Append(errs, errMissingEndpointFromConfig)
 	}
 

@@ -3,36 +3,107 @@ all_set:
   metrics:
     gitlab.catalog.component.project_count:
       enabled: true
+      attributes: ["gitlab.catalog.component.name"]
     gitlab.catalog.project.component_count:
       enabled: true
+      attributes: ["vcs.repository.url.full"]
     gitlab.catalog.resource.star_count:
       enabled: true
+      attributes: ["gitlab.catalog.resource.name","gitlab.catalog.resource.full_path"]
     gitlab.catalog.resource.usage_count:
       enabled: true
+      attributes: ["gitlab.catalog.resource.name","gitlab.catalog.resource.full_path"]
     vcs.change.count:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.change.state","vcs.repository.name","vcs.repository.id"]
     vcs.change.duration:
       enabled: true
+      attributes: ["vcs.change.id","vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.change.state"]
     vcs.change.time_to_approval:
       enabled: true
+      attributes: ["vcs.change.id","vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name"]
     vcs.change.time_to_merge:
       enabled: true
+      attributes: ["vcs.change.id","vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name"]
     vcs.contributor.count:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id"]
     vcs.ref.count:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.type"]
     vcs.ref.lines_delta:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.head.type","vcs.line_change.type"]
     vcs.ref.revisions_delta:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.head.type","vcs.revision_delta.direction"]
     vcs.ref.time:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.head.type"]
     vcs.repository.count:
       enabled: true
     vcs.terraform.module.consumer:
       enabled: true
+      attributes: ["vcs.terraform.module.name","vcs.terraform.module.system","vcs.repository.name","vcs.repository.url.full"]
     vcs.terraform.module.consumer.count:
       enabled: true
+      attributes: ["vcs.terraform.module.name","vcs.terraform.module.system"]
+    vcs.terraform.module.count:
+      enabled: true
+  resource_attributes:
+    organization.name:
+      enabled: true
+    vcs.vendor.name:
+      enabled: true
+reaggregate_set:
+  metrics:
+    gitlab.catalog.component.project_count:
+      enabled: true
+      attributes: []
+    gitlab.catalog.project.component_count:
+      enabled: true
+      attributes: []
+    gitlab.catalog.resource.star_count:
+      enabled: true
+      attributes: []
+    gitlab.catalog.resource.usage_count:
+      enabled: true
+      attributes: []
+    vcs.change.count:
+      enabled: true
+      attributes: []
+    vcs.change.duration:
+      enabled: true
+      attributes: []
+    vcs.change.time_to_approval:
+      enabled: true
+      attributes: []
+    vcs.change.time_to_merge:
+      enabled: true
+      attributes: []
+    vcs.contributor.count:
+      enabled: true
+      attributes: []
+    vcs.ref.count:
+      enabled: true
+      attributes: []
+    vcs.ref.lines_delta:
+      enabled: true
+      attributes: []
+    vcs.ref.revisions_delta:
+      enabled: true
+      attributes: []
+    vcs.ref.time:
+      enabled: true
+      attributes: []
+    vcs.repository.count:
+      enabled: true
+    vcs.terraform.module.consumer:
+      enabled: true
+      attributes: []
+    vcs.terraform.module.consumer.count:
+      enabled: true
+      attributes: []
     vcs.terraform.module.count:
       enabled: true
   resource_attributes:
@@ -44,36 +115,51 @@ none_set:
   metrics:
     gitlab.catalog.component.project_count:
       enabled: false
+      attributes: ["gitlab.catalog.component.name"]
     gitlab.catalog.project.component_count:
       enabled: false
+      attributes: ["vcs.repository.url.full"]
     gitlab.catalog.resource.star_count:
       enabled: false
+      attributes: ["gitlab.catalog.resource.name","gitlab.catalog.resource.full_path"]
     gitlab.catalog.resource.usage_count:
       enabled: false
+      attributes: ["gitlab.catalog.resource.name","gitlab.catalog.resource.full_path"]
     vcs.change.count:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.change.state","vcs.repository.name","vcs.repository.id"]
     vcs.change.duration:
       enabled: false
+      attributes: ["vcs.change.id","vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.change.state"]
     vcs.change.time_to_approval:
       enabled: false
+      attributes: ["vcs.change.id","vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name"]
     vcs.change.time_to_merge:
       enabled: false
+      attributes: ["vcs.change.id","vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name"]
     vcs.contributor.count:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id"]
     vcs.ref.count:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.type"]
     vcs.ref.lines_delta:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.head.type","vcs.line_change.type"]
     vcs.ref.revisions_delta:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.head.type","vcs.revision_delta.direction"]
     vcs.ref.time:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.head.type"]
     vcs.repository.count:
       enabled: false
     vcs.terraform.module.consumer:
       enabled: false
+      attributes: ["vcs.terraform.module.name","vcs.terraform.module.system","vcs.repository.name","vcs.repository.url.full"]
     vcs.terraform.module.consumer.count:
       enabled: false
+      attributes: ["vcs.terraform.module.name","vcs.terraform.module.system"]
     vcs.terraform.module.count:
       enabled: false
   resource_attributes:

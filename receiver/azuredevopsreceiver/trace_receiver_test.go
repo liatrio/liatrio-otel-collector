@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/config/confighttp"
+	"go.opentelemetry.io/collector/config/confignet"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/pdata/ptrace"
@@ -38,7 +39,9 @@ func TestCreateNewTracesReceiver(t *testing.T) {
 			config: Config{
 				WebHook: WebHook{
 					ServerConfig: confighttp.ServerConfig{
-						Endpoint: "localhost:8080",
+						NetAddr: confignet.AddrConfig{
+							Endpoint: "localhost:8080",
+						},
 					},
 					Path:       "/events",
 					HealthPath: "/health",
@@ -53,7 +56,9 @@ func TestCreateNewTracesReceiver(t *testing.T) {
 			config: Config{
 				WebHook: WebHook{
 					ServerConfig: confighttp.ServerConfig{
-						Endpoint: "", // Empty endpoint should fail
+						NetAddr: confignet.AddrConfig{
+							Endpoint: "", // Empty endpoint should fail
+						},
 					},
 				},
 			},
@@ -99,7 +104,9 @@ func TestEventToTraces(t *testing.T) {
 			cfg := &Config{
 				WebHook: WebHook{
 					ServerConfig: confighttp.ServerConfig{
-						Endpoint: "localhost:8080",
+						NetAddr: confignet.AddrConfig{
+							Endpoint: "localhost:8080",
+						},
 					},
 				},
 			}
@@ -128,7 +135,9 @@ func TestHandleStageEvent(t *testing.T) {
 	cfg := &Config{
 		WebHook: WebHook{
 			ServerConfig: confighttp.ServerConfig{
-				Endpoint: "localhost:8080",
+				NetAddr: confignet.AddrConfig{
+					Endpoint: "localhost:8080",
+				},
 			},
 		},
 	}
@@ -150,7 +159,9 @@ func TestHandleJobEvent(t *testing.T) {
 	cfg := &Config{
 		WebHook: WebHook{
 			ServerConfig: confighttp.ServerConfig{
-				Endpoint: "localhost:8080",
+				NetAddr: confignet.AddrConfig{
+					Endpoint: "localhost:8080",
+				},
 			},
 		},
 	}
@@ -202,7 +213,9 @@ func TestEventHandlingWithRealData(t *testing.T) {
 			cfg := &Config{
 				WebHook: WebHook{
 					ServerConfig: confighttp.ServerConfig{
-						Endpoint: "localhost:8080",
+						NetAddr: confignet.AddrConfig{
+							Endpoint: "localhost:8080",
+						},
 					},
 				},
 			}

@@ -94,7 +94,7 @@ func TestScrape(t *testing.T) {
 			defer server.Close()
 
 			cfg := &Config{
-				MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
+				MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig(),
 				ConcurrencyLimit:     5,
 			}
 
