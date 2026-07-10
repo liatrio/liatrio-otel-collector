@@ -60,7 +60,7 @@ func createDefaultConfig() component.Config {
 		// TODO: scrapers defined as a common set of gitlab
 		// TODO: aqp completely remove these comments if the metrics build config
 		// needs to be defined in each scraper
-		// MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig(),
 	}
 }
 
@@ -107,7 +107,7 @@ func createAddScraperOpts(
 			return nil, fmt.Errorf("failed to create scraper %q: %w", key, err)
 		}
 
-		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddScraper(metadata.Type, gitlabscraper))
+		scraperControllerOptions = append(scraperControllerOptions, scraperhelper.AddMetricsScraper(metadata.Type, gitlabscraper))
 	}
 
 	return scraperControllerOptions, nil

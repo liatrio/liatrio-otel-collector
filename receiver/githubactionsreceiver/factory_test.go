@@ -35,7 +35,7 @@ func TestCreateTracesReceiver(t *testing.T) {
 				t.Parallel()
 
 				cfg := createDefaultConfig().(*Config)
-				cfg.Endpoint = "localhost:8080"
+				cfg.NetAddr.Endpoint = "localhost:8080"
 				require.NoError(t, cfg.Validate(), "error validating default config")
 
 				_, err := createTracesReceiver(
@@ -53,7 +53,7 @@ func TestCreateTracesReceiver(t *testing.T) {
 				t.Parallel()
 
 				cfg := createDefaultConfig().(*Config)
-				cfg.Endpoint = "localhost:8080"
+				cfg.NetAddr.Endpoint = "localhost:8080"
 				require.NoError(t, cfg.Validate(), "error validating default config")
 
 				_, err := createTracesReceiver(

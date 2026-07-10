@@ -28,7 +28,7 @@ func (f *Factory) CreateDefaultConfig() internal.Config {
 	clientConfig := confighttp.NewDefaultClientConfig()
 	clientConfig.Timeout = defaultHTTPTimeout
 	return &Config{
-		MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig(),
 		ClientConfig:         clientConfig,
 	}
 }

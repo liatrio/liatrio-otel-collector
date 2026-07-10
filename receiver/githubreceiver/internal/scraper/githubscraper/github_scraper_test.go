@@ -313,7 +313,7 @@ func TestScrape(t *testing.T) {
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
 
-			cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+			cfg := &Config{MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig()}
 
 			cfg.Metrics.VcsCveCount.Enabled = true
 
@@ -473,7 +473,7 @@ func TestScrapeRecoversFromPanic(t *testing.T) {
 	server := httptest.NewServer(MockServer(singleRepoResponses("repo1")))
 	defer server.Close()
 
-	cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+	cfg := &Config{MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig()}
 	cfg.Metrics.VcsCveCount.Enabled = true
 
 	// Attach an observed logger so the test can confirm a panic was actually
@@ -525,7 +525,7 @@ func TestScrapeLogsRecoveredPanic(t *testing.T) {
 	server := httptest.NewServer(MockServer(singleRepoResponses("repo1")))
 	defer server.Close()
 
-	cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+	cfg := &Config{MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig()}
 	cfg.Metrics.VcsCveCount.Enabled = true
 
 	core, recorded := observer.New(zap.ErrorLevel)
@@ -607,7 +607,7 @@ func TestScrapeDoesNotDeadlockAfterRecoveredPanic(t *testing.T) {
 	server := httptest.NewServer(MockServer(r))
 	defer server.Close()
 
-	cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+	cfg := &Config{MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig()}
 	cfg.Metrics.VcsCveCount.Enabled = true
 
 	// Same guard as TestScrapeRecoversFromPanic: if the underlying panic

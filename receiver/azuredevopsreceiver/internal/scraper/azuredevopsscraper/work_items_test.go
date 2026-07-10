@@ -63,7 +63,7 @@ func TestRecordWorkItemMetrics_EmptyAllowlistSkipsTags(t *testing.T) {
 		BaseURL:                  "https://dev.azure.com",
 		WorkItemsEnabled:         true,
 		WorkItemTagAllowlist:     []string{},
-		MetricsBuilderConfig:     metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig:     metadata.NewDefaultMetricsBuilderConfig(),
 		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
 	}
 
@@ -118,7 +118,7 @@ func TestRecordWorkItemMetrics_AllowlistFiltersToOnlyAllowedTags(t *testing.T) {
 		BaseURL:                  "https://dev.azure.com",
 		WorkItemsEnabled:         true,
 		WorkItemTagAllowlist:     []string{"P1-Urgent", "Blocked"},
-		MetricsBuilderConfig:     metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig:     metadata.NewDefaultMetricsBuilderConfig(),
 		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
 	}
 

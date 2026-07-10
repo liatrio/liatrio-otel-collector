@@ -30,7 +30,7 @@ var _ component.Config = (*Config)(nil)
 func (cfg *Config) Validate() error {
 	var errs error
 
-	if cfg.Endpoint == "" {
+	if cfg.NetAddr.Endpoint == "" {
 		errs = multierr.Append(errs, errMissingEndpointFromConfig)
 	}
 

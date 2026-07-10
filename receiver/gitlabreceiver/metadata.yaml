@@ -79,8 +79,7 @@ metrics:
   gitlab.catalog.component.project_count:
     enabled: true
     description: The number of projects in the organization using a specific CI/CD Catalog component.
-    stability:
-      level: development
+    stability: development
     unit: '{project}'
     gauge:
       value_type: int
@@ -88,8 +87,7 @@ metrics:
   gitlab.catalog.project.component_count:
     enabled: true
     description: The number of CI/CD Catalog components used by a project.
-    stability:
-      level: development
+    stability: development
     unit: '{component}'
     gauge:
       value_type: int
@@ -97,8 +95,7 @@ metrics:
   gitlab.catalog.resource.star_count:
     enabled: true
     description: The number of stars on a CI/CD Catalog resource.
-    stability:
-      level: development
+    stability: development
     unit: '{star}'
     gauge:
       value_type: int
@@ -106,16 +103,14 @@ metrics:
   gitlab.catalog.resource.usage_count:
     enabled: true
     description: The number of projects using a CI/CD Catalog resource in the last 30 days.
-    stability:
-      level: development
+    stability: development
     unit: '{usage}'
     gauge:
       value_type: int
     attributes: [gitlab.catalog.resource.name, gitlab.catalog.resource.full_path]
   vcs.change.count:
     description: The number of changes (pull requests) in a repository, categorized by their state (either open or merged).
-    stability:
-      level: development
+    stability: development
     enabled: true
     gauge:
       value_type: int
@@ -124,35 +119,31 @@ metrics:
   vcs.change.duration:
     enabled: true
     description: The time duration a change (pull request/merge request/changelist) has been in an open state.
-    stability:
-      level: development
+    stability: development
     unit: s
     gauge:
       value_type: int
-    attributes: [vcs.change.id, vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.change.state]
+    attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.change.state]
   vcs.change.time_to_approval:
     enabled: true
     description: The amount of time it took a change (pull request) to go from open to approved.
-    stability:
-      level: development
+    stability: development
     unit: s
     gauge:
       value_type: int
-    attributes: [vcs.change.id, vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
+    attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
   vcs.change.time_to_merge:
     enabled: true
     description: The amount of time it took a change (pull request) to go from open to merged.
-    stability:
-      level: development
+    stability: development
     unit: s
     gauge:
       value_type: int
-    attributes: [vcs.change.id, vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
+    attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]
   vcs.contributor.count:
     enabled: false
     description: The number of unique contributors to a repository.
-    stability:
-      level: development
+    stability: development
     unit: '{contributor}'
     gauge:
       value_type: int
@@ -160,8 +151,7 @@ metrics:
   vcs.ref.count:
     enabled: true
     description: The number of refs of type branch in a repository.
-    stability:
-      level: development
+    stability: development
     unit: '{ref}'
     gauge:
       value_type: int
@@ -169,17 +159,15 @@ metrics:
   vcs.ref.lines_delta:
     enabled: true
     description: The number of lines added/removed in a ref (branch) relative to the default branch (trunk).
-    stability:
-      level: development
+    stability: development
     unit: '{line}'
     gauge:
       value_type: int
-    attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.head.type, vcs.line_change.type]
+    attributes: [vcs.change.id, vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.head.type, vcs.line_change.type]
   vcs.ref.revisions_delta:
     enabled: true
     description: The number of revisions (commits) a ref (branch) is ahead/behind the branch from trunk (default).
-    stability:
-      level: development
+    stability: development
     unit: '{revision}'
     gauge:
       value_type: int
@@ -187,8 +175,7 @@ metrics:
   vcs.ref.time:
     enabled: true
     description: Time a ref (branch) created from the default branch (trunk) has existed. The `vcs.ref.head.type` attribute will always be `branch`.
-    stability:
-      level: development
+    stability: development
     unit: s
     gauge:
       value_type: int
@@ -196,8 +183,7 @@ metrics:
   vcs.repository.count:
     enabled: true
     description: The number of repositories in an organization.
-    stability:
-      level: development
+    stability: development
     unit: '{repository}'
     gauge:
       value_type: int
@@ -205,8 +191,7 @@ metrics:
   vcs.terraform.module.consumer:
     enabled: true
     description: A consuming project of a Terraform module. Value is always 1, attributes identify the consumer.
-    stability:
-      level: development
+    stability: development
     unit: '{consumer}'
     gauge:
       value_type: int
@@ -214,8 +199,7 @@ metrics:
   vcs.terraform.module.consumer.count:
     enabled: true
     description: The number of distinct projects consuming a Terraform module.
-    stability:
-      level: development
+    stability: development
     unit: '{consumer}'
     gauge:
       value_type: int
@@ -223,8 +207,7 @@ metrics:
   vcs.terraform.module.count:
     enabled: true
     description: The number of Terraform modules published in the group registry.
-    stability:
-      level: development
+    stability: development
     unit: '{module}'
     gauge:
       value_type: int

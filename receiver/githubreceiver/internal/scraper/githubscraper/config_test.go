@@ -23,7 +23,7 @@ func TestConfig(t *testing.T) {
 	clientConfig.Timeout = 15 * time.Second
 
 	expectedConfig := &Config{
-		MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig(),
 		ClientConfig:         clientConfig,
 	}
 

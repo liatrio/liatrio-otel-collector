@@ -94,8 +94,7 @@ metrics:
   deploy.deployment.average_duration:
     enabled: true
     description: Average deployment duration for a given service and environment over the deployment_lookback_days period.
-    stability:
-      level: development
+    stability: development
     unit: s
     gauge:
       value_type: int
@@ -103,8 +102,7 @@ metrics:
   deploy.deployment.count:
     enabled: true
     description: The number of deployments by service, environment, and status.
-    stability:
-      level: development
+    stability: development
     unit: '{deployment}'
     sum:
       value_type: int
@@ -114,16 +112,14 @@ metrics:
   deploy.deployment.last_timestamp:
     enabled: true
     description: Unix timestamp of the last completed deployment for a service, environment, and status.
-    stability:
-      level: development
+    stability: development
     unit: s
     gauge:
       value_type: int
     attributes: [service.name, deployment.environment.name, deployment.status]
   vcs.change.count:
     description: The number of changes (pull requests) in a repository, categorized by their state (either open or merged).
-    stability:
-      level: development
+    stability: development
     enabled: true
     gauge:
       value_type: int
@@ -132,8 +128,7 @@ metrics:
   vcs.change.duration:
     enabled: true
     description: The time duration a change (pull request/merge request/changelist) has been in an open state.
-    stability:
-      level: development
+    stability: development
     unit: s
     gauge:
       value_type: int
@@ -142,8 +137,7 @@ metrics:
   vcs.change.time_to_approval:
     enabled: true
     description: The amount of time it took a change (pull request) to go from open to approved.
-    stability:
-      level: development
+    stability: development
     unit: s
     gauge:
       value_type: int
@@ -151,8 +145,7 @@ metrics:
   vcs.change.time_to_merge:
     enabled: true
     description: The amount of time it took a change (pull request) to go from open to merged.
-    stability:
-      level: development
+    stability: development
     unit: s
     gauge:
       value_type: int
@@ -160,8 +153,7 @@ metrics:
   vcs.code_coverage:
     enabled: true
     description: The code coverage percentage of a ref (branch).
-    stability:
-      level: development
+    stability: development
     unit: '%'
     gauge:
       value_type: int
@@ -169,8 +161,7 @@ metrics:
   vcs.contributor.count:
     enabled: false
     description: The number of unique contributors to a repository.
-    stability:
-      level: development
+    stability: development
     unit: '{contributor}'
     gauge:
       value_type: int
@@ -178,8 +169,7 @@ metrics:
   vcs.ref.count:
     enabled: true
     description: The number of refs of type branch in a repository.
-    stability:
-      level: development
+    stability: development
     unit: '{ref}'
     gauge:
       value_type: int
@@ -187,8 +177,7 @@ metrics:
   vcs.ref.lines_delta:
     enabled: true
     description: The number of lines added/removed in a ref (branch) relative to the default branch (trunk).
-    stability:
-      level: development
+    stability: development
     unit: '{line}'
     gauge:
       value_type: int
@@ -196,8 +185,7 @@ metrics:
   vcs.ref.revisions_delta:
     enabled: true
     description: The number of revisions (commits) a ref (branch) is ahead/behind the branch from trunk (default).
-    stability:
-      level: development
+    stability: development
     unit: '{revision}'
     gauge:
       value_type: int
@@ -205,8 +193,7 @@ metrics:
   vcs.ref.time:
     enabled: true
     description: Time a ref (branch) created from the default branch (trunk) has existed. The `vcs.ref.type` attribute will always be `branch`.
-    stability:
-      level: development
+    stability: development
     unit: s
     gauge:
       value_type: int
@@ -214,8 +201,7 @@ metrics:
   vcs.repository.count:
     enabled: true
     description: The number of repositories in an organization.
-    stability:
-      level: development
+    stability: development
     unit: '{repository}'
     gauge:
       value_type: int
@@ -226,8 +212,7 @@ metrics:
   work_item.age:
     enabled: true
     description: Time since work item creation for items that are not yet closed, in seconds.
-    stability:
-      level: development
+    stability: development
     unit: s
     gauge:
       value_type: int
@@ -235,8 +220,7 @@ metrics:
   work_item.count:
     enabled: true
     description: The number of work items by type and state.
-    stability:
-      level: development
+    stability: development
     unit: '{work_item}'
     gauge:
       value_type: int
@@ -244,8 +228,7 @@ metrics:
   work_item.cycle_time:
     enabled: true
     description: Time from work item creation to closure in seconds. Only recorded for closed work items.
-    stability:
-      level: development
+    stability: development
     unit: s
     gauge:
       value_type: int
@@ -253,8 +236,7 @@ metrics:
   work_item.tag.count:
     enabled: true
     description: The number of work items with a given tag, broken down by work item type.
-    stability:
-      level: development
+    stability: development
     unit: '{work_item}'
     gauge:
       value_type: int
