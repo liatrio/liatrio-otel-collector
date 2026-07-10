@@ -23,6 +23,10 @@ jobs:
       github.event.comment.body == '/regenerate' &&
       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-latest
+    # Defense in depth for this privileged issue_comment workflow: configure the
+    # `regenerate` environment with required reviewers so each run that checks
+    # out and executes PR-provided code is approved by a maintainer.
+    environment: regenerate
     permissions:
       contents: read
       id-token: write
@@ -50,9 +54,10 @@ jobs:
         run: |
           gh pr view "${{ github.event.issue.number }}" \
             --repo "${{ github.repository }}" \
-            --json headRefName,isCrossRepository \
+            --json headRefName,headRefOid,isCrossRepository \
             > pr.json
           echo "head_ref=$(jq -r .headRefName pr.json)" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$(jq -r .headRefOid pr.json)" >> "$GITHUB_OUTPUT"
           echo "is_fork=$(jq -r .isCrossRepository pr.json)" >> "$GITHUB_OUTPUT"
 
       - name: Reject fork PRs
@@ -68,7 +73,9 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          ref: ${{ steps.pr.outputs.head_ref }}
+          # Pin to the exact SHA resolved above rather than the mutable branch
+          # ref, so what runs is what was gated (no time-of-check/time-of-use gap).
+          ref: ${{ steps.pr.outputs.head_sha }}
           fetch-depth: 0
           token: ${{ steps.octo-sts.outputs.token }}
 
@@ -93,9 +100,14 @@ jobs:
       - name: Commit and push changes
         env:
           GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+          # Referenced via the environment (not interpolated into the script) so
+          # a crafted branch name can't inject shell commands.
+          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
         run: |
           set -eo pipefail
-          if git diff --quiet; then
+          # --untracked-files=all so newly generated (untracked) files count as
+          # changes; `git diff --quiet` only looks at tracked files.
+          if [ -z "$(git status --porcelain=v1 --untracked-files=all)" ]; then
             echo "No changes produced by make generate."
             gh pr comment "${{ github.event.issue.number }}" \
               --repo "${{ github.repository }}" \
@@ -106,7 +118,7 @@ jobs:
           git config user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
           git add -A
           git commit -m "chore: run make generate"
-          git push origin "HEAD:${{ steps.pr.outputs.head_ref }}"
+          git push origin "HEAD:${HEAD_REF}"
           gh pr comment "${{ github.event.issue.number }}" \
             --repo "${{ github.repository }}" \
             --body ":white_check_mark: Committed regenerated code to this PR."

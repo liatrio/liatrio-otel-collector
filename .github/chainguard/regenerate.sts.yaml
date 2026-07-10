@@ -7,4 +7,4 @@ subject_pattern: repo:liatrio/liatrio-otel-collector:ref:refs/heads/main
 
 permissions:
   contents: write
-  pull-requests: write
+  pull_requests: write
