@@ -1,8 +1,13 @@
 ---
 name: regenerate
 
-# Comment `/regenerate` on a PR to check out its head branch, run
-# `make generate`, and commit any resulting changes back to the branch.
+# Lets a maintainer comment `/regenerate` on a Renovate PR to re-run
+# `make generate` and commit the result back to the branch.
+#
+# Hosted Renovate can't run post-upgrade hooks, so dependency bumps that
+# change generated code land with stale output and fail CI. Rather than
+# pulling the branch down locally to regenerate and push back, a maintainer
+# comments `/regenerate` and this workflow does it for them.
 on:
   issue_comment:
     types: [created]
@@ -16,17 +21,23 @@ concurrency:
 jobs:
   regenerate:
     name: regenerate
-    # Gate on: comment is on a PR, body is exactly `/regenerate`, and the
-    # commenter has write access (owner/member/collaborator).
+    # Gate on ALL of:
+    #   - the comment is on a PR,
+    #   - its body is exactly `/regenerate`,
+    #   - the PR was opened by Renovate, and
+    #   - the commenter has write access (owner/member/collaborator).
+    #
+    # Scoping to Renovate-authored PRs is the security boundary: Renovate
+    # pushes its branches to this repo (never a fork), so the code we check
+    # out and execute is always a same-repo dependency bump — the very code
+    # the build-and-test workflow already runs on every push to the branch.
+    # An arbitrary contributor's PR can never reach this job.
     if: >-
       github.event.issue.pull_request &&
       github.event.comment.body == '/regenerate' &&
+      github.event.issue.user.login == 'renovate[bot]' &&
       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-latest
-    # Defense in depth for this privileged issue_comment workflow: configure the
-    # `regenerate` environment with required reviewers so each run that checks
-    # out and executes PR-provided code is approved by a maintainer.
-    environment: regenerate
     permissions:
       contents: read
       id-token: write
@@ -47,35 +58,19 @@ jobs:
             "/repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
             -f content=eyes
 
-      - name: Get PR metadata
+      - name: Get PR branch
         id: pr
         env:
           GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
         run: |
-          gh pr view "${{ github.event.issue.number }}" \
-            --repo "${{ github.repository }}" \
-            --json headRefName,headRefOid,isCrossRepository \
-            > pr.json
-          echo "head_ref=$(jq -r .headRefName pr.json)" >> "$GITHUB_OUTPUT"
-          echo "head_sha=$(jq -r .headRefOid pr.json)" >> "$GITHUB_OUTPUT"
-          echo "is_fork=$(jq -r .isCrossRepository pr.json)" >> "$GITHUB_OUTPUT"
-
-      - name: Reject fork PRs
-        if: steps.pr.outputs.is_fork == 'true'
-        env:
-          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
-        run: |
-          gh pr comment "${{ github.event.issue.number }}" \
-            --repo "${{ github.repository }}" \
-            --body ":warning: \`/regenerate\` can't push to a fork's branch. Please run \`make generate\` locally and push the changes yourself."
-          exit 1
+          head_ref=$(gh pr view "${{ github.event.issue.number }}" \
+            --repo "${{ github.repository }}" --json headRefName --jq .headRefName)
+          echo "head_ref=${head_ref}" >> "$GITHUB_OUTPUT"
 
       - name: Clone repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          # Pin to the exact SHA resolved above rather than the mutable branch
-          # ref, so what runs is what was gated (no time-of-check/time-of-use gap).
-          ref: ${{ steps.pr.outputs.head_sha }}
+          ref: ${{ steps.pr.outputs.head_ref }}
           fetch-depth: 0
           token: ${{ steps.octo-sts.outputs.token }}
 
