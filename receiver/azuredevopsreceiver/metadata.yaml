@@ -80,6 +80,9 @@ attributes:
       - ahead
       - behind
   # Work item attributes
+  work_item.id:
+    description: The unique identifier of the work item. Used to disambiguate individual work items that would otherwise share the same type/state/project attribute set.
+    type: string
   work_item.state:
     description: The current state of the work item (New, Active, Resolved, Closed, etc.).
     type: string
@@ -216,7 +219,7 @@ metrics:
     unit: s
     gauge:
       value_type: int
-    attributes: [work_item.type, work_item.state, project.name]
+    attributes: [work_item.id, work_item.type, work_item.state, project.name]
   work_item.count:
     enabled: true
     description: The number of work items by type and state.
@@ -232,7 +235,7 @@ metrics:
     unit: s
     gauge:
       value_type: int
-    attributes: [work_item.type, project.name]
+    attributes: [work_item.id, work_item.type, project.name]
   work_item.tag.count:
     enabled: true
     description: The number of work items with a given tag, broken down by work item type.

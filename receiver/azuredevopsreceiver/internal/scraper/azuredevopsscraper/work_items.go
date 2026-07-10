@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -244,6 +245,8 @@ func (ados *azuredevopsScraper) recordWorkItemMetrics(nowTimestamp pcommon.Times
 			continue
 		}
 
+		workItemID := strconv.Itoa(wi.ID)
+
 		// Initialize map if needed
 		if counts[workItemType] == nil {
 			counts[workItemType] = make(map[string]int)
@@ -278,6 +281,7 @@ func (ados *azuredevopsScraper) recordWorkItemMetrics(nowTimestamp pcommon.Times
 			ados.mb.RecordWorkItemCycleTimeDataPoint(
 				nowTimestamp,
 				int64(cycleTime),
+				workItemID,
 				workItemType,
 				project,
 			)
@@ -287,6 +291,7 @@ func (ados *azuredevopsScraper) recordWorkItemMetrics(nowTimestamp pcommon.Times
 			ados.mb.RecordWorkItemAgeDataPoint(
 				nowTimestamp,
 				int64(age),
+				workItemID,
 				workItemType,
 				state,
 				project,

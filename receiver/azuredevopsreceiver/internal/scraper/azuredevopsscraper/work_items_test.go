@@ -179,3 +179,73 @@ func TestRecordWorkItemMetrics_AllowlistFiltersToOnlyAllowedTags(t *testing.T) {
 	assert.False(t, emittedTags["P2-High"], "P2-High should NOT be emitted (not in allowlist)")
 	assert.False(t, emittedTags["Tech-Debt"], "Tech-Debt should NOT be emitted (not in allowlist)")
 }
+
+// TestRecordWorkItemMetrics_DistinctIDsDecollideAgeDatapoints verifies that two
+// open work items sharing the same type/state/project produce two distinct
+// work_item.age datapoints rather than collapsing into one. Under otel
+// v0.156.0 the generated metrics builder merges datapoints with an identical
+// attribute set + timestamp (gauges avg-merge), so without work_item.id these
+// two items would be averaged into a single lossy datapoint.
+func TestRecordWorkItemMetrics_DistinctIDsDecollideAgeDatapoints(t *testing.T) {
+	cfg := &Config{
+		Organization:             "test-org",
+		Project:                  "test-project",
+		BaseURL:                  "https://dev.azure.com",
+		WorkItemsEnabled:         true,
+		MetricsBuilderConfig:     metadata.NewDefaultMetricsBuilderConfig(),
+		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
+	}
+
+	settings := receivertest.NewNopSettings(metadata.Type)
+	scraper := newAzureDevOpsScraper(context.Background(), settings, cfg)
+
+	now := time.Now()
+	ts := pcommon.NewTimestampFromTime(now)
+
+	// Two open Bugs in the same state and project — identical on every
+	// attribute except work_item.id.
+	workItems := []WorkItem{
+		{
+			ID: 10,
+			Fields: map[string]interface{}{
+				"System.WorkItemType": "Bug",
+				"System.State":        "Active",
+				"System.CreatedDate":  now.Add(-24 * time.Hour).Format(time.RFC3339),
+			},
+		},
+		{
+			ID: 11,
+			Fields: map[string]interface{}{
+				"System.WorkItemType": "Bug",
+				"System.State":        "Active",
+				"System.CreatedDate":  now.Add(-48 * time.Hour).Format(time.RFC3339),
+			},
+		},
+	}
+
+	scraper.recordWorkItemMetrics(ts, workItems, "test-project")
+	metrics := scraper.mb.Emit()
+
+	ids := map[string]bool{}
+	for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
+		rm := metrics.ResourceMetrics().At(i)
+		for j := 0; j < rm.ScopeMetrics().Len(); j++ {
+			sm := rm.ScopeMetrics().At(j)
+			for k := 0; k < sm.Metrics().Len(); k++ {
+				m := sm.Metrics().At(k)
+				if m.Name() != "work_item.age" {
+					continue
+				}
+				dp := m.Gauge().DataPoints()
+				for l := 0; l < dp.Len(); l++ {
+					if idVal, ok := dp.At(l).Attributes().Get("work_item.id"); ok {
+						ids[idVal.Str()] = true
+					}
+				}
+			}
+		}
+	}
+
+	assert.Len(t, ids, 2, "work_item.age should emit a distinct datapoint per work item (keyed by work_item.id)")
+	assert.True(t, ids["10"] && ids["11"], "both work item ids should be present as distinct datapoints")
+}
