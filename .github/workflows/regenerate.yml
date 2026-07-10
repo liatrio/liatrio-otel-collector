@@ -1,0 +1,112 @@
+---
+name: regenerate
+
+# Comment `/regenerate` on a PR to check out its head branch, run
+# `make generate`, and commit any resulting changes back to the branch.
+on:
+  issue_comment:
+    types: [created]
+
+# Only one regenerate run per PR at a time; a newer comment cancels an
+# in-flight run for the same PR.
+concurrency:
+  group: regenerate-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  regenerate:
+    name: regenerate
+    # Gate on: comment is on a PR, body is exactly `/regenerate`, and the
+    # commenter has write access (owner/member/collaborator).
+    if: >-
+      github.event.issue.pull_request &&
+      github.event.comment.body == '/regenerate' &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - name: Get Octo STS Token
+        uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
+        id: octo-sts
+        with:
+          scope: ${{ github.repository }}
+          identity: regenerate
+
+      - name: Acknowledge command
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+        run: |
+          gh api -X POST \
+            "/repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
+            -f content=eyes
+
+      - name: Get PR metadata
+        id: pr
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+        run: |
+          gh pr view "${{ github.event.issue.number }}" \
+            --repo "${{ github.repository }}" \
+            --json headRefName,isCrossRepository \
+            > pr.json
+          echo "head_ref=$(jq -r .headRefName pr.json)" >> "$GITHUB_OUTPUT"
+          echo "is_fork=$(jq -r .isCrossRepository pr.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Reject fork PRs
+        if: steps.pr.outputs.is_fork == 'true'
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+        run: |
+          gh pr comment "${{ github.event.issue.number }}" \
+            --repo "${{ github.repository }}" \
+            --body ":warning: \`/regenerate\` can't push to a fork's branch. Please run \`make generate\` locally and push the changes yourself."
+          exit 1
+
+      - name: Clone repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ steps.pr.outputs.head_ref }}
+          fetch-depth: 0
+          token: ${{ steps.octo-sts.outputs.token }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+          cache: false
+
+      - name: Make install-tools
+        run: make install-tools
+
+      - name: Make generate
+        run: make generate
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+        run: echo "user-id=$(gh api "/users/octo-sts[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push changes
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+        run: |
+          set -eo pipefail
+          if git diff --quiet; then
+            echo "No changes produced by make generate."
+            gh pr comment "${{ github.event.issue.number }}" \
+              --repo "${{ github.repository }}" \
+              --body ":white_check_mark: \`make generate\` produced no changes — the PR is already up to date."
+            exit 0
+          fi
+          git config user.name 'octo-sts[bot]'
+          git config user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m "chore: run make generate"
+          git push origin "HEAD:${{ steps.pr.outputs.head_ref }}"
+          gh pr comment "${{ github.event.issue.number }}" \
+            --repo "${{ github.repository }}" \
+            --body ":white_check_mark: Committed regenerated code to this PR."

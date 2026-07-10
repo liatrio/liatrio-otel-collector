@@ -1,0 +1,10 @@
+---
+# Identity assumed by the /regenerate slash-command workflow so it can push
+# generated code back to a PR branch. issue_comment workflows always run in the
+# context of the default branch, so the subject is pinned to refs/heads/main.
+issuer: https://token.actions.githubusercontent.com
+subject_pattern: repo:liatrio/liatrio-otel-collector:ref:refs/heads/main
+
+permissions:
+  contents: write
+  pull-requests: write
