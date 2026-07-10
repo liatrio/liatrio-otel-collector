@@ -9,7 +9,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
-
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
 )
@@ -21,30 +20,100 @@ func TestMetricsBuilderConfig(t *testing.T) {
 	}{
 		{
 			name: "default",
-			want: DefaultMetricsBuilderConfig(),
+			want: NewDefaultMetricsBuilderConfig(),
 		},
 		{
 			name: "all_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					DeployDeploymentAverageDuration: MetricConfig{Enabled: true},
-					DeployDeploymentCount:           MetricConfig{Enabled: true},
-					DeployDeploymentLastTimestamp:   MetricConfig{Enabled: true},
-					VcsChangeCount:                  MetricConfig{Enabled: true},
-					VcsChangeDuration:               MetricConfig{Enabled: true},
-					VcsChangeTimeToApproval:         MetricConfig{Enabled: true},
-					VcsChangeTimeToMerge:            MetricConfig{Enabled: true},
-					VcsCodeCoverage:                 MetricConfig{Enabled: true},
-					VcsContributorCount:             MetricConfig{Enabled: true},
-					VcsRefCount:                     MetricConfig{Enabled: true},
-					VcsRefLinesDelta:                MetricConfig{Enabled: true},
-					VcsRefRevisionsDelta:            MetricConfig{Enabled: true},
-					VcsRefTime:                      MetricConfig{Enabled: true},
-					VcsRepositoryCount:              MetricConfig{Enabled: true},
-					WorkItemAge:                     MetricConfig{Enabled: true},
-					WorkItemCount:                   MetricConfig{Enabled: true},
-					WorkItemCycleTime:               MetricConfig{Enabled: true},
-					WorkItemTagCount:                MetricConfig{Enabled: true},
+					DeployDeploymentAverageDuration: DeployDeploymentAverageDurationMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []DeployDeploymentAverageDurationMetricAttributeKey{DeployDeploymentAverageDurationMetricAttributeKeyServiceName, DeployDeploymentAverageDurationMetricAttributeKeyDeploymentEnvironmentName},
+					},
+					DeployDeploymentCount: DeployDeploymentCountMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []DeployDeploymentCountMetricAttributeKey{DeployDeploymentCountMetricAttributeKeyServiceName, DeployDeploymentCountMetricAttributeKeyDeploymentEnvironmentName, DeployDeploymentCountMetricAttributeKeyDeploymentStatus},
+					},
+					DeployDeploymentLastTimestamp: DeployDeploymentLastTimestampMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []DeployDeploymentLastTimestampMetricAttributeKey{DeployDeploymentLastTimestampMetricAttributeKeyServiceName, DeployDeploymentLastTimestampMetricAttributeKeyDeploymentEnvironmentName, DeployDeploymentLastTimestampMetricAttributeKeyDeploymentStatus},
+					},
+					VcsChangeCount: VcsChangeCountMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsChangeCountMetricAttributeKey{VcsChangeCountMetricAttributeKeyVcsRepositoryURLFull, VcsChangeCountMetricAttributeKeyVcsChangeState, VcsChangeCountMetricAttributeKeyVcsRepositoryName, VcsChangeCountMetricAttributeKeyVcsRepositoryID},
+					},
+					VcsChangeDuration: VcsChangeDurationMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsChangeDurationMetricAttributeKey{VcsChangeDurationMetricAttributeKeyVcsRepositoryURLFull, VcsChangeDurationMetricAttributeKeyVcsRepositoryName, VcsChangeDurationMetricAttributeKeyVcsRepositoryID, VcsChangeDurationMetricAttributeKeyVcsRefHeadName, VcsChangeDurationMetricAttributeKeyVcsChangeState},
+					},
+					VcsChangeTimeToApproval: VcsChangeTimeToApprovalMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsChangeTimeToApprovalMetricAttributeKey{VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryURLFull, VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryName, VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryID, VcsChangeTimeToApprovalMetricAttributeKeyVcsRefHeadName},
+					},
+					VcsChangeTimeToMerge: VcsChangeTimeToMergeMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsChangeTimeToMergeMetricAttributeKey{VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryURLFull, VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryName, VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryID, VcsChangeTimeToMergeMetricAttributeKeyVcsRefHeadName},
+					},
+					VcsCodeCoverage: VcsCodeCoverageMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsCodeCoverageMetricAttributeKey{VcsCodeCoverageMetricAttributeKeyVcsRepositoryURLFull, VcsCodeCoverageMetricAttributeKeyVcsRepositoryName, VcsCodeCoverageMetricAttributeKeyVcsRepositoryID, VcsCodeCoverageMetricAttributeKeyVcsRefHeadName, VcsCodeCoverageMetricAttributeKeyVcsRefHeadType},
+					},
+					VcsContributorCount: VcsContributorCountMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsContributorCountMetricAttributeKey{VcsContributorCountMetricAttributeKeyVcsRepositoryURLFull, VcsContributorCountMetricAttributeKeyVcsRepositoryName, VcsContributorCountMetricAttributeKeyVcsRepositoryID},
+					},
+					VcsRefCount: VcsRefCountMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsRefCountMetricAttributeKey{VcsRefCountMetricAttributeKeyVcsRepositoryURLFull, VcsRefCountMetricAttributeKeyVcsRepositoryName, VcsRefCountMetricAttributeKeyVcsRepositoryID, VcsRefCountMetricAttributeKeyVcsRefType},
+					},
+					VcsRefLinesDelta: VcsRefLinesDeltaMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsRefLinesDeltaMetricAttributeKey{VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType},
+					},
+					VcsRefRevisionsDelta: VcsRefRevisionsDeltaMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsRefRevisionsDeltaMetricAttributeKey{VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryName, VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryID, VcsRefRevisionsDeltaMetricAttributeKeyVcsRefHeadName, VcsRefRevisionsDeltaMetricAttributeKeyVcsRefType, VcsRefRevisionsDeltaMetricAttributeKeyVcsRevisionDeltaDirection},
+					},
+					VcsRefTime: VcsRefTimeMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsRefTimeMetricAttributeKey{VcsRefTimeMetricAttributeKeyVcsRepositoryURLFull, VcsRefTimeMetricAttributeKeyVcsRepositoryName, VcsRefTimeMetricAttributeKeyVcsRepositoryID, VcsRefTimeMetricAttributeKeyVcsRefHeadName, VcsRefTimeMetricAttributeKeyVcsRefType},
+					},
+					VcsRepositoryCount: VcsRepositoryCountMetricConfig{
+						Enabled: true,
+					},
+					WorkItemAge: WorkItemAgeMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []WorkItemAgeMetricAttributeKey{WorkItemAgeMetricAttributeKeyWorkItemID, WorkItemAgeMetricAttributeKeyWorkItemType, WorkItemAgeMetricAttributeKeyWorkItemState, WorkItemAgeMetricAttributeKeyProjectName},
+					},
+					WorkItemCount: WorkItemCountMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []WorkItemCountMetricAttributeKey{WorkItemCountMetricAttributeKeyWorkItemType, WorkItemCountMetricAttributeKeyWorkItemState, WorkItemCountMetricAttributeKeyProjectName},
+					},
+					WorkItemCycleTime: WorkItemCycleTimeMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []WorkItemCycleTimeMetricAttributeKey{WorkItemCycleTimeMetricAttributeKeyWorkItemID, WorkItemCycleTimeMetricAttributeKeyWorkItemType, WorkItemCycleTimeMetricAttributeKeyProjectName},
+					},
+					WorkItemTagCount: WorkItemTagCountMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []WorkItemTagCountMetricAttributeKey{WorkItemTagCountMetricAttributeKeyWorkItemTag, WorkItemTagCountMetricAttributeKeyWorkItemType, WorkItemTagCountMetricAttributeKeyProjectName},
+					},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					VcsOwnerName:    ResourceAttributeConfig{Enabled: true},
@@ -56,24 +125,94 @@ func TestMetricsBuilderConfig(t *testing.T) {
 			name: "none_set",
 			want: MetricsBuilderConfig{
 				Metrics: MetricsConfig{
-					DeployDeploymentAverageDuration: MetricConfig{Enabled: false},
-					DeployDeploymentCount:           MetricConfig{Enabled: false},
-					DeployDeploymentLastTimestamp:   MetricConfig{Enabled: false},
-					VcsChangeCount:                  MetricConfig{Enabled: false},
-					VcsChangeDuration:               MetricConfig{Enabled: false},
-					VcsChangeTimeToApproval:         MetricConfig{Enabled: false},
-					VcsChangeTimeToMerge:            MetricConfig{Enabled: false},
-					VcsCodeCoverage:                 MetricConfig{Enabled: false},
-					VcsContributorCount:             MetricConfig{Enabled: false},
-					VcsRefCount:                     MetricConfig{Enabled: false},
-					VcsRefLinesDelta:                MetricConfig{Enabled: false},
-					VcsRefRevisionsDelta:            MetricConfig{Enabled: false},
-					VcsRefTime:                      MetricConfig{Enabled: false},
-					VcsRepositoryCount:              MetricConfig{Enabled: false},
-					WorkItemAge:                     MetricConfig{Enabled: false},
-					WorkItemCount:                   MetricConfig{Enabled: false},
-					WorkItemCycleTime:               MetricConfig{Enabled: false},
-					WorkItemTagCount:                MetricConfig{Enabled: false},
+					DeployDeploymentAverageDuration: DeployDeploymentAverageDurationMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []DeployDeploymentAverageDurationMetricAttributeKey{DeployDeploymentAverageDurationMetricAttributeKeyServiceName, DeployDeploymentAverageDurationMetricAttributeKeyDeploymentEnvironmentName},
+					},
+					DeployDeploymentCount: DeployDeploymentCountMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []DeployDeploymentCountMetricAttributeKey{DeployDeploymentCountMetricAttributeKeyServiceName, DeployDeploymentCountMetricAttributeKeyDeploymentEnvironmentName, DeployDeploymentCountMetricAttributeKeyDeploymentStatus},
+					},
+					DeployDeploymentLastTimestamp: DeployDeploymentLastTimestampMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []DeployDeploymentLastTimestampMetricAttributeKey{DeployDeploymentLastTimestampMetricAttributeKeyServiceName, DeployDeploymentLastTimestampMetricAttributeKeyDeploymentEnvironmentName, DeployDeploymentLastTimestampMetricAttributeKeyDeploymentStatus},
+					},
+					VcsChangeCount: VcsChangeCountMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsChangeCountMetricAttributeKey{VcsChangeCountMetricAttributeKeyVcsRepositoryURLFull, VcsChangeCountMetricAttributeKeyVcsChangeState, VcsChangeCountMetricAttributeKeyVcsRepositoryName, VcsChangeCountMetricAttributeKeyVcsRepositoryID},
+					},
+					VcsChangeDuration: VcsChangeDurationMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsChangeDurationMetricAttributeKey{VcsChangeDurationMetricAttributeKeyVcsRepositoryURLFull, VcsChangeDurationMetricAttributeKeyVcsRepositoryName, VcsChangeDurationMetricAttributeKeyVcsRepositoryID, VcsChangeDurationMetricAttributeKeyVcsRefHeadName, VcsChangeDurationMetricAttributeKeyVcsChangeState},
+					},
+					VcsChangeTimeToApproval: VcsChangeTimeToApprovalMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsChangeTimeToApprovalMetricAttributeKey{VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryURLFull, VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryName, VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryID, VcsChangeTimeToApprovalMetricAttributeKeyVcsRefHeadName},
+					},
+					VcsChangeTimeToMerge: VcsChangeTimeToMergeMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsChangeTimeToMergeMetricAttributeKey{VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryURLFull, VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryName, VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryID, VcsChangeTimeToMergeMetricAttributeKeyVcsRefHeadName},
+					},
+					VcsCodeCoverage: VcsCodeCoverageMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsCodeCoverageMetricAttributeKey{VcsCodeCoverageMetricAttributeKeyVcsRepositoryURLFull, VcsCodeCoverageMetricAttributeKeyVcsRepositoryName, VcsCodeCoverageMetricAttributeKeyVcsRepositoryID, VcsCodeCoverageMetricAttributeKeyVcsRefHeadName, VcsCodeCoverageMetricAttributeKeyVcsRefHeadType},
+					},
+					VcsContributorCount: VcsContributorCountMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsContributorCountMetricAttributeKey{VcsContributorCountMetricAttributeKeyVcsRepositoryURLFull, VcsContributorCountMetricAttributeKeyVcsRepositoryName, VcsContributorCountMetricAttributeKeyVcsRepositoryID},
+					},
+					VcsRefCount: VcsRefCountMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsRefCountMetricAttributeKey{VcsRefCountMetricAttributeKeyVcsRepositoryURLFull, VcsRefCountMetricAttributeKeyVcsRepositoryName, VcsRefCountMetricAttributeKeyVcsRepositoryID, VcsRefCountMetricAttributeKeyVcsRefType},
+					},
+					VcsRefLinesDelta: VcsRefLinesDeltaMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsRefLinesDeltaMetricAttributeKey{VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType},
+					},
+					VcsRefRevisionsDelta: VcsRefRevisionsDeltaMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsRefRevisionsDeltaMetricAttributeKey{VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryName, VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryID, VcsRefRevisionsDeltaMetricAttributeKeyVcsRefHeadName, VcsRefRevisionsDeltaMetricAttributeKeyVcsRefType, VcsRefRevisionsDeltaMetricAttributeKeyVcsRevisionDeltaDirection},
+					},
+					VcsRefTime: VcsRefTimeMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []VcsRefTimeMetricAttributeKey{VcsRefTimeMetricAttributeKeyVcsRepositoryURLFull, VcsRefTimeMetricAttributeKeyVcsRepositoryName, VcsRefTimeMetricAttributeKeyVcsRepositoryID, VcsRefTimeMetricAttributeKeyVcsRefHeadName, VcsRefTimeMetricAttributeKeyVcsRefType},
+					},
+					VcsRepositoryCount: VcsRepositoryCountMetricConfig{
+						Enabled: false,
+					},
+					WorkItemAge: WorkItemAgeMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []WorkItemAgeMetricAttributeKey{WorkItemAgeMetricAttributeKeyWorkItemID, WorkItemAgeMetricAttributeKeyWorkItemType, WorkItemAgeMetricAttributeKeyWorkItemState, WorkItemAgeMetricAttributeKeyProjectName},
+					},
+					WorkItemCount: WorkItemCountMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []WorkItemCountMetricAttributeKey{WorkItemCountMetricAttributeKeyWorkItemType, WorkItemCountMetricAttributeKeyWorkItemState, WorkItemCountMetricAttributeKeyProjectName},
+					},
+					WorkItemCycleTime: WorkItemCycleTimeMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []WorkItemCycleTimeMetricAttributeKey{WorkItemCycleTimeMetricAttributeKeyWorkItemID, WorkItemCycleTimeMetricAttributeKeyWorkItemType, WorkItemCycleTimeMetricAttributeKeyProjectName},
+					},
+					WorkItemTagCount: WorkItemTagCountMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []WorkItemTagCountMetricAttributeKey{WorkItemTagCountMetricAttributeKeyWorkItemTag, WorkItemTagCountMetricAttributeKeyWorkItemType, WorkItemTagCountMetricAttributeKeyProjectName},
+					},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					VcsOwnerName:    ResourceAttributeConfig{Enabled: false},
@@ -85,10 +224,213 @@ func TestMetricsBuilderConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := loadMetricsBuilderConfig(t, tt.name)
-			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(MetricConfig{}, ResourceAttributeConfig{}))
+			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(DeployDeploymentAverageDurationMetricConfig{}, DeployDeploymentCountMetricConfig{}, DeployDeploymentLastTimestampMetricConfig{}, VcsChangeCountMetricConfig{}, VcsChangeDurationMetricConfig{}, VcsChangeTimeToApprovalMetricConfig{}, VcsChangeTimeToMergeMetricConfig{}, VcsCodeCoverageMetricConfig{}, VcsContributorCountMetricConfig{}, VcsRefCountMetricConfig{}, VcsRefLinesDeltaMetricConfig{}, VcsRefRevisionsDeltaMetricConfig{}, VcsRefTimeMetricConfig{}, VcsRepositoryCountMetricConfig{}, WorkItemAgeMetricConfig{}, WorkItemCountMetricConfig{}, WorkItemCycleTimeMetricConfig{}, WorkItemTagCountMetricConfig{}, ResourceAttributeConfig{}))
 			require.Emptyf(t, diff, "Config mismatch (-expected +actual):\n%s", diff)
 		})
 	}
+}
+func TestDeployDeploymentAverageDurationMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().DeployDeploymentAverageDuration
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []DeployDeploymentAverageDurationMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric deploy.deployment.average_duration doesn't have an attribute invalid, valid attributes: [service.name, deployment.environment.name]")
+
+	cfg = DefaultMetricsConfig().DeployDeploymentAverageDuration
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestDeployDeploymentCountMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().DeployDeploymentCount
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []DeployDeploymentCountMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric deploy.deployment.count doesn't have an attribute invalid, valid attributes: [service.name, deployment.environment.name, deployment.status]")
+
+	cfg = DefaultMetricsConfig().DeployDeploymentCount
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestDeployDeploymentLastTimestampMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().DeployDeploymentLastTimestamp
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []DeployDeploymentLastTimestampMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric deploy.deployment.last_timestamp doesn't have an attribute invalid, valid attributes: [service.name, deployment.environment.name, deployment.status]")
+
+	cfg = DefaultMetricsConfig().DeployDeploymentLastTimestamp
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestVcsChangeCountMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().VcsChangeCount
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []VcsChangeCountMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric vcs.change.count doesn't have an attribute invalid, valid attributes: [vcs.repository.url.full, vcs.change.state, vcs.repository.name, vcs.repository.id]")
+
+	cfg = DefaultMetricsConfig().VcsChangeCount
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestVcsChangeDurationMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().VcsChangeDuration
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []VcsChangeDurationMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric vcs.change.duration doesn't have an attribute invalid, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.change.state]")
+
+	cfg = DefaultMetricsConfig().VcsChangeDuration
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestVcsChangeTimeToApprovalMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().VcsChangeTimeToApproval
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []VcsChangeTimeToApprovalMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric vcs.change.time_to_approval doesn't have an attribute invalid, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]")
+
+	cfg = DefaultMetricsConfig().VcsChangeTimeToApproval
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestVcsChangeTimeToMergeMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().VcsChangeTimeToMerge
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []VcsChangeTimeToMergeMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric vcs.change.time_to_merge doesn't have an attribute invalid, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]")
+
+	cfg = DefaultMetricsConfig().VcsChangeTimeToMerge
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestVcsCodeCoverageMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().VcsCodeCoverage
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []VcsCodeCoverageMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric vcs.code_coverage doesn't have an attribute invalid, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.head.type]")
+
+	cfg = DefaultMetricsConfig().VcsCodeCoverage
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestVcsContributorCountMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().VcsContributorCount
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []VcsContributorCountMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric vcs.contributor.count doesn't have an attribute invalid, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id]")
+
+	cfg = DefaultMetricsConfig().VcsContributorCount
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestVcsRefCountMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().VcsRefCount
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []VcsRefCountMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric vcs.ref.count doesn't have an attribute invalid, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.type]")
+
+	cfg = DefaultMetricsConfig().VcsRefCount
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestVcsRefLinesDeltaMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().VcsRefLinesDelta
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []VcsRefLinesDeltaMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric vcs.ref.lines_delta doesn't have an attribute invalid, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.type, vcs.line_change.type]")
+
+	cfg = DefaultMetricsConfig().VcsRefLinesDelta
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestVcsRefRevisionsDeltaMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().VcsRefRevisionsDelta
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []VcsRefRevisionsDeltaMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric vcs.ref.revisions_delta doesn't have an attribute invalid, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.type, vcs.revision_delta.direction]")
+
+	cfg = DefaultMetricsConfig().VcsRefRevisionsDelta
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestVcsRefTimeMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().VcsRefTime
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []VcsRefTimeMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric vcs.ref.time doesn't have an attribute invalid, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.type]")
+
+	cfg = DefaultMetricsConfig().VcsRefTime
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestWorkItemAgeMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().WorkItemAge
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []WorkItemAgeMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric work_item.age doesn't have an attribute invalid, valid attributes: [work_item.id, work_item.type, work_item.state, project.name]")
+
+	cfg = DefaultMetricsConfig().WorkItemAge
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestWorkItemCountMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().WorkItemCount
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []WorkItemCountMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric work_item.count doesn't have an attribute invalid, valid attributes: [work_item.type, work_item.state, project.name]")
+
+	cfg = DefaultMetricsConfig().WorkItemCount
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestWorkItemCycleTimeMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().WorkItemCycleTime
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []WorkItemCycleTimeMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric work_item.cycle_time doesn't have an attribute invalid, valid attributes: [work_item.id, work_item.type, project.name]")
+
+	cfg = DefaultMetricsConfig().WorkItemCycleTime
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
+}
+
+func TestWorkItemTagCountMetricsConfig_Validate(t *testing.T) {
+	cfg := DefaultMetricsConfig().WorkItemTagCount
+	require.NoError(t, cfg.Validate())
+
+	cfg.EnabledAttributes = []WorkItemTagCountMetricAttributeKey{"invalid"}
+	require.ErrorContains(t, cfg.Validate(), "metric work_item.tag.count doesn't have an attribute invalid, valid attributes: [work_item.tag, work_item.type, project.name]")
+
+	cfg = DefaultMetricsConfig().WorkItemTagCount
+	cfg.AggregationStrategy = "invalid"
+	require.ErrorContains(t, cfg.Validate(), "invalid aggregation strategy")
 }
 
 func loadMetricsBuilderConfig(t *testing.T, name string) MetricsBuilderConfig {
@@ -96,7 +438,7 @@ func loadMetricsBuilderConfig(t *testing.T, name string) MetricsBuilderConfig {
 	require.NoError(t, err)
 	sub, err := cm.Sub(name)
 	require.NoError(t, err)
-	cfg := DefaultMetricsBuilderConfig()
+	cfg := NewDefaultMetricsBuilderConfig()
 	require.NoError(t, sub.Unmarshal(&cfg, confmap.WithIgnoreUnused()))
 	return cfg
 }

@@ -3,101 +3,913 @@
 package metadata
 
 import (
+	"fmt"
+
 	"go.opentelemetry.io/collector/confmap"
 	"go.opentelemetry.io/collector/filter"
 )
 
-// MetricConfig provides common config for a particular metric.
-type MetricConfig struct {
-	Enabled bool `mapstructure:"enabled"`
+// GitlabCatalogComponentProjectCountMetricAttributeKey specifies the key of an attribute for the gitlab.catalog.component.project_count metric.
+type GitlabCatalogComponentProjectCountMetricAttributeKey string
 
+const (
+	GitlabCatalogComponentProjectCountMetricAttributeKeyGitlabCatalogComponentName GitlabCatalogComponentProjectCountMetricAttributeKey = "gitlab.catalog.component.name"
+)
+
+// GitlabCatalogComponentProjectCountMetricConfig provides config for the gitlab.catalog.component.project_count metric.
+type GitlabCatalogComponentProjectCountMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
 	enabledSetByUser bool
+
+	AggregationStrategy string                                                 `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []GitlabCatalogComponentProjectCountMetricAttributeKey `mapstructure:"attributes"`
 }
 
-func (ms *MetricConfig) Unmarshal(parser *confmap.Conf) error {
+func (ms *GitlabCatalogComponentProjectCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
 	if parser == nil {
 		return nil
 	}
+
 	err := parser.Unmarshal(ms)
 	if err != nil {
 		return err
 	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *GitlabCatalogComponentProjectCountMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case GitlabCatalogComponentProjectCountMetricAttributeKeyGitlabCatalogComponentName:
+		default:
+			return fmt.Errorf("metric gitlab.catalog.component.project_count doesn't have an attribute %v, valid attributes: [gitlab.catalog.component.name]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// GitlabCatalogProjectComponentCountMetricAttributeKey specifies the key of an attribute for the gitlab.catalog.project.component_count metric.
+type GitlabCatalogProjectComponentCountMetricAttributeKey string
+
+const (
+	GitlabCatalogProjectComponentCountMetricAttributeKeyVcsRepositoryURLFull GitlabCatalogProjectComponentCountMetricAttributeKey = "vcs.repository.url.full"
+)
+
+// GitlabCatalogProjectComponentCountMetricConfig provides config for the gitlab.catalog.project.component_count metric.
+type GitlabCatalogProjectComponentCountMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                                 `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []GitlabCatalogProjectComponentCountMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *GitlabCatalogProjectComponentCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *GitlabCatalogProjectComponentCountMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case GitlabCatalogProjectComponentCountMetricAttributeKeyVcsRepositoryURLFull:
+		default:
+			return fmt.Errorf("metric gitlab.catalog.project.component_count doesn't have an attribute %v, valid attributes: [vcs.repository.url.full]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// GitlabCatalogResourceStarCountMetricAttributeKey specifies the key of an attribute for the gitlab.catalog.resource.star_count metric.
+type GitlabCatalogResourceStarCountMetricAttributeKey string
+
+const (
+	GitlabCatalogResourceStarCountMetricAttributeKeyGitlabCatalogResourceName     GitlabCatalogResourceStarCountMetricAttributeKey = "gitlab.catalog.resource.name"
+	GitlabCatalogResourceStarCountMetricAttributeKeyGitlabCatalogResourceFullPath GitlabCatalogResourceStarCountMetricAttributeKey = "gitlab.catalog.resource.full_path"
+)
+
+// GitlabCatalogResourceStarCountMetricConfig provides config for the gitlab.catalog.resource.star_count metric.
+type GitlabCatalogResourceStarCountMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                             `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []GitlabCatalogResourceStarCountMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *GitlabCatalogResourceStarCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *GitlabCatalogResourceStarCountMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case GitlabCatalogResourceStarCountMetricAttributeKeyGitlabCatalogResourceName, GitlabCatalogResourceStarCountMetricAttributeKeyGitlabCatalogResourceFullPath:
+		default:
+			return fmt.Errorf("metric gitlab.catalog.resource.star_count doesn't have an attribute %v, valid attributes: [gitlab.catalog.resource.name, gitlab.catalog.resource.full_path]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// GitlabCatalogResourceUsageCountMetricAttributeKey specifies the key of an attribute for the gitlab.catalog.resource.usage_count metric.
+type GitlabCatalogResourceUsageCountMetricAttributeKey string
+
+const (
+	GitlabCatalogResourceUsageCountMetricAttributeKeyGitlabCatalogResourceName     GitlabCatalogResourceUsageCountMetricAttributeKey = "gitlab.catalog.resource.name"
+	GitlabCatalogResourceUsageCountMetricAttributeKeyGitlabCatalogResourceFullPath GitlabCatalogResourceUsageCountMetricAttributeKey = "gitlab.catalog.resource.full_path"
+)
+
+// GitlabCatalogResourceUsageCountMetricConfig provides config for the gitlab.catalog.resource.usage_count metric.
+type GitlabCatalogResourceUsageCountMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                              `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []GitlabCatalogResourceUsageCountMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *GitlabCatalogResourceUsageCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *GitlabCatalogResourceUsageCountMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case GitlabCatalogResourceUsageCountMetricAttributeKeyGitlabCatalogResourceName, GitlabCatalogResourceUsageCountMetricAttributeKeyGitlabCatalogResourceFullPath:
+		default:
+			return fmt.Errorf("metric gitlab.catalog.resource.usage_count doesn't have an attribute %v, valid attributes: [gitlab.catalog.resource.name, gitlab.catalog.resource.full_path]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// VcsChangeCountMetricAttributeKey specifies the key of an attribute for the vcs.change.count metric.
+type VcsChangeCountMetricAttributeKey string
+
+const (
+	VcsChangeCountMetricAttributeKeyVcsRepositoryURLFull VcsChangeCountMetricAttributeKey = "vcs.repository.url.full"
+	VcsChangeCountMetricAttributeKeyVcsChangeState       VcsChangeCountMetricAttributeKey = "vcs.change.state"
+	VcsChangeCountMetricAttributeKeyVcsRepositoryName    VcsChangeCountMetricAttributeKey = "vcs.repository.name"
+	VcsChangeCountMetricAttributeKeyVcsRepositoryID      VcsChangeCountMetricAttributeKey = "vcs.repository.id"
+)
+
+// VcsChangeCountMetricConfig provides config for the vcs.change.count metric.
+type VcsChangeCountMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                             `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []VcsChangeCountMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *VcsChangeCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *VcsChangeCountMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case VcsChangeCountMetricAttributeKeyVcsRepositoryURLFull, VcsChangeCountMetricAttributeKeyVcsChangeState, VcsChangeCountMetricAttributeKeyVcsRepositoryName, VcsChangeCountMetricAttributeKeyVcsRepositoryID:
+		default:
+			return fmt.Errorf("metric vcs.change.count doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.change.state, vcs.repository.name, vcs.repository.id]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// VcsChangeDurationMetricAttributeKey specifies the key of an attribute for the vcs.change.duration metric.
+type VcsChangeDurationMetricAttributeKey string
+
+const (
+	VcsChangeDurationMetricAttributeKeyVcsRepositoryURLFull VcsChangeDurationMetricAttributeKey = "vcs.repository.url.full"
+	VcsChangeDurationMetricAttributeKeyVcsRepositoryName    VcsChangeDurationMetricAttributeKey = "vcs.repository.name"
+	VcsChangeDurationMetricAttributeKeyVcsRepositoryID      VcsChangeDurationMetricAttributeKey = "vcs.repository.id"
+	VcsChangeDurationMetricAttributeKeyVcsRefHeadName       VcsChangeDurationMetricAttributeKey = "vcs.ref.head.name"
+	VcsChangeDurationMetricAttributeKeyVcsChangeState       VcsChangeDurationMetricAttributeKey = "vcs.change.state"
+)
+
+// VcsChangeDurationMetricConfig provides config for the vcs.change.duration metric.
+type VcsChangeDurationMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []VcsChangeDurationMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *VcsChangeDurationMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *VcsChangeDurationMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case VcsChangeDurationMetricAttributeKeyVcsRepositoryURLFull, VcsChangeDurationMetricAttributeKeyVcsRepositoryName, VcsChangeDurationMetricAttributeKeyVcsRepositoryID, VcsChangeDurationMetricAttributeKeyVcsRefHeadName, VcsChangeDurationMetricAttributeKeyVcsChangeState:
+		default:
+			return fmt.Errorf("metric vcs.change.duration doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.change.state]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// VcsChangeTimeToApprovalMetricAttributeKey specifies the key of an attribute for the vcs.change.time_to_approval metric.
+type VcsChangeTimeToApprovalMetricAttributeKey string
+
+const (
+	VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryURLFull VcsChangeTimeToApprovalMetricAttributeKey = "vcs.repository.url.full"
+	VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryName    VcsChangeTimeToApprovalMetricAttributeKey = "vcs.repository.name"
+	VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryID      VcsChangeTimeToApprovalMetricAttributeKey = "vcs.repository.id"
+	VcsChangeTimeToApprovalMetricAttributeKeyVcsRefHeadName       VcsChangeTimeToApprovalMetricAttributeKey = "vcs.ref.head.name"
+)
+
+// VcsChangeTimeToApprovalMetricConfig provides config for the vcs.change.time_to_approval metric.
+type VcsChangeTimeToApprovalMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                      `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []VcsChangeTimeToApprovalMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *VcsChangeTimeToApprovalMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *VcsChangeTimeToApprovalMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryURLFull, VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryName, VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryID, VcsChangeTimeToApprovalMetricAttributeKeyVcsRefHeadName:
+		default:
+			return fmt.Errorf("metric vcs.change.time_to_approval doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// VcsChangeTimeToMergeMetricAttributeKey specifies the key of an attribute for the vcs.change.time_to_merge metric.
+type VcsChangeTimeToMergeMetricAttributeKey string
+
+const (
+	VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryURLFull VcsChangeTimeToMergeMetricAttributeKey = "vcs.repository.url.full"
+	VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryName    VcsChangeTimeToMergeMetricAttributeKey = "vcs.repository.name"
+	VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryID      VcsChangeTimeToMergeMetricAttributeKey = "vcs.repository.id"
+	VcsChangeTimeToMergeMetricAttributeKeyVcsRefHeadName       VcsChangeTimeToMergeMetricAttributeKey = "vcs.ref.head.name"
+)
+
+// VcsChangeTimeToMergeMetricConfig provides config for the vcs.change.time_to_merge metric.
+type VcsChangeTimeToMergeMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                   `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []VcsChangeTimeToMergeMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *VcsChangeTimeToMergeMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *VcsChangeTimeToMergeMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryURLFull, VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryName, VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryID, VcsChangeTimeToMergeMetricAttributeKeyVcsRefHeadName:
+		default:
+			return fmt.Errorf("metric vcs.change.time_to_merge doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// VcsContributorCountMetricAttributeKey specifies the key of an attribute for the vcs.contributor.count metric.
+type VcsContributorCountMetricAttributeKey string
+
+const (
+	VcsContributorCountMetricAttributeKeyVcsRepositoryURLFull VcsContributorCountMetricAttributeKey = "vcs.repository.url.full"
+	VcsContributorCountMetricAttributeKeyVcsRepositoryName    VcsContributorCountMetricAttributeKey = "vcs.repository.name"
+	VcsContributorCountMetricAttributeKeyVcsRepositoryID      VcsContributorCountMetricAttributeKey = "vcs.repository.id"
+)
+
+// VcsContributorCountMetricConfig provides config for the vcs.contributor.count metric.
+type VcsContributorCountMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                  `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []VcsContributorCountMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *VcsContributorCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *VcsContributorCountMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case VcsContributorCountMetricAttributeKeyVcsRepositoryURLFull, VcsContributorCountMetricAttributeKeyVcsRepositoryName, VcsContributorCountMetricAttributeKeyVcsRepositoryID:
+		default:
+			return fmt.Errorf("metric vcs.contributor.count doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// VcsRefCountMetricAttributeKey specifies the key of an attribute for the vcs.ref.count metric.
+type VcsRefCountMetricAttributeKey string
+
+const (
+	VcsRefCountMetricAttributeKeyVcsRepositoryURLFull VcsRefCountMetricAttributeKey = "vcs.repository.url.full"
+	VcsRefCountMetricAttributeKeyVcsRepositoryName    VcsRefCountMetricAttributeKey = "vcs.repository.name"
+	VcsRefCountMetricAttributeKeyVcsRepositoryID      VcsRefCountMetricAttributeKey = "vcs.repository.id"
+	VcsRefCountMetricAttributeKeyVcsRefHeadType       VcsRefCountMetricAttributeKey = "vcs.ref.head.type"
+)
+
+// VcsRefCountMetricConfig provides config for the vcs.ref.count metric.
+type VcsRefCountMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                          `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []VcsRefCountMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *VcsRefCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *VcsRefCountMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case VcsRefCountMetricAttributeKeyVcsRepositoryURLFull, VcsRefCountMetricAttributeKeyVcsRepositoryName, VcsRefCountMetricAttributeKeyVcsRepositoryID, VcsRefCountMetricAttributeKeyVcsRefHeadType:
+		default:
+			return fmt.Errorf("metric vcs.ref.count doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.type]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// VcsRefLinesDeltaMetricAttributeKey specifies the key of an attribute for the vcs.ref.lines_delta metric.
+type VcsRefLinesDeltaMetricAttributeKey string
+
+const (
+	VcsRefLinesDeltaMetricAttributeKeyVcsChangeID          VcsRefLinesDeltaMetricAttributeKey = "vcs.change.id"
+	VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull VcsRefLinesDeltaMetricAttributeKey = "vcs.repository.url.full"
+	VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName    VcsRefLinesDeltaMetricAttributeKey = "vcs.repository.name"
+	VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID      VcsRefLinesDeltaMetricAttributeKey = "vcs.repository.id"
+	VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName       VcsRefLinesDeltaMetricAttributeKey = "vcs.ref.head.name"
+	VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType       VcsRefLinesDeltaMetricAttributeKey = "vcs.ref.head.type"
+	VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType    VcsRefLinesDeltaMetricAttributeKey = "vcs.line_change.type"
+)
+
+// VcsRefLinesDeltaMetricConfig provides config for the vcs.ref.lines_delta metric.
+type VcsRefLinesDeltaMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                               `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []VcsRefLinesDeltaMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *VcsRefLinesDeltaMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *VcsRefLinesDeltaMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case VcsRefLinesDeltaMetricAttributeKeyVcsChangeID, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType:
+		default:
+			return fmt.Errorf("metric vcs.ref.lines_delta doesn't have an attribute %v, valid attributes: [vcs.change.id, vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.head.type, vcs.line_change.type]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// VcsRefRevisionsDeltaMetricAttributeKey specifies the key of an attribute for the vcs.ref.revisions_delta metric.
+type VcsRefRevisionsDeltaMetricAttributeKey string
+
+const (
+	VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryURLFull      VcsRefRevisionsDeltaMetricAttributeKey = "vcs.repository.url.full"
+	VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryName         VcsRefRevisionsDeltaMetricAttributeKey = "vcs.repository.name"
+	VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryID           VcsRefRevisionsDeltaMetricAttributeKey = "vcs.repository.id"
+	VcsRefRevisionsDeltaMetricAttributeKeyVcsRefHeadName            VcsRefRevisionsDeltaMetricAttributeKey = "vcs.ref.head.name"
+	VcsRefRevisionsDeltaMetricAttributeKeyVcsRefHeadType            VcsRefRevisionsDeltaMetricAttributeKey = "vcs.ref.head.type"
+	VcsRefRevisionsDeltaMetricAttributeKeyVcsRevisionDeltaDirection VcsRefRevisionsDeltaMetricAttributeKey = "vcs.revision_delta.direction"
+)
+
+// VcsRefRevisionsDeltaMetricConfig provides config for the vcs.ref.revisions_delta metric.
+type VcsRefRevisionsDeltaMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                   `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []VcsRefRevisionsDeltaMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *VcsRefRevisionsDeltaMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *VcsRefRevisionsDeltaMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryName, VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryID, VcsRefRevisionsDeltaMetricAttributeKeyVcsRefHeadName, VcsRefRevisionsDeltaMetricAttributeKeyVcsRefHeadType, VcsRefRevisionsDeltaMetricAttributeKeyVcsRevisionDeltaDirection:
+		default:
+			return fmt.Errorf("metric vcs.ref.revisions_delta doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.head.type, vcs.revision_delta.direction]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// VcsRefTimeMetricAttributeKey specifies the key of an attribute for the vcs.ref.time metric.
+type VcsRefTimeMetricAttributeKey string
+
+const (
+	VcsRefTimeMetricAttributeKeyVcsRepositoryURLFull VcsRefTimeMetricAttributeKey = "vcs.repository.url.full"
+	VcsRefTimeMetricAttributeKeyVcsRepositoryName    VcsRefTimeMetricAttributeKey = "vcs.repository.name"
+	VcsRefTimeMetricAttributeKeyVcsRepositoryID      VcsRefTimeMetricAttributeKey = "vcs.repository.id"
+	VcsRefTimeMetricAttributeKeyVcsRefHeadName       VcsRefTimeMetricAttributeKey = "vcs.ref.head.name"
+	VcsRefTimeMetricAttributeKeyVcsRefHeadType       VcsRefTimeMetricAttributeKey = "vcs.ref.head.type"
+)
+
+// VcsRefTimeMetricConfig provides config for the vcs.ref.time metric.
+type VcsRefTimeMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                         `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []VcsRefTimeMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *VcsRefTimeMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *VcsRefTimeMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case VcsRefTimeMetricAttributeKeyVcsRepositoryURLFull, VcsRefTimeMetricAttributeKeyVcsRepositoryName, VcsRefTimeMetricAttributeKeyVcsRepositoryID, VcsRefTimeMetricAttributeKeyVcsRefHeadName, VcsRefTimeMetricAttributeKeyVcsRefHeadType:
+		default:
+			return fmt.Errorf("metric vcs.ref.time doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.head.type]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// VcsRepositoryCountMetricConfig provides config for the vcs.repository.count metric.
+type VcsRepositoryCountMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *VcsRepositoryCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// VcsTerraformModuleConsumerMetricAttributeKey specifies the key of an attribute for the vcs.terraform.module.consumer metric.
+type VcsTerraformModuleConsumerMetricAttributeKey string
+
+const (
+	VcsTerraformModuleConsumerMetricAttributeKeyVcsTerraformModuleName   VcsTerraformModuleConsumerMetricAttributeKey = "vcs.terraform.module.name"
+	VcsTerraformModuleConsumerMetricAttributeKeyVcsTerraformModuleSystem VcsTerraformModuleConsumerMetricAttributeKey = "vcs.terraform.module.system"
+	VcsTerraformModuleConsumerMetricAttributeKeyVcsRepositoryName        VcsTerraformModuleConsumerMetricAttributeKey = "vcs.repository.name"
+	VcsTerraformModuleConsumerMetricAttributeKeyVcsRepositoryURLFull     VcsTerraformModuleConsumerMetricAttributeKey = "vcs.repository.url.full"
+)
+
+// VcsTerraformModuleConsumerMetricConfig provides config for the vcs.terraform.module.consumer metric.
+type VcsTerraformModuleConsumerMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                         `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []VcsTerraformModuleConsumerMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *VcsTerraformModuleConsumerMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *VcsTerraformModuleConsumerMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case VcsTerraformModuleConsumerMetricAttributeKeyVcsTerraformModuleName, VcsTerraformModuleConsumerMetricAttributeKeyVcsTerraformModuleSystem, VcsTerraformModuleConsumerMetricAttributeKeyVcsRepositoryName, VcsTerraformModuleConsumerMetricAttributeKeyVcsRepositoryURLFull:
+		default:
+			return fmt.Errorf("metric vcs.terraform.module.consumer doesn't have an attribute %v, valid attributes: [vcs.terraform.module.name, vcs.terraform.module.system, vcs.repository.name, vcs.repository.url.full]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// VcsTerraformModuleConsumerCountMetricAttributeKey specifies the key of an attribute for the vcs.terraform.module.consumer.count metric.
+type VcsTerraformModuleConsumerCountMetricAttributeKey string
+
+const (
+	VcsTerraformModuleConsumerCountMetricAttributeKeyVcsTerraformModuleName   VcsTerraformModuleConsumerCountMetricAttributeKey = "vcs.terraform.module.name"
+	VcsTerraformModuleConsumerCountMetricAttributeKeyVcsTerraformModuleSystem VcsTerraformModuleConsumerCountMetricAttributeKey = "vcs.terraform.module.system"
+)
+
+// VcsTerraformModuleConsumerCountMetricConfig provides config for the vcs.terraform.module.consumer.count metric.
+type VcsTerraformModuleConsumerCountMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                              `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []VcsTerraformModuleConsumerCountMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *VcsTerraformModuleConsumerCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *VcsTerraformModuleConsumerCountMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case VcsTerraformModuleConsumerCountMetricAttributeKeyVcsTerraformModuleName, VcsTerraformModuleConsumerCountMetricAttributeKeyVcsTerraformModuleSystem:
+		default:
+			return fmt.Errorf("metric vcs.terraform.module.consumer.count doesn't have an attribute %v, valid attributes: [vcs.terraform.module.name, vcs.terraform.module.system]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// VcsTerraformModuleCountMetricConfig provides config for the vcs.terraform.module.count metric.
+type VcsTerraformModuleCountMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *VcsTerraformModuleCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
 	ms.enabledSetByUser = parser.IsSet("enabled")
 	return nil
 }
 
 // MetricsConfig provides config for gitlab metrics.
 type MetricsConfig struct {
-	GitlabCatalogComponentProjectCount MetricConfig `mapstructure:"gitlab.catalog.component.project_count"`
-	GitlabCatalogProjectComponentCount MetricConfig `mapstructure:"gitlab.catalog.project.component_count"`
-	GitlabCatalogResourceStarCount     MetricConfig `mapstructure:"gitlab.catalog.resource.star_count"`
-	GitlabCatalogResourceUsageCount    MetricConfig `mapstructure:"gitlab.catalog.resource.usage_count"`
-	VcsChangeCount                     MetricConfig `mapstructure:"vcs.change.count"`
-	VcsChangeDuration                  MetricConfig `mapstructure:"vcs.change.duration"`
-	VcsChangeTimeToApproval            MetricConfig `mapstructure:"vcs.change.time_to_approval"`
-	VcsChangeTimeToMerge               MetricConfig `mapstructure:"vcs.change.time_to_merge"`
-	VcsContributorCount                MetricConfig `mapstructure:"vcs.contributor.count"`
-	VcsRefCount                        MetricConfig `mapstructure:"vcs.ref.count"`
-	VcsRefLinesDelta                   MetricConfig `mapstructure:"vcs.ref.lines_delta"`
-	VcsRefRevisionsDelta               MetricConfig `mapstructure:"vcs.ref.revisions_delta"`
-	VcsRefTime                         MetricConfig `mapstructure:"vcs.ref.time"`
-	VcsRepositoryCount                 MetricConfig `mapstructure:"vcs.repository.count"`
-	VcsTerraformModuleConsumer         MetricConfig `mapstructure:"vcs.terraform.module.consumer"`
-	VcsTerraformModuleConsumerCount    MetricConfig `mapstructure:"vcs.terraform.module.consumer.count"`
-	VcsTerraformModuleCount            MetricConfig `mapstructure:"vcs.terraform.module.count"`
+	GitlabCatalogComponentProjectCount GitlabCatalogComponentProjectCountMetricConfig `mapstructure:"gitlab.catalog.component.project_count"`
+	GitlabCatalogProjectComponentCount GitlabCatalogProjectComponentCountMetricConfig `mapstructure:"gitlab.catalog.project.component_count"`
+	GitlabCatalogResourceStarCount     GitlabCatalogResourceStarCountMetricConfig     `mapstructure:"gitlab.catalog.resource.star_count"`
+	GitlabCatalogResourceUsageCount    GitlabCatalogResourceUsageCountMetricConfig    `mapstructure:"gitlab.catalog.resource.usage_count"`
+	VcsChangeCount                     VcsChangeCountMetricConfig                     `mapstructure:"vcs.change.count"`
+	VcsChangeDuration                  VcsChangeDurationMetricConfig                  `mapstructure:"vcs.change.duration"`
+	VcsChangeTimeToApproval            VcsChangeTimeToApprovalMetricConfig            `mapstructure:"vcs.change.time_to_approval"`
+	VcsChangeTimeToMerge               VcsChangeTimeToMergeMetricConfig               `mapstructure:"vcs.change.time_to_merge"`
+	VcsContributorCount                VcsContributorCountMetricConfig                `mapstructure:"vcs.contributor.count"`
+	VcsRefCount                        VcsRefCountMetricConfig                        `mapstructure:"vcs.ref.count"`
+	VcsRefLinesDelta                   VcsRefLinesDeltaMetricConfig                   `mapstructure:"vcs.ref.lines_delta"`
+	VcsRefRevisionsDelta               VcsRefRevisionsDeltaMetricConfig               `mapstructure:"vcs.ref.revisions_delta"`
+	VcsRefTime                         VcsRefTimeMetricConfig                         `mapstructure:"vcs.ref.time"`
+	VcsRepositoryCount                 VcsRepositoryCountMetricConfig                 `mapstructure:"vcs.repository.count"`
+	VcsTerraformModuleConsumer         VcsTerraformModuleConsumerMetricConfig         `mapstructure:"vcs.terraform.module.consumer"`
+	VcsTerraformModuleConsumerCount    VcsTerraformModuleConsumerCountMetricConfig    `mapstructure:"vcs.terraform.module.consumer.count"`
+	VcsTerraformModuleCount            VcsTerraformModuleCountMetricConfig            `mapstructure:"vcs.terraform.module.count"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
-		GitlabCatalogComponentProjectCount: MetricConfig{
+		GitlabCatalogComponentProjectCount: GitlabCatalogComponentProjectCountMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []GitlabCatalogComponentProjectCountMetricAttributeKey{GitlabCatalogComponentProjectCountMetricAttributeKeyGitlabCatalogComponentName},
+		},
+		GitlabCatalogProjectComponentCount: GitlabCatalogProjectComponentCountMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []GitlabCatalogProjectComponentCountMetricAttributeKey{GitlabCatalogProjectComponentCountMetricAttributeKeyVcsRepositoryURLFull},
+		},
+		GitlabCatalogResourceStarCount: GitlabCatalogResourceStarCountMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []GitlabCatalogResourceStarCountMetricAttributeKey{GitlabCatalogResourceStarCountMetricAttributeKeyGitlabCatalogResourceName, GitlabCatalogResourceStarCountMetricAttributeKeyGitlabCatalogResourceFullPath},
+		},
+		GitlabCatalogResourceUsageCount: GitlabCatalogResourceUsageCountMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []GitlabCatalogResourceUsageCountMetricAttributeKey{GitlabCatalogResourceUsageCountMetricAttributeKeyGitlabCatalogResourceName, GitlabCatalogResourceUsageCountMetricAttributeKeyGitlabCatalogResourceFullPath},
+		},
+		VcsChangeCount: VcsChangeCountMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []VcsChangeCountMetricAttributeKey{VcsChangeCountMetricAttributeKeyVcsRepositoryURLFull, VcsChangeCountMetricAttributeKeyVcsChangeState, VcsChangeCountMetricAttributeKeyVcsRepositoryName, VcsChangeCountMetricAttributeKeyVcsRepositoryID},
+		},
+		VcsChangeDuration: VcsChangeDurationMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []VcsChangeDurationMetricAttributeKey{VcsChangeDurationMetricAttributeKeyVcsRepositoryURLFull, VcsChangeDurationMetricAttributeKeyVcsRepositoryName, VcsChangeDurationMetricAttributeKeyVcsRepositoryID, VcsChangeDurationMetricAttributeKeyVcsRefHeadName, VcsChangeDurationMetricAttributeKeyVcsChangeState},
+		},
+		VcsChangeTimeToApproval: VcsChangeTimeToApprovalMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []VcsChangeTimeToApprovalMetricAttributeKey{VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryURLFull, VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryName, VcsChangeTimeToApprovalMetricAttributeKeyVcsRepositoryID, VcsChangeTimeToApprovalMetricAttributeKeyVcsRefHeadName},
+		},
+		VcsChangeTimeToMerge: VcsChangeTimeToMergeMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []VcsChangeTimeToMergeMetricAttributeKey{VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryURLFull, VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryName, VcsChangeTimeToMergeMetricAttributeKeyVcsRepositoryID, VcsChangeTimeToMergeMetricAttributeKeyVcsRefHeadName},
+		},
+		VcsContributorCount: VcsContributorCountMetricConfig{
+			Enabled:             false,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []VcsContributorCountMetricAttributeKey{VcsContributorCountMetricAttributeKeyVcsRepositoryURLFull, VcsContributorCountMetricAttributeKeyVcsRepositoryName, VcsContributorCountMetricAttributeKeyVcsRepositoryID},
+		},
+		VcsRefCount: VcsRefCountMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []VcsRefCountMetricAttributeKey{VcsRefCountMetricAttributeKeyVcsRepositoryURLFull, VcsRefCountMetricAttributeKeyVcsRepositoryName, VcsRefCountMetricAttributeKeyVcsRepositoryID, VcsRefCountMetricAttributeKeyVcsRefHeadType},
+		},
+		VcsRefLinesDelta: VcsRefLinesDeltaMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []VcsRefLinesDeltaMetricAttributeKey{VcsRefLinesDeltaMetricAttributeKeyVcsChangeID, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType},
+		},
+		VcsRefRevisionsDelta: VcsRefRevisionsDeltaMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []VcsRefRevisionsDeltaMetricAttributeKey{VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryName, VcsRefRevisionsDeltaMetricAttributeKeyVcsRepositoryID, VcsRefRevisionsDeltaMetricAttributeKeyVcsRefHeadName, VcsRefRevisionsDeltaMetricAttributeKeyVcsRefHeadType, VcsRefRevisionsDeltaMetricAttributeKeyVcsRevisionDeltaDirection},
+		},
+		VcsRefTime: VcsRefTimeMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []VcsRefTimeMetricAttributeKey{VcsRefTimeMetricAttributeKeyVcsRepositoryURLFull, VcsRefTimeMetricAttributeKeyVcsRepositoryName, VcsRefTimeMetricAttributeKeyVcsRepositoryID, VcsRefTimeMetricAttributeKeyVcsRefHeadName, VcsRefTimeMetricAttributeKeyVcsRefHeadType},
+		},
+		VcsRepositoryCount: VcsRepositoryCountMetricConfig{
 			Enabled: true,
 		},
-		GitlabCatalogProjectComponentCount: MetricConfig{
-			Enabled: true,
+		VcsTerraformModuleConsumer: VcsTerraformModuleConsumerMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []VcsTerraformModuleConsumerMetricAttributeKey{VcsTerraformModuleConsumerMetricAttributeKeyVcsTerraformModuleName, VcsTerraformModuleConsumerMetricAttributeKeyVcsTerraformModuleSystem, VcsTerraformModuleConsumerMetricAttributeKeyVcsRepositoryName, VcsTerraformModuleConsumerMetricAttributeKeyVcsRepositoryURLFull},
 		},
-		GitlabCatalogResourceStarCount: MetricConfig{
-			Enabled: true,
+		VcsTerraformModuleConsumerCount: VcsTerraformModuleConsumerCountMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []VcsTerraformModuleConsumerCountMetricAttributeKey{VcsTerraformModuleConsumerCountMetricAttributeKeyVcsTerraformModuleName, VcsTerraformModuleConsumerCountMetricAttributeKeyVcsTerraformModuleSystem},
 		},
-		GitlabCatalogResourceUsageCount: MetricConfig{
-			Enabled: true,
-		},
-		VcsChangeCount: MetricConfig{
-			Enabled: true,
-		},
-		VcsChangeDuration: MetricConfig{
-			Enabled: true,
-		},
-		VcsChangeTimeToApproval: MetricConfig{
-			Enabled: true,
-		},
-		VcsChangeTimeToMerge: MetricConfig{
-			Enabled: true,
-		},
-		VcsContributorCount: MetricConfig{
-			Enabled: false,
-		},
-		VcsRefCount: MetricConfig{
-			Enabled: true,
-		},
-		VcsRefLinesDelta: MetricConfig{
-			Enabled: true,
-		},
-		VcsRefRevisionsDelta: MetricConfig{
-			Enabled: true,
-		},
-		VcsRefTime: MetricConfig{
-			Enabled: true,
-		},
-		VcsRepositoryCount: MetricConfig{
-			Enabled: true,
-		},
-		VcsTerraformModuleConsumer: MetricConfig{
-			Enabled: true,
-		},
-		VcsTerraformModuleConsumerCount: MetricConfig{
-			Enabled: true,
-		},
-		VcsTerraformModuleCount: MetricConfig{
+		VcsTerraformModuleCount: VcsTerraformModuleCountMetricConfig{
 			Enabled: true,
 		},
 	}
@@ -152,9 +964,14 @@ type MetricsBuilderConfig struct {
 	ResourceAttributes ResourceAttributesConfig `mapstructure:"resource_attributes"`
 }
 
-func DefaultMetricsBuilderConfig() MetricsBuilderConfig {
+func NewDefaultMetricsBuilderConfig() MetricsBuilderConfig {
 	return MetricsBuilderConfig{
 		Metrics:            DefaultMetricsConfig(),
 		ResourceAttributes: DefaultResourceAttributesConfig(),
 	}
+}
+
+// Deprecated: Use NewDefaultMetricsBuilderConfig.
+func DefaultMetricsBuilderConfig() MetricsBuilderConfig {
+	return NewDefaultMetricsBuilderConfig()
 }

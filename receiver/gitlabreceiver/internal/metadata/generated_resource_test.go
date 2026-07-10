@@ -30,16 +30,15 @@ func TestResourceBuilder(t *testing.T) {
 			default:
 				assert.Failf(t, "unexpected test case: %s", tt)
 			}
-
-			val, ok := res.Attributes().Get("organization.name")
+			organizationNameAttrVal, ok := res.Attributes().Get("organization.name")
 			assert.True(t, ok)
 			if ok {
-				assert.Equal(t, "organization.name-val", val.Str())
+				assert.Equal(t, "organization.name-val", organizationNameAttrVal.Str())
 			}
-			val, ok = res.Attributes().Get("vcs.vendor.name")
+			vcsVendorNameAttrVal, ok := res.Attributes().Get("vcs.vendor.name")
 			assert.True(t, ok)
 			if ok {
-				assert.Equal(t, "vcs.vendor.name-val", val.Str())
+				assert.Equal(t, "vcs.vendor.name-val", vcsVendorNameAttrVal.Str())
 			}
 		})
 	}
