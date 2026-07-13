@@ -28,7 +28,6 @@ type githubActionsReceiver struct {
 	createSettings receiver.Settings
 	logger         *zap.Logger
 	obsrecv        *receiverhelper.ObsReport
-	ghClient       *github.Client
 }
 
 func newTracesReceiver(
@@ -50,18 +49,12 @@ func newTracesReceiver(
 		return nil, err
 	}
 
-	client, err := github.NewClient()
-	if err != nil {
-		return nil, err
-	}
-
 	gar := &githubActionsReceiver{
 		nextConsumer:   nextConsumer,
 		config:         config,
 		createSettings: params,
 		logger:         params.Logger,
 		obsrecv:        obsrecv,
-		ghClient:       client,
 	}
 
 	return gar, nil

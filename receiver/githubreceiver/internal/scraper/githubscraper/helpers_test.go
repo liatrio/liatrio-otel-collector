@@ -1726,3 +1726,26 @@ func TestMapSeveritiesCodeScanAlerts(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateClients(t *testing.T) {
+	factory := Factory{}
+	settings := receivertest.NewNopSettings(metadata.Type)
+
+	t.Run("errors when the http client is not initialized", func(t *testing.T) {
+		ghs := newGitHubScraper(settings, factory.CreateDefaultConfig().(*Config))
+		// ghs.client is left nil, so github.WithHTTPClient(nil) makes
+		// github.NewClient return an error.
+		_, _, err := ghs.createClients()
+		assert.Error(t, err)
+	})
+
+	t.Run("errors on an invalid enterprise endpoint", func(t *testing.T) {
+		ghs := newGitHubScraper(settings, factory.CreateDefaultConfig().(*Config))
+		ghs.client = &http.Client{}
+		// A control character makes the endpoint unparseable, so building the
+		// enterprise GraphQL URL fails.
+		ghs.cfg.Endpoint = "http://\x7f"
+		_, _, err := ghs.createClients()
+		assert.Error(t, err)
+	})
+}
