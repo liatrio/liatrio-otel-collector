@@ -14,7 +14,7 @@ import (
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/cenkalti/backoff/v5"
-	"github.com/google/go-github/v69/github"
+	"github.com/google/go-github/v89/github"
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 	"go.uber.org/zap"
 )
@@ -171,7 +171,11 @@ func genDefaultSearchQuery(ownertype string, ghorg string) string {
 // https://docs.github.com/en/enterprise-server@3.8/graphql/guides/forming-calls-with-graphql#the-graphql-endpoint
 // https://docs.github.com/en/enterprise-server@3.8/rest/guides/getting-started-with-the-rest-api#making-a-request
 func (ghs *githubScraper) createClients() (gClient graphql.Client, rClient *github.Client, err error) {
-	rClient = github.NewClient(ghs.client)
+	rClient, err = github.NewClient(github.WithHTTPClient(ghs.client))
+	if err != nil {
+		ghs.logger.Sugar().Errorf("error creating rest client: %v", err)
+		return nil, nil, err
+	}
 	gClient = graphql.NewClient(defaultGraphURL, ghs.client)
 
 	if ghs.cfg.Endpoint != "" {
@@ -187,7 +191,7 @@ func (ghs *githubScraper) createClients() (gClient graphql.Client, rClient *gith
 
 		// The rest client needs the endpoint to be the root of the server
 		ru := ghs.cfg.Endpoint
-		rClient, err = github.NewClient(ghs.client).WithEnterpriseURLs(ru, ru)
+		rClient, err = github.NewClient(github.WithHTTPClient(ghs.client), github.WithEnterpriseURLs(ru, ru))
 		if err != nil {
 			ghs.logger.Sugar().Errorf("error creating enterprise client: %v", err)
 			return nil, nil, err

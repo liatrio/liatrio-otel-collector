@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/go-github/v69/github"
+	"github.com/google/go-github/v89/github"
 	"github.com/gorilla/mux"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componentstatus"
@@ -57,7 +57,10 @@ func newTracesReceiver(
 		return nil, err
 	}
 
-	client := github.NewClient(nil)
+	client, err := github.NewClient()
+	if err != nil {
+		return nil, err
+	}
 
 	gtr := &githubTracesReceiver{
 		traceConsumer: traceConsumer,

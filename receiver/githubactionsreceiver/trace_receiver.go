@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/google/go-github/v69/github"
+	"github.com/google/go-github/v89/github"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
@@ -50,7 +50,10 @@ func newTracesReceiver(
 		return nil, err
 	}
 
-	client := github.NewClient(nil)
+	client, err := github.NewClient()
+	if err != nil {
+		return nil, err
+	}
 
 	gar := &githubActionsReceiver{
 		nextConsumer:   nextConsumer,

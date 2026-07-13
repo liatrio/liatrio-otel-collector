@@ -3,7 +3,6 @@ module github.com/liatrio/liatrio-otel-collector/receiver/githubactionsreceiver
 go 1.25.0
 
 require (
-	github.com/google/go-github/v69 v69.2.0
 	github.com/google/go-github/v89 v89.0.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.62.0
