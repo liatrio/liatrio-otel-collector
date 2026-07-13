@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/cenkalti/backoff/v5"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 var sourceLineRegex = regexp.MustCompile(`(?m)^\s*source\s*=\s*"([^"]*)"`)
@@ -16,7 +16,7 @@ var sourceLineRegex = regexp.MustCompile(`(?m)^\s*source\s*=\s*"([^"]*)"`)
 type terraformModule struct {
 	Name            string
 	System          string
-	SourceProjectID int
+	SourceProjectID int64
 }
 
 func (gts *gitlabTerraformScraper) getModules(ctx context.Context, restClient *gitlab.Client) ([]terraformModule, error) {
@@ -31,7 +31,7 @@ func (gts *gitlabTerraformScraper) getModules(ctx context.Context, restClient *g
 			packages, res, err := restClient.Packages.ListGroupPackages(gts.cfg.GitLabOrg, &gitlab.ListGroupPackagesOptions{
 				PackageType: gitlab.Ptr("terraform_module"),
 				ListOptions: gitlab.ListOptions{
-					Page:    nextPage,
+					Page:    int64(nextPage),
 					PerPage: 100,
 				},
 			}, gitlab.WithContext(ctx))
@@ -86,7 +86,7 @@ func (gts *gitlabTerraformScraper) getModules(ctx context.Context, restClient *g
 }
 
 type moduleConsumer struct {
-	ProjectID   int
+	ProjectID   int64
 	ProjectName string
 	ProjectURL  string
 }
@@ -118,7 +118,7 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 		for nextPage := 1; nextPage > 0; {
 			blobs, res, err := restClient.Search.BlobsByGroup(gts.cfg.GitLabOrg, query, &gitlab.SearchOptions{
 				ListOptions: gitlab.ListOptions{
-					Page:    nextPage,
+					Page:    int64(nextPage),
 					PerPage: 100,
 				},
 			}, gitlab.WithContext(ctx))
@@ -155,7 +155,7 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 	// (eliminates comments, descriptions, variable names, and substring matches
 	// against longer module names), then deduplicate by project ID. The .tf
 	// extension filter is applied server-side via the search query.
-	seen := make(map[int]bool)
+	seen := make(map[int64]bool)
 	var consumers []moduleConsumer
 	for _, blob := range allBlobs {
 		if blob.ProjectID == module.SourceProjectID {
@@ -179,7 +179,7 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 			name, url, err := gts.getProjectInfo(ctx, restClient, consumer.ProjectID)
 			if err != nil {
 				gts.logger.Sugar().Warnf("could not resolve project info for ID %d: %v", consumer.ProjectID, err)
-				consumers[i].ProjectName = strconv.Itoa(consumer.ProjectID)
+				consumers[i].ProjectName = strconv.FormatInt(consumer.ProjectID, 10)
 				consumers[i].ProjectURL = ""
 				continue
 			}
@@ -191,7 +191,7 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 	return consumers, nil
 }
 
-func (gts *gitlabTerraformScraper) getProjectInfo(ctx context.Context, restClient *gitlab.Client, projectID int) (string, string, error) {
+func (gts *gitlabTerraformScraper) getProjectInfo(ctx context.Context, restClient *gitlab.Client, projectID int64) (string, string, error) {
 	var project *gitlab.Project
 
 	operation := func() (string, error) {
