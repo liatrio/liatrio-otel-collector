@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/cenkalti/backoff/v5"
@@ -33,7 +33,7 @@ func (gls *gitlabScraper) getProjects(ctx context.Context, restClient *gitlab.Cl
 				Search:           gitlab.Ptr(gls.cfg.SearchQuery),
 				Archived:         gitlab.Ptr(false),
 				ListOptions: gitlab.ListOptions{
-					Page:    nextPage,
+					Page:    int64(nextPage),
 					PerPage: 100,
 				},
 			})
@@ -55,7 +55,7 @@ func (gls *gitlabScraper) getProjects(ctx context.Context, restClient *gitlab.Cl
 			for _, p := range projects {
 				projectList = append(projectList, gitlabProject{
 					Name:           p.Name,
-					ID:             strconv.Itoa(p.ID),
+					ID:             strconv.FormatInt(p.ID, 10),
 					Path:           p.PathWithNamespace,
 					CreatedAt:      *p.CreatedAt,
 					LastActivityAt: *p.LastActivityAt,
