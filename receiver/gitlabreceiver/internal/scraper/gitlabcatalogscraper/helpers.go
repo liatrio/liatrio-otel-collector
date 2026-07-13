@@ -9,7 +9,7 @@ import (
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/cenkalti/backoff/v5"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 // componentIncludeRegex matches component include lines in .gitlab-ci.yml
@@ -36,7 +36,7 @@ func (gcs *gitlabCatalogScraper) getProjects(ctx context.Context, restClient *gi
 				IncludeSubGroups: gitlab.Ptr(false),
 				Archived:         gitlab.Ptr(false),
 				ListOptions: gitlab.ListOptions{
-					Page:    nextPage,
+					Page:    int64(nextPage),
 					PerPage: 100,
 				},
 			})
@@ -56,7 +56,7 @@ func (gcs *gitlabCatalogScraper) getProjects(ctx context.Context, restClient *gi
 			for _, p := range projects {
 				localProjects = append(localProjects, gitlabProject{
 					Name: p.Name,
-					ID:   strconv.Itoa(p.ID),
+					ID:   strconv.FormatInt(p.ID, 10),
 					Path: p.PathWithNamespace,
 					URL:  p.WebURL,
 				})
