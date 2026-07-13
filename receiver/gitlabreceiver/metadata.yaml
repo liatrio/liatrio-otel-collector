@@ -44,6 +44,15 @@ attributes:
     enum:
       - added
       - removed
+  vcs.ref.base.name:
+    description: The name of the VCS base reference (branch) the delta is measured against.
+    type: string
+  vcs.ref.base.type:
+    description: The type of the base reference (branch, tag).
+    type: string
+    enum:
+      - branch
+      - tag
   vcs.ref.head.name:
     description: The name of the VCS head reference (branch).
     type: string
@@ -158,12 +167,12 @@ metrics:
     attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.type]
   vcs.ref.lines_delta:
     enabled: true
-    description: The number of lines added/removed in a ref (branch) relative to the default branch (trunk).
+    description: The number of lines added/removed in a ref (branch) relative to the base ref (the change's target branch).
     stability: development
     unit: '{line}'
     gauge:
       value_type: int
-    attributes: [vcs.change.id, vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.head.type, vcs.line_change.type]
+    attributes: [vcs.change.id, vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.head.type, vcs.ref.base.name, vcs.ref.base.type, vcs.line_change.type]
   vcs.ref.revisions_delta:
     enabled: true
     description: The number of revisions (commits) a ref (branch) is ahead/behind the branch from trunk (default).

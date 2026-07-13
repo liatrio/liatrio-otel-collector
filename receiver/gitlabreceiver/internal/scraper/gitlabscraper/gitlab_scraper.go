@@ -189,9 +189,9 @@ func (gls *gitlabScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 
 			for _, mr := range mrs {
 				//nolint:lll
-				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Additions), mr.Iid, url, path, projectID, mr.SourceBranch, refType, metadata.AttributeVcsLineChangeTypeAdded)
+				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Additions), mr.Iid, url, path, projectID, mr.SourceBranch, refType, mr.TargetBranch, metadata.AttributeVcsRefBaseTypeBranch, metadata.AttributeVcsLineChangeTypeAdded)
 				//nolint:lll
-				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Deletions), mr.Iid, url, path, projectID, mr.SourceBranch, refType, metadata.AttributeVcsLineChangeTypeRemoved)
+				gls.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(mr.DiffStatsSummary.Deletions), mr.Iid, url, path, projectID, mr.SourceBranch, refType, mr.TargetBranch, metadata.AttributeVcsRefBaseTypeBranch, metadata.AttributeVcsLineChangeTypeRemoved)
 
 				// Checks if the merge request has been merged. This is done with IsZero() which tells us if the
 				// time is or isn't  January 1, year 1, 00:00:00 UTC, which is what null in graphql date values

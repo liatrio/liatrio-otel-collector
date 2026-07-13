@@ -158,7 +158,7 @@ The number of refs of type branch in a repository.
 
 ### vcs.ref.lines_delta
 
-The number of lines added/removed in a ref (branch) relative to the default branch (trunk).
+The number of lines added/removed in a ref (branch) relative to the base ref (the change's target branch).
 
 | Unit | Metric Type | Value Type | Stability |
 | ---- | ----------- | ---------- | --------- |
@@ -174,6 +174,8 @@ The number of lines added/removed in a ref (branch) relative to the default bran
 | vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended | - |
 | vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended | - |
 | vcs.ref.head.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended | - |
+| vcs.ref.base.name | The name of the VCS base reference (branch) the delta is measured against. | Any Str | Recommended | - |
+| vcs.ref.base.type | The type of the base reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended | - |
 | vcs.line_change.type | The type of line change being measured on a ref (branch). | Str: ``added``, ``removed`` | Recommended | - |
 
 ### vcs.ref.revisions_delta

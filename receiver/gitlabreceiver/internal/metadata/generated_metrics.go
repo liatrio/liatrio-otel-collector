@@ -73,6 +73,32 @@ var MapAttributeVcsLineChangeType = map[string]AttributeVcsLineChangeType{
 	"removed": AttributeVcsLineChangeTypeRemoved,
 }
 
+// AttributeVcsRefBaseType specifies the value vcs.ref.base.type attribute.
+type AttributeVcsRefBaseType int
+
+const (
+	_ AttributeVcsRefBaseType = iota
+	AttributeVcsRefBaseTypeBranch
+	AttributeVcsRefBaseTypeTag
+)
+
+// String returns the string representation of the AttributeVcsRefBaseType.
+func (av AttributeVcsRefBaseType) String() string {
+	switch av {
+	case AttributeVcsRefBaseTypeBranch:
+		return "branch"
+	case AttributeVcsRefBaseTypeTag:
+		return "tag"
+	}
+	return ""
+}
+
+// MapAttributeVcsRefBaseType is a helper map of string to AttributeVcsRefBaseType attribute value.
+var MapAttributeVcsRefBaseType = map[string]AttributeVcsRefBaseType{
+	"branch": AttributeVcsRefBaseTypeBranch,
+	"tag":    AttributeVcsRefBaseTypeTag,
+}
+
 // AttributeVcsRefHeadType specifies the value vcs.ref.head.type attribute.
 type AttributeVcsRefHeadType int
 
@@ -168,7 +194,7 @@ var MetricsInfo = metricsInfo{
 	},
 	VcsRefLinesDelta: metricInfo{
 		Name:       "vcs.ref.lines_delta",
-		Attributes: []string{"vcs.change.id", "vcs.repository.url.full", "vcs.repository.name", "vcs.repository.id", "vcs.ref.head.name", "vcs.ref.head.type", "vcs.line_change.type"},
+		Attributes: []string{"vcs.change.id", "vcs.repository.url.full", "vcs.repository.name", "vcs.repository.id", "vcs.ref.head.name", "vcs.ref.head.type", "vcs.ref.base.name", "vcs.ref.base.type", "vcs.line_change.type"},
 	},
 	VcsRefRevisionsDelta: metricInfo{
 		Name:       "vcs.ref.revisions_delta",
@@ -1179,14 +1205,14 @@ type metricVcsRefLinesDelta struct {
 // init fills vcs.ref.lines_delta metric with initial data.
 func (m *metricVcsRefLinesDelta) init() {
 	m.data.SetName("vcs.ref.lines_delta")
-	m.data.SetDescription("The number of lines added/removed in a ref (branch) relative to the default branch (trunk).")
+	m.data.SetDescription("The number of lines added/removed in a ref (branch) relative to the base ref (the change's target branch).")
 	m.data.SetUnit("{line}")
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
 }
 
-func (m *metricVcsRefLinesDelta) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefHeadTypeAttributeValue string, vcsLineChangeTypeAttributeValue string) {
+func (m *metricVcsRefLinesDelta) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefHeadTypeAttributeValue string, vcsRefBaseNameAttributeValue string, vcsRefBaseTypeAttributeValue string, vcsLineChangeTypeAttributeValue string) {
 	if !m.config.Enabled {
 		return
 	}
@@ -1211,6 +1237,12 @@ func (m *metricVcsRefLinesDelta) recordDataPoint(start pcommon.Timestamp, ts pco
 	}
 	if slices.Contains(m.config.EnabledAttributes, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType) {
 		dp.Attributes().PutStr("vcs.ref.head.type", vcsRefHeadTypeAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseName) {
+		dp.Attributes().PutStr("vcs.ref.base.name", vcsRefBaseNameAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseType) {
+		dp.Attributes().PutStr("vcs.ref.base.type", vcsRefBaseTypeAttributeValue)
 	}
 	if slices.Contains(m.config.EnabledAttributes, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType) {
 		dp.Attributes().PutStr("vcs.line_change.type", vcsLineChangeTypeAttributeValue)
@@ -2024,8 +2056,8 @@ func (mb *MetricsBuilder) RecordVcsRefCountDataPoint(ts pcommon.Timestamp, val i
 }
 
 // RecordVcsRefLinesDeltaDataPoint adds a data point to vcs.ref.lines_delta metric.
-func (mb *MetricsBuilder) RecordVcsRefLinesDeltaDataPoint(ts pcommon.Timestamp, val int64, vcsChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefHeadTypeAttributeValue AttributeVcsRefHeadType, vcsLineChangeTypeAttributeValue AttributeVcsLineChangeType) {
-	mb.metricVcsRefLinesDelta.recordDataPoint(mb.startTime, ts, val, vcsChangeIDAttributeValue, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryIDAttributeValue, vcsRefHeadNameAttributeValue, vcsRefHeadTypeAttributeValue.String(), vcsLineChangeTypeAttributeValue.String())
+func (mb *MetricsBuilder) RecordVcsRefLinesDeltaDataPoint(ts pcommon.Timestamp, val int64, vcsChangeIDAttributeValue string, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefHeadTypeAttributeValue AttributeVcsRefHeadType, vcsRefBaseNameAttributeValue string, vcsRefBaseTypeAttributeValue AttributeVcsRefBaseType, vcsLineChangeTypeAttributeValue AttributeVcsLineChangeType) {
+	mb.metricVcsRefLinesDelta.recordDataPoint(mb.startTime, ts, val, vcsChangeIDAttributeValue, vcsRepositoryURLFullAttributeValue, vcsRepositoryNameAttributeValue, vcsRepositoryIDAttributeValue, vcsRefHeadNameAttributeValue, vcsRefHeadTypeAttributeValue.String(), vcsRefBaseNameAttributeValue, vcsRefBaseTypeAttributeValue.String(), vcsLineChangeTypeAttributeValue.String())
 }
 
 // RecordVcsRefRevisionsDeltaDataPoint adds a data point to vcs.ref.revisions_delta metric.

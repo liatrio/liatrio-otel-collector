@@ -95,6 +95,7 @@ func TestScrape(t *testing.T) {
 									Title:        "mr1",
 									Iid:          "1",
 									SourceBranch: "feature-a",
+									TargetBranch: "main",
 									CreatedAt:    time.Now().AddDate(0, 0, -1),
 									DiffStatsSummary: MergeRequestNodeDiffStatsSummary{
 										Additions: 10,
@@ -109,6 +110,7 @@ func TestScrape(t *testing.T) {
 									Title:        "mr2",
 									Iid:          "2",
 									SourceBranch: "feature-a",
+									TargetBranch: "main",
 									CreatedAt:    time.Now().AddDate(0, 0, -2),
 									MergedAt:     time.Now().AddDate(0, 0, -1),
 									DiffStatsSummary: MergeRequestNodeDiffStatsSummary{
