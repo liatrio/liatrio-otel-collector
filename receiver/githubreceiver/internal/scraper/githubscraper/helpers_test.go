@@ -7,14 +7,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 	"time"
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/google/go-github/v69/github"
+	"github.com/google/go-github/v89/github"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
@@ -92,8 +91,8 @@ type codeScanAlertResponse struct {
 
 func MockServer(responses *responses) *http.ServeMux {
 	var mux http.ServeMux
-	contribRestEndpoint := "/api-v3/repos/o/r/contributors"
-	codeScanRestEndpoint := "/api-v3/repos/o/r/code-scanning/alerts"
+	contribRestEndpoint := "/api/v3/repos/o/r/contributors"
+	codeScanRestEndpoint := "/api/v3/repos/o/r/code-scanning/alerts"
 
 	graphEndpoint := "/"
 	if responses.scrape {
@@ -887,11 +886,8 @@ func TestGetContributors(t *testing.T) {
 			server := httptest.NewServer(tc.server)
 			defer func() { server.Close() }()
 
-			client := github.NewClient(nil)
-			url, err := url.Parse(server.URL + "/api-v3" + "/")
+			client, err := github.NewClient(github.WithEnterpriseURLs(server.URL, server.URL))
 			assert.NoError(t, err)
-			client.BaseURL = url
-			client.UploadURL = url
 
 			contribs, err := ghs.getContributorCount(context.Background(), client, tc.repo)
 			assert.NoError(t, err)
@@ -1605,12 +1601,8 @@ func TestGetCVEs(t *testing.T) {
 			ghs.cfg.GitHubOrg = tc.org
 
 			gClient := graphql.NewClient(server.URL, ghs.client)
-			rClient := github.NewClient(nil)
-
-			url, err := url.Parse(server.URL + "/api-v3" + "/")
+			rClient, err := github.NewClient(github.WithEnterpriseURLs(server.URL, server.URL))
 			assert.NoError(t, err)
-			rClient.BaseURL = url
-			rClient.UploadURL = url
 
 			cves, err := ghs.getCVEs(context.Background(), gClient, rClient, tc.repo)
 			totalCVEs := int64(0)
@@ -1655,11 +1647,8 @@ func TestGetCodeScanAlertsRepoWithoutAlerts(t *testing.T) {
 			ghs := newGitHubScraper(settings, defaultConfig.(*Config))
 			ghs.cfg.GitHubOrg = "o"
 
-			rClient := github.NewClient(nil)
-			u, err := url.Parse(server.URL + "/api-v3" + "/")
+			rClient, err := github.NewClient(github.WithEnterpriseURLs(server.URL, server.URL))
 			assert.NoError(t, err)
-			rClient.BaseURL = u
-			rClient.UploadURL = u
 
 			assert.NotPanics(t, func() {
 				alerts := ghs.getCodeScanAlerts(context.Background(), rClient, "r")
@@ -1680,7 +1669,8 @@ func TestGetCodeScanAlertsNilResponse(t *testing.T) {
 	ghs := newGitHubScraper(settings, defaultConfig.(*Config))
 	ghs.cfg.GitHubOrg = "o"
 
-	rClient := github.NewClient(nil)
+	rClient, err := github.NewClient()
+	assert.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -1735,4 +1725,27 @@ func TestMapSeveritiesCodeScanAlerts(t *testing.T) {
 			assert.Equal(t, tc.expected, got)
 		})
 	}
+}
+
+func TestCreateClients(t *testing.T) {
+	factory := Factory{}
+	settings := receivertest.NewNopSettings(metadata.Type)
+
+	t.Run("errors when the http client is not initialized", func(t *testing.T) {
+		ghs := newGitHubScraper(settings, factory.CreateDefaultConfig().(*Config))
+		// ghs.client is left nil, so github.WithHTTPClient(nil) makes
+		// github.NewClient return an error.
+		_, _, err := ghs.createClients()
+		assert.Error(t, err)
+	})
+
+	t.Run("errors on an invalid enterprise endpoint", func(t *testing.T) {
+		ghs := newGitHubScraper(settings, factory.CreateDefaultConfig().(*Config))
+		ghs.client = &http.Client{}
+		// A control character makes the endpoint unparseable, so building the
+		// enterprise GraphQL URL fails.
+		ghs.cfg.Endpoint = "http://\x7f"
+		_, _, err := ghs.createClients()
+		assert.Error(t, err)
+	})
 }

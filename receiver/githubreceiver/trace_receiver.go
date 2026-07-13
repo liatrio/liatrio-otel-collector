@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/go-github/v69/github"
+	"github.com/google/go-github/v89/github"
 	"github.com/gorilla/mux"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componentstatus"
@@ -36,7 +36,6 @@ type githubTracesReceiver struct {
 	settings      receiver.Settings
 	logger        *zap.Logger
 	obsrecv       *receiverhelper.ObsReport
-	ghClient      *github.Client
 }
 
 func newTracesReceiver(
@@ -57,15 +56,12 @@ func newTracesReceiver(
 		return nil, err
 	}
 
-	client := github.NewClient(nil)
-
 	gtr := &githubTracesReceiver{
 		traceConsumer: traceConsumer,
 		cfg:           config,
 		settings:      params,
 		logger:        params.Logger,
 		obsrecv:       obsrecv,
-		ghClient:      client,
 	}
 
 	return gtr, nil

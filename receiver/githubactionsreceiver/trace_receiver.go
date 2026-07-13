@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/google/go-github/v69/github"
+	"github.com/google/go-github/v89/github"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
@@ -28,7 +28,6 @@ type githubActionsReceiver struct {
 	createSettings receiver.Settings
 	logger         *zap.Logger
 	obsrecv        *receiverhelper.ObsReport
-	ghClient       *github.Client
 }
 
 func newTracesReceiver(
@@ -50,15 +49,12 @@ func newTracesReceiver(
 		return nil, err
 	}
 
-	client := github.NewClient(nil)
-
 	gar := &githubActionsReceiver{
 		nextConsumer:   nextConsumer,
 		config:         config,
 		createSettings: params,
 		logger:         params.Logger,
 		obsrecv:        obsrecv,
-		ghClient:       client,
 	}
 
 	return gar, nil
