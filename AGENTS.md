@@ -169,7 +169,7 @@ register, and the package-upgrade/OCB/Renovate runbook live in
   `make generate`, `make tidy-all`, and `make crosslink` and fails on any resulting diff — so keep
   generated code, module tidiness, and replace directives in sync.
 - Releases are automated on `main` via multimod + semantic versioning driven by `versions.yaml`
-  (the `liatrio-otel` module set).
+  (the `liatrio-otel` module set). Full pipeline in [`docs/releasing.md`](docs/releasing.md).
 
 ## Guardrails
 
