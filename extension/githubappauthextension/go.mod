@@ -3,7 +3,7 @@ module github.com/liatrio/liatrio-otel-collector/extension/githubappauthextensio
 go 1.25.0
 
 require (
-	github.com/bradleyfalzon/ghinstallation/v2 v2.14.0
+	github.com/bradleyfalzon/ghinstallation/v2 v2.19.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.62.0
 	go.opentelemetry.io/collector/component/componenttest v0.156.0
@@ -26,7 +26,8 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/google/go-github/v69 v69.0.0 // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/go-github/v88 v88.0.0 // indirect
+	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-version v1.9.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
