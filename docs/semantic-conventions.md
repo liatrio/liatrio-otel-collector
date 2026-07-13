@@ -7,8 +7,8 @@ keeping that current.
 ## Rule of thumb: when in doubt, default to the spec
 
 Every attribute, metric, resource, and namespace we emit should follow the upstream semconv
-**spec** unless there is no convention for it yet. Do not invent local names for things the spec
-already defines, and do not diverge from spec naming for convenience.
+**spec** unless there is no convention for it yet. Reuse the spec's existing names for anything it
+already defines, and match its naming exactly rather than adapting it for convenience.
 
 **Follow the version of the spec that our packages declare, not whatever is newest upstream.** See
 [Spec vs. package](#spec-vs-package): the spec moves faster than the Go package, and we can only
