@@ -367,6 +367,8 @@ const (
 	VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName    VcsRefLinesDeltaMetricAttributeKey = "vcs.repository.name"
 	VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName       VcsRefLinesDeltaMetricAttributeKey = "vcs.ref.head.name"
 	VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType       VcsRefLinesDeltaMetricAttributeKey = "vcs.ref.head.type"
+	VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseName       VcsRefLinesDeltaMetricAttributeKey = "vcs.ref.base.name"
+	VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseType       VcsRefLinesDeltaMetricAttributeKey = "vcs.ref.base.type"
 	VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType    VcsRefLinesDeltaMetricAttributeKey = "vcs.line_change.type"
 )
 
@@ -396,9 +398,9 @@ func (ms *VcsRefLinesDeltaMetricConfig) Unmarshal(parser *confmap.Conf) error {
 func (ms *VcsRefLinesDeltaMetricConfig) Validate() error {
 	for _, val := range ms.EnabledAttributes {
 		switch val {
-		case VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType:
+		case VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType, VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseName, VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType:
 		default:
-			return fmt.Errorf("metric vcs.ref.lines_delta doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.ref.head.name, vcs.ref.head.type, vcs.line_change.type]", val)
+			return fmt.Errorf("metric vcs.ref.lines_delta doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.ref.head.name, vcs.ref.head.type, vcs.ref.base.name, vcs.ref.base.type, vcs.line_change.type]", val)
 		}
 	}
 
@@ -589,7 +591,7 @@ func DefaultMetricsConfig() MetricsConfig {
 		VcsRefLinesDelta: VcsRefLinesDeltaMetricConfig{
 			Enabled:             true,
 			AggregationStrategy: AggregationStrategyAvg,
-			EnabledAttributes:   []VcsRefLinesDeltaMetricAttributeKey{VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType},
+			EnabledAttributes:   []VcsRefLinesDeltaMetricAttributeKey{VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadType, VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseName, VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType},
 		},
 		VcsRefRevisionsDelta: VcsRefRevisionsDeltaMetricConfig{
 			Enabled:             true,

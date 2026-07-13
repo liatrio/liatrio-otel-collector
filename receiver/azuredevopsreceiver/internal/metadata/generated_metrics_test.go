@@ -154,9 +154,9 @@ func TestMetricsBuilder(t *testing.T) {
 			}
 			defaultMetricsCount++
 			allMetricsCount++
-			mb.RecordVcsRefLinesDeltaDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val", AttributeVcsRefTypeBranch, AttributeVcsLineChangeTypeAdded)
+			mb.RecordVcsRefLinesDeltaDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.repository.id-val", "vcs.ref.head.name-val", AttributeVcsRefTypeBranch, "vcs.ref.base.name-val", AttributeVcsRefBaseTypeBranch, AttributeVcsLineChangeTypeAdded)
 			if tt.name == "reaggregate_set" {
-				mb.RecordVcsRefLinesDeltaDataPoint(ts, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.repository.id-val-2", "vcs.ref.head.name-val-2", AttributeVcsRefTypeTag, AttributeVcsLineChangeTypeRemoved)
+				mb.RecordVcsRefLinesDeltaDataPoint(ts, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.repository.id-val-2", "vcs.ref.head.name-val-2", AttributeVcsRefTypeTag, "vcs.ref.base.name-val-2", AttributeVcsRefBaseTypeTag, AttributeVcsLineChangeTypeRemoved)
 			}
 			defaultMetricsCount++
 			allMetricsCount++
@@ -815,6 +815,12 @@ func TestMetricsBuilder(t *testing.T) {
 						vcsRefTypeAttrVal, ok := dp.Attributes().Get("vcs.ref.type")
 						assert.True(t, ok)
 						assert.Equal(t, "branch", vcsRefTypeAttrVal.Str())
+						vcsRefBaseNameAttrVal, ok := dp.Attributes().Get("vcs.ref.base.name")
+						assert.True(t, ok)
+						assert.Equal(t, "vcs.ref.base.name-val", vcsRefBaseNameAttrVal.Str())
+						vcsRefBaseTypeAttrVal, ok := dp.Attributes().Get("vcs.ref.base.type")
+						assert.True(t, ok)
+						assert.Equal(t, "branch", vcsRefBaseTypeAttrVal.Str())
 						vcsLineChangeTypeAttrVal, ok := dp.Attributes().Get("vcs.line_change.type")
 						assert.True(t, ok)
 						assert.Equal(t, "added", vcsLineChangeTypeAttrVal.Str())
@@ -848,6 +854,10 @@ func TestMetricsBuilder(t *testing.T) {
 						_, ok = dp.Attributes().Get("vcs.ref.head.name")
 						assert.False(t, ok)
 						_, ok = dp.Attributes().Get("vcs.ref.type")
+						assert.False(t, ok)
+						_, ok = dp.Attributes().Get("vcs.ref.base.name")
+						assert.False(t, ok)
+						_, ok = dp.Attributes().Get("vcs.ref.base.type")
 						assert.False(t, ok)
 						_, ok = dp.Attributes().Get("vcs.line_change.type")
 						assert.False(t, ok)

@@ -137,9 +137,15 @@ resourceMetrics:
                     - key: vcs.line_change.type
                       value:
                         stringValue: added
-                    - key: vcs.ref.head.name
+                    - key: vcs.ref.base.name
                       value:
                         stringValue: main
+                    - key: vcs.ref.base.type
+                      value:
+                        stringValue: branch
+                    - key: vcs.ref.head.name
+                      value:
+                        stringValue: dev
                     - key: vcs.ref.head.type
                       value:
                         stringValue: branch
@@ -156,9 +162,15 @@ resourceMetrics:
                     - key: vcs.line_change.type
                       value:
                         stringValue: removed
-                    - key: vcs.ref.head.name
+                    - key: vcs.ref.base.name
                       value:
                         stringValue: main
+                    - key: vcs.ref.base.type
+                      value:
+                        stringValue: branch
+                    - key: vcs.ref.head.name
+                      value:
+                        stringValue: dev
                     - key: vcs.ref.head.type
                       value:
                         stringValue: branch
@@ -179,7 +191,7 @@ resourceMetrics:
                   attributes:
                     - key: vcs.ref.head.name
                       value:
-                        stringValue: main
+                        stringValue: dev
                     - key: vcs.ref.head.type
                       value:
                         stringValue: branch
@@ -198,7 +210,7 @@ resourceMetrics:
                   attributes:
                     - key: vcs.ref.head.name
                       value:
-                        stringValue: main
+                        stringValue: dev
                     - key: vcs.ref.head.type
                       value:
                         stringValue: branch
@@ -222,7 +234,7 @@ resourceMetrics:
                   attributes:
                     - key: vcs.ref.head.name
                       value:
-                        stringValue: main
+                        stringValue: dev
                     - key: vcs.ref.head.type
                       value:
                         stringValue: branch

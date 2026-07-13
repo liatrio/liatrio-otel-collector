@@ -89,7 +89,8 @@ func TestScrape(t *testing.T) {
 							Nodes: []SearchNode{
 								&SearchNodeRepository{
 									Repo: Repo{
-										Name: "repo1",
+										Name:             "repo1",
+										DefaultBranchRef: RepoDefaultBranchRef{Name: "main"},
 									},
 								},
 							},
@@ -124,7 +125,7 @@ func TestScrape(t *testing.T) {
 							TotalCount: 1,
 							Nodes: []BranchNode{
 								{
-									Name: "main",
+									Name: "dev",
 									Compare: BranchNodeCompareComparison{
 										AheadBy:  0,
 										BehindBy: 1,
@@ -206,7 +207,8 @@ func TestScrape(t *testing.T) {
 							Nodes: []TeamNode{
 								{
 									Repo: Repo{
-										Name: "repo1",
+										Name:             "repo1",
+										DefaultBranchRef: RepoDefaultBranchRef{Name: "main"},
 									},
 								},
 							},
@@ -241,7 +243,7 @@ func TestScrape(t *testing.T) {
 							TotalCount: 1,
 							Nodes: []BranchNode{
 								{
-									Name: "main",
+									Name: "dev",
 									Compare: BranchNodeCompareComparison{
 										AheadBy:  0,
 										BehindBy: 1,

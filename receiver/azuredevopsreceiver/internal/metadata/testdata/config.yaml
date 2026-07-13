@@ -33,7 +33,7 @@ all_set:
       attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.type"]
     vcs.ref.lines_delta:
       enabled: true
-      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.type","vcs.line_change.type"]
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.type","vcs.ref.base.name","vcs.ref.base.type","vcs.line_change.type"]
     vcs.ref.revisions_delta:
       enabled: true
       attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.type","vcs.revision_delta.direction"]
@@ -153,7 +153,7 @@ none_set:
       attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.type"]
     vcs.ref.lines_delta:
       enabled: false
-      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.type","vcs.line_change.type"]
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.type","vcs.ref.base.name","vcs.ref.base.type","vcs.line_change.type"]
     vcs.ref.revisions_delta:
       enabled: false
       attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.type","vcs.revision_delta.direction"]

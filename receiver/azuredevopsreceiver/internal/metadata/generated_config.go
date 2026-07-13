@@ -525,6 +525,8 @@ const (
 	VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID      VcsRefLinesDeltaMetricAttributeKey = "vcs.repository.id"
 	VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName       VcsRefLinesDeltaMetricAttributeKey = "vcs.ref.head.name"
 	VcsRefLinesDeltaMetricAttributeKeyVcsRefType           VcsRefLinesDeltaMetricAttributeKey = "vcs.ref.type"
+	VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseName       VcsRefLinesDeltaMetricAttributeKey = "vcs.ref.base.name"
+	VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseType       VcsRefLinesDeltaMetricAttributeKey = "vcs.ref.base.type"
 	VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType    VcsRefLinesDeltaMetricAttributeKey = "vcs.line_change.type"
 )
 
@@ -554,9 +556,9 @@ func (ms *VcsRefLinesDeltaMetricConfig) Unmarshal(parser *confmap.Conf) error {
 func (ms *VcsRefLinesDeltaMetricConfig) Validate() error {
 	for _, val := range ms.EnabledAttributes {
 		switch val {
-		case VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType:
+		case VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefType, VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseName, VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType:
 		default:
-			return fmt.Errorf("metric vcs.ref.lines_delta doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.type, vcs.line_change.type]", val)
+			return fmt.Errorf("metric vcs.ref.lines_delta doesn't have an attribute %v, valid attributes: [vcs.repository.url.full, vcs.repository.name, vcs.repository.id, vcs.ref.head.name, vcs.ref.type, vcs.ref.base.name, vcs.ref.base.type, vcs.line_change.type]", val)
 		}
 	}
 
@@ -972,7 +974,7 @@ func DefaultMetricsConfig() MetricsConfig {
 		VcsRefLinesDelta: VcsRefLinesDeltaMetricConfig{
 			Enabled:             true,
 			AggregationStrategy: AggregationStrategyAvg,
-			EnabledAttributes:   []VcsRefLinesDeltaMetricAttributeKey{VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType},
+			EnabledAttributes:   []VcsRefLinesDeltaMetricAttributeKey{VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryURLFull, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryName, VcsRefLinesDeltaMetricAttributeKeyVcsRepositoryID, VcsRefLinesDeltaMetricAttributeKeyVcsRefHeadName, VcsRefLinesDeltaMetricAttributeKeyVcsRefType, VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseName, VcsRefLinesDeltaMetricAttributeKeyVcsRefBaseType, VcsRefLinesDeltaMetricAttributeKeyVcsLineChangeType},
 		},
 		VcsRefRevisionsDelta: VcsRefRevisionsDeltaMetricConfig{
 			Enabled:             true,
