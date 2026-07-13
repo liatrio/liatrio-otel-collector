@@ -107,8 +107,8 @@ Two independent codegen pipelines run from `//go:generate` directives (usually i
    `schema.graphql` (upstream API schema), `genqlient.graphql` (queries), `genqlient.yaml` (config +
    scalar bindings) — and generate `generated_graphql.go` / `generated.go`.
 
-CI fails if regenerating produces a diff, so **run `make generate` and commit the result** after
-touching any `metadata.yaml`, `.graphql`, or genqlient config. Editing templates in `cmd/otel-compgen`
+CI fails if regenerating produces a diff, so **run `make generate` and include the regenerated files
+in the same change** after touching any `metadata.yaml`, `.graphql`, or genqlient config. Editing templates in `cmd/otel-compgen`
 requires rebuilding that binary — templates are compiled in via `//go:embed`.
 
 ## Component architecture
@@ -167,7 +167,7 @@ register, and the package-upgrade/OCB/Renovate runbook live in
 - Lint config is `.golangci.yaml` (Go 1.24, line length 185). Formatting is `goimports` + `gofmt`.
 - CI (`.github/workflows/build.yml`) only runs real jobs on PRs targeting `main`. It re-runs
   `make generate`, `make tidy-all`, and `make crosslink` and fails on any resulting diff — so keep
-  generated code, module tidiness, and replace directives committed.
+  generated code, module tidiness, and replace directives in sync.
 - Releases are automated on `main` via multimod + semantic versioning driven by `versions.yaml`
   (the `liatrio-otel` module set).
 
@@ -178,7 +178,8 @@ register, and the package-upgrade/OCB/Renovate runbook live in
   (`metadata.yaml`, `.graphql`, `genqlient.yaml`) and regenerate with `make gen` / `make generate`.
 - **Regenerate and re-tidy after touching inputs.** After editing any `metadata.yaml`, `.graphql`,
   genqlient config, or dependencies, run `make generate` and `make tidy-all` (and `make crosslink`
-  if `replace`/module wiring changed) and commit the results. CI fails on any diff.
+  if `replace`/module wiring changed) and include the regenerated files in the change. CI fails on
+  any diff.
 - **Adding or removing a component means editing `config/manifest.yaml`** and running `make crosslink`
   — there is no other registry.
 - **Do not bump the semconv package as a side effect.** It is a deliberate manual migration; follow
