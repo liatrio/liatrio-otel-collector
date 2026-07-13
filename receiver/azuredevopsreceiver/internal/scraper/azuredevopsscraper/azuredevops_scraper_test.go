@@ -175,7 +175,7 @@ func TestScrapeSuccess(t *testing.T) {
 		BaseURL:                  server.URL,
 		LimitPullRequests:        100,
 		ConcurrencyLimit:         5,
-		MetricsBuilderConfig:     metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig:     metadata.NewDefaultMetricsBuilderConfig(),
 		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
 	}
 
@@ -223,7 +223,7 @@ func TestScrapeRepositoriesError(t *testing.T) {
 		Organization:             "test-org",
 		Project:                  "test-project",
 		BaseURL:                  server.URL,
-		MetricsBuilderConfig:     metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig:     metadata.NewDefaultMetricsBuilderConfig(),
 		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
 	}
 
@@ -540,7 +540,7 @@ func TestScrapeWithConcurrencyLimit(t *testing.T) {
 		Project:                  "test-project",
 		BaseURL:                  server.URL,
 		ConcurrencyLimit:         1, // Test with concurrency limit of 1
-		MetricsBuilderConfig:     metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig:     metadata.NewDefaultMetricsBuilderConfig(),
 		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
 	}
 
@@ -602,7 +602,7 @@ func TestScrapeWithBranchMetrics(t *testing.T) {
 		Organization:             "test-org",
 		Project:                  "test-project",
 		BaseURL:                  server.URL,
-		MetricsBuilderConfig:     metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig:     metadata.NewDefaultMetricsBuilderConfig(),
 		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
 	}
 
@@ -772,7 +772,7 @@ func TestScrapeOnlyRepoCountSkipsPerRepoAPIs(t *testing.T) {
 	defer server.Close()
 
 	mbCfg := allMetricsDisabled()
-	mbCfg.Metrics.VcsRepositoryCount = metadata.MetricConfig{Enabled: true}
+	mbCfg.Metrics.VcsRepositoryCount = metadata.VcsRepositoryCountMetricConfig{Enabled: true}
 
 	cfg := &Config{
 		Organization:             "test-org",
@@ -819,7 +819,7 @@ func TestScrapeOnlyBranchMetricsSkipsPRs(t *testing.T) {
 	defer server.Close()
 
 	mbCfg := allMetricsDisabled()
-	mbCfg.Metrics.VcsRefCount = metadata.MetricConfig{Enabled: true}
+	mbCfg.Metrics.VcsRefCount = metadata.VcsRefCountMetricConfig{Enabled: true}
 
 	cfg := &Config{
 		Organization:             "test-org",
@@ -865,7 +865,7 @@ func TestScrapeOnlyPRMetricsSkipsBranches(t *testing.T) {
 	defer server.Close()
 
 	mbCfg := allMetricsDisabled()
-	mbCfg.Metrics.VcsChangeCount = metadata.MetricConfig{Enabled: true}
+	mbCfg.Metrics.VcsChangeCount = metadata.VcsChangeCountMetricConfig{Enabled: true}
 
 	cfg := &Config{
 		Organization:             "test-org",
@@ -934,7 +934,7 @@ func TestScrapeWithPullRequestMetrics(t *testing.T) {
 		Organization:             "test-org",
 		Project:                  "test-project",
 		BaseURL:                  server.URL,
-		MetricsBuilderConfig:     metadata.DefaultMetricsBuilderConfig(),
+		MetricsBuilderConfig:     metadata.NewDefaultMetricsBuilderConfig(),
 		ResourceAttributesConfig: metadata.DefaultResourceAttributesConfig(),
 	}
 

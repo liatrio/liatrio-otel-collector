@@ -22,10 +22,10 @@ Average deployment duration for a given service and environment over the deploym
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| service.name | Logical name of the service being deployed. | Any Str | Recommended |
-| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| service.name | Logical name of the service being deployed. | Any Str | Recommended | - |
+| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | Recommended | - |
 
 ### deploy.deployment.count
 
@@ -37,11 +37,11 @@ The number of deployments by service, environment, and status.
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| service.name | Logical name of the service being deployed. | Any Str | Recommended |
-| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | Recommended |
-| deployment.status | The status of the deployment. | Str: ``succeeded``, ``failed`` | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| service.name | Logical name of the service being deployed. | Any Str | Recommended | - |
+| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | Recommended | - |
+| deployment.status | The status of the deployment. | Str: ``succeeded``, ``failed`` | Recommended | - |
 
 ### deploy.deployment.last_timestamp
 
@@ -53,11 +53,11 @@ Unix timestamp of the last completed deployment for a service, environment, and 
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| service.name | Logical name of the service being deployed. | Any Str | Recommended |
-| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | Recommended |
-| deployment.status | The status of the deployment. | Str: ``succeeded``, ``failed`` | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| service.name | Logical name of the service being deployed. | Any Str | Recommended | - |
+| deployment.environment.name | Name of the deployment environment (aka deployment tier). | Any Str | Recommended | - |
+| deployment.status | The status of the deployment. | Str: ``succeeded``, ``failed`` | Recommended | - |
 
 ### vcs.change.count
 
@@ -69,12 +69,12 @@ The number of changes (pull requests) in a repository, categorized by their stat
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended |
-| vcs.change.state | The state of a change (pull request) | Str: ``open``, ``merged`` | Recommended |
-| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended |
-| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended | - |
+| vcs.change.state | The state of a change (pull request) | Str: ``open``, ``merged`` | Recommended | - |
+| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended | - |
+| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended | - |
 
 ### vcs.change.duration
 
@@ -86,13 +86,13 @@ The time duration a change (pull request/merge request/changelist) has been in a
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended |
-| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended |
-| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended |
-| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended |
-| vcs.change.state | The state of a change (pull request) | Str: ``open``, ``merged`` | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended | - |
+| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended | - |
+| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended | - |
+| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended | - |
+| vcs.change.state | The state of a change (pull request) | Str: ``open``, ``merged`` | Recommended | - |
 
 ### vcs.change.time_to_approval
 
@@ -104,12 +104,12 @@ The amount of time it took a change (pull request) to go from open to approved.
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended |
-| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended |
-| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended |
-| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended | - |
+| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended | - |
+| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended | - |
+| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended | - |
 
 ### vcs.change.time_to_merge
 
@@ -121,12 +121,12 @@ The amount of time it took a change (pull request) to go from open to merged.
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended |
-| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended |
-| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended |
-| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended | - |
+| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended | - |
+| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended | - |
+| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended | - |
 
 ### vcs.code_coverage
 
@@ -138,13 +138,13 @@ The code coverage percentage of a ref (branch).
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended |
-| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended |
-| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended |
-| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended |
-| vcs.ref.head.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended | - |
+| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended | - |
+| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended | - |
+| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended | - |
+| vcs.ref.head.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended | - |
 
 ### vcs.ref.count
 
@@ -156,12 +156,12 @@ The number of refs of type branch in a repository.
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended |
-| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended |
-| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended |
-| vcs.ref.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended | - |
+| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended | - |
+| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended | - |
+| vcs.ref.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended | - |
 
 ### vcs.ref.lines_delta
 
@@ -173,14 +173,16 @@ The number of lines added/removed in a ref (branch) relative to the default bran
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended |
-| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended |
-| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended |
-| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended |
-| vcs.ref.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended |
-| vcs.line_change.type | The type of line change being measured on a ref (branch). | Str: ``added``, ``removed`` | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended | - |
+| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended | - |
+| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended | - |
+| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended | - |
+| vcs.ref.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended | - |
+| vcs.ref.base.name | The name of the VCS base reference (branch) the delta is measured against. | Any Str | Recommended | - |
+| vcs.ref.base.type | The type of the base reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended | - |
+| vcs.line_change.type | The type of line change being measured on a ref (branch). | Str: ``added``, ``removed`` | Recommended | - |
 
 ### vcs.ref.revisions_delta
 
@@ -192,14 +194,14 @@ The number of revisions (commits) a ref (branch) is ahead/behind the branch from
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended |
-| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended |
-| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended |
-| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended |
-| vcs.ref.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended |
-| vcs.revision_delta.direction | The type of revision comparison. | Str: ``ahead``, ``behind`` | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended | - |
+| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended | - |
+| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended | - |
+| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended | - |
+| vcs.ref.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended | - |
+| vcs.revision_delta.direction | The type of revision comparison. | Str: ``ahead``, ``behind`` | Recommended | - |
 
 ### vcs.ref.time
 
@@ -211,13 +213,13 @@ Time a ref (branch) created from the default branch (trunk) has existed. The `vc
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended |
-| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended |
-| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended |
-| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended |
-| vcs.ref.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended | - |
+| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended | - |
+| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended | - |
+| vcs.ref.head.name | The name of the VCS head reference (branch). | Any Str | Recommended | - |
+| vcs.ref.type | The type of the head reference (branch, tag). | Str: ``branch``, ``tag`` | Recommended | - |
 
 ### vcs.repository.count
 
@@ -237,11 +239,12 @@ Time since work item creation for items that are not yet closed, in seconds.
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | Recommended |
-| work_item.state | The current state of the work item (New, Active, Resolved, Closed, etc.). | Any Str | Recommended |
-| project.name | The name of the Azure DevOps project. | Any Str | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| work_item.id | The unique identifier of the work item. Used to disambiguate individual work items that would otherwise share the same type/state/project attribute set. | Any Str | Recommended | - |
+| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | Recommended | - |
+| work_item.state | The current state of the work item (New, Active, Resolved, Closed, etc.). | Any Str | Recommended | - |
+| project.name | The name of the Azure DevOps project. | Any Str | Recommended | - |
 
 ### work_item.count
 
@@ -253,11 +256,11 @@ The number of work items by type and state.
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | Recommended |
-| work_item.state | The current state of the work item (New, Active, Resolved, Closed, etc.). | Any Str | Recommended |
-| project.name | The name of the Azure DevOps project. | Any Str | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | Recommended | - |
+| work_item.state | The current state of the work item (New, Active, Resolved, Closed, etc.). | Any Str | Recommended | - |
+| project.name | The name of the Azure DevOps project. | Any Str | Recommended | - |
 
 ### work_item.cycle_time
 
@@ -269,10 +272,11 @@ Time from work item creation to closure in seconds. Only recorded for closed wor
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | Recommended |
-| project.name | The name of the Azure DevOps project. | Any Str | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| work_item.id | The unique identifier of the work item. Used to disambiguate individual work items that would otherwise share the same type/state/project attribute set. | Any Str | Recommended | - |
+| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | Recommended | - |
+| project.name | The name of the Azure DevOps project. | Any Str | Recommended | - |
 
 ### work_item.tag.count
 
@@ -284,11 +288,11 @@ The number of work items with a given tag, broken down by work item type.
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| work_item.tag | A tag applied to the work item (e.g., P1-Urgent, Feature, Blocked). | Any Str | Recommended |
-| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | Recommended |
-| project.name | The name of the Azure DevOps project. | Any Str | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| work_item.tag | A tag applied to the work item (e.g., P1-Urgent, Feature, Blocked). | Any Str | Recommended | - |
+| work_item.type | The type of work item (User Story, Bug, Task, etc.). | Any Str | Recommended | - |
+| project.name | The name of the Azure DevOps project. | Any Str | Recommended | - |
 
 ## Optional Metrics
 
@@ -310,15 +314,15 @@ The number of unique contributors to a repository.
 
 #### Attributes
 
-| Name | Description | Values | Requirement Level |
-| ---- | ----------- | ------ | -------- |
-| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended |
-| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended |
-| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended |
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| vcs.repository.url.full | The canonical URL of the repository providing the complete HTTPS address. | Any Str | Recommended | - |
+| vcs.repository.name | The name of the VCS repository. | Any Str | Recommended | - |
+| vcs.repository.id | The unique identifier of the VCS repository. | Any Str | Recommended | - |
 
 ## Resource Attributes
 
-| Name | Description | Values | Enabled |
-| ---- | ----------- | ------ | ------- |
-| vcs.owner.name | VCS Organization | Any Str | true |
-| vcs.provider.name | The name of the VCS vendor/provider (ie. azuredevops) | Any Str | true |
+| Name | Description | Values | Enabled | Semantic Convention | Stability |
+| ---- | ----------- | ------ | ------- | ------------------- | --------- |
+| vcs.owner.name | VCS Organization | Any Str | true | - | - |
+| vcs.provider.name | The name of the VCS vendor/provider (ie. azuredevops) | Any Str | true | - | - |

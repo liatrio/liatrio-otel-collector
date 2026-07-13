@@ -3,24 +3,75 @@ all_set:
   metrics:
     vcs.change.count:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.change.state","vcs.repository.name"]
     vcs.change.duration:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.name","vcs.change.state"]
     vcs.change.time_to_approval:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.name"]
     vcs.change.time_to_merge:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.name"]
     vcs.contributor.count:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name"]
     vcs.cve.count:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","cve.severity"]
     vcs.ref.count:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.type"]
     vcs.ref.lines_delta:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.name","vcs.ref.head.type","vcs.ref.base.name","vcs.ref.base.type","vcs.line_change.type"]
     vcs.ref.revisions_delta:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.name","vcs.ref.head.type","vcs.revision_delta.direction"]
     vcs.ref.time:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.name","vcs.ref.head.type"]
+    vcs.repository.count:
+      enabled: true
+  resource_attributes:
+    organization.name:
+      enabled: true
+    team.name:
+      enabled: true
+    vcs.vendor.name:
+      enabled: true
+reaggregate_set:
+  metrics:
+    vcs.change.count:
+      enabled: true
+      attributes: []
+    vcs.change.duration:
+      enabled: true
+      attributes: []
+    vcs.change.time_to_approval:
+      enabled: true
+      attributes: []
+    vcs.change.time_to_merge:
+      enabled: true
+      attributes: []
+    vcs.contributor.count:
+      enabled: true
+      attributes: []
+    vcs.cve.count:
+      enabled: true
+      attributes: []
+    vcs.ref.count:
+      enabled: true
+      attributes: []
+    vcs.ref.lines_delta:
+      enabled: true
+      attributes: []
+    vcs.ref.revisions_delta:
+      enabled: true
+      attributes: []
+    vcs.ref.time:
+      enabled: true
+      attributes: []
     vcs.repository.count:
       enabled: true
   resource_attributes:
@@ -34,24 +85,34 @@ none_set:
   metrics:
     vcs.change.count:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.change.state","vcs.repository.name"]
     vcs.change.duration:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.name","vcs.change.state"]
     vcs.change.time_to_approval:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.name"]
     vcs.change.time_to_merge:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.name"]
     vcs.contributor.count:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name"]
     vcs.cve.count:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","cve.severity"]
     vcs.ref.count:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.type"]
     vcs.ref.lines_delta:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.name","vcs.ref.head.type","vcs.ref.base.name","vcs.ref.base.type","vcs.line_change.type"]
     vcs.ref.revisions_delta:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.name","vcs.ref.head.type","vcs.revision_delta.direction"]
     vcs.ref.time:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.ref.head.name","vcs.ref.head.type"]
     vcs.repository.count:
       enabled: false
   resource_attributes:

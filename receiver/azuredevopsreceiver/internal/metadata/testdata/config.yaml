@@ -3,40 +3,117 @@ all_set:
   metrics:
     deploy.deployment.average_duration:
       enabled: true
+      attributes: ["service.name","deployment.environment.name"]
     deploy.deployment.count:
       enabled: true
+      attributes: ["service.name","deployment.environment.name","deployment.status"]
     deploy.deployment.last_timestamp:
       enabled: true
+      attributes: ["service.name","deployment.environment.name","deployment.status"]
     vcs.change.count:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.change.state","vcs.repository.name","vcs.repository.id"]
     vcs.change.duration:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.change.state"]
     vcs.change.time_to_approval:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name"]
     vcs.change.time_to_merge:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name"]
     vcs.code_coverage:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.head.type"]
     vcs.contributor.count:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id"]
     vcs.ref.count:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.type"]
     vcs.ref.lines_delta:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.type","vcs.ref.base.name","vcs.ref.base.type","vcs.line_change.type"]
     vcs.ref.revisions_delta:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.type","vcs.revision_delta.direction"]
     vcs.ref.time:
       enabled: true
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.type"]
     vcs.repository.count:
       enabled: true
     work_item.age:
       enabled: true
+      attributes: ["work_item.id","work_item.type","work_item.state","project.name"]
     work_item.count:
       enabled: true
+      attributes: ["work_item.type","work_item.state","project.name"]
     work_item.cycle_time:
       enabled: true
+      attributes: ["work_item.id","work_item.type","project.name"]
     work_item.tag.count:
       enabled: true
+      attributes: ["work_item.tag","work_item.type","project.name"]
+  resource_attributes:
+    vcs.owner.name:
+      enabled: true
+    vcs.provider.name:
+      enabled: true
+reaggregate_set:
+  metrics:
+    deploy.deployment.average_duration:
+      enabled: true
+      attributes: []
+    deploy.deployment.count:
+      enabled: true
+      attributes: []
+    deploy.deployment.last_timestamp:
+      enabled: true
+      attributes: []
+    vcs.change.count:
+      enabled: true
+      attributes: []
+    vcs.change.duration:
+      enabled: true
+      attributes: []
+    vcs.change.time_to_approval:
+      enabled: true
+      attributes: []
+    vcs.change.time_to_merge:
+      enabled: true
+      attributes: []
+    vcs.code_coverage:
+      enabled: true
+      attributes: []
+    vcs.contributor.count:
+      enabled: true
+      attributes: []
+    vcs.ref.count:
+      enabled: true
+      attributes: []
+    vcs.ref.lines_delta:
+      enabled: true
+      attributes: []
+    vcs.ref.revisions_delta:
+      enabled: true
+      attributes: []
+    vcs.ref.time:
+      enabled: true
+      attributes: []
+    vcs.repository.count:
+      enabled: true
+    work_item.age:
+      enabled: true
+      attributes: []
+    work_item.count:
+      enabled: true
+      attributes: []
+    work_item.cycle_time:
+      enabled: true
+      attributes: []
+    work_item.tag.count:
+      enabled: true
+      attributes: []
   resource_attributes:
     vcs.owner.name:
       enabled: true
@@ -46,40 +123,57 @@ none_set:
   metrics:
     deploy.deployment.average_duration:
       enabled: false
+      attributes: ["service.name","deployment.environment.name"]
     deploy.deployment.count:
       enabled: false
+      attributes: ["service.name","deployment.environment.name","deployment.status"]
     deploy.deployment.last_timestamp:
       enabled: false
+      attributes: ["service.name","deployment.environment.name","deployment.status"]
     vcs.change.count:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.change.state","vcs.repository.name","vcs.repository.id"]
     vcs.change.duration:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.change.state"]
     vcs.change.time_to_approval:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name"]
     vcs.change.time_to_merge:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name"]
     vcs.code_coverage:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.head.type"]
     vcs.contributor.count:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id"]
     vcs.ref.count:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.type"]
     vcs.ref.lines_delta:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.type","vcs.ref.base.name","vcs.ref.base.type","vcs.line_change.type"]
     vcs.ref.revisions_delta:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.type","vcs.revision_delta.direction"]
     vcs.ref.time:
       enabled: false
+      attributes: ["vcs.repository.url.full","vcs.repository.name","vcs.repository.id","vcs.ref.head.name","vcs.ref.type"]
     vcs.repository.count:
       enabled: false
     work_item.age:
       enabled: false
+      attributes: ["work_item.id","work_item.type","work_item.state","project.name"]
     work_item.count:
       enabled: false
+      attributes: ["work_item.type","work_item.state","project.name"]
     work_item.cycle_time:
       enabled: false
+      attributes: ["work_item.id","work_item.type","project.name"]
     work_item.tag.count:
       enabled: false
+      attributes: ["work_item.tag","work_item.type","project.name"]
   resource_attributes:
     vcs.owner.name:
       enabled: false

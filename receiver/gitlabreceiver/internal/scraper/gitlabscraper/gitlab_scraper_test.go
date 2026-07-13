@@ -76,19 +76,47 @@ func TestScrape(t *testing.T) {
 					},
 					responseCode: http.StatusOK,
 				},
+				// getCombinedMergeRequests issues two GraphQL calls: the first for
+				// opened MRs, the second for merged MRs. MockServer serves mrs[0] to
+				// the opened call and mrs[1] to the merged call, so each state returns
+				// only state-appropriate MRs with distinct Iids (mirroring production,
+				// where an MR is in exactly one state).
+				//
+				// Both MRs deliberately share the source branch "feature-a" (a reused
+				// branch name) with different diff stats. This exercises the
+				// vcs.ref.lines_delta path, whose attribute set keys datapoints by
+				// branch rather than by change: two MRs on one branch collide on
+				// identity+timestamp and are merged by the metrics builder.
 				mrResponse: mrResponse{
 					mrs: []getMergeRequestsProjectMergeRequestsMergeRequestConnection{
 						{
 							Nodes: []MergeRequestNode{
 								{
-									Title:     "mr1",
-									Iid:       "1",
-									CreatedAt: time.Now().AddDate(0, 0, -1),
+									Title:        "mr1",
+									Iid:          "1",
+									SourceBranch: "feature-a",
+									TargetBranch: "main",
+									CreatedAt:    time.Now().AddDate(0, 0, -1),
+									DiffStatsSummary: MergeRequestNodeDiffStatsSummary{
+										Additions: 10,
+										Deletions: 5,
+									},
 								},
+							},
+						},
+						{
+							Nodes: []MergeRequestNode{
 								{
-									Title:    "mr1",
-									Iid:      "1",
-									MergedAt: time.Now().AddDate(0, 0, -1),
+									Title:        "mr2",
+									Iid:          "2",
+									SourceBranch: "feature-a",
+									TargetBranch: "main",
+									CreatedAt:    time.Now().AddDate(0, 0, -2),
+									MergedAt:     time.Now().AddDate(0, 0, -1),
+									DiffStatsSummary: MergeRequestNodeDiffStatsSummary{
+										Additions: 20,
+										Deletions: 8,
+									},
 								},
 							},
 						},
@@ -126,7 +154,7 @@ func TestScrape(t *testing.T) {
 			server := httptest.NewServer(tc.server)
 			defer server.Close()
 
-			cfg := &Config{MetricsBuilderConfig: metadata.DefaultMetricsBuilderConfig()}
+			cfg := &Config{MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig()}
 
 			gls := newGitLabScraper(context.Background(), receivertest.NewNopSettings(metadata.Type), cfg)
 			gls.cfg.GitLabOrg = "project"

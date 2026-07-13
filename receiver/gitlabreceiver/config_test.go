@@ -50,6 +50,7 @@ func TestLoadConfig(t *testing.T) {
 			CollectionInterval: 30 * time.Second,
 			InitialDelay:       1 * time.Second,
 		},
+		MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig(),
 		Scrapers: map[string]internal.Config{
 			gitlabscraper.TypeStr: (&gitlabscraper.Factory{}).CreateDefaultConfig(),
 		},
@@ -63,6 +64,7 @@ func TestLoadConfig(t *testing.T) {
 			CollectionInterval: 60 * time.Second,
 			InitialDelay:       1 * time.Second,
 		},
+		MetricsBuilderConfig: metadata.NewDefaultMetricsBuilderConfig(),
 		Scrapers: map[string]internal.Config{
 			gitlabterraformscraper.TypeStr: (&gitlabterraformscraper.Factory{}).CreateDefaultConfig(),
 		},

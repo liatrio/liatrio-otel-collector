@@ -187,8 +187,10 @@ func (ghs *githubScraper) scrape(ctx context.Context) (pmetric.Metrics, error) {
 				}
 
 				ghs.mb.RecordVcsRefTimeDataPoint(now, age, url, name, branch.Name, refType)
-				ghs.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(additions), url, name, branch.Name, refType, metadata.AttributeVcsLineChangeTypeAdded)
-				ghs.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(deletions), url, name, branch.Name, refType, metadata.AttributeVcsLineChangeTypeRemoved)
+				//nolint:lll
+				ghs.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(additions), url, name, branch.Name, refType, trunk, metadata.AttributeVcsRefBaseTypeBranch, metadata.AttributeVcsLineChangeTypeAdded)
+				//nolint:lll
+				ghs.mb.RecordVcsRefLinesDeltaDataPoint(now, int64(deletions), url, name, branch.Name, refType, trunk, metadata.AttributeVcsRefBaseTypeBranch, metadata.AttributeVcsLineChangeTypeRemoved)
 
 			}
 
