@@ -109,6 +109,83 @@ jobs:
             exit 1
           fi
 
+  regen:
+    name: regen
+    needs: [generate, lint]
+    # Only runs when Tier 1 (generate/lint) failed on a renovate[bot] PR, and never on a push made
+    # by the octo-sts bot itself (this job's own commit re-triggers `synchronize`, which would
+    # otherwise recurse). This is a plain AND, not the repo's default OR'd/ref-negated guard, because
+    # this job must never run on `main` or on non-Renovate PRs regardless of failure() state.
+    if: failure() && github.event.pull_request.user.login == 'renovate[bot]' && github.actor != 'octo-sts[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Get Octo STS Token
+        uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
+        id: octo-sts
+        with:
+          scope: ${{ github.repository }}
+          identity: regen
+
+      - name: Clone repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          token: ${{ steps.octo-sts.outputs.token }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+          cache: false
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/octo-sts[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+
+      - name: Configure git committer
+        run: |
+          git config user.name 'octo-sts[bot]'
+          git config user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
+
+      - name: Make install-tools
+        run: make install-tools
+
+      - name: Run mechanical regeneration
+        run: |
+          make generate
+          make tidy-all
+          make crosslink
+          make fmt-all
+
+      - name: Refuse to push workflow changes
+        run: |
+          if ! git diff --quiet --name-only -- .github/; then
+            echo "Regeneration touched .github/** — refusing to commit/push a workflow-poisoning diff."
+            git diff --name-only -- .github/
+            exit 1
+          fi
+
+      # Deliberately does NOT re-apply Renovate's `rebase` label after pushing. Re-adding it would
+      # tell Renovate to force-rebase the branch from the dependency update on its next run, which
+      # recreates the branch and discards this foreign commit — undoing the fix and looping forever.
+      # Renovate treats a foreign commit as a signal to stop auto-rebasing that branch, which is the
+      # outcome we want: our fix sticks, and the PR is left for CI to go green and get merged.
+      - name: Commit and push fixes
+        run: |
+          if git diff --quiet; then
+            echo "No mechanical fixes needed; nothing to commit."
+            exit 0
+          fi
+          git add .
+          git commit -m "chore: run make generate"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
   build:
     name: build
     if: github.ref != 'refs/heads/main' || ( github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]')
