@@ -1,0 +1,23 @@
+{
+  "_comment": "Offline failure-context sidecar for the ghinstallation fixture (see backoff/context.json). Exposed at $FIX_CONTEXT_FILE during offline replay.",
+  "pr_number": null,
+  "labels": [
+    "dependencies",
+    "renovatebot"
+  ],
+  "group_label": null,
+  "base_ref": "93ad14eab1dc4be14594c2c4c531b983e6d3d189",
+  "failing_checks": [
+    "build-and-test / generate"
+  ],
+  "renovate_notes": "minor version update within v2",
+  "upgrades": [
+    {
+      "depName": "github.com/bradleyfalzon/ghinstallation/v2",
+      "currentValue": "v2.x",
+      "newValue": "v2.19.0",
+      "updateType": "minor",
+      "packageFile": "extension/githubappauthextension/go.mod"
+    }
+  ]
+}

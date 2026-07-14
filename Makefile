@@ -112,3 +112,11 @@ multimod-prerelease:
 .PHONY: crosslink
 crosslink:
 	$(CROSSLINK) --root=$(shell pwd) --prune
+
+# Local-only evaluation harness for the /fix skill (spec Unit 4). Deliberately NOT in CHECKS and
+# NOT referenced by .github/workflows/build.yml: it invokes the Claude CLI (spends money, needs the
+# host toolchain) and must never enter the CI hot path. Runs every fixture under eval/fixtures/ by
+# default; pass names/flags through EVAL_ARGS, e.g. `make eval EVAL_ARGS="backoff --skip-agent"`.
+.PHONY: eval
+eval:
+	./eval/run.sh $(EVAL_ARGS)

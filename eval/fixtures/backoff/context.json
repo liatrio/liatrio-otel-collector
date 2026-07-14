@@ -1,0 +1,33 @@
+{
+  "_comment": "Offline failure-context sidecar for the backoff fixture. During offline replay `gh` is unavailable, so run.sh exposes this at $FIX_CONTEXT_FILE and the /fix skill reads it as the fallback for what it would otherwise self-fetch (group label + renovate-upgrades JSON + failing checks). Mirrors the shape of the real PR #822.",
+  "pr_number": 822,
+  "labels": [
+    "dependencies",
+    "renovatebot"
+  ],
+  "group_label": null,
+  "base_ref": "b3a6bada6c8679f6c4a6e128a1f81cf82061a374",
+  "failing_checks": [
+    "build-and-test / generate",
+    "build-and-test / lint"
+  ],
+  "renovate_notes": "MAJOR VERSION UPDATE - please manually update this package",
+  "upgrades": [
+    {
+      "depName": "github.com/cenkalti/backoff/v5",
+      "newName": "github.com/cenkalti/backoff/v7",
+      "currentValue": "v5.0.3",
+      "newValue": "v7.0.0",
+      "updateType": "major",
+      "packageFile": "receiver/githubreceiver/go.mod"
+    },
+    {
+      "depName": "github.com/cenkalti/backoff/v5",
+      "newName": "github.com/cenkalti/backoff/v7",
+      "currentValue": "v5.0.3",
+      "newValue": "v7.0.0",
+      "updateType": "major",
+      "packageFile": "receiver/gitlabreceiver/go.mod"
+    }
+  ]
+}

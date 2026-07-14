@@ -1,0 +1,34 @@
+{
+  "_comment": "Offline failure-context sidecar for the go-github fixture (see backoff/context.json). Exposed at $FIX_CONTEXT_FILE during offline replay. go-github v69->v89 redesigned the NewClient constructor (now returns an error + uses functional options), so this is an API migration, not a pure import-path swap.",
+  "pr_number": null,
+  "labels": [
+    "dependencies",
+    "renovatebot"
+  ],
+  "group_label": null,
+  "base_ref": "93ad14eab1dc4be14594c2c4c531b983e6d3d189",
+  "failing_checks": [
+    "build-and-test / lint",
+    "build-and-test / test",
+    "build-and-test / generate"
+  ],
+  "renovate_notes": "MAJOR VERSION UPDATE - please manually update this package",
+  "upgrades": [
+    {
+      "depName": "github.com/google/go-github/v69",
+      "newName": "github.com/google/go-github/v89",
+      "currentValue": "v69.0.0",
+      "newValue": "v89.0.0",
+      "updateType": "major",
+      "packageFile": "receiver/githubreceiver/go.mod"
+    },
+    {
+      "depName": "github.com/google/go-github/v69",
+      "newName": "github.com/google/go-github/v89",
+      "currentValue": "v69.0.0",
+      "newValue": "v89.0.0",
+      "updateType": "major",
+      "packageFile": "receiver/githubactionsreceiver/go.mod"
+    }
+  ]
+}
