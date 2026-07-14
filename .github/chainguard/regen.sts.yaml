@@ -1,9 +1,19 @@
 ---
+# Trust policy for the `regen` octo-sts identity (see the `regen` job in
+# .github/workflows/build.yml). octo-sts reads this from the DEFAULT BRANCH, not the PR head,
+# so a PR can't widen it — this file, not the tamperable `if:` guard in build.yml, is the
+# real gate on who can mint the token.
 issuer: https://token.actions.githubusercontent.com
+
+# PR-triggered runs of this repo only (auto-anchored ^...$, so never push/main or pull_request_target).
 subject_pattern: repo:liatrio/liatrio-otel-collector:pull_request
 
 claim_pattern:
   head_ref: ^renovate/.*
+  # Run must be initiated by renovate[bot] (id 29139614). actor_id is GitHub-signed and
+  # unspoofable; head_ref alone isn't enough (anyone can name a branch renovate/*). This
+  # rejects a human's commit pushed to a Renovate PR and fork PRs. Numeric id is rename-stable.
+  actor_id: "29139614"
 
 permissions:
   contents: write

@@ -135,6 +135,10 @@ jobs:
           token: ${{ steps.octo-sts.outputs.token }}
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
+          # Do not leave the write-capable octo-sts token in the git credential store for the
+          # duration of the job — the regen steps below run PR-provided (Renovate-bumped) code, so
+          # the push step authenticates explicitly instead of relying on a persisted credential.
+          persist-credentials: false
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -177,6 +181,13 @@ jobs:
       # Renovate treats a foreign commit as a signal to stop auto-rebasing that branch, which is the
       # outcome we want: our fix sticks, and the PR is left for CI to go green and get merged.
       - name: Commit and push fixes
+        env:
+          # Pass the untrusted, user-controllable branch name and the octo-sts token through the
+          # environment rather than interpolating them into the shell — `${{ … }}` expansion happens
+          # before the script runs, so a crafted head ref could otherwise inject shell commands.
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          REPO: ${{ github.repository }}
         run: |
           if git diff --quiet; then
             echo "No mechanical fixes needed; nothing to commit."
@@ -184,7 +195,7 @@ jobs:
           fi
           git add .
           git commit -m "chore: run make generate"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:${HEAD_REF}"
 
   build:
     name: build
