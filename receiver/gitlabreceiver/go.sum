@@ -152,8 +152,6 @@ github.com/vektah/gqlparser/v2 v2.5.30 h1:EqLwGAFLIzt1wpx1IPpY67DwUujF1OfzgEyDsL
 github.com/vektah/gqlparser/v2 v2.5.30/go.mod h1:D1/VCZtV3LPnQrcPBeR/q5jkSQIPti0uYCP/RI0gIeo=
 github.com/yusufpapurcu/wmi v1.2.4 h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo0=
 github.com/yusufpapurcu/wmi v1.2.4/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
-gitlab.com/gitlab-org/api/client-go/v2 v2.47.0 h1:WJboeVdMY/lJkso/wIJXhMMC/xGt+qIkBy67BAqhnag=
-gitlab.com/gitlab-org/api/client-go/v2 v2.47.0/go.mod h1:WEdEVDbr2ZtYfpw95r5XWZeGcr1mVsJZk57aeXWsSVU=
 gitlab.com/gitlab-org/api/client-go/v2 v2.48.1 h1:k5N2hjc67pMkq3h0K2HyVSb7PkMyUTlW5kHQLrK3aQY=
 gitlab.com/gitlab-org/api/client-go/v2 v2.48.1/go.mod h1:WEdEVDbr2ZtYfpw95r5XWZeGcr1mVsJZk57aeXWsSVU=
 go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
