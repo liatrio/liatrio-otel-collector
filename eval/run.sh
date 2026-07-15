@@ -138,6 +138,16 @@ run_one() {
     cp "$skill_src" "$repo/.claude/skills/fix/SKILL.md"
     grep -qxF '.claude/' "$repo/.git/info/exclude" 2>/dev/null || echo '.claude/' >> "$repo/.git/info/exclude"
   fi
+  # 3a-bis. provision the renovate-* playbook-skills the fix skill reads to ground its diagnosis. The
+  # fixture bundles are branches off main that predate the playbooks, so without this the skill has no
+  # playbook to consult during a run. Copied from the live repo under the same .claude/ git-exclude so
+  # the inspected tree stays clean. Under --bare these are read as files (not auto-discovered) — fine.
+  for pb in "$REPO_ROOT"/.claude/skills/renovate-*/; do
+    [[ -f "$pb/SKILL.md" ]] || continue
+    mkdir -p "$repo/.claude/skills/$(basename "$pb")"
+    cp "$pb/SKILL.md" "$repo/.claude/skills/$(basename "$pb")/SKILL.md"
+    grep -qxF '.claude/' "$repo/.git/info/exclude" 2>/dev/null || echo '.claude/' >> "$repo/.git/info/exclude"
+  done
   # 3b. offline failure-context sidecar (group label + renovate-upgrades JSON), also git-excluded
   if [[ -f "$fdir/context.json" ]]; then
     cp "$fdir/context.json" "$repo/.eval-context.json"

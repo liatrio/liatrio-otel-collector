@@ -1,16 +1,14 @@
 ---
-group: otel-core-contrib
-packages:
-  - "go.opentelemetry.io/collector"
-  - "go.opentelemetry.io/collector/**"
-  - "github.com/open-telemetry/opentelemetry-collector-contrib/**"
-  - "go.opentelemetry.io/otel"
-  - "go.opentelemetry.io/otel/**"
-failure_signatures:
-  - "OCB"
-  - "builder"
-  - "mdatagen"
-  - "version mismatch"
+name: renovate-otel-core
+description: >-
+  Renovate maintenance playbook, read by the `/fix` skill, covering the OTel collector core +
+  contrib + API/SDK lockstep group (Renovate group label `group:otel-core-contrib`). Select when the
+  PR moves `go.opentelemetry.io/collector` / `collector/**`,
+  `github.com/open-telemetry/opentelemetry-collector-contrib/**`, or `go.opentelemetry.io/otel` /
+  `otel/**` — plus the `mdatagen`/`builder` tools — which must move in lockstep or OCB fails to
+  assemble the distribution. Failure signatures are OCB / builder / mdatagen version-mismatch errors
+  on `make build`. Move the whole group or none; a green module-local check is NOT sufficient (the
+  full OCB build is the gate). If the core bump surfaces semconv errors, overlay `renovate-semconv`.
 ---
 
 # Playbook: OTel collector core & contrib (lockstep group)
@@ -24,7 +22,7 @@ dependency group: it moves the collector core, the contrib components, and the O
 ## Why these modules move together (the lockstep rationale)
 
 Lifted and expanded from the `description` on this group in
-[`renovate.json`](../../renovate.json):
+[`renovate.json`](../../../renovate.json):
 
 - **OCB compatibility.** The OpenTelemetry Collector Builder assembles the `otelcol-custom` binary
   from `config/manifest.yaml`. Every `go.opentelemetry.io/collector*` and
@@ -45,14 +43,14 @@ Lifted and expanded from the `description` on this group in
 
 ## Authoritative docs
 
-- [`AGENTS.md` → Domain Glossary](../../AGENTS.md#domain-glossary) — OCB, `config/manifest.yaml`,
+- [`AGENTS.md` → Domain Glossary](../../../AGENTS.md#domain-glossary) — OCB, `config/manifest.yaml`,
   multimod, crosslink.
-- [`AGENTS.md` → Code generation](../../AGENTS.md#code-generation-critical) — mdatagen/genqlient;
+- [`AGENTS.md` → Code generation](../../../AGENTS.md#code-generation-critical) — mdatagen/genqlient;
   regenerate and re-tidy after any dependency change.
-- [`AGENTS.md` → Guardrails](../../AGENTS.md#guardrails) — adding/removing a component means editing
+- [`AGENTS.md` → Guardrails](../../../AGENTS.md#guardrails) — adding/removing a component means editing
   `config/manifest.yaml` + `make crosslink`.
-- [`config/manifest.yaml`](../../config/manifest.yaml) — the only place components are wired into the
-  build.
+- [`config/manifest.yaml`](../../../config/manifest.yaml) — the only place components are wired into
+  the build.
 
 ## Failure modes → remediation
 
@@ -62,13 +60,13 @@ Lifted and expanded from the `description` on this group in
 | `make crosslink` rewrites `replace` directives | inter-module `replace`s drifted after the bump | commit the crosslink result |
 | `make generate` diff after a core bump | mdatagen output changed with the new core | commit regenerated `internal/metadata/` + `documentation.md`; never hand-edit them |
 | a `go.opentelemetry.io/otel/*` **major** bump drops a require on tidy | major bump is an import-path migration | rewrite the import paths to the new major first, then `make tidy-all` (do not accept the drop — this is the backoff/v7 class of defect) |
-| compiler errors mentioning `semconv` | the core bump pulled a semconv change | switch to [`semconv.md`](./semconv.md); do **not** bump the semconv package to make it compile |
+| compiler errors mentioning `semconv` | the core bump pulled a semconv change | switch to [`renovate-semconv`](../renovate-semconv/SKILL.md); do **not** bump the semconv package to make it compile |
 
 ## Hard invariants / guardrails
 
 - **Move the whole group or none of it.** Never merge a partial lockstep bump.
 - **Never bump the semconv package as a side effect** of a core bump — defer to
-  [`semconv.md`](./semconv.md) / [`docs/semantic-conventions.md`](../semantic-conventions.md).
+  [`renovate-semconv`](../renovate-semconv/SKILL.md) / [`docs/semantic-conventions.md`](../../../docs/semantic-conventions.md).
 - **Never hand-edit generated files**; regenerate with `make generate` and commit the result.
 - **Adding/removing a component is a `config/manifest.yaml` + `make crosslink` change** — there is no
   other registry.

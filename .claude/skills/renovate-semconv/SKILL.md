@@ -1,35 +1,37 @@
 ---
-group: null
-packages:
-  - "go.opentelemetry.io/otel/semconv/**"
-failure_signatures:
-  - "undefined: semconv."
-  - "sem_conv_version"
-  - "semconv/v1"
-  - "has no field or method"
+name: renovate-semconv
+description: >-
+  Renovate maintenance playbook, read by the `/fix` skill, covering OpenTelemetry
+  semantic-convention breakage. Select when a dependency bump surfaces semconv failure signatures in
+  the failing logs — `undefined: semconv.`, a `sem_conv_version` mismatch, `semconv/v1`, or
+  `has no field or method` on a semconv symbol — or when a package under
+  `go.opentelemetry.io/otel/semconv/**` changes directly. A semconv migration is a deliberate manual,
+  judgment-tier change: **never bump the semconv package** as a side effect; it terminates at best
+  `partial`/`deferred`, never a confident `fixed`. Frequently overlaid on top of `renovate-otel-core`
+  when a collector-core bump pulls a semconv change into generated code.
 ---
 
 # Playbook: semantic conventions (semconv)
 
 Semconv is **not** a Renovate group — Renovate deliberately does not bump the semconv package (it is
 a manual migration). This playbook is therefore selected by **failure signature** during a `/fix`
-run, not by a group label: a collector-core bump ([`otel-core.md`](./otel-core.md)) can surface
-semconv breakage in generated code, and the compiler errors then match the `failure_signatures`
-above. The `packages:` glob is a secondary hook for the rare direct semconv-module reference.
+run, not by a group label: a collector-core bump ([`renovate-otel-core`](../renovate-otel-core/SKILL.md))
+can surface semconv breakage in generated code, and the compiler errors then match the failure
+signatures in this skill's `description`. A direct `go.opentelemetry.io/otel/semconv/**` reference is
+a secondary hook for the rare case Renovate touches the package.
 
 **This is a judgment-tier class, not a mechanical one.** A semconv migration is best-effort at most;
-do not report it as a completed fix. See [`README.md`](./README.md) and spec Unit 3 for the
-three-tier classification.
+do not report it as a completed fix. See spec Unit 3 for the three-tier classification.
 
 ## Authoritative docs
 
-- [`docs/semantic-conventions.md`](../semantic-conventions.md) — the full policy: spec-vs-package
-  version axes, the version matrix, the extensions register, and the
-  [package upgrade / OCB / Renovate runbook](../semantic-conventions.md#package-upgrade--ocb--renovate-runbook).
-- [`docs/semantic-conventions.md` → Rule of thumb](../semantic-conventions.md#rule-of-thumb-when-in-doubt-default-to-the-spec)
+- [`docs/semantic-conventions.md`](../../../docs/semantic-conventions.md) — the full policy:
+  spec-vs-package version axes, the version matrix, the extensions register, and the
+  [package upgrade / OCB / Renovate runbook](../../../docs/semantic-conventions.md#package-upgrade--ocb--renovate-runbook).
+- [`docs/semantic-conventions.md` → Rule of thumb](../../../docs/semantic-conventions.md#rule-of-thumb-when-in-doubt-default-to-the-spec)
   — default to the spec at the version our packages declare, not whatever is newest upstream.
-- [`AGENTS.md` → Semantic conventions](../../AGENTS.md#semantic-conventions) — the short-form posture
-  and the "do not bump the semconv package as a side effect" guardrail.
+- [`AGENTS.md` → Semantic conventions](../../../AGENTS.md#semantic-conventions) — the short-form
+  posture and the "do not bump the semconv package as a side effect" guardrail.
 
 ## Failure modes → remediation
 
@@ -49,6 +51,6 @@ three-tier classification.
 - **Never hand-edit generated files** — change `metadata.yaml`'s `sem_conv_version` (or the
   hand-written source) and run `make gen`.
 - When the spec defines a convention, the spec name **replaces** the local extension attribute;
-  update the extensions register in [`docs/semantic-conventions.md`](../semantic-conventions.md#extensions-register) if you change one.
+  update the extensions register in [`docs/semantic-conventions.md`](../../../docs/semantic-conventions.md#extensions-register) if you change one.
 - A semconv migration terminates at best **`partial`**/**`deferred`**, never a confident `fixed`
   unless it is a pure rename fully verified by `make generate` + `make test-all`.

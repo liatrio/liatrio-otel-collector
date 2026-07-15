@@ -132,21 +132,28 @@ current checkout). Gather failure context, degrading gracefully:
 
 ## Playbook selection (ground yourself before editing)
 
-Map the PR to its playbook(s) using the contract in
-[`docs/playbooks/README.md`](../../../docs/playbooks/README.md). The reference implementation is
-[`eval/select_playbook_test.sh`](../../../eval/select_playbook_test.sh) — follow it exactly:
+Ground each fix in the matching **`renovate-*` playbook-skill** (`renovate-otel-core`,
+`renovate-semconv`, `renovate-default`). Select by **description**, not a hard-coded contract:
 
-1. **Group label first (authoritative).** Strip `group:` and match 1:1 against a playbook's `group:`
-   front-matter. This recovers the file-path-grouped classes a name glob can't.
-2. **Glob fallback** for ungrouped single-package PRs: match each upgraded package name from the
-   `renovate-upgrades` JSON against playbook `packages:` globs.
-3. **Most-specific-wins** on multi-match: exact > scoped path glob > broad wildcard.
-4. **Fall back to `_default.md`**; when a grouped PR spans multiple playbooks, use the whole **set**.
+1. **Read the `renovate-*` playbook-skills' descriptions** and pick the one whose description fits
+   this PR. Use the structured `renovate-upgrades` JSON (from the PR body / `FIX_CONTEXT_FILE`) to
+   know which packages actually changed, and the failing-log text to know how it broke:
+   - the OTel collector core/contrib/API-SDK lockstep group — group label `otel-core-contrib`, or any
+     `go.opentelemetry.io/collector*`, `opentelemetry-collector-contrib/*`, or
+     `go.opentelemetry.io/otel*` bump → **`renovate-otel-core`**;
+   - semconv breakage in the failing logs (`undefined: semconv.`, `sem_conv_version`, `semconv/v1`,
+     `has no field or method`) or a direct `otel/semconv/**` change → **`renovate-semconv`**;
+   - anything else — mechanical drift, or a major-bump require-drop with no more specific match →
+     **`renovate-default`** (the fallback).
+2. **Overlay, don't only replace.** A PR selected by one playbook can still surface a *different*
+   class of breakage — a core bump (`renovate-otel-core`) that produces semconv compiler errors also
+   pulls in `renovate-semconv`. Apply every playbook-skill whose description matches; when a grouped
+   PR genuinely spans multiple playbooks, use the whole **set**.
 
-Additionally overlay any playbook whose `failure_signatures:` substrings appear in the failing logs
-(e.g. `undefined: semconv.` pulls in `semconv.md` on top of the primary selection). Read the matched
-playbook(s) fully — their authoritative-doc pointers, failure-mode → remediation, and hard
-invariants are your fix guide.
+Read the matched playbook-skill(s) fully — their authoritative-doc pointers, failure-mode →
+remediation, and hard invariants are your fix guide. Each lives at
+`.claude/skills/renovate-<name>/SKILL.md`; under `--bare` (the eval harness) they are not
+auto-discovered, so read that file directly rather than invoking it as a slash-command.
 
 ## The fix procedure
 
@@ -305,7 +312,7 @@ breaks it.) Put any closing remarks inside the sections below, not above the fro
 status: fixed | partial | deferred | exhausted
 incomplete_commit: <sha-or-null>     # SHA of the Status: incomplete (semconv first-pass) commit, else null
 cve_introduced: <cve-id-or-null>     # ID of a NEW vuln from the Step 5b delta (report-only), else null
-playbook: <matched playbook basename(s), e.g. _default.md>
+playbook: <matched playbook-skill name(s), e.g. renovate-semconv>
 ---
 
 ## Outcome
