@@ -1,140 +1,266 @@
 ---
 # =============================================================================================
-# SCAFFOLD — NOT PRODUCTION-ENABLED. Do not add comment/PR triggers until the prompt-injection
-# hardening checklist below is satisfied (public repo).
+# fix-agent — in-CI wrapper for the Tier-2 `/fix` Renovate maintenance agent ("LLM elevation").
 #
-# In-CI wrapper for the Tier-2 `/fix` Renovate maintenance agent ("LLM elevation"): it would run the
-# `/fix` skill headless against a red Renovate PR that Tier-1 `regen` (build.yml) could not green —
-# the class of major-bump / API-adaptation fix that `regen`'s `if:` now routes away from Tier 1.
+# Trigger: a `/fix` comment on a Renovate PR. Runs the `/fix` skill headless against the PR, then
+# PUSHES the resulting fix commits to the renovate branch and POSTS the recap as a PR comment.
+# This is the class of red PR (major bumps / API adaptations) that Tier-1 `regen` (build.yml) now
+# routes away from itself.
 #
-# This file deliberately ships INERT:
-#   * `on:` is `workflow_dispatch` ONLY — no `issue_comment` / `pull_request(_target)` triggers, so
-#     untrusted PR content can never START a run. Only a maintainer clicking "Run workflow" can.
-#   * No ANTHROPIC_API_KEY is wired, so the agent step cannot actually invoke claude.
-#   * The octo-sts token, push, and PR-comment steps are commented out / clearly guarded.
-#
-# A `/fix` run READS untrusted PR content (diffs, changelog snippets, PR body). On a PUBLIC repo, any
-# trigger that lets untrusted input start it — or any step that pushes/comments while holding a write
-# token — opens a prompt-injection surface. The design is captured here for review; it is not wired
-# to fire. Prerequisites before enabling (ALL required):
-#   1. Trusted-actor gate, token scoping, and base-checkout isolation below reviewed & tested.
-#   2. `.github/chainguard/fix.sts.yaml` octo-sts trust policy created (mirror regen.sts.yaml, scoped
-#      to head_ref ^renovate/.* with `permissions: contents: write`) — NOT yet created.
-#   3. `ANTHROPIC_API_KEY` repo secret added and wired into the agent step — intentionally NOT wired.
-#   4. The push / PR-comment steps uncommented only after 1–3 hold.
+# ---- SECURITY POSTURE (this is a PUBLIC repo; a /fix run READS + BUILDS untrusted PR code) -------
+#   * Trigger is `issue_comment` ONLY — anyone can comment, so the trigger gates nothing by itself.
+#     Authorization is enforced in two layers:
+#       - job `if:` pre-filter: the comment is on a PR, starts with `/fix`, and the author has an
+#         org/collaborator association (keeps random public commenters from ever starting the job);
+#       - a runtime step that requires the commenter to hold repo WRITE access (admin/maintain/write)
+#         via the collaborators API, and FAILS CLOSED. Bots are rejected outright.
+#   * The write-capable octo-sts token (fix.sts.yaml, contents:write only) is minted AFTER the
+#     authorization gate and is used ONLY in the push step — it is never exposed to the agent/build
+#     step's environment.
+#   * The agent step's env holds ONLY ANTHROPIC_API_KEY (+ an offline FIX_CONTEXT_FILE the workflow
+#     builds with the default token). No GitHub token is exposed to it. The agent runs with a NARROW
+#     --allowedTools allow-list (make/go/git-local/read utils) — never a blanket Bash, never push.
+#   * RESIDUAL RISK (inherent, accepted): `/fix` must `make build`/`test` the PR, which executes the
+#     PR's (untrusted) Makefiles/code. A malicious PR could read ANTHROPIC_API_KEY from that step's
+#     env. The maintainer write-access gate is the control: invoking `/fix` on a PR is the same trust
+#     act as running `make build` on it locally. Do not lower the authorization gate.
 # =============================================================================================
-name: fix-agent (SCAFFOLD — disabled)
+name: fix-agent
 
 on:
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: PR number of the red Renovate PR to run /fix against
-        required: true
-        type: string
+  issue_comment:
+    types: [created]
 
-# No workflow-level permissions; the job grants only the minimum it needs (and even that stays inert
-# while the token/push steps are commented out).
-permissions: {}
+# Least privilege for the DEFAULT token: read the repo, write PR comments (ack + recap), and request
+# an OIDC token for octo-sts. contents:write for the push comes from the octo-sts token, NOT this one.
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: fix-agent-${{ github.event.issue.number }}
+  cancel-in-progress: false
 
 jobs:
   fix:
-    name: fix-agent (scaffold)
+    name: fix-agent
     runs-on: ubuntu-latest
-    permissions:
-      # contents: read is all the inert scaffold needs. Enabling item 2 (octo-sts) additionally
-      # requires `id-token: write`; add it here at that point, not before.
-      contents: read
+    # Cheap pre-filter (authoritative write-access check is the first step below): only a `/fix`
+    # comment on a PR, from someone with an org/collaborator association, ever starts this job.
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/fix') &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
     steps:
-      # --- Security Considerations #6, item 1: trusted-actor gate -----------------------------------
-      # The human who dispatched this must be authorized — a member of the `liatrio/tag-o11y` team OR
-      # a repo-write holder — verified via the GitHub API. NEVER a hardcoded login, NEVER a bot. An
-      # untrusted actor must not be able to drive an LLM that holds a write-capable token.
-      - name: Verify dispatcher is a trusted maintainer
+      # --- Authorization gate: commenter must hold repo WRITE access (fail closed) -----------------
+      - name: Authorize commenter (require repo write access)
         env:
           GH_TOKEN: ${{ github.token }}
-          ACTOR: ${{ github.actor }}
           REPO: ${{ github.repository }}
+          ACTOR: ${{ github.event.comment.user.login }}
         run: |
-          # Reject bots outright (belt-and-suspenders; workflow_dispatch actor is normally a human).
+          set -euo pipefail
+          # Reject bots outright — a bot must never drive the agent.
           case "$ACTOR" in
-            *'[bot]'|dependabot|renovate) echo "actor ${ACTOR} is a bot — refused" >&2; exit 1 ;;
+            *'[bot]'|dependabot|renovate) echo "actor '$ACTOR' is a bot — refused" >&2; exit 1 ;;
           esac
-          # Repo-write (admin/maintain/write) check via the collaborator-permission API.
+          # Authoritative check: repo collaborator permission (admin/maintain/write). The default
+          # GITHUB_TOKEN can read this. Any error path leaves perm=none -> refused (fail closed).
           perm="$(gh api "repos/${REPO}/collaborators/${ACTOR}/permission" --jq '.permission' 2>/dev/null || echo none)"
-          # Team-membership check (liatrio/tag-o11y) would run here, but reading org teams needs a
-          # token with `read:org`; the default github.token cannot, so production enablement wires an
-          # app/PAT token for this. Never substitute a hardcoded allow-list of logins.
           case "$perm" in
-            admin|maintain|write) echo "actor ${ACTOR} has '${perm}' permission — authorized" ;;
-            *) echo "actor ${ACTOR} is not a repo-write holder (perm='${perm}'); refusing." >&2; exit 1 ;;
+            admin|maintain|write) echo "actor '$ACTOR' has '$perm' access — authorized" ;;
+            *) echo "actor '$ACTOR' lacks repo write access (perm='$perm') — refusing" >&2; exit 1 ;;
           esac
 
-      # --- item 2: mint a narrowly-scoped, short-lived token ---------------------------------------
-      # TODO(before-enable): create .github/chainguard/fix.sts.yaml (mirror regen.sts.yaml) scoped to
-      # head_ref ^renovate/.* with `permissions: contents: write`, and add `id-token: write` to this
-      # job. Until that trust policy exists on the DEFAULT branch, octo-sts has nothing to match and
-      # cannot mint a token — the intended fail-safe for this scaffold. Left commented so a dispatch
-      # of the scaffold never obtains a write-capable credential.
-      # - name: Get Octo STS Token (renovate/**-scoped)
-      #   uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
-      #   id: octo-sts
-      #   with:
-      #     scope: ${{ github.repository }}
-      #     identity: fix
+      # --- Resolve the PR and guard: OPEN + a renovate/** branch -----------------------------------
+      - name: Resolve PR head/base and guard
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          read -r state head base < <(gh pr view "$PR_NUMBER" -R "$REPO" \
+            --json state,headRefName,baseRefName \
+            --jq '[.state, .headRefName, .baseRefName] | @tsv')
+          echo "state=$state head=$head base=$base"
+          [ "$state" = "OPEN" ] || { echo "PR #$PR_NUMBER is not OPEN ($state) — refusing" >&2; exit 1; }
+          case "$head" in
+            renovate/*) : ;;
+            *) echo "head ref '$head' is not a renovate/** branch — /fix is Renovate-only, refusing" >&2; exit 1 ;;
+          esac
+          {
+            echo "head_ref=$head"
+            echo "base_ref=$base"
+          } >> "$GITHUB_OUTPUT"
 
-      # --- item 3: checkout BASE ref (trusted); add the untrusted head ref in a subdirectory -------
-      # Run from a trusted base checkout so the thing defining what commands/hooks run is NOT the
-      # Renovate-authored (untrusted) head. The PR head is fetched into ./pr and never executed until
-      # the sandboxed agent step.
-      - name: Checkout base (trusted)
+      - name: Acknowledge the request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          ACTOR: ${{ github.event.comment.user.login }}
+        run: |
+          set -euo pipefail
+          gh pr comment "$PR_NUMBER" -R "$REPO" \
+            --body "🤖 \`/fix\` started by @${ACTOR} — running the Tier-2 Renovate maintenance agent. I'll push any fix commits to this branch and post a recap here when done."
+
+      # --- Canonical skills come from the DEFAULT branch, not the (untrusted) PR head --------------
+      - name: Checkout default branch (for canonical skills)
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ github.event.repository.default_branch }}
+          path: base
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout PR branch (untrusted; isolated in ./pr)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ steps.pr.outputs.head_ref }}
+          path: pr
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Add untrusted PR head in a subdirectory
+      - name: Provision fix + renovate playbook skills into the PR tree
+        run: |
+          set -euo pipefail
+          mkdir -p pr/.claude/skills
+          # Copy the canonical skill set from the default-branch checkout so the run does not depend on
+          # the (possibly stale, un-rebased) renovate branch carrying them. Git-excluded so they never
+          # enter the tree we push.
+          cp -R base/.claude/skills/fix pr/.claude/skills/
+          for d in base/.claude/skills/renovate-*/; do
+            [ -d "$d" ] && cp -R "$d" pr/.claude/skills/
+          done
+          grep -qxF '.claude/' pr/.git/info/exclude 2>/dev/null || echo '.claude/' >> pr/.git/info/exclude
+          grep -qxF '.eval-context.json' pr/.git/info/exclude 2>/dev/null || echo '.eval-context.json' >> pr/.git/info/exclude
+
+      # --- Build the offline failure-context sidecar so the agent needs NO GitHub token ------------
+      - name: Build failure-context sidecar
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.inputs.pr_number }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          BASE_REF: ${{ steps.pr.outputs.base_ref }}
         run: |
-          # Production form fetches the PR head into ./pr WITHOUT running any of its code (no make/hook
-          # runs until the sandboxed agent step). Inert in the scaffold.
-          mkdir -p pr
-          echo "SCAFFOLD: would fetch PR #${PR_NUMBER} head into ./pr; base checkout stays trusted."
+          set -euo pipefail
+          body="$(gh pr view "$PR_NUMBER" -R "$REPO" --json body --jq '.body')"
+          group="$(gh pr view "$PR_NUMBER" -R "$REPO" --json labels \
+            --jq '[.labels[].name | select(startswith("group:"))][0] // ""')"
+          # The structured renovate-upgrades blob is emitted into the PR body as an HTML comment.
+          upgrades="$(printf '%s' "$body" \
+            | grep -o '<!-- renovate-upgrades:.*-->' \
+            | sed -e 's/^<!-- renovate-upgrades://' -e 's/-->$//' || true)"
+          echo "$upgrades" | jq -e . >/dev/null 2>&1 || upgrades='[]'
+          failing="$(gh pr checks "$PR_NUMBER" -R "$REPO" 2>/dev/null \
+            | awk -F '\t' 'tolower($2) ~ /fail/ {print $1}' | jq -R . | jq -s . || echo '[]')"
+          # Make the base commit reachable in ./pr so the skill's CVE-delta gate can `git checkout` it,
+          # then record the concrete merge-base SHA (falls back to the branch name if unreachable).
+          git -C pr fetch --no-tags --depth=200 origin "$BASE_REF" 2>/dev/null || true
+          base_sha="$(git -C pr merge-base FETCH_HEAD HEAD 2>/dev/null || echo '')"
+          jq -n \
+            --arg group "$group" \
+            --argjson upgrades "$upgrades" \
+            --argjson failing "$failing" \
+            --arg base_ref "$BASE_REF" \
+            --arg base_sha "$base_sha" \
+            '{group_label: $group, upgrades: $upgrades, failing_checks: $failing, base_ref: (if $base_sha == "" then $base_ref else $base_sha end)}' \
+            > pr/.eval-context.json
+          echo "context:"; cat pr/.eval-context.json
 
-      # --- item 4: invoke the agent headless with a NARROW allowedTools ----------------------------
-      # `--bare` gives production determinism (reads ANTHROPIC_API_KEY, never the OAuth/keychain
-      # login). --allowedTools is an explicit allow-list of the specific make/git/gh invocations /fix
-      # needs — NOT a blanket `Bash`. show_full_output stays off so untrusted PR/log content is never
-      # echoed verbatim into the run log.
-      - name: Run /fix (headless, sandboxed)
+      - name: Configure git identity (for the agent's commits)
+        run: |
+          set -euo pipefail
+          git -C pr config user.name 'github-actions[bot]'
+          git -C pr config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      # --- Run /fix headless — env is ANTHROPIC_API_KEY + FIX_CONTEXT_FILE only (NO GitHub token) ---
+      - name: Run /fix
+        id: fix
         env:
-          # ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # TODO(before-enable): wire the secret
-          PR_NUMBER: ${{ github.event.inputs.pr_number }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FIX_CONTEXT_FILE: ${{ github.workspace }}/pr/.eval-context.json
+          PR_NUMBER: ${{ github.event.issue.number }}
         run: |
-          echo "SCAFFOLD: not invoking claude — ANTHROPIC_API_KEY intentionally unwired."
-          echo "Production form (run inside ./pr):"
-          echo "  claude --bare -p \"/fix \${PR_NUMBER}\" \\"
-          echo "    --allowedTools 'Read,Edit,Bash(make generate),Bash(make tidy-all),Bash(make crosslink),Bash(make fmt-all),Bash(make lint-all),Bash(make test-all),Bash(make build),Bash(git add:*),Bash(git commit:*),Bash(git diff:*),Bash(git status:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr checks:*)' \\"
-          echo "    --permission-mode acceptEdits --output-format json    # show_full_output: OFF"
+          set -euo pipefail
+          before="$(git -C pr rev-parse HEAD)"
+          echo "pre_sha=$before" >> "$GITHUB_OUTPUT"
+          # Narrow allow-list: make/go/local-git/read utilities. Never a blanket Bash, never git push
+          # or gh (the workflow does the push/comment). The agent reads context from FIX_CONTEXT_FILE.
+          allowed='Read,Edit,Bash(make:*),Bash(go:*),Bash(git add:*),Bash(git commit:*),Bash(git diff:*),Bash(git status:*),Bash(git log:*),Bash(git checkout:*),Bash(git stash:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(.tools/osv-scanner:*),Bash(grep:*),Bash(sed:*),Bash(awk:*),Bash(jq:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(sort:*),Bash(comm:*),Bash(head:*),Bash(tail:*)'
+          set +e
+          ( cd pr && claude -p "/fix ${PR_NUMBER}" \
+              --strict-mcp-config \
+              --allowedTools "$allowed" \
+              --permission-mode acceptEdits \
+              --output-format json \
+              --max-turns 80 \
+              --max-budget-usd 8 ) > out.json 2> claude.stderr
+          rc=$?
+          set -e
+          echo "claude exit: $rc"
+          # The skill's structured recap is the JSON "result" field; fall back to raw stdout/stderr.
+          jq -r '.result // .text // ""' out.json > recap.md 2>/dev/null || true
+          [ -s recap.md ] || cp claude.stderr recap.md
+          after="$(git -C pr rev-parse HEAD)"
+          echo "post_sha=$after" >> "$GITHUB_OUTPUT"
+          if [ "$before" != "$after" ]; then echo "pushed=true" >> "$GITHUB_OUTPUT"; else echo "pushed=false" >> "$GITHUB_OUTPUT"; fi
 
-      # --- item 5: push + PR comment — PRESENT BUT NOT ENABLED -------------------------------------
-      # The ONLY outward-effecting steps. They stay commented until the whole checklist above holds.
-      # A push/comment driven by an LLM that has read untrusted PR content is exactly the
-      # prompt-injection surface this scaffold refuses to open.
-      # - name: Push /fix commits (NOT ENABLED)
-      #   env:
-      #     GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
-      #     HEAD_REF: ${{ github.event.pull_request.head.ref }}
-      #     REPO: ${{ github.repository }}
-      #   run: |
-      #     cd pr
-      #     git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:${HEAD_REF}"
-      #
-      # - name: Post recap as a PR comment (NOT ENABLED)
-      #   env:
-      #     GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
-      #     PR_NUMBER: ${{ github.event.inputs.pr_number }}
-      #   run: gh pr comment "${PR_NUMBER}" --body-file pr/recap.md
+      # --- Mint the write token ONLY now (after the untrusted build step), for the push -------------
+      - name: Get Octo STS Token (contents:write, push-only)
+        if: steps.fix.outputs.pushed == 'true'
+        id: octo-sts
+        uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
+        with:
+          scope: ${{ github.repository }}
+          identity: fix
+
+      - name: Push fix commits to the renovate branch
+        if: steps.fix.outputs.pushed == 'true'
+        env:
+          # Untrusted branch name + token passed via env, never interpolated into the shell (same
+          # hardening as the regen job): `${{ }}` expands before the script runs.
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          git -C pr push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:${HEAD_REF}"
+
+      # --- Post the recap (default token; a github-actions comment does not re-trigger this workflow)
+      - name: Post recap as a PR comment
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          PUSHED: ${{ steps.fix.outputs.pushed }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### 🤖 \`/fix\` result"
+            echo
+            if [ "${PUSHED:-false}" = "true" ]; then
+              echo "Pushed the fix commit(s) to this branch. Recap:"
+            else
+              echo "No commits were pushed (the agent deferred, exhausted, or found nothing to change). Recap:"
+            fi
+            echo
+            if [ -f recap.md ]; then
+              # Fence the (untrusted-derived) recap so it can't be read as further instructions.
+              echo '<details><summary>Structured recap</summary>'
+              echo
+              cat recap.md
+              echo
+              echo '</details>'
+            else
+              echo "_No recap was produced; check the workflow run logs._"
+            fi
+          } > comment.md
+          gh pr comment "$PR_NUMBER" -R "$REPO" --body-file comment.md
