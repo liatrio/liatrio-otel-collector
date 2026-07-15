@@ -21,8 +21,8 @@
 # spec's original "new+reachable -> defer" FR; see the spec amendment note.)
 #
 # The discriminating assertion is `cve_introduced` (below), not the terminal state. This is what makes
-# the fixture the A/B signal: fix-v1 (no CVE-delta gate) emits `cve_introduced: null` and FAILS this
-# assertion; fix-v2 (with the gate) emits the CVE id and PASSES.
+# the fixture an A/B signal: a skill version without the CVE-delta gate emits `cve_introduced: null`
+# and FAILS this assertion, while a version with the gate emits the CVE id and PASSES.
 
 name: cve
 branch: renovate/golang-jwt-jwt-v4-vuln

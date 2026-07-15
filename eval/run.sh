@@ -39,8 +39,8 @@
 #   ./eval/run.sh                       # every fixture, live (spends money)
 #   ./eval/run.sh backoff               # one fixture, live
 #   ./eval/run.sh backoff --skip-agent  # RED baseline: assertions on the untouched clone, no spend
-#   EVAL_SKILL_VERSION=fix-v1 ./eval/run.sh backoff   # A/B: pin a versioned skill snapshot
-#   ./eval/run.sh cve --ab fix-v1,fix-v2             # A/B: v1 vs v2 on the cve fixture (2 paid runs)
+#   EVAL_SKILL_VERSION=<verA> ./eval/run.sh backoff   # A/B: pin a versioned skill snapshot
+#   ./eval/run.sh cve --ab <verA>,<verB>            # A/B: two skill versions on the cve fixture (2 paid runs)
 #   EVAL_JUDGE=1 ./eval/run.sh semconv-defer          # + sampled non-gating recap quality scores
 #
 set -euo pipefail
@@ -165,7 +165,7 @@ run_one() {
     # --help`, the way to provide context under --bare is explicit injection. So we append the
     # versioned SKILL.md body (frontmatter stripped) as a system prompt and give a minimal user
     # prompt. This is deterministic under --bare AND is exactly what A/B-testing the skill *text*
-    # means: fix-v1 vs fix-v2 differ only in this injected text.
+    # means: the two versions differ only in this injected text.
     local sp="$work/skill-system-prompt.md" skill_body userprompt
     awk 'BEGIN{n=0} /^---[[:space:]]*$/{n++; if(n<=2) next} n>=2{print}' "$skill_src" > "$sp"
     skill_body="$(cat "$sp")"
