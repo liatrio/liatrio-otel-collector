@@ -4,9 +4,12 @@ description: >-
   Tier-2 local fixer for a red Renovate dependency PR that CI's automatic Tier-1 regeneration
   couldn't green. Invoke as `/fix <pr_number>` (or `/fix <branch>` / on an already-checked-out
   renovate/* branch). Checks out the PR, runs the deterministic regeneration phase, diagnoses the
-  red state against the matched playbook, applies MECHANICAL fixes in a bounded loop, and returns a
-  structured recap. LOCAL EFFECTS ONLY — it never pushes and never posts PR comments. Do NOT use for
-  non-Renovate branches, for merging, or to push/comment.
+  red state against the matched playbook, and classifies each change into three tiers — fixing
+  mechanical/determinable API adaptations completely, making a best-effort first pass on semconv
+  migrations (never bumping the semconv package), and deferring behavioural redesigns — with a
+  report-only osv-scanner CVE-delta gate, returning a four-state structured recap. LOCAL EFFECTS
+  ONLY — it never pushes and never posts PR comments. Do NOT use for non-Renovate branches, for
+  merging, or to push/comment.
 ---
 
 # `/fix <pr_number>` — Renovate PR maintenance agent (Tier 2, local)
@@ -35,42 +38,61 @@ green with reviewable, concern-separated commits, and hand back an honest struct
 - **Be identity/credential-agnostic.** Read git and `gh`/`git` auth from the environment. Never
   branch behavior on "am I in CI." The same steps run locally and in a harness clone.
 
-## Scope of this version (mechanical + determinable API adaptation)
+## Scope — three-tier change classification
 
 You are the **Tier-2 (LLM) fixer**. Tier-1 already ran the deterministic `sed`/regeneration and
 couldn't green the PR — so your job is precisely the class of fix that needs API knowledge, not just
-text substitution. Fix everything whose correct form is **determinable**; defer only genuinely
-judgment-bound changes. Change classes:
+text substitution. Classify **each needed change** into exactly one of three tiers and act
+accordingly:
 
-- **mechanical / determinable API adaptation (FIX COMPLETELY)** — regeneration, `go mod tidy`
-  fallout, and **any dependency-bump adaptation whose correct form is determinable** from the failing
-  compiler/test output, the arguments/values/errors already in scope, and the dependency's public API
-  (read it — see below). This explicitly includes:
-  - major-version **import-path** migrations (`.../v5` → `.../v7`);
-  - **changed exported signatures** — e.g. a function that gained a required `error`/`time.Duration`
-    argument you can supply from a value/error already in scope
-    (`RetryAfter(int)` → `RetryAfter(time.Duration, error)`);
-  - **renamed / moved / removed exported symbols** with a known replacement idiom — e.g. a removed
-    error type replaced by `errors.Is(err, pkg.ErrX)` / an `As`-style helper;
-  - constructor changes (e.g. a `New…` that now returns `(T, error)` and/or takes functional
-    options) where you thread the returned error through the existing call sites.
+### Tier A — mechanical / determinable API adaptation (FIX COMPLETELY)
 
-  These need API knowledge, not new behaviour — exactly what Tier-1 cannot do. **Do NOT defer a bump
-  merely because it needs more than a `sed` rename.** Your module-local build/vet/test loop is the
-  safety net: attempt the adaptation; if it does not compile or a test fails, re-diagnose (up to the
-  5-attempt cap).
+Regeneration, `go mod tidy` fallout, and **any dependency-bump adaptation whose correct form is
+determinable** from the failing compiler/test output, the arguments/values/errors already in scope,
+and the dependency's public API (read it — see below). This explicitly includes:
 
-- **semconv migration (DEFER in this version)** — a core bump surfacing semantic-convention compiler
-  errors. Never bump the semconv package. (A later version attempts a best-effort first pass.)
+- major-version **import-path** migrations (`.../v5` → `.../v7`);
+- **changed exported signatures** — e.g. a function that gained a required `error`/`time.Duration`
+  argument you can supply from a value/error already in scope
+  (`RetryAfter(int)` → `RetryAfter(time.Duration, error)`);
+- **renamed / moved / removed exported symbols** with a known replacement idiom — e.g. a removed
+  error type replaced by `errors.Is(err, pkg.ErrX)` / an `As`-style helper;
+- constructor changes (e.g. a `New…` that now returns `(T, error)` and/or takes functional
+  options) where you thread the returned error through the existing call sites.
 
-- **genuinely judgment-bound / behavioural redesign / CVE (DEFER without attempting)** — a change
-  requiring a NEW design or behavioural decision that is *not* determinable from context: new
-  required configuration, a choice between differing runtime semantics the API won't disambiguate, or
-  anything security-sensitive. Defer with a populated "What's left".
+These need API knowledge, not new behaviour — exactly what Tier-1 cannot do. **Do NOT defer a bump
+merely because it needs more than a `sed` rename.** Your module-local build/vet/test loop is the
+safety net: attempt the adaptation; if it does not compile or a test fails, re-diagnose (up to the
+5-attempt cap).
 
-Calibration: a wrong `fixed` is worse than an honest `deferred` — **and** a lazy `deferred` on a
-determinable fix is a failure too. Before deferring an API break, you MUST have read the new API and
-concluded the adaptation is genuinely ambiguous, not merely non-trivial.
+### Tier B — semconv migration (BEST-EFFORT FIRST PASS, expected not to finish)
+
+A core bump surfacing semantic-convention compiler errors (e.g. `undefined: semconv.X` because an
+attribute was renamed/removed in a newer semconv, or a `sem_conv_version` mismatch). This is a
+**deliberate manual migration** in this repo (see `docs/semantic-conventions.md`), and completing it
+is out of your remit. Rules:
+
+- **Never bump the semconv package selection** — neither the hand-written `otel/semconv/vX` imports
+  nor `sem_conv_version:` in any `metadata.yaml`. That version is chosen manually.
+- Attempt only a **best-effort first pass** of the parts that are unambiguous and do *not* move the
+  semconv version (e.g. a mechanical rename with a 1:1 documented replacement in the *same* version).
+  If you land any such partial progress, commit it as a **separate** commit carrying a
+  `Status: incomplete` git trailer (see Step 4), and terminate `partial` with a populated "What's
+  left" describing the remaining manual migration.
+- If — as is usual — nothing can be safely done without moving the semconv version (the fix *is* the
+  forbidden package bump), commit **nothing** and terminate `deferred`, with "What's left" pointing
+  at the `docs/semantic-conventions.md` migration runbook. A false `fixed` here is a serious failure.
+
+### Tier C — genuinely judgment-bound / behavioural redesign (DEFER without attempting)
+
+A change requiring a NEW design or behavioural decision that is *not* determinable from context: new
+required configuration, a choice between differing runtime semantics the API won't disambiguate, or a
+security redesign. Defer with a populated "What's left". (An introduced **CVE** is handled separately
+by the report-only CVE-delta gate in Step 5 — it does not by itself force a defer.)
+
+Calibration: a wrong `fixed` is worse than an honest `deferred`/`partial` — **and** a lazy defer on a
+determinable (Tier A) fix is a failure too. Before deferring an API break, you MUST have read the new
+API and concluded the adaptation is genuinely ambiguous, not merely non-trivial.
 
 ### Read the new API before adapting (grounding)
 
@@ -190,12 +212,21 @@ Separate commits **by concern**, each a Conventional Commit, each passing the pr
 
 - **mechanical adaptation** (the import rewrite / symbol substitution) — e.g.
   `fix(deps): migrate github.com/cenkalti/backoff v5 -> v7 import paths`;
-- **regeneration** (only the generated-file / tidy churn) — e.g. `chore: run make generate`.
+- **regeneration** (only the generated-file / tidy churn) — e.g. `chore: run make generate`;
+- **semconv best-effort first pass** (Tier B only, if any safe partial progress) — a **separate**
+  commit that MUST carry a `Status: incomplete` git trailer in its body, e.g.:
 
-The **mechanical commit(s) must independently pass the verification gate** (they compile and test on
-their own). Any speculative/incomplete commit (semconv first pass, in a later version) carries a
-`Status: incomplete` git trailer — the mechanical commits here do not. Include a one-line rationale
-and the playbook/doc reference in each commit body.
+  ```bash
+  git commit -m "refactor(semconv): first-pass rename of <attr> (incomplete migration)" \
+    -m "Best-effort partial; the semconv version migration remains manual." \
+    -m "Status: incomplete"
+  ```
+
+The **mechanical (Tier A) commit(s) must independently pass the verification gate** (they compile and
+test on their own). The semconv first-pass commit is the only one that carries `Status: incomplete`;
+Tier A commits never do. Include a one-line rationale and the playbook/doc reference in each commit
+body. Record the SHA of any `Status: incomplete` commit — it populates the recap's `incomplete_commit`
+front-matter field.
 
 ### Step 5 — Single thorough final gate (once, before declaring green)
 
@@ -213,17 +244,53 @@ If lint/test/build reveals new breakage, re-enter the loop (respecting the 5-att
 than declaring green. `lint`/`test`/`build` have a CI backstop (the post-push re-run) so they may be
 reported best-effort if the host toolchain can't run them; regeneration-clean cannot.
 
-> Security-scan CVE-delta (`osv-scanner` base-vs-PR) is added in a later version of this skill. This
-> version does not evaluate the CVE delta; if a bump is security-related, `defer` it.
+#### Step 5b — CVE-delta gate (osv-scanner base-vs-PR; report-only, ALWAYS run)
+
+As part of the single final gate, compute the security **delta** — always, even when the PR already
+compiles and tests pass (there is no CVE issue to "see" in the build). Scan the **base ref** and the
+**PR state** with the same scanner `make scan-all` uses, and diff findings by vulnerability ID/alias:
+
+```bash
+# from the repo root; use the repo's pinned osv-scanner (make install-tools builds .tools/osv-scanner)
+git stash -q || true; git checkout -q <base-ref>
+.tools/osv-scanner --format json -r . > /tmp/osv-base.json 2>/dev/null || true
+git checkout -q -   # back to the PR branch
+.tools/osv-scanner --format json -r . > /tmp/osv-pr.json 2>/dev/null || true
+# NEW = vuln IDs present in osv-pr.json but not in osv-base.json (compare group ids/aliases)
+```
+
+Interpret the delta:
+
+- **New vulnerability (in PR, not in base) → REPORT, do NOT block.** Surface it prominently in the
+  recap's Security section and set `cve_introduced` in the front-matter to its ID. This gate is
+  **report-only, non-gating**: a new CVE does **not** by itself change the terminal state.
+- **A disappearing ID (in base, not in PR) → success signal** — note it (the bump *fixed* a CVE).
+- **Pre-existing (in both) → ignore.**
+
+> Reachability caveat (important): the repo-pinned **osv-scanner v2.4.0 does not populate Go
+> call-graph reachability** (`experimentalAnalysis[<id>].called`) in the scan modes available here —
+> it does lockfile CVE matching only. So you **cannot** distinguish reachable from unreachable
+> findings, and this gate is therefore report-only rather than a hard defer. If a future osv-scanner
+> *does* report `called: false` for a new finding, you may down-rank it to a non-prominent note; when
+> reachability is unknown (the current reality), report every new finding. Do **not** invoke
+> `govulncheck` (redundant and unused in the Makefile).
+>
+> Note also that `make scan-all` has **NO CI backstop** (`build.yml` never runs osv-scanner), so this
+> local delta is the *only* place an introduced CVE is caught. Never silently drop it.
 
 ## Terminate in exactly one of four states + structured recap
 
 Always return a recap: YAML front-matter followed by the fixed sections. Terminal `status`:
 
-- **`fixed`** — the final gate passed; the PR is genuinely green.
-- **`partial`** — some concerns fixed and committed, others remain (populate "What's left").
-- **`deferred`** — the change is non-mechanical (semconv / behavioral / CVE); attempted nothing or
-  only the deterministic phase; explain why and what a human must do.
+- **`fixed`** — the final gate passed; the PR is genuinely green. (A report-only CVE-delta finding
+  does **not** demote this — it is surfaced in Security with `cve_introduced` set, but the PR is
+  still green.)
+- **`partial`** — some concerns fixed and committed, others remain (populate "What's left"). Typical
+  for a Tier-B semconv best-effort first pass that landed a `Status: incomplete` commit but could not
+  finish the manual migration.
+- **`deferred`** — the change is genuinely non-mechanical (a whole-hog semconv migration whose only
+  fix is the forbidden package bump, or a Tier-C behavioural redesign); attempted nothing or only the
+  deterministic phase; explain why and what a human must do.
 - **`exhausted`** — hit the 5-attempt cap still red; report the last diagnosis and remaining error.
 
 ### Recap format
@@ -236,8 +303,8 @@ breaks it.) Put any closing remarks inside the sections below, not above the fro
 ```markdown
 ---
 status: fixed | partial | deferred | exhausted
-incomplete_commit: <sha-or-null>     # a Status: incomplete commit, if any (null in this version)
-cve_introduced: null                 # CVE-delta is a later version; always null here
+incomplete_commit: <sha-or-null>     # SHA of the Status: incomplete (semconv first-pass) commit, else null
+cve_introduced: <cve-id-or-null>     # ID of a NEW vuln from the Step 5b delta (report-only), else null
 playbook: <matched playbook basename(s), e.g. _default.md>
 ---
 
@@ -255,7 +322,10 @@ Inner-loop (module-local) results and the single final-gate results
 (`make generate` clean / `lint-all` / `test-all` / `build`).
 
 ## Security
-CVE-delta not evaluated in this version. State that explicitly.
+The Step 5b osv-scanner base-vs-PR CVE-delta result. If a new vulnerability was introduced, call it
+out **prominently and unmissably** here (ID + affected package/version + that it is report-only /
+not blocking / has no CI backstop) and ensure `cve_introduced` names it. If a CVE disappeared, note
+the fix. If no delta, say so. State that osv-scanner v2.4 reachability is unavailable.
 
 ## What's left / needs you
 For partial/deferred/exhausted: exactly what a human must do next. Empty only when `fixed`.
