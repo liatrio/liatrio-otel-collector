@@ -116,7 +116,12 @@ jobs:
     # by the octo-sts bot itself (this job's own commit re-triggers `synchronize`, which would
     # otherwise recurse). This is a plain AND, not the repo's default OR'd/ref-negated guard, because
     # this job must never run on `main` or on non-Renovate PRs regardless of failure() state.
-    if: failure() && github.event.pull_request.user.login == 'renovate[bot]' && github.actor != 'octo-sts[bot]'
+    #
+    # Excludes `dependency-major-update`-labelled PRs (label applied by renovate.json). A Go major
+    # bump is an import-path migration whose new require is unused until imports are rewritten — a
+    # judgment-tier change Tier 1's `make tidy-all` cannot do, and would in fact silently drop the
+    # require. Those PRs flow past regen to the LLM tier (the /fix agent) instead.
+    if: failure() && github.event.pull_request.user.login == 'renovate[bot]' && github.actor != 'octo-sts[bot]' && !contains(github.event.pull_request.labels.*.name, 'dependency-major-update')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -160,42 +165,12 @@ jobs:
       - name: Make install-tools
         run: make install-tools
 
-      # A Go major-version dependency bump (e.g. backoff/v5 -> backoff/v7) adds a new require line
-      # that nothing imports yet — the source-level import-path migration is a judgment-tier change
-      # Tier 1 doesn't attempt. `go mod tidy` then "correctly" drops that unused, newly-added line,
-      # which silently undoes the bump instead of fixing codegen drift. This snapshot, compared
-      # after the mechanical fixes below, is what lets the next step catch that and refuse to push.
-      - name: Snapshot module requirements (pre-fix)
-        run: |
-          find . -not -path './build/*' -not -path './tmp/*' -name go.mod | sort | while read -r mod; do
-            dir=$(dirname "$mod")
-            go -C "$dir" mod edit -json | jq -r --arg dir "$dir" '(.Require // [])[] | "\($dir)\t\(.Path)@\(.Version)"'
-          done > /tmp/regen-reqs-before.txt
-
       - name: Run mechanical regeneration
         run: |
           make generate
           make tidy-all
           make crosslink
           make fmt-all
-
-      - name: Refuse to silently drop dependency requirements
-        run: |
-          find . -not -path './build/*' -not -path './tmp/*' -name go.mod | sort | while read -r mod; do
-            dir=$(dirname "$mod")
-            go -C "$dir" mod edit -json | jq -r --arg dir "$dir" '(.Require // [])[] | "\($dir)\t\(.Path)@\(.Version)"'
-          done > /tmp/regen-reqs-after.txt
-          removed=$(comm -23 <(sort /tmp/regen-reqs-before.txt) <(sort /tmp/regen-reqs-after.txt))
-          if [ -n "$removed" ]; then
-            echo "Mechanical regeneration would remove module requirement(s) present before this job ran:"
-            echo "$removed"
-            echo
-            echo "This usually means the bump needs a source-level change (e.g. a Go major-version"
-            echo "import-path migration) that Tier 1 can't perform, and 'go mod tidy' is dropping the"
-            echo "newly-added, still-unused requirement instead of completing it. Refusing to"
-            echo "commit/push; leaving this PR failing for manual or /fix-skill follow-up."
-            exit 1
-          fi
 
       - name: Refuse to push workflow changes
         run: |
