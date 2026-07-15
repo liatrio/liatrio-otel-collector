@@ -1,0 +1,22 @@
+{
+  "_comment": "Offline failure-context sidecar for the hand-built cve fixture. During offline replay `gh` is unavailable, so run.sh exposes this at $FIX_CONTEXT_FILE and the /fix skill reads it as the fallback for what it would otherwise self-fetch. SYNTHETIC fixture: a dependency bump that pins a vulnerable golang-jwt/jwt/v4 v4.5.0 (via a replace directive) to exercise the osv-scanner base-vs-PR CVE-delta gate. The PR compiles and tests pass; the only issue is the introduced CVE, which the skill must surface (report-only, non-gating) in the recap's Security section and the cve_introduced field. Note: scan-all has NO CI backstop, so this local delta is the only place the CVE is caught.",
+  "pr_number": null,
+  "labels": [
+    "dependencies",
+    "renovatebot",
+    "group:tool-deps"
+  ],
+  "group_label": null,
+  "base_ref": "b79db72edb0e6fdbf4f3bed4320f0741f1faa099",
+  "failing_checks": [],
+  "renovate_notes": "This bump introduces a dependency version with published OSV advisories (GHSA-mh63-6h87-95cp / CVE-2025-30204). CI has no osv-scanner backstop, so the CVE surfaces only in the skill's local scan-delta gate.",
+  "upgrades": [
+    {
+      "depName": "github.com/golang-jwt/jwt/v4",
+      "currentValue": "v4.5.2",
+      "newValue": "v4.5.0",
+      "updateType": "pin",
+      "packageFile": "extension/githubappauthextension/go.mod"
+    }
+  ]
+}

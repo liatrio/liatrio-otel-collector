@@ -1,0 +1,27 @@
+---
+# expected.yaml — ghinstallation v2.x -> v2.19.0 mechanical fixture (spec Unit 4).
+#
+# Class: MECHANICAL (minor version bump, no import-path change). Renovate bumped the require to
+# v2.19.0; the red state is go.sum / require drift that the deterministic phase (`make tidy-all` /
+# `make generate`) resolves. No source (.go) change is required. Correct terminal state is `fixed`.
+
+name: ghinstallation
+branch: renovate/github.com-bradleyfalzon-ghinstallation-v2-2.x
+base: 93ad14eab1dc4be14594c2c4c531b983e6d3d189
+
+terminal_state: fixed
+
+# Only the extension module that depends on ghinstallation is touched (go.mod / go.sum).
+must_change:
+  - extension/githubappauthextension/**
+
+must_not_change:
+  - .github/**
+
+# A single regeneration/tidy commit is the expected shape; allow up to 2.
+commit_count_min: 1
+commit_count_max: 2
+conventional_commits: true
+required_trailers: []
+
+generate_diff_clean: true

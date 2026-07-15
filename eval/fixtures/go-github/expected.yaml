@@ -1,0 +1,34 @@
+---
+# expected.yaml — go-github v69 -> v89 fixture (spec Unit 4).
+#
+# NOTE ON TIER (evidence-based, 2026-07-14): unlike backoff/ghinstallation, this bump is NOT purely
+# mechanical. v89 redesigned the client constructor: `github.NewClient(nil)` -> `github.NewClient()`
+# returning `(client, error)` with functional options (`WithHTTPClient`, `WithEnterpriseURLs`), which
+# forces error-return threading through the call sites (and new tests). The reference human fix does
+# exactly this across ~15 files.
+#
+# This fixture therefore probes the mechanical/judgment BOUNDARY. `terminal_state` below is set to the
+# reference outcome (`fixed`); if the conservative v1 mechanical skill instead correctly DEFERS the
+# API redesign, that is a legitimate finding — reclassify this to `deferred` and keep it as the
+# motivating A/B case for Task 4.0 (v2 attempts the redesign, v1 defers). Do not weaken the skill's
+# mechanical-tier conservatism just to force this green.
+
+name: go-github
+branch: renovate/github.com-google-go-github-v69-89.x
+base: 93ad14eab1dc4be14594c2c4c531b983e6d3d189
+
+terminal_state: fixed
+
+must_change:
+  - receiver/githubreceiver/**
+  - receiver/githubactionsreceiver/**
+
+must_not_change:
+  - .github/**
+
+commit_count_min: 1
+commit_count_max: 4
+conventional_commits: true
+required_trailers: []
+
+generate_diff_clean: true

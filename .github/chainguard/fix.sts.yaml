@@ -1,0 +1,25 @@
+---
+# Trust policy for the `fix` octo-sts identity (see the `fix-agent` job in
+# .github/workflows/fix-agent.yml). octo-sts reads this from the DEFAULT BRANCH, not the PR head, so
+# a PR can't widen it — this file, not the tamperable in-workflow logic, is the real gate on who can
+# mint the token.
+#
+# This mints ONLY the contents:write token used to PUSH the /fix result to the renovate branch. The
+# workflow's authorization gate (repo write-access check on the commenter) runs BEFORE this token is
+# minted, and the token is never placed in the environment of the untrusted build / agent step.
+issuer: https://token.actions.githubusercontent.com
+
+# An issue_comment-triggered run executes on the default branch, so the OIDC subject is the main ref
+# (auto-anchored ^...$). Combined with the event_name + workflow_ref claims below, only THIS workflow
+# file, triggered by an issue_comment, can mint the token — no other workflow on main qualifies.
+subject_pattern: repo:liatrio/liatrio-otel-collector:ref:refs/heads/main
+
+claim_pattern:
+  # Only the issue_comment trigger (the sole enabled trigger of the fix-agent workflow).
+  event_name: ^issue_comment$
+  # Pin to this exact workflow definition on the default branch. workflow_ref is GitHub-signed, so a
+  # different workflow (or a PR-side copy of this one) cannot mint the token.
+  workflow_ref: ^liatrio/liatrio-otel-collector/\.github/workflows/fix-agent\.yml@refs/heads/main$
+
+permissions:
+  contents: write

@@ -1,0 +1,48 @@
+---
+# expected.yaml — hand-built CVE-delta fixture (spec Unit 4 FR: CVE fixture; Unit 3 FR: CVE-delta
+# gate, Task 4.7). Exercises the skill's osv-scanner base-vs-PR delta.
+#
+# Class: CVE-INTRODUCING DEPENDENCY BUMP. Construction (see .../01-task-04-proofs.md):
+#   * base (b79db72): extension/githubappauthextension resolves golang-jwt/jwt/v4 to v4.5.2 (fixed;
+#     osv-scanner reports NO jwt findings).
+#   * tip (the simulated Renovate bump): a `replace github.com/golang-jwt/jwt/v4 => .../v4 v4.5.0`
+#     directive pins the vulnerable v4.5.0 (osv-scanner reports GHSA-mh63-6h87-95cp / CVE-2025-30204
+#     AND GHSA-29wx-vh33-7x7r / CVE-2024-51744). A `replace` is used deliberately: Go MVS keeps jwt at
+#     v4.5.2 under a plain `require` downgrade (a transitive dep floors it), so pinning the vulnerable
+#     version requires the replace. It survives `go mod tidy` (the skill's idempotent deterministic
+#     phase leaves it intact).
+#
+# EXPECTED OUTCOME = `fixed`, NOT `deferred`. Per the resolved design decision (2026-07-15):
+# osv-scanner v2.4.0 (the repo-pinned version) does NOT populate Go call-graph reachability
+# (`experimentalAnalysis.called`) in any available scan mode, so the CVE-delta gate cannot
+# distinguish reachable from unreachable findings. The gate is therefore REPORT-ONLY, NON-GATING:
+# a new vulnerability in the delta is surfaced prominently in the recap's Security section and the
+# `cve_introduced` front-matter field, but does NOT change the terminal state. (This weakens the
+# spec's original "new+reachable -> defer" FR; see the spec amendment note.)
+#
+# The discriminating assertion is `cve_introduced` (below), not the terminal state. This is what makes
+# the fixture an A/B signal: a skill version without the CVE-delta gate emits `cve_introduced: null`
+# and FAILS this assertion, while a version with the gate emits the CVE id and PASSES.
+
+name: cve
+branch: renovate/golang-jwt-jwt-v4-vuln
+base: b79db72edb0e6fdbf4f3bed4320f0741f1faa099
+
+terminal_state: fixed
+
+# The recap's `cve_introduced` front-matter must name the introduced vulnerability. The assertion
+# matches this as a case-insensitive substring, so any of the vuln's aliases satisfies it.
+cve_introduced_expected: CVE-2025-30204
+
+# The bump compiles and tests pass as-is, so the skill adds no source fix.
+must_not_change:
+  - .github/**
+
+# base..HEAD = the fixture's own bump commit (1); the skill adds none (report-only, nothing to fix).
+commit_count_min: 1
+commit_count_max: 2
+conventional_commits: true
+required_trailers: []
+
+# The tree is regeneration-clean (a pure dependency change).
+generate_diff_clean: true

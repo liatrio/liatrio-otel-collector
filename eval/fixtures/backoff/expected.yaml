@@ -1,0 +1,36 @@
+---
+# expected.yaml — hand-written oracle for the backoff v5->v7 mechanical fixture (spec Unit 4).
+#
+# Class: MECHANICAL. Renovate's raw bump only added `github.com/cenkalti/backoff/v7` beside the
+# existing `/v5` require in two module go.mods without rewriting import paths, so `go mod tidy` drops
+# it as unused (the PR-822 silent no-op). The correct /fix behavior is the major-version import-path
+# migration: rewrite v5->v7 across the importing modules, let go.mod/regeneration settle, and land
+# concern-separated commits. Correct terminal state is therefore `fixed`.
+
+name: backoff
+branch: renovate/github.com-cenkalti-backoff-v5-7.x
+# Base = parent of Renovate's raw bump commit (98051e5). The bundle replays base..raw-bump.
+base: b3a6bada6c8679f6c4a6e128a1f81cf82061a374
+
+terminal_state: fixed
+
+# The migration must touch the two modules that import backoff.
+must_change:
+  - receiver/githubreceiver/**
+  - receiver/gitlabreceiver/**
+
+# Guardrail: the skill must never touch workflow/CI config.
+must_not_change:
+  - .github/**
+
+# Concern-separated: mechanical adaptation (import rewrite) + regeneration/tidy. Allow 1-4 to leave
+# room for a separate go.mod-tidy commit without over-constraining commit granularity.
+commit_count_min: 1
+commit_count_max: 4
+conventional_commits: true
+
+# Mechanical class carries no speculative-work trailer (that is the semconv class, fixture 4.1).
+required_trailers: []
+
+# After a correct fix the tree must be regeneration-clean.
+generate_diff_clean: true

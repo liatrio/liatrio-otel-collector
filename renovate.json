@@ -24,13 +24,19 @@
         "dockerfile"
       ],
       "groupName": "dockerfile deps",
+      "addLabels": [
+        "group:dockerfile"
+      ],
       "semanticCommitType": "fix"
     },
     {
       "matchManagers": [
         "github-actions"
       ],
-      "groupName": "github-actions deps"
+      "groupName": "github-actions deps",
+      "addLabels": [
+        "group:github-actions"
+      ]
     },
     {
       "matchManagers": [
@@ -54,6 +60,9 @@
         "internal/tools/**"
       ],
       "groupName": "tool deps",
+      "addLabels": [
+        "group:tool-deps"
+      ],
       "description": "Groups together all dependencies on third party tools"
     },
     {
@@ -64,6 +73,9 @@
         "cmd/otel-compgen/**"
       ],
       "groupName": "otel-compgen cmd deps",
+      "addLabels": [
+        "group:otel-compgen"
+      ],
       "description": "Groups together all dependencies of the otel-compgen utility"
     },
     {
@@ -74,10 +86,15 @@
       "matchPackageNames": [
         "go.opentelemetry.io/collector",
         "go.opentelemetry.io/collector/**",
-        "github.com/open-telemetry/opentelemetry-collector-contrib/**"
+        "github.com/open-telemetry/opentelemetry-collector-contrib/**",
+        "go.opentelemetry.io/otel",
+        "go.opentelemetry.io/otel/**"
       ],
       "groupName": "otel collector core & contrib deps",
-      "description": "OCB requires every component compiled into the distribution, plus the mdatagen/builder tools used to generate and assemble it, to share a compatible core collector version. All go.opentelemetry.io/collector* and opentelemetry-collector-contrib/* deps (across manifest.yaml, every component go.mod, and internal/tools/go.mod's mdatagen/builder) must move in lockstep, not one-at-a-time. Placed last so it overrides the generic 'tool deps' grouping for mdatagen/builder specifically."
+      "addLabels": [
+        "group:otel-core-contrib"
+      ],
+      "description": "OCB requires every component compiled into the distribution, plus the mdatagen/builder tools used to generate and assemble it, to share a compatible core collector version. All go.opentelemetry.io/collector*, opentelemetry-collector-contrib/*, and go.opentelemetry.io/otel* deps (across manifest.yaml, every component go.mod, and internal/tools/go.mod's mdatagen/builder) must move in lockstep, not one-at-a-time. The go.opentelemetry.io/otel and go.opentelemetry.io/otel/** API/SDK modules are direct dependencies of the custom receivers and are pinned to a version compatible with the collector core they compile into via OCB; letting them drift one-at-a-time reintroduces exactly the version skew this group prevents (Open Question #5, resolved: include them). Placed last so it overrides the generic 'tool deps' grouping for mdatagen/builder specifically. See .claude/skills/renovate-otel-core/SKILL.md for the full rationale."
     }
   ],
   "prConcurrentLimit": 10,
@@ -89,5 +106,8 @@
   ],
   "suppressNotifications": [
     "prEditedNotification"
+  ],
+  "prBodyNotes": [
+    "<!-- renovate-upgrades:{{{toJSON upgrades}}} -->"
   ]
 }

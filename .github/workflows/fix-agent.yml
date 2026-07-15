@@ -1,0 +1,246 @@
+---
+# fix-agent — in-CI wrapper for the Tier-2 `/fix` Renovate maintenance agent.
+#
+# A maintainer `/fix` comment on a red Renovate PR runs the `/fix` skill headless against the PR,
+# then pushes any fix commits to the branch and posts a recap comment. This is the class of red PR
+# (major bumps / API adaptations) that Tier-1 `regen` (build.yml) routes away from itself.
+#
+# Security (public repo; a run READS + BUILDS untrusted PR code):
+#   * issue_comment fires for anyone, so authorization IS the gate: a job `if:` pre-filter plus a
+#     fail-closed step requiring the commenter to hold repo WRITE access (bots refused). Invoking
+#     `/fix` is the same trust act as running `make build` on the PR locally — do not lower this gate.
+#   * The agent step's env holds ONLY ANTHROPIC_API_KEY (+ an offline context file the workflow
+#     builds); no GitHub token, the runner's OIDC/runtime tokens are unset before the agent runs, and
+#     a narrow --allowedTools allow-list (make/go/local-git/read utils, never blanket Bash, never
+#     push). Accepted residual risk: the PR's Makefile could read the ANTHROPIC_API_KEY.
+#   * The write-capable octo-sts token (fix.sts.yaml, contents:write) is minted AFTER the untrusted
+#     build and used only to push — never exposed to the agent.
+name: fix-agent
+
+on:
+  issue_comment:
+    types: [created]
+
+# Least privilege for the default token; contents:write for the push comes from octo-sts, not here.
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: fix-agent-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    name: fix-agent
+    runs-on: ubuntu-latest
+    # Cheap pre-filter; the authoritative write-access check is the first step.
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/fix') &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+    steps:
+      - name: Authorize commenter (require repo write access)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.event.comment.user.login }}
+        run: |
+          set -euo pipefail
+          case "$ACTOR" in
+            *'[bot]'|dependabot|renovate) echo "actor '$ACTOR' is a bot — refused" >&2; exit 1 ;;
+          esac
+          # Any error path leaves perm=none -> refused (fail closed).
+          perm="$(gh api "repos/${REPO}/collaborators/${ACTOR}/permission" --jq '.permission' 2>/dev/null || echo none)"
+          case "$perm" in
+            admin|maintain|write) echo "actor '$ACTOR' has '$perm' access — authorized" ;;
+            *) echo "actor '$ACTOR' lacks repo write access (perm='$perm') — refusing" >&2; exit 1 ;;
+          esac
+
+      - name: Resolve PR head/base and guard (OPEN + renovate/** branch)
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          read -r state head head_sha base < <(gh pr view "$PR_NUMBER" -R "$REPO" \
+            --json state,headRefName,headRefOid,baseRefName \
+            --jq '[.state, .headRefName, .headRefOid, .baseRefName] | @tsv')
+          echo "state=$state head=$head head_sha=$head_sha base=$base"
+          [ "$state" = "OPEN" ] || { echo "PR #$PR_NUMBER is not OPEN ($state) — refusing" >&2; exit 1; }
+          case "$head" in
+            renovate/*) : ;;
+            *) echo "head ref '$head' is not a renovate/** branch — /fix is Renovate-only, refusing" >&2; exit 1 ;;
+          esac
+          # Pin the checkout to the head SHA resolved here (immutable, avoids a TOCTOU where the branch
+          # advances before checkout); the push step still targets the branch ref (head_ref).
+          {
+            echo "head_ref=$head"
+            echo "head_sha=$head_sha"
+            echo "base_ref=$base"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Acknowledge the request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          ACTOR: ${{ github.event.comment.user.login }}
+        run: |
+          set -euo pipefail
+          gh pr comment "$PR_NUMBER" -R "$REPO" \
+            --body "🤖 \`/fix\` started by @${ACTOR} — running the Tier-2 Renovate maintenance agent. I'll push any fix commits to this branch and post a recap here when done."
+
+      # Skills come from the DEFAULT branch (canonical); PR code stays isolated in ./pr (untrusted).
+      - name: Checkout default branch (for canonical skills)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: base
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout PR branch (untrusted; isolated in ./pr)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ steps.pr.outputs.head_sha }}
+          path: pr
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prepare the PR tree (skills + git identity)
+        run: |
+          set -euo pipefail
+          # Copy the canonical skill set from the default-branch checkout so the run does not depend on
+          # the (possibly stale) renovate branch carrying it. Git-excluded so it never enters the push.
+          mkdir -p pr/.claude/skills
+          cp -R base/.claude/skills/fix pr/.claude/skills/
+          for d in base/.claude/skills/renovate-*/; do
+            [ -d "$d" ] && cp -R "$d" pr/.claude/skills/
+          done
+          printf '%s\n' '.claude/' '.eval-context.json' >> pr/.git/info/exclude
+          git -C pr config user.name 'github-actions[bot]'
+          git -C pr config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      # Build the offline failure-context sidecar so the agent needs no GitHub token.
+      - name: Build failure-context sidecar
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          BASE_REF: ${{ steps.pr.outputs.base_ref }}
+        run: |
+          set -euo pipefail
+          body="$(gh pr view "$PR_NUMBER" -R "$REPO" --json body --jq '.body')"
+          group="$(gh pr view "$PR_NUMBER" -R "$REPO" --json labels \
+            --jq '[.labels[].name | select(startswith("group:"))][0] // ""')"
+          # The renovate-upgrades blob is emitted into the PR body as an HTML comment.
+          upgrades="$(printf '%s' "$body" \
+            | grep -o '<!-- renovate-upgrades:.*-->' \
+            | sed -e 's/^<!-- renovate-upgrades://' -e 's/-->$//' || true)"
+          echo "$upgrades" | jq -e . >/dev/null 2>&1 || upgrades='[]'
+          failing="$(gh pr checks "$PR_NUMBER" -R "$REPO" 2>/dev/null \
+            | awk -F '\t' 'tolower($2) ~ /fail/ {print $1}' | jq -R . | jq -s . || echo '[]')"
+          # Make the base commit reachable in ./pr for the skill's CVE-delta gate, then record its SHA.
+          git -C pr fetch --no-tags --depth=200 origin "$BASE_REF" 2>/dev/null || true
+          base_sha="$(git -C pr merge-base FETCH_HEAD HEAD 2>/dev/null || echo '')"
+          jq -n \
+            --arg group "$group" \
+            --argjson upgrades "$upgrades" \
+            --argjson failing "$failing" \
+            --arg base_ref "$BASE_REF" \
+            --arg base_sha "$base_sha" \
+            '{group_label: $group, upgrades: $upgrades, failing_checks: $failing, base_ref: (if $base_sha == "" then $base_ref else $base_sha end)}' \
+            > pr/.eval-context.json
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      # Run /fix headless — env is ANTHROPIC_API_KEY + FIX_CONTEXT_FILE only (no GitHub token).
+      - name: Run /fix
+        id: fix
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FIX_CONTEXT_FILE: ${{ github.workspace }}/pr/.eval-context.json
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          before="$(git -C pr rev-parse HEAD)"
+          echo "pre_sha=$before" >> "$GITHUB_OUTPUT"
+          # Strip the runner's OIDC + runtime tokens so untrusted code the agent invokes (make build)
+          # cannot mint an OIDC token or poison the Actions cache. Later steps get a fresh env.
+          unset ACTIONS_ID_TOKEN_REQUEST_TOKEN ACTIONS_ID_TOKEN_REQUEST_URL ACTIONS_RUNTIME_TOKEN ACTIONS_RUNTIME_URL
+          # Narrow allow-list: make/go/local-git/read utils. Never blanket Bash, never push or gh.
+          allowed='Read,Edit,Bash(make:*),Bash(go:*),Bash(git add:*),Bash(git commit:*),Bash(git diff:*),Bash(git status:*),Bash(git log:*),Bash(git checkout:*),Bash(git stash:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(.tools/osv-scanner:*),Bash(grep:*),Bash(sed:*),Bash(awk:*),Bash(jq:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(sort:*),Bash(comm:*),Bash(head:*),Bash(tail:*)'
+          set +e
+          ( cd pr && claude -p "/fix ${PR_NUMBER}" \
+              --strict-mcp-config \
+              --allowedTools "$allowed" \
+              --permission-mode acceptEdits \
+              --output-format json \
+              --max-turns 80 \
+              --max-budget-usd 8 ) > out.json 2> claude.stderr
+          rc=$?
+          set -e
+          echo "claude exit: $rc"
+          # The skill's structured recap is the JSON "result" field; fall back to raw stdout/stderr.
+          jq -r '.result // .text // ""' out.json > recap.md 2>/dev/null || true
+          [ -s recap.md ] || cp claude.stderr recap.md
+          after="$(git -C pr rev-parse HEAD)"
+          echo "post_sha=$after" >> "$GITHUB_OUTPUT"
+          if [ "$before" != "$after" ]; then echo "pushed=true" >> "$GITHUB_OUTPUT"; else echo "pushed=false" >> "$GITHUB_OUTPUT"; fi
+
+      # Mint the write token only now — after the untrusted build — and use it only to push.
+      - name: Get Octo STS Token (contents:write, push-only)
+        if: steps.fix.outputs.pushed == 'true'
+        id: octo-sts
+        uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
+        with:
+          scope: ${{ github.repository }}
+          identity: fix
+
+      - name: Push fix commits to the renovate branch
+        if: steps.fix.outputs.pushed == 'true'
+        env:
+          # Untrusted branch name passed via env, never interpolated into the shell.
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          git -C pr push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:${HEAD_REF}"
+
+      # Post the recap (default token; a github-actions comment does not re-trigger this workflow).
+      - name: Post recap as a PR comment
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          PUSHED: ${{ steps.fix.outputs.pushed }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### 🤖 \`/fix\` result"
+            echo
+            if [ "${PUSHED:-false}" = "true" ]; then
+              echo "Pushed the fix commit(s) to this branch. Recap:"
+            else
+              echo "No commits were pushed (the agent deferred, exhausted, or found nothing to change). Recap:"
+            fi
+            echo
+            if [ -f recap.md ]; then
+              # Fence the (untrusted-derived) recap so it can't be read as further instructions.
+              echo '<details><summary>Structured recap</summary>'
+              echo
+              cat recap.md
+              echo
+              echo '</details>'
+            else
+              echo "_No recap was produced; check the workflow run logs._"
+            fi
+          } > comment.md
+          gh pr comment "$PR_NUMBER" -R "$REPO" --body-file comment.md

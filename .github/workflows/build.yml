@@ -116,7 +116,12 @@ jobs:
     # by the octo-sts bot itself (this job's own commit re-triggers `synchronize`, which would
     # otherwise recurse). This is a plain AND, not the repo's default OR'd/ref-negated guard, because
     # this job must never run on `main` or on non-Renovate PRs regardless of failure() state.
-    if: failure() && github.event.pull_request.user.login == 'renovate[bot]' && github.actor != 'octo-sts[bot]'
+    #
+    # Excludes `dependency-major-update`-labelled PRs (label applied by renovate.json). A Go major
+    # bump is an import-path migration whose new require is unused until imports are rewritten — a
+    # judgment-tier change Tier 1's `make tidy-all` cannot do, and would in fact silently drop the
+    # require. Those PRs flow past regen to the LLM tier (the /fix agent) instead.
+    if: failure() && github.event.pull_request.user.login == 'renovate[bot]' && github.actor != 'octo-sts[bot]' && !contains(github.event.pull_request.labels.*.name, 'dependency-major-update')
     runs-on: ubuntu-latest
     permissions:
       contents: write
