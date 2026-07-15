@@ -9,7 +9,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.156.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.156.0
 	github.com/stretchr/testify v1.11.1
-	gitlab.com/gitlab-org/api/client-go/v2 v2.47.0
+	gitlab.com/gitlab-org/api/client-go/v2 v2.48.1
 	go.opentelemetry.io/collector/component v1.62.0
 	go.opentelemetry.io/collector/component/componenttest v0.156.0
 	go.opentelemetry.io/collector/config/confighttp v0.156.0
