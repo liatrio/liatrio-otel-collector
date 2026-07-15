@@ -1,0 +1,27 @@
+{
+  "_comment": "Offline failure-context sidecar for the hand-built semconv-defer fixture. During offline replay `gh` is unavailable, so run.sh exposes this at $FIX_CONTEXT_FILE and the /fix skill reads it as the fallback for what it would otherwise self-fetch. This is a SYNTHETIC negative fixture (not a real PR): it simulates a semconv-package version bump that breaks a hand-written attribute reference. The group_label points selection at the otel-core/semconv playbooks; the failing check + log signature ('undefined: semconv.') is what the skill's semconv failure_signature match keys on to classify this as a must-defer semconv migration.",
+  "pr_number": null,
+  "labels": [
+    "dependencies",
+    "renovatebot",
+    "group:otel-core-contrib"
+  ],
+  "group_label": "group:otel-core-contrib",
+  "base_ref": "5ed344da9c5deb6ec9f54e30d1781ca61bcfe107",
+  "failing_checks": [
+    "build-and-test / lint",
+    "build-and-test / test"
+  ],
+  "renovate_notes": "Semconv package selection is a manual, deliberate migration in this repo; Renovate is configured not to bump it (docs/semantic-conventions.md).",
+  "failing_log_excerpt": "receiver/githubreceiver/trace_event_handling.go:329:30: undefined: semconv.PeerServiceKey",
+  "upgrades": [
+    {
+      "depName": "go.opentelemetry.io/otel/semconv/v1.34.0",
+      "newName": "go.opentelemetry.io/otel/semconv/v1.41.0",
+      "currentValue": "v1.34.0",
+      "newValue": "v1.41.0",
+      "updateType": "major",
+      "packageFile": "receiver/githubreceiver/go.mod"
+    }
+  ]
+}

@@ -86,6 +86,25 @@ else
   fi
 fi
 
+# ============================ CHECK 1b: cve_introduced (report-only CVE-delta) =====================
+# When the fixture sets `cve_introduced_expected`, the recap's `cve_introduced:` front-matter field
+# must name that vulnerability (case-insensitive substring; any alias satisfies it). This is the
+# discriminating assertion for the CVE-delta gate (Task 4.7/4.8) and the A/B signal: a skill without
+# the gate emits `cve_introduced: null` and fails here. Skipped on the RED baseline (no recap).
+want_cve="$(y_scalar cve_introduced_expected)"
+if [[ -n "$want_cve" ]]; then
+  if [[ "$SKIP_AGENT" == "1" ]]; then
+    skip "cve_introduced names the CVE" "(skip-agent: no recap)"
+  else
+    fm_cve="$(awk 'tolower($1)=="cve_introduced:"{v=$2; gsub(/["\r,]/,"",v); print v; exit}' "$RECAP" 2>/dev/null)"
+    if printf '%s' "$fm_cve" | grep -qiF "$want_cve"; then
+      check "cve_introduced names the CVE" PASS "$fm_cve"
+    else
+      check "cve_introduced names the CVE" FAIL "got='${fm_cve:-<empty/null>}' want~='$want_cve'"
+    fi
+  fi
+fi
+
 # ============================ CHECK 2: is_error ====================================================
 if [[ "$SKIP_AGENT" == "1" ]]; then
   skip "is_error == false" "(skip-agent: no headless run)"

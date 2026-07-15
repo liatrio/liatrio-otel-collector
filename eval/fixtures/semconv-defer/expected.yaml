@@ -1,0 +1,46 @@
+---
+# expected.yaml — hand-built NEGATIVE fixture: a semconv-migration bump whose CORRECT outcome is
+# `deferred` (spec Unit 4 FR: negative fixture; Unit 3 FR: three-tier classification; Non-Goal #5).
+#
+# Class: SEMCONV MIGRATION (must-defer). This is the case the /fix skill must NOT falsely report as
+# `fixed`. Construction (see docs/specs .../01-task-04-proofs.md):
+#   * base commit (5ed344d): hand-written receiver/githubreceiver/trace_event_handling.go uses
+#     `semconv.PeerServiceKey`, which is valid at the pinned import `otel/semconv/v1.34.0` — builds clean.
+#   * tip commit (the simulated Renovate bump): moves the hand-written semconv import selection
+#     v1.34.0 -> v1.41.0, where `peer.service` / `PeerServiceKey` was removed from the root package.
+#     Result: `undefined: semconv.PeerServiceKey` — a genuine, deterministic semconv compile break.
+#
+# Why the correct outcome is `deferred`, not `fixed`: the ONLY ways to green this are (a) revert
+# Renovate's version change (not the fixer's job) or (b) perform the deliberate semconv migration —
+# reconcile the removed/renamed attribute AND move the `sem_conv_version` selection. Bumping the
+# semconv package selection is a hard invariant the skill must never do as a side effect
+# (docs/semantic-conventions.md; Non-Goal #5). A best-effort first pass finds nothing safely
+# committable, so the skill defers with a populated "What's left". A recap of `fixed` here is a
+# false-green failure.
+
+name: semconv-defer
+branch: renovate/go.opentelemetry.io-otel-semconv-1.x
+# Base = the fixture-base commit that adds the peer.service usage (parent of the simulated bump).
+base: 5ed344da9c5deb6ec9f54e30d1781ca61bcfe107
+
+terminal_state: deferred
+
+# A correct defer makes NO source fix. (No must_change: deferring means nothing is adapted.)
+# Guardrails the defer must still honour:
+must_not_change:
+  - .github/**
+  # Never hand-edit generated files to paper over the semconv break.
+  - receiver/githubreceiver/internal/metadata/generated_**
+  # Never bump the semconv package selection as a side effect.
+  - receiver/githubreceiver/metadata.yaml
+
+# A clean defer commits nothing (0). Allow up to 1 to tolerate a no-op deterministic-phase commit,
+# though the deterministic phase produces no diff on this fixture.
+commit_count_min: 0
+commit_count_max: 1
+conventional_commits: true
+required_trailers: []
+
+# Not asserted: the tree is intentionally left red (unfixed) on a defer, so a post-run
+# `make generate` diff-clean gate is not meaningful here.
+generate_diff_clean: false
