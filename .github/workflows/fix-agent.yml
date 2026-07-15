@@ -10,8 +10,9 @@
 #     fail-closed step requiring the commenter to hold repo WRITE access (bots refused). Invoking
 #     `/fix` is the same trust act as running `make build` on the PR locally — do not lower this gate.
 #   * The agent step's env holds ONLY ANTHROPIC_API_KEY (+ an offline context file the workflow
-#     builds); no GitHub token, and a narrow --allowedTools allow-list (make/go/local-git/read utils,
-#     never blanket Bash, never push). Accepted residual risk: the PR's Makefile could read the key.
+#     builds); no GitHub token, the runner's OIDC/runtime tokens are unset before the agent runs, and
+#     a narrow --allowedTools allow-list (make/go/local-git/read utils, never blanket Bash, never
+#     push). Accepted residual risk: the PR's Makefile could read the ANTHROPIC_API_KEY.
 #   * The write-capable octo-sts token (fix.sts.yaml, contents:write) is minted AFTER the untrusted
 #     build and used only to push — never exposed to the agent.
 name: fix-agent
@@ -65,17 +66,20 @@ jobs:
           PR_NUMBER: ${{ github.event.issue.number }}
         run: |
           set -euo pipefail
-          read -r state head base < <(gh pr view "$PR_NUMBER" -R "$REPO" \
-            --json state,headRefName,baseRefName \
-            --jq '[.state, .headRefName, .baseRefName] | @tsv')
-          echo "state=$state head=$head base=$base"
+          read -r state head head_sha base < <(gh pr view "$PR_NUMBER" -R "$REPO" \
+            --json state,headRefName,headRefOid,baseRefName \
+            --jq '[.state, .headRefName, .headRefOid, .baseRefName] | @tsv')
+          echo "state=$state head=$head head_sha=$head_sha base=$base"
           [ "$state" = "OPEN" ] || { echo "PR #$PR_NUMBER is not OPEN ($state) — refusing" >&2; exit 1; }
           case "$head" in
             renovate/*) : ;;
             *) echo "head ref '$head' is not a renovate/** branch — /fix is Renovate-only, refusing" >&2; exit 1 ;;
           esac
+          # Pin the checkout to the head SHA resolved here (immutable, avoids a TOCTOU where the branch
+          # advances before checkout); the push step still targets the branch ref (head_ref).
           {
             echo "head_ref=$head"
+            echo "head_sha=$head_sha"
             echo "base_ref=$base"
           } >> "$GITHUB_OUTPUT"
 
@@ -166,6 +170,9 @@ jobs:
           set -euo pipefail
           before="$(git -C pr rev-parse HEAD)"
           echo "pre_sha=$before" >> "$GITHUB_OUTPUT"
+          # Strip the runner's OIDC + runtime tokens so untrusted code the agent invokes (make build)
+          # cannot mint an OIDC token or poison the Actions cache. Later steps get a fresh env.
+          unset ACTIONS_ID_TOKEN_REQUEST_TOKEN ACTIONS_ID_TOKEN_REQUEST_URL ACTIONS_RUNTIME_TOKEN ACTIONS_RUNTIME_URL
           # Narrow allow-list: make/go/local-git/read utils. Never blanket Bash, never push or gh.
           allowed='Read,Edit,Bash(make:*),Bash(go:*),Bash(git add:*),Bash(git commit:*),Bash(git diff:*),Bash(git status:*),Bash(git log:*),Bash(git checkout:*),Bash(git stash:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(.tools/osv-scanner:*),Bash(grep:*),Bash(sed:*),Bash(awk:*),Bash(jq:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(sort:*),Bash(comm:*),Bash(head:*),Bash(tail:*)'
           set +e
