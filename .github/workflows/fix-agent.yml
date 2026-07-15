@@ -142,12 +142,13 @@ jobs:
             | grep -o '<!-- renovate-upgrades:.*-->' \
             | sed -e 's/^<!-- renovate-upgrades://' -e 's/-->$//' || true)"
           echo "$upgrades" | jq -e . >/dev/null 2>&1 || upgrades='[]'
-          # `gh pr checks` exits non-zero (8) whenever a check is failing — which is always true here,
-          # since /fix only runs on red PRs. Capture it separately so that expected exit code cannot
-          # poison the JSON-building pipeline under `set -o pipefail`, then validate + fall back to [].
-          checks="$(gh pr checks "$PR_NUMBER" -R "$REPO" 2>/dev/null || true)"
-          failing="$(printf '%s\n' "$checks" \
-            | awk -F '\t' 'tolower($2) ~ /fail/ {print $1}' | jq -R . | jq -s . 2>/dev/null)"
+          # `gh pr checks` exits non-zero whenever a check is failing (1) or pending (8) — which is
+          # always true here, since /fix only runs on red PRs. Capture it separately so that expected
+          # exit code cannot poison the pipeline under `set -o pipefail`, then validate + fall back to
+          # []. Parse the machine-readable `bucket` field (gh's own pass/fail/pending/... categorization)
+          # rather than scraping the human TSV table.
+          checks="$(gh pr checks "$PR_NUMBER" -R "$REPO" --json name,bucket 2>/dev/null || true)"
+          failing="$(printf '%s' "$checks" | jq -c '[.[] | select(.bucket == "fail") | .name]' 2>/dev/null)"
           echo "$failing" | jq -e . >/dev/null 2>&1 || failing='[]'
           # Make the base commit reachable in ./pr for the skill's CVE-delta gate, then record its SHA.
           git -C pr fetch --no-tags --depth=200 origin "$BASE_REF" 2>/dev/null || true
