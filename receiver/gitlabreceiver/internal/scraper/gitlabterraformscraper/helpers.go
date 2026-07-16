@@ -6,8 +6,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/cenkalti/backoff/v5"
+	"github.com/cenkalti/backoff/v7"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
@@ -37,7 +38,7 @@ func (gts *gitlabTerraformScraper) getModules(ctx context.Context, restClient *g
 			}, gitlab.WithContext(ctx))
 			if err != nil {
 				if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 {
-					return "", backoff.RetryAfter(60)
+					return "", backoff.RetryAfter(60*time.Second, err)
 				}
 				return "", backoff.Permanent(err)
 			}
@@ -124,7 +125,7 @@ func (gts *gitlabTerraformScraper) searchModuleConsumers(ctx context.Context, re
 			}, gitlab.WithContext(ctx))
 			if err != nil {
 				if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 {
-					return "", backoff.RetryAfter(60)
+					return "", backoff.RetryAfter(60*time.Second, err)
 				}
 				return "", backoff.Permanent(err)
 			}
@@ -199,7 +200,7 @@ func (gts *gitlabTerraformScraper) getProjectInfo(ctx context.Context, restClien
 		project, _, err = restClient.Projects.GetProject(projectID, nil, gitlab.WithContext(ctx))
 		if err != nil {
 			if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 {
-				return "", backoff.RetryAfter(60)
+				return "", backoff.RetryAfter(60*time.Second, err)
 			}
 			return "", backoff.Permanent(err)
 		}

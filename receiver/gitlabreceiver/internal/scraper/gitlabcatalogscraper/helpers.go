@@ -6,9 +6,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/cenkalti/backoff/v5"
+	"github.com/cenkalti/backoff/v7"
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
@@ -42,7 +43,7 @@ func (gcs *gitlabCatalogScraper) getProjects(ctx context.Context, restClient *gi
 			})
 			if err != nil {
 				if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 {
-					return "", backoff.RetryAfter(60)
+					return "", backoff.RetryAfter(60*time.Second, err)
 				}
 				return "", backoff.Permanent(err)
 			}
