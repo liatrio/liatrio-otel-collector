@@ -4,7 +4,6 @@ go 1.25.0
 
 require (
 	github.com/Khan/genqlient v0.8.1
-	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/cenkalti/backoff/v7 v7.0.0
 	github.com/google/go-cmp v0.7.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.156.0
@@ -57,6 +56,7 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/ebitengine/purego v0.10.0 // indirect
