@@ -142,8 +142,14 @@ jobs:
             | grep -o '<!-- renovate-upgrades:.*-->' \
             | sed -e 's/^<!-- renovate-upgrades://' -e 's/-->$//' || true)"
           echo "$upgrades" | jq -e . >/dev/null 2>&1 || upgrades='[]'
-          failing="$(gh pr checks "$PR_NUMBER" -R "$REPO" 2>/dev/null \
-            | awk -F '\t' 'tolower($2) ~ /fail/ {print $1}' | jq -R . | jq -s . || echo '[]')"
+          # `gh pr checks` exits non-zero whenever a check is failing (1) or pending (8) — which is
+          # always true here, since /fix only runs on red PRs. Capture it separately so that expected
+          # exit code cannot poison the pipeline under `set -o pipefail`, then validate + fall back to
+          # []. Parse the machine-readable `bucket` field (gh's own pass/fail/pending/... categorization)
+          # rather than scraping the human TSV table.
+          checks="$(gh pr checks "$PR_NUMBER" -R "$REPO" --json name,bucket 2>/dev/null || true)"
+          failing="$(printf '%s' "$checks" | jq -c '[.[] | select(.bucket == "fail") | .name]' 2>/dev/null)"
+          echo "$failing" | jq -e . >/dev/null 2>&1 || failing='[]'
           # Make the base commit reachable in ./pr for the skill's CVE-delta gate, then record its SHA.
           git -C pr fetch --no-tags --depth=200 origin "$BASE_REF" 2>/dev/null || true
           base_sha="$(git -C pr merge-base FETCH_HEAD HEAD 2>/dev/null || echo '')"
@@ -187,7 +193,9 @@ jobs:
           set -e
           echo "claude exit: $rc"
           # The skill's structured recap is the JSON "result" field; fall back to raw stdout/stderr.
-          jq -r '.result // .text // ""' out.json > recap.md 2>/dev/null || true
+          # select(length>0) so an empty-string result (not just a missing one) also falls through to
+          # stderr — `//` only substitutes on null, and jq would otherwise emit a blank recap.
+          jq -r '(.result // .text // "") | select(length>0)' out.json > recap.md 2>/dev/null || true
           [ -s recap.md ] || cp claude.stderr recap.md
           after="$(git -C pr rev-parse HEAD)"
           echo "post_sha=$after" >> "$GITHUB_OUTPUT"
@@ -233,7 +241,10 @@ jobs:
             fi
             echo
             if [ -f recap.md ]; then
-              # Fence the (untrusted-derived) recap so it can't be read as further instructions.
+              # Fold the (untrusted-derived) recap into a <details> block. This only collapses it
+              # visually — it does NOT neutralize markdown, mentions, or links, and a </details> in
+              # the recap escapes the fold. The recap is agent output over untrusted PR code, so a
+              # reader must treat its contents as untrusted, not as anything this workflow vouches for.
               echo '<details><summary>Structured recap</summary>'
               echo
               cat recap.md
