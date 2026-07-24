@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -135,7 +135,7 @@ jobs:
           identity: regen
 
       - name: Clone repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ steps.octo-sts.outputs.token }}
           ref: ${{ github.event.pull_request.head.ref }}
@@ -226,7 +226,7 @@ jobs:
       id-token: write
     steps:
       - name: Clone repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -293,7 +293,7 @@ jobs:
           identity: semantic-release
 
       - name: Clone repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ steps.octo-sts.outputs.token }}
           fetch-depth: 0
@@ -303,7 +303,7 @@ jobs:
 
       - name: Get next version
         id: get_next_version
-        uses: thenativeweb/get-next-version@b66ed58cb3556622f81636ca9fb483df6de0dc7a # 2.7.4
+        uses: thenativeweb/get-next-version@6b05e7e34281ed8daf9069877994b71d259137eb # 2.7.5
         with:
           prefix: v # optional, defaults to ''
 
