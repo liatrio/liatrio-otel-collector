@@ -126,6 +126,10 @@ jobs:
     permissions:
       contents: write
       id-token: write
+    # Consumed by notify-fix-needed so a successful Tier-1 push does not also spam Slack
+    # (a new CI run follows the push; the card waits for that post-regen outcome).
+    outputs:
+      pushed: ${{ steps.push.outputs.pushed }}
     steps:
       - name: Get Octo STS Token
         uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
@@ -186,6 +190,7 @@ jobs:
       # Renovate treats a foreign commit as a signal to stop auto-rebasing that branch, which is the
       # outcome we want: our fix sticks, and the PR is left for CI to go green and get merged.
       - name: Commit and push fixes
+        id: push
         env:
           # Pass the untrusted, user-controllable branch name and the octo-sts token through the
           # environment rather than interpolating them into the shell — `${{ … }}` expansion happens
@@ -196,11 +201,13 @@ jobs:
         run: |
           if git diff --quiet; then
             echo "No mechanical fixes needed; nothing to commit."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git add .
           git commit -m "chore: run make generate"
           git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:${HEAD_REF}"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
 
   build:
     name: build
@@ -275,6 +282,241 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+
+  # Deterministic Slack approval card when a Renovate PR still needs Tier-2 (/fix).
+  # Enabled only when repo variable SLACK_FIX_CHANNEL_ID is set. Cursor reaction automation is Part 2.
+  notify-fix-needed:
+    name: notify-fix-needed
+    needs: [generate, lint, build, test, regen]
+    if: >-
+      always() &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.user.login == 'renovate[bot]' &&
+      github.actor != 'octo-sts[bot]' &&
+      vars.SLACK_FIX_CHANNEL_ID != '' &&
+      (
+        needs.generate.result == 'failure' ||
+        needs.lint.result == 'failure' ||
+        needs.build.result == 'failure' ||
+        needs.test.result == 'failure'
+      ) &&
+      !(needs.regen.result == 'success' && needs.regen.outputs.pushed == 'true')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Prepare Slack card payload
+        id: prep
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          CHANNEL_ID: ${{ vars.SLACK_FIX_CHANNEL_ID }}
+          GENERATE_RESULT: ${{ needs.generate.result }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          REGEN_RESULT: ${{ needs.regen.result }}
+          IS_MAJOR: ${{ contains(github.event.pull_request.labels.*.name, 'dependency-major-update') }}
+        run: |
+          set -euo pipefail
+
+          body="$(gh pr view "$PR_NUMBER" -R "$REPO" --json body --jq '.body')"
+          group="$(gh pr view "$PR_NUMBER" -R "$REPO" --json labels \
+            --jq '[.labels[].name | select(startswith("group:"))][0] // ""')"
+          upgrades_raw="$(printf '%s' "$body" \
+            | grep -o '<!-- renovate-upgrades:.*-->' \
+            | sed -e 's/^<!-- renovate-upgrades://' -e 's/-->$//' || true)"
+          echo "$upgrades_raw" | jq -e . >/dev/null 2>&1 || upgrades_raw='[]'
+          upgrades_summary="$(printf '%s' "$upgrades_raw" | jq -r '
+            if length == 0 then "_none parsed from PR body_"
+            else
+              [.[0:8][] |
+                "- `\(.depName // .name // "unknown")` \(.currentValue // .currentVersion // .fromVersion // "?") → \(.newValue // .newVersion // .toVersion // "?")"
+              ] | join("\n")
+              + (if length > 8 then "\n- …and \(length - 8) more" else "" end)
+            end
+          ')"
+
+          failing=""
+          for pair in "generate:${GENERATE_RESULT}" "lint:${LINT_RESULT}" "build:${BUILD_RESULT}" "test:${TEST_RESULT}"; do
+            name="${pair%%:*}"
+            result="${pair#*:}"
+            if [ "$result" = "failure" ]; then
+              failing="${failing:+$failing, }${name}"
+            fi
+          done
+          [ -n "$failing" ] || failing="unknown"
+
+          reasons=()
+          if [ "$IS_MAJOR" = "true" ] && { [ "$GENERATE_RESULT" = "failure" ] || [ "$LINT_RESULT" = "failure" ]; }; then
+            reasons+=("major-update skipped Tier-1")
+          elif [ "$GENERATE_RESULT" = "failure" ] || [ "$LINT_RESULT" = "failure" ]; then
+            reasons+=("Tier-1 did not green (regen=${REGEN_RESULT})")
+          fi
+          if [ "$BUILD_RESULT" = "failure" ] || [ "$TEST_RESULT" = "failure" ]; then
+            reasons+=("build/test failed")
+          fi
+          if [ ${#reasons[@]} -eq 0 ]; then
+            reasons+=("CI failed")
+          fi
+          why="$(IFS='; '; printf '%s' "${reasons[*]}")"
+
+          # Dedupe marker on the PR: <!-- slack-fix-card:{"ts":"...","sha":"..."} -->
+          marker_line=""
+          comment_id=""
+          existing_ts=""
+          existing_sha=""
+          marker_line="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq '.[] | select(.body | test("<!-- slack-fix-card:")) | "\(.id)\t\(.body)"' \
+            | head -n 1 || true)"
+          if [ -n "$marker_line" ]; then
+            comment_id="$(printf '%s' "$marker_line" | cut -f1)"
+            marker_json="$(printf '%s' "$marker_line" | cut -f2- | grep -o '<!-- slack-fix-card:{.*} -->' \
+              | sed -e 's/^<!-- slack-fix-card://' -e 's/ -->$//' || true)"
+            if echo "$marker_json" | jq -e . >/dev/null 2>&1; then
+              existing_ts="$(printf '%s' "$marker_json" | jq -r '.ts // empty')"
+              existing_sha="$(printf '%s' "$marker_json" | jq -r '.sha // empty')"
+            fi
+          fi
+
+          if [ -n "$existing_ts" ] && [ "$existing_sha" = "$HEAD_SHA" ]; then
+            echo "Slack card already posted for head SHA ${HEAD_SHA} — skipping."
+            echo "action=skip" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -n "$existing_ts" ]; then
+            echo "action=update" >> "$GITHUB_OUTPUT"
+            echo "existing_ts=${existing_ts}" >> "$GITHUB_OUTPUT"
+          else
+            echo "action=post" >> "$GITHUB_OUTPUT"
+          fi
+          echo "comment_id=${comment_id}" >> "$GITHUB_OUTPUT"
+
+          group_line="${group:-_none_}"
+          # Fallback text for notifications; blocks carry the structured card.
+          fallback="Tier-2 fix needed — ${REPO} PR #${PR_NUMBER}: ${PR_TITLE}"
+
+          # Escape values for embedding in JSON strings via jq --arg.
+          jq -n \
+            --arg channel "$CHANNEL_ID" \
+            --arg text "$fallback" \
+            --arg repo "$REPO" \
+            --arg pr_number "$PR_NUMBER" \
+            --arg pr_title "$PR_TITLE" \
+            --arg pr_url "$PR_URL" \
+            --arg head_ref "$HEAD_REF" \
+            --arg group_line "$group_line" \
+            --arg why "$why" \
+            --arg failing "$failing" \
+            --arg upgrades "$upgrades_summary" \
+            --arg ts "${existing_ts:-}" \
+            '
+            {
+              channel: $channel,
+              text: $text,
+              blocks: [
+                {
+                  type: "header",
+                  text: { type: "plain_text", text: "Tier-2 fix needed", emoji: true }
+                },
+                {
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: ("*<" + $pr_url + "|#" + $pr_number + " — " + $pr_title + ">*\n"
+                      + "`" + $repo + "` · `" + $head_ref + "`")
+                  }
+                },
+                {
+                  type: "section",
+                  fields: [
+                    { type: "mrkdwn", text: ("*Group*\n" + $group_line) },
+                    { type: "mrkdwn", text: ("*Failing jobs*\n" + $failing) }
+                  ]
+                },
+                {
+                  type: "section",
+                  text: { type: "mrkdwn", text: ("*Why*\n" + $why) }
+                },
+                {
+                  type: "section",
+                  text: { type: "mrkdwn", text: ("*Upgrades*\n" + $upgrades) }
+                },
+                {
+                  type: "section",
+                  text: {
+                    type: "mrkdwn",
+                    text: "React with :wrench: to run the Tier-2 `/fix` agent.\nReact with :eyes: if a human will handle it."
+                  }
+                },
+                {
+                  type: "context",
+                  elements: [
+                    {
+                      type: "mrkdwn",
+                      text: "Approving is the same trust act as running `make build` on this PR locally. Cursor automation wiring is Part 2."
+                    }
+                  ]
+                }
+              ]
+            }
+            + (if $ts == "" then {} else {ts: $ts} end)
+            ' > /tmp/slack-fix-card.json
+
+          echo "Wrote /tmp/slack-fix-card.json"
+
+      - name: Post Slack card
+        id: slack_post
+        if: steps.prep.outputs.action == 'post'
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
+        with:
+          errors: true
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: /tmp/slack-fix-card.json
+
+      - name: Update Slack card
+        id: slack_update
+        if: steps.prep.outputs.action == 'update'
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
+        with:
+          errors: true
+          method: chat.update
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: /tmp/slack-fix-card.json
+
+      - name: Persist Slack card marker on the PR
+        if: steps.prep.outputs.action == 'post' || steps.prep.outputs.action == 'update'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          COMMENT_ID: ${{ steps.prep.outputs.comment_id }}
+          POST_TS: ${{ steps.slack_post.outputs.ts }}
+          UPDATE_TS: ${{ steps.slack_update.outputs.ts }}
+        run: |
+          set -euo pipefail
+          SLACK_TS="${POST_TS:-${UPDATE_TS:-}}"
+          if [ -z "${SLACK_TS}" ]; then
+            echo "No Slack message ts returned — cannot write dedupe marker" >&2
+            exit 1
+          fi
+          marker="<!-- slack-fix-card:$(jq -nc --arg ts "$SLACK_TS" --arg sha "$HEAD_SHA" '{ts:$ts,sha:$sha}') -->"
+          body="$(printf '%s\n%s\n' '<!-- do not edit: used by notify-fix-needed to dedupe Slack cards -->' "$marker")"
+          if [ -n "${COMMENT_ID:-}" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${COMMENT_ID}" -f body="$body" >/dev/null
+          else
+            gh api -X POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -f body="$body" >/dev/null
+          fi
+          echo "Stored slack-fix-card marker ts=${SLACK_TS} sha=${HEAD_SHA}"
 
   multimod-prepare-release:
     if: ${{ github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]' }}
