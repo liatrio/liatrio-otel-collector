@@ -171,6 +171,26 @@ register, and the package-upgrade/OCB/Renovate runbook live in
 - Releases are automated on `main` via multimod + semantic versioning driven by `versions.yaml`
   (the `liatrio-otel` module set). Full pipeline in [`docs/releasing.md`](docs/releasing.md).
 
+### Tier-2 Slack notify (Renovate)
+
+When a `renovate[bot]` PR stays red after Tier-1 (`regen`) — or Tier-1 is skipped for
+`dependency-major-update` — `build.yml`'s `notify-fix-needed` job posts (or updates) a deterministic
+Slack approval card in the configured product channel. Cursor reaction → `/fix` automation is a
+follow-on (Part 2); until then maintainers can still escalate with a `/fix` PR comment
+(`.github/workflows/fix-agent.yml`).
+
+**Enable (maintainers):**
+
+1. Slack app with `chat:write`, installed to the workspace, bot invited to a **public** product channel
+   (public is required for a future Cursor reaction trigger).
+2. Repo secret `SLACK_BOT_TOKEN` (`xoxb-…`).
+3. Repo variable `SLACK_FIX_CHANNEL_ID` (`C…`). The job is gated on this variable — unset means skip
+   (no CI failure).
+
+**Behavior:** one card per PR head SHA (deduped via a `<!-- slack-fix-card:… -->` PR comment marker);
+new HEAD updates the existing Slack message in place. Cards are not posted on the workflow run where
+`regen` successfully pushes (a follow-up CI run decides).
+
 ## Guardrails
 
 - **Never hand-edit generated files** — `internal/metadata/generated_*.go`, `generated_graphql.go` /
