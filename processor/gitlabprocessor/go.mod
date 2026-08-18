@@ -7,7 +7,7 @@ toolchain go1.26.5
 require (
 	github.com/Khan/genqlient v0.8.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.157.0
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.0
 	go.opentelemetry.io/collector/component v1.63.0
 	go.opentelemetry.io/collector/component/componenttest v0.157.0
 	go.opentelemetry.io/collector/config/confighttp v0.157.0
