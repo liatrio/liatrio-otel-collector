@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/google/go-github/v89 v89.0.0
+	github.com/google/go-github/v90 v90.0.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/collector/component v1.63.0
 	go.opentelemetry.io/collector/component/componenttest v0.157.0
