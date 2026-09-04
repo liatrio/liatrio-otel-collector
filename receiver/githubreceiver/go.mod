@@ -1,12 +1,13 @@
 module github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/Khan/genqlient v0.8.1
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v89 v89.0.0
+	github.com/google/go-github/v91 v91.0.0
 	github.com/gorilla/mux v1.8.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.157.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest v0.157.0
