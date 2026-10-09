@@ -9,10 +9,14 @@
 #   * issue_comment fires for anyone, so authorization IS the gate: a job `if:` pre-filter plus a
 #     fail-closed step requiring the commenter to hold repo WRITE access (bots refused). Invoking
 #     `/fix` is the same trust act as running `make build` on the PR locally — do not lower this gate.
-#   * The agent step's env holds ONLY ANTHROPIC_API_KEY (+ an offline context file the workflow
-#     builds); no GitHub token, the runner's OIDC/runtime tokens are unset before the agent runs, and
-#     a narrow --allowedTools allow-list (make/go/local-git/read utils, never blanket Bash, never
-#     push). Accepted residual risk: the PR's Makefile could read the ANTHROPIC_API_KEY.
+#   * The agent authenticates to the Claude API via workload identity federation, not a stored API
+#     key: the official claude-code-action base-action exchanges this job's GitHub OIDC token for a
+#     short-lived Anthropic token. The federation rule is pinned (Anthropic-side) to this workflow
+#     file on main + issue_comment. The agent's env holds no GitHub token (only an offline context
+#     file the workflow builds); the action strips the OIDC request vars from Claude's env,
+#     CLAUDE_CODE_SUBPROCESS_ENV_SCRUB strips credentials from every command it runs, and a narrow
+#     --allowedTools allow-list (make/go/local-git/read utils, never blanket Bash, never push).
+#     Accepted residual risk: the PR's Makefile could read the short-lived federated token on disk.
 #   * The write-capable octo-sts token (fix.sts.yaml, contents:write) is minted AFTER the untrusted
 #     build and used only to push — never exposed to the agent.
 name: fix-agent
@@ -162,48 +166,60 @@ jobs:
             '{group_label: $group, upgrades: $upgrades, failing_checks: $failing, base_ref: (if $base_sha == "" then $base_ref else $base_sha end)}' \
             > pr/.eval-context.json
 
-      - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
+      - name: Record pre-agent HEAD
+        id: pre
+        run: echo "sha=$(git -C pr rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      # Run /fix headless — env is ANTHROPIC_API_KEY + FIX_CONTEXT_FILE only (no GitHub token).
+      # Run /fix headless via the official base action, authenticated by workload identity federation
+      # (the IDs below are identifiers, not credentials). The action fetches the OIDC token itself and
+      # strips ACTIONS_ID_TOKEN_REQUEST_* from Claude's env so untrusted code the agent invokes
+      # (make build) cannot mint OIDC tokens. continue-on-error: a failed or exhausted agent run must
+      # still reach the push + recap steps.
       - name: Run /fix
         id: fix
+        continue-on-error: true
+        uses: anthropics/claude-code-action/base-action@2dca132ff0e0c4094ce6048b422c6915a071210b # v1.0.247
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_WORKING_DIR: ${{ github.workspace }}/pr
+          CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: '1'
           FIX_CONTEXT_FILE: ${{ github.workspace }}/pr/.eval-context.json
-          PR_NUMBER: ${{ github.event.issue.number }}
+        with:
+          prompt: /fix ${{ github.event.issue.number }}
+          anthropic_federation_rule_id: fdrl_01WdaiKMQqgu8KTxxb9ZYr9R
+          anthropic_organization_id: 163812c1-814e-4d9b-8a6e-879467845bd8
+          anthropic_service_account_id: svac_01GcRRa4Q1NfGRyCynyxkXY9 # flywheel-ci-workflows
+          anthropic_workspace_id: wrkspc_01SWcrtWDyke1TCLzAxZoFqT # Flywheel
+          # Narrow allow-list: make/go/local-git/read utils. Never blanket Bash, never push or gh.
+          claude_args: |
+            --strict-mcp-config
+            --permission-mode acceptEdits
+            --max-turns 80
+            --max-budget-usd 8
+            --allowedTools "Read,Edit,Bash(make:*),Bash(go:*),Bash(git add:*),Bash(git commit:*),Bash(git diff:*),Bash(git status:*),Bash(git log:*),Bash(git checkout:*),Bash(git stash:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(.tools/osv-scanner:*),Bash(grep:*),Bash(sed:*),Bash(awk:*),Bash(jq:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(sort:*),Bash(comm:*),Bash(head:*),Bash(tail:*)"
+
+      - name: Collect /fix result
+        id: result
+        env:
+          PRE_SHA: ${{ steps.pre.outputs.sha }}
+          EXECUTION_FILE: ${{ steps.fix.outputs.execution_file }}
+          FIX_OUTCOME: ${{ steps.fix.outcome }}
         run: |
           set -euo pipefail
-          before="$(git -C pr rev-parse HEAD)"
-          echo "pre_sha=$before" >> "$GITHUB_OUTPUT"
-          # Strip the runner's OIDC + runtime tokens so untrusted code the agent invokes (make build)
-          # cannot mint an OIDC token or poison the Actions cache. Later steps get a fresh env.
-          unset ACTIONS_ID_TOKEN_REQUEST_TOKEN ACTIONS_ID_TOKEN_REQUEST_URL ACTIONS_RUNTIME_TOKEN ACTIONS_RUNTIME_URL
-          # Narrow allow-list: make/go/local-git/read utils. Never blanket Bash, never push or gh.
-          allowed='Read,Edit,Bash(make:*),Bash(go:*),Bash(git add:*),Bash(git commit:*),Bash(git diff:*),Bash(git status:*),Bash(git log:*),Bash(git checkout:*),Bash(git stash:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(.tools/osv-scanner:*),Bash(grep:*),Bash(sed:*),Bash(awk:*),Bash(jq:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(sort:*),Bash(comm:*),Bash(head:*),Bash(tail:*)'
-          set +e
-          ( cd pr && claude -p "/fix ${PR_NUMBER}" \
-              --strict-mcp-config \
-              --allowedTools "$allowed" \
-              --permission-mode acceptEdits \
-              --output-format json \
-              --max-turns 80 \
-              --max-budget-usd 8 ) > out.json 2> claude.stderr
-          rc=$?
-          set -e
-          echo "claude exit: $rc"
-          # The skill's structured recap is the JSON "result" field; fall back to raw stdout/stderr.
-          # select(length>0) so an empty-string result (not just a missing one) also falls through to
-          # stderr — `//` only substitutes on null, and jq would otherwise emit a blank recap.
-          jq -r '(.result // .text // "") | select(length>0)' out.json > recap.md 2>/dev/null || true
-          [ -s recap.md ] || cp claude.stderr recap.md
+          # The skill's structured recap is the final "result" message in the execution log.
+          # select(length>0) so an empty-string result (not just a missing one) also falls through —
+          # `//` only substitutes on null, and jq would otherwise emit a blank recap.
+          if [ -n "${EXECUTION_FILE:-}" ] && [ -f "$EXECUTION_FILE" ]; then
+            jq -r '[.[] | select(.type == "result")] | last | (.result // "") | select(length>0)' \
+              "$EXECUTION_FILE" > recap.md 2>/dev/null || true
+          fi
+          [ -s recap.md ] || echo "_The agent produced no recap (step outcome: ${FIX_OUTCOME}); check the workflow run logs._" > recap.md
           after="$(git -C pr rev-parse HEAD)"
-          echo "post_sha=$after" >> "$GITHUB_OUTPUT"
-          if [ "$before" != "$after" ]; then echo "pushed=true" >> "$GITHUB_OUTPUT"; else echo "pushed=false" >> "$GITHUB_OUTPUT"; fi
+          echo "fix outcome: $FIX_OUTCOME, pre=$PRE_SHA post=$after"
+          if [ "$PRE_SHA" != "$after" ]; then echo "pushed=true" >> "$GITHUB_OUTPUT"; else echo "pushed=false" >> "$GITHUB_OUTPUT"; fi
 
       # Mint the write token only now — after the untrusted build — and use it only to push.
       - name: Get Octo STS Token (contents:write, push-only)
-        if: steps.fix.outputs.pushed == 'true'
+        if: steps.result.outputs.pushed == 'true'
         id: octo-sts
         uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
         with:
@@ -211,7 +227,7 @@ jobs:
           identity: fix
 
       - name: Push fix commits to the renovate branch
-        if: steps.fix.outputs.pushed == 'true'
+        if: steps.result.outputs.pushed == 'true'
         env:
           # Untrusted branch name passed via env, never interpolated into the shell.
           GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
@@ -228,7 +244,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.issue.number }}
-          PUSHED: ${{ steps.fix.outputs.pushed }}
+          PUSHED: ${{ steps.result.outputs.pushed }}
         run: |
           set -euo pipefail
           {
