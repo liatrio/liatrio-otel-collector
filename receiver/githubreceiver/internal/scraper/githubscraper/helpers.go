@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/cenkalti/backoff/v5"
+	"github.com/cenkalti/backoff/v7"
 	"github.com/google/go-github/v89/github"
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 	"go.uber.org/zap"
@@ -108,8 +108,7 @@ func (ghs *githubScraper) getBranches(
 				cost := r.GetRateLimit().Cost
 
 				if cost >= remaining {
-					reset := time.Until(reset).Seconds()
-					return "", backoff.RetryAfter(int(reset))
+					return "", backoff.RetryAfter(time.Until(reset), err)
 				}
 			}
 
@@ -266,8 +265,7 @@ func (ghs *githubScraper) getPullRequests(
 				cost := prs.GetRateLimit().Cost
 
 				if cost >= remaining {
-					reset := time.Until(reset).Seconds()
-					return "", backoff.RetryAfter(int(reset))
+					return "", backoff.RetryAfter(time.Until(reset), err)
 				}
 
 				return "", err
@@ -365,8 +363,7 @@ func (ghs *githubScraper) getCommitData(
 			cost := data.GetRateLimit().Cost
 
 			if cost >= remaining {
-				reset := time.Until(reset).Seconds()
-				return nil, backoff.RetryAfter(int(reset))
+				return nil, backoff.RetryAfter(time.Until(reset), err)
 			}
 		}
 
