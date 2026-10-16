@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/collector/filter"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
+	"go.opentelemetry.io/collector/pdata/xpdata/xhash"
 	"go.opentelemetry.io/collector/receiver"
 	conventions "go.opentelemetry.io/otel/semconv/v1.37.0"
 )
@@ -20,6 +21,15 @@ const (
 	AggregationStrategyMin = "min"
 	AggregationStrategyMax = "max"
 )
+
+// dataPointKey hashes dp's attributes and timestamps for O(1) dedup lookup.
+func dataPointKey(dp pmetric.NumberDataPoint) uint64 {
+	return xhash.Hash64(
+		xhash.WithMap(dp.Attributes()),
+		xhash.WithValue(pcommon.NewValueInt(int64(dp.StartTimestamp()))),
+		xhash.WithValue(pcommon.NewValueInt(int64(dp.Timestamp()))),
+	)
+}
 
 // AttributeDeploymentStatus specifies the value deployment.status attribute.
 type AttributeDeploymentStatus int
@@ -308,6 +318,7 @@ type metricDeployDeploymentAverageDuration struct {
 	config        DeployDeploymentAverageDurationMetricConfig // metric config provided by user.
 	capacity      int                                         // max observed number of data points added to the metric.
 	aggDataPoints []int64                                     // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int                              // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills deploy.deployment.average_duration metric with initial data.
@@ -318,6 +329,7 @@ func (m *metricDeployDeploymentAverageDuration) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricDeployDeploymentAverageDuration) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string) {
@@ -336,31 +348,31 @@ func (m *metricDeployDeploymentAverageDuration) recordDataPoint(start pcommon.Ti
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -400,6 +412,7 @@ type metricDeployDeploymentCount struct {
 	config        DeployDeploymentCountMetricConfig // metric config provided by user.
 	capacity      int                               // max observed number of data points added to the metric.
 	aggDataPoints []int64                           // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int                    // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills deploy.deployment.count metric with initial data.
@@ -412,6 +425,7 @@ func (m *metricDeployDeploymentCount) init() {
 	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityUnspecified)
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricDeployDeploymentCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string, deploymentStatusAttributeValue string) {
@@ -433,31 +447,31 @@ func (m *metricDeployDeploymentCount) recordDataPoint(start pcommon.Timestamp, t
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Sum().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -497,6 +511,7 @@ type metricDeployDeploymentLastTimestamp struct {
 	config        DeployDeploymentLastTimestampMetricConfig // metric config provided by user.
 	capacity      int                                       // max observed number of data points added to the metric.
 	aggDataPoints []int64                                   // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int                            // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills deploy.deployment.last_timestamp metric with initial data.
@@ -507,6 +522,7 @@ func (m *metricDeployDeploymentLastTimestamp) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricDeployDeploymentLastTimestamp) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, serviceNameAttributeValue string, deploymentEnvironmentNameAttributeValue string, deploymentStatusAttributeValue string) {
@@ -528,31 +544,31 @@ func (m *metricDeployDeploymentLastTimestamp) recordDataPoint(start pcommon.Time
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -592,6 +608,7 @@ type metricVcsChangeCount struct {
 	config        VcsChangeCountMetricConfig // metric config provided by user.
 	capacity      int                        // max observed number of data points added to the metric.
 	aggDataPoints []int64                    // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int             // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills vcs.change.count metric with initial data.
@@ -602,6 +619,7 @@ func (m *metricVcsChangeCount) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricVcsChangeCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsChangeStateAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string) {
@@ -626,31 +644,31 @@ func (m *metricVcsChangeCount) recordDataPoint(start pcommon.Timestamp, ts pcomm
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -690,6 +708,7 @@ type metricVcsChangeDuration struct {
 	config        VcsChangeDurationMetricConfig // metric config provided by user.
 	capacity      int                           // max observed number of data points added to the metric.
 	aggDataPoints []int64                       // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int                // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills vcs.change.duration metric with initial data.
@@ -700,6 +719,7 @@ func (m *metricVcsChangeDuration) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricVcsChangeDuration) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsChangeStateAttributeValue string) {
@@ -727,31 +747,31 @@ func (m *metricVcsChangeDuration) recordDataPoint(start pcommon.Timestamp, ts pc
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -791,6 +811,7 @@ type metricVcsChangeTimeToApproval struct {
 	config        VcsChangeTimeToApprovalMetricConfig // metric config provided by user.
 	capacity      int                                 // max observed number of data points added to the metric.
 	aggDataPoints []int64                             // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int                      // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills vcs.change.time_to_approval metric with initial data.
@@ -801,6 +822,7 @@ func (m *metricVcsChangeTimeToApproval) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricVcsChangeTimeToApproval) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string) {
@@ -825,31 +847,31 @@ func (m *metricVcsChangeTimeToApproval) recordDataPoint(start pcommon.Timestamp,
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -889,6 +911,7 @@ type metricVcsChangeTimeToMerge struct {
 	config        VcsChangeTimeToMergeMetricConfig // metric config provided by user.
 	capacity      int                              // max observed number of data points added to the metric.
 	aggDataPoints []int64                          // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int                   // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills vcs.change.time_to_merge metric with initial data.
@@ -899,6 +922,7 @@ func (m *metricVcsChangeTimeToMerge) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricVcsChangeTimeToMerge) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string) {
@@ -923,31 +947,31 @@ func (m *metricVcsChangeTimeToMerge) recordDataPoint(start pcommon.Timestamp, ts
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -987,6 +1011,7 @@ type metricVcsCodeCoverage struct {
 	config        VcsCodeCoverageMetricConfig // metric config provided by user.
 	capacity      int                         // max observed number of data points added to the metric.
 	aggDataPoints []int64                     // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int              // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills vcs.code_coverage metric with initial data.
@@ -997,6 +1022,7 @@ func (m *metricVcsCodeCoverage) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricVcsCodeCoverage) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefHeadTypeAttributeValue string) {
@@ -1024,31 +1050,31 @@ func (m *metricVcsCodeCoverage) recordDataPoint(start pcommon.Timestamp, ts pcom
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -1088,6 +1114,7 @@ type metricVcsContributorCount struct {
 	config        VcsContributorCountMetricConfig // metric config provided by user.
 	capacity      int                             // max observed number of data points added to the metric.
 	aggDataPoints []int64                         // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int                  // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills vcs.contributor.count metric with initial data.
@@ -1098,6 +1125,7 @@ func (m *metricVcsContributorCount) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricVcsContributorCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string) {
@@ -1119,31 +1147,31 @@ func (m *metricVcsContributorCount) recordDataPoint(start pcommon.Timestamp, ts 
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -1183,6 +1211,7 @@ type metricVcsRefCount struct {
 	config        VcsRefCountMetricConfig // metric config provided by user.
 	capacity      int                     // max observed number of data points added to the metric.
 	aggDataPoints []int64                 // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int          // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills vcs.ref.count metric with initial data.
@@ -1193,6 +1222,7 @@ func (m *metricVcsRefCount) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricVcsRefCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefTypeAttributeValue string) {
@@ -1217,31 +1247,31 @@ func (m *metricVcsRefCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -1281,6 +1311,7 @@ type metricVcsRefLinesDelta struct {
 	config        VcsRefLinesDeltaMetricConfig // metric config provided by user.
 	capacity      int                          // max observed number of data points added to the metric.
 	aggDataPoints []int64                      // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int               // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills vcs.ref.lines_delta metric with initial data.
@@ -1291,6 +1322,7 @@ func (m *metricVcsRefLinesDelta) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricVcsRefLinesDelta) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefTypeAttributeValue string, vcsRefBaseNameAttributeValue string, vcsRefBaseTypeAttributeValue string, vcsLineChangeTypeAttributeValue string) {
@@ -1327,31 +1359,31 @@ func (m *metricVcsRefLinesDelta) recordDataPoint(start pcommon.Timestamp, ts pco
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -1391,6 +1423,7 @@ type metricVcsRefRevisionsDelta struct {
 	config        VcsRefRevisionsDeltaMetricConfig // metric config provided by user.
 	capacity      int                              // max observed number of data points added to the metric.
 	aggDataPoints []int64                          // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int                   // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills vcs.ref.revisions_delta metric with initial data.
@@ -1401,6 +1434,7 @@ func (m *metricVcsRefRevisionsDelta) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricVcsRefRevisionsDelta) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefTypeAttributeValue string, vcsRevisionDeltaDirectionAttributeValue string) {
@@ -1431,31 +1465,31 @@ func (m *metricVcsRefRevisionsDelta) recordDataPoint(start pcommon.Timestamp, ts
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -1495,6 +1529,7 @@ type metricVcsRefTime struct {
 	config        VcsRefTimeMetricConfig // metric config provided by user.
 	capacity      int                    // max observed number of data points added to the metric.
 	aggDataPoints []int64                // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int         // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills vcs.ref.time metric with initial data.
@@ -1505,6 +1540,7 @@ func (m *metricVcsRefTime) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricVcsRefTime) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, vcsRepositoryURLFullAttributeValue string, vcsRepositoryNameAttributeValue string, vcsRepositoryIDAttributeValue string, vcsRefHeadNameAttributeValue string, vcsRefTypeAttributeValue string) {
@@ -1532,31 +1568,31 @@ func (m *metricVcsRefTime) recordDataPoint(start pcommon.Timestamp, ts pcommon.T
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -1646,6 +1682,7 @@ type metricWorkItemAge struct {
 	config        WorkItemAgeMetricConfig // metric config provided by user.
 	capacity      int                     // max observed number of data points added to the metric.
 	aggDataPoints []int64                 // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int          // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills work_item.age metric with initial data.
@@ -1656,6 +1693,7 @@ func (m *metricWorkItemAge) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricWorkItemAge) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, workItemIDAttributeValue string, workItemTypeAttributeValue string, workItemStateAttributeValue string, projectNameAttributeValue string) {
@@ -1680,31 +1718,31 @@ func (m *metricWorkItemAge) recordDataPoint(start pcommon.Timestamp, ts pcommon.
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -1744,6 +1782,7 @@ type metricWorkItemCount struct {
 	config        WorkItemCountMetricConfig // metric config provided by user.
 	capacity      int                       // max observed number of data points added to the metric.
 	aggDataPoints []int64                   // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int            // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills work_item.count metric with initial data.
@@ -1754,6 +1793,7 @@ func (m *metricWorkItemCount) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricWorkItemCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, workItemTypeAttributeValue string, workItemStateAttributeValue string, projectNameAttributeValue string) {
@@ -1775,31 +1815,31 @@ func (m *metricWorkItemCount) recordDataPoint(start pcommon.Timestamp, ts pcommo
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -1839,6 +1879,7 @@ type metricWorkItemCycleTime struct {
 	config        WorkItemCycleTimeMetricConfig // metric config provided by user.
 	capacity      int                           // max observed number of data points added to the metric.
 	aggDataPoints []int64                       // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int                // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills work_item.cycle_time metric with initial data.
@@ -1849,6 +1890,7 @@ func (m *metricWorkItemCycleTime) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricWorkItemCycleTime) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, workItemIDAttributeValue string, workItemTypeAttributeValue string, projectNameAttributeValue string) {
@@ -1870,31 +1912,31 @@ func (m *metricWorkItemCycleTime) recordDataPoint(start pcommon.Timestamp, ts pc
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
@@ -1934,6 +1976,7 @@ type metricWorkItemTagCount struct {
 	config        WorkItemTagCountMetricConfig // metric config provided by user.
 	capacity      int                          // max observed number of data points added to the metric.
 	aggDataPoints []int64                      // slice containing number of aggregated datapoints at each index
+	dpIndex       map[uint64]int               // maps a data point's hash to its index, for O(1) dedup lookup.
 }
 
 // init fills work_item.tag.count metric with initial data.
@@ -1944,6 +1987,7 @@ func (m *metricWorkItemTagCount) init() {
 	m.data.SetEmptyGauge()
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 	m.aggDataPoints = m.aggDataPoints[:0]
+	m.dpIndex = make(map[uint64]int, m.capacity)
 }
 
 func (m *metricWorkItemTagCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, workItemTagAttributeValue string, workItemTypeAttributeValue string, projectNameAttributeValue string) {
@@ -1965,31 +2009,31 @@ func (m *metricWorkItemTagCount) recordDataPoint(start pcommon.Timestamp, ts pco
 	}
 
 	var s string
+	key := dataPointKey(dp)
 	dps := m.data.Gauge().DataPoints()
-	for i := 0; i < dps.Len(); i++ {
+	if i, ok := m.dpIndex[key]; ok {
 		dpi := dps.At(i)
-		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
-			switch s = m.config.AggregationStrategy; s {
-			case AggregationStrategySum, AggregationStrategyAvg:
-				dpi.SetIntValue(dpi.IntValue() + val)
-				m.aggDataPoints[i] += 1
-				return
-			case AggregationStrategyMin:
-				if dpi.IntValue() > val {
-					dpi.SetIntValue(val)
-				}
-				return
-			case AggregationStrategyMax:
-				if dpi.IntValue() < val {
-					dpi.SetIntValue(val)
-				}
-				return
+		switch s = m.config.AggregationStrategy; s {
+		case AggregationStrategySum, AggregationStrategyAvg:
+			dpi.SetIntValue(dpi.IntValue() + val)
+			m.aggDataPoints[i] += 1
+			return
+		case AggregationStrategyMin:
+			if dpi.IntValue() > val {
+				dpi.SetIntValue(val)
 			}
+			return
+		case AggregationStrategyMax:
+			if dpi.IntValue() < val {
+				dpi.SetIntValue(val)
+			}
+			return
 		}
 	}
 
 	dp.SetIntValue(val)
 	m.aggDataPoints = append(m.aggDataPoints, 1)
+	m.dpIndex[key] = dps.Len()
 	dp.MoveTo(dps.AppendEmpty())
 }
 
