@@ -65,14 +65,10 @@ jobs:
         if: steps.version.outputs.skip == 'false'
         run: make install-tools
 
-      - name: Import GPG key
+      # Keyless signing via the job's OIDC identity; multimod always runs `git tag -s`.
+      - name: Setup gitsign
         if: steps.version.outputs.skip == 'false'
-        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7.0.0
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_KEY_PASSPHRASE }}
-          git_user_signingkey: true
-          git_commit_gpgsign: true
+        uses: chainguard-dev/actions/setup-gitsign@3403a578b543fd3f0debdaef9dd989ae54e3fcef # main 2026-10-06
 
       - name: Get GitHub App User ID
         if: steps.version.outputs.skip == 'false'
