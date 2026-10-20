@@ -1,7 +1,17 @@
 ---
+# Trust policy for the `semantic-release` octo-sts identity, used by cut-release.yml (push the release
+# branch, open the PR) and create-release.yml (push tags, create the Release). octo-sts reads this
+# from the DEFAULT BRANCH, so a PR can't widen it.
 issuer: https://token.actions.githubusercontent.com
+
+# Patterns are auto-anchored ^...$.
 subject_pattern: repo:liatrio/liatrio-otel-collector:ref:refs/heads/main
+
+claim_pattern:
+  # Only the two release workflows on main can mint this token.
+  workflow_ref: liatrio/liatrio-otel-collector/\.github/workflows/(cut-release|create-release)\.yml@refs/heads/main
 
 permissions:
   contents: write
   packages: write
+  pull_requests: write

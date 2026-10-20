@@ -1,0 +1,142 @@
+---
+# Opens a release PR that bumps versions.yaml and runs multimod prerelease. Merging that PR
+# triggers create-release.yml, which tags and publishes. See docs/releasing.md.
+name: cut-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump (auto = from Conventional Commits since the last tag, patch if none)
+        type: choice
+        options: [auto, patch, minor]
+        default: auto
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  cut-release:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Get Octo STS Token
+        uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
+        id: octo-sts
+        with:
+          scope: ${{ github.repository }}
+          identity: semantic-release
+
+      - name: Clone repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          token: ${{ steps.octo-sts.outputs.token }}
+          fetch-depth: 0
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: 1.27
+
+      - name: Install tools
+        run: make install-tools
+
+      - name: Get next version
+        id: get_next_version
+        uses: thenativeweb/get-next-version@c43a909ffb1edc9e5444bc62a2f86504e8506e5f # 2.8.2
+        with:
+          prefix: v
+
+      - name: Compute release version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+          AUTO_VERSION: ${{ steps.get_next_version.outputs.version }}
+          AUTO_HAS_NEXT: ${{ steps.get_next_version.outputs.hasNextVersion }}
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+        run: |
+          set -euo pipefail
+          LAST=$(git tag -l 'v*' --sort=-v:refname | head -1)
+          CURRENT=$(yq '.module-sets.liatrio-otel.version' versions.yaml)
+          # A prepared-but-untagged version must be published before cutting another.
+          if [ "$CURRENT" != "$LAST" ] && ! git rev-parse -q --verify "refs/tags/$CURRENT" >/dev/null; then
+            echo "::error::versions.yaml is $CURRENT but it has no tag; dispatch create-release first"
+            exit 1
+          fi
+          IFS=. read -r MAJOR MINOR PATCH <<< "${LAST#v}"
+          case "$BUMP" in
+            minor) VERSION="v$MAJOR.$((MINOR + 1)).0" ;;
+            patch) VERSION="v$MAJOR.$MINOR.$((PATCH + 1))" ;;
+            auto)
+              # Dispatching means "release now", so a chore-only bundle still ships as a patch.
+              if [ "$AUTO_HAS_NEXT" = "true" ]; then VERSION="$AUTO_VERSION"; else VERSION="v$MAJOR.$MINOR.$((PATCH + 1))"; fi
+              ;;
+          esac
+          BRANCH="release/$VERSION"
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            echo "::error::tag $VERSION already exists"; exit 1
+          fi
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null; then
+            echo "::error::branch $BRANCH already exists"; exit 1
+          fi
+          if [ -n "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+            echo "::error::an open PR for $BRANCH already exists"; exit 1
+          fi
+          echo "Releasing $VERSION (previous: $LAST, bump: $BUMP)"
+          {
+            echo "version=$VERSION"
+            echo "previous=$LAST"
+            echo "branch=$BRANCH"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/octo-sts[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+
+      - name: Prepare release branch
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BRANCH: ${{ steps.version.outputs.branch }}
+          USER_ID: ${{ steps.get-user-id.outputs.user-id }}
+        run: |
+          set -euo pipefail
+          git config --global user.name 'octo-sts[bot]'
+          git config --global user.email "$USER_ID+octo-sts[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          yq -i ".module-sets.liatrio-otel.version = \"$VERSION\"" versions.yaml
+          git add versions.yaml
+          git commit -m "chore: prepare release $VERSION"
+          make multimod-prerelease
+          git push origin "$BRANCH"
+
+      - name: Open release PR
+        env:
+          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PREVIOUS: ${{ steps.version.outputs.previous }}
+          BRANCH: ${{ steps.version.outputs.branch }}
+        run: |
+          set -euo pipefail
+          NOTES=$(gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+            -f tag_name="$VERSION" -f previous_tag_name="$PREVIOUS" -f target_commitish="$BRANCH" --jq .body)
+          BODY_FILE=$(mktemp)
+          cat > "$BODY_FILE" <<EOF
+          Prepares liatrio-otel $VERSION (previous: $PREVIOUS).
+
+          **Merging this PR publishes the release**: \`create-release\` tags the module set and creates
+          the GitHub Release, which triggers GoReleaser.
+
+          ## Release notes preview
+
+          $NOTES
+          EOF
+          gh pr create --base main --head "$BRANCH" \
+            --title "chore(release): prepare liatrio-otel $VERSION" --body-file "$BODY_FILE"
