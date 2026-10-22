@@ -10,7 +10,7 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/cenkalti/backoff/v5"
+	"github.com/cenkalti/backoff/v7"
 )
 
 type gitlabProject struct {
@@ -40,7 +40,7 @@ func (gls *gitlabScraper) getProjects(ctx context.Context, restClient *gitlab.Cl
 			if err != nil {
 				if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
 					apiErr.Response.Status == "429 Too Many Requests" {
-					return "", backoff.RetryAfter(60)
+					return "", backoff.RetryAfter(60*time.Second, err)
 				}
 				return "", backoff.Permanent(err)
 			}
@@ -96,7 +96,7 @@ func (gls *gitlabScraper) getBranchNames(ctx context.Context, client graphql.Cli
 		if err != nil {
 			if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
 				apiErr.Response.Status == "429 Too Many Requests" {
-				return "", backoff.RetryAfter(60)
+				return "", backoff.RetryAfter(60*time.Second, err)
 			}
 			return "", backoff.Permanent(err)
 		}
@@ -119,7 +119,7 @@ func (gls *gitlabScraper) getInitialCommit(ctx context.Context, client *gitlab.C
 		if err != nil {
 			if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
 				apiErr.Response.Status == "429 Too Many Requests" {
-				return "", backoff.RetryAfter(60)
+				return "", backoff.RetryAfter(60*time.Second, err)
 			}
 			return "", backoff.Permanent(err)
 		}
@@ -150,7 +150,7 @@ func (gls *gitlabScraper) getContributorCount(
 		if err != nil {
 			if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
 				apiErr.Response.Status == "429 Too Many Requests" {
-				return "", backoff.RetryAfter(60)
+				return "", backoff.RetryAfter(60*time.Second, err)
 			}
 			return "", backoff.Permanent(err)
 		}
@@ -181,7 +181,7 @@ func (gls *gitlabScraper) getMergeRequests(
 			if err != nil {
 				if apiErr, ok := err.(*gitlab.ErrorResponse); ok && apiErr.Response.StatusCode == 429 &&
 					apiErr.Response.Status == "429 Too Many Requests" {
-					return "", backoff.RetryAfter(60)
+					return "", backoff.RetryAfter(60*time.Second, err)
 				}
 				return "", backoff.Permanent(err)
 			}
