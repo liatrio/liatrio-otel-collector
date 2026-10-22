@@ -16,6 +16,7 @@ on:
       - '**/documentation.md'
       - .golangci.yaml
       - .goreleaser.yaml
+      - versions.yaml
 
   push:
     branches: [main]
@@ -121,7 +122,8 @@ jobs:
     # bump is an import-path migration whose new require is unused until imports are rewritten — a
     # judgment-tier change Tier 1's `make tidy-all` cannot do, and would in fact silently drop the
     # require. Those PRs flow past regen to the LLM tier (the /fix agent) instead.
-    if: failure() && github.event.pull_request.user.login == 'renovate[bot]' && github.actor != 'octo-sts[bot]' && !contains(github.event.pull_request.labels.*.name, 'dependency-major-update')
+    if: failure() && github.event.pull_request.user.login == 'renovate[bot]' && github.actor != 'octo-sts[bot]' && 
+      !contains(github.event.pull_request.labels.*.name, 'dependency-major-update')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -275,57 +277,3 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
-
-  multimod-prepare-release:
-    if: ${{ github.ref == 'refs/heads/main' && github.actor != 'octo-sts[bot]' }}
-    needs: [lint, build]
-    runs-on:
-      group: bigger
-    permissions:
-      contents: write
-      id-token: write
-    steps:
-      - name: Get Octo STS Token
-        uses: octo-sts/action@210248e8ae1ae1550aa6e232c6f192b3ccbf7335
-        id: octo-sts
-        with:
-          scope: ${{ github.repository }}
-          identity: semantic-release
-
-      - name: Clone repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          token: ${{ steps.octo-sts.outputs.token }}
-          fetch-depth: 0
-
-      - name: Install tools
-        run: make install-tools
-
-      - name: Get next version
-        id: get_next_version
-        uses: thenativeweb/get-next-version@c43a909ffb1edc9e5444bc62a2f86504e8506e5f # 2.8.2
-        with:
-          prefix: v # optional, defaults to ''
-
-      - name: Show the next version
-        run: |
-          echo ${{ steps.get_next_version.outputs.version }}
-          echo ${{ steps.get_next_version.outputs.hasNextVersion }}
-
-      - name: Get GitHub App User ID
-        id: get-user-id
-        run: echo "user-id=$(gh api "/users/octo-sts[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
-
-      - name: Multimod release #This is so multimod prerelease can get author info
-        if: steps.get_next_version.outputs.hasNextVersion == 'true'
-        run: |
-          set -eo pipefail
-          git config --global user.name 'octo-sts[bot]'
-          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
-          yq -i '.module-sets.liatrio-otel.version = "${{ steps.get_next_version.outputs.version }}"' versions.yaml
-          git add .
-          git commit -m "chore: run multimod to update versions ahead of release(version ${{ steps.get_next_version.outputs.version }})"
-          make multimod-prerelease
-          git push

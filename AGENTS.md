@@ -168,8 +168,9 @@ register, and the package-upgrade/OCB/Renovate runbook live in
 - CI (`.github/workflows/build.yml`) only runs real jobs on PRs targeting `main`. It re-runs
   `make generate`, `make tidy-all`, and `make crosslink` and fails on any resulting diff — so keep
   generated code, module tidiness, and replace directives in sync.
-- Releases are automated on `main` via multimod + semantic versioning driven by `versions.yaml`
-  (the `liatrio-otel` module set). Full pipeline in [`docs/releasing.md`](docs/releasing.md).
+- Releases are maintainer-triggered: dispatching `cut-release` opens a release PR that bumps
+  `versions.yaml` (the `liatrio-otel` module set) via multimod, and merging it tags and publishes.
+  Merges to `main` do not release on their own. Full pipeline in [`docs/releasing.md`](docs/releasing.md).
 
 ## Guardrails
 

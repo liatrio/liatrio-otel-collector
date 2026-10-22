@@ -1,17 +1,28 @@
 ---
+# Tags the module set at the version in versions.yaml and creates the GitHub Release (which triggers
+# release.yml). Runs when a release PR from cut-release.yml merges; no-op if the tag already exists.
 name: create-release
 
 on:
   push:
     branches: [main]
+    paths: [versions.yaml]
+  # Manual recovery, e.g. a prepared version that was never tagged.
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   create-release:
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' && github.actor == 'octo-sts[bot]' && startsWith(github.event.head_commit.message, 'Prepare liatrio-otel 
-      for version') }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     permissions:
-      contents: write
+      contents: read
       id-token: write
     steps:
       - name: Get Octo STS Token
@@ -27,49 +38,62 @@ jobs:
           token: ${{ steps.octo-sts.outputs.token }}
           fetch-depth: 0
 
+      - name: Check release version
+        id: version
+        run: |
+          set -euo pipefail
+          VERSION=$(yq '.module-sets.liatrio-otel.version' versions.yaml)
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            echo "Tag $VERSION already exists; nothing to release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          PREVIOUS=$(git tag -l 'v*' --sort=-v:refname | head -1)
+          echo "Releasing $VERSION (previous: $PREVIOUS)"
+          {
+            echo "skip=false"
+            echo "version=$VERSION"
+            echo "previous=$PREVIOUS"
+          } >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        if: steps.version.outputs.skip == 'false'
         with:
           go-version: 1.27
 
       - name: Install tools
+        if: steps.version.outputs.skip == 'false'
         run: make install-tools
 
-      - name: Get changelog
-        id: get_tag
-        uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          custom_release_rules: chore:patch:🧹 Chores,fix:patch:🐛 Bug Fixes,feat:minor:✨ Features
-          dry_run: true
-          default_bump: false
-
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7.0.0
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_KEY_PASSPHRASE }}
-          git_user_signingkey: true
-          git_commit_gpgsign: true
+      # Keyless signing via the job's OIDC identity; multimod always runs `git tag -s`.
+      - name: Setup gitsign
+        if: steps.version.outputs.skip == 'false'
+        uses: chainguard-dev/actions/setup-gitsign@3403a578b543fd3f0debdaef9dd989ae54e3fcef # main 2026-10-06
 
       - name: Get GitHub App User ID
+        if: steps.version.outputs.skip == 'false'
         id: get-user-id
         run: echo "user-id=$(gh api "/users/octo-sts[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
 
       - name: Multimod Push Tags
+        if: steps.version.outputs.skip == 'false'
+        env:
+          USER_ID: ${{ steps.get-user-id.outputs.user-id }}
         run: |
           set -eo pipefail
           git config --global user.name 'octo-sts[bot]'
-          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+octo-sts[bot]@users.noreply.github.com'
-          ./.tools/multimod tag --module-set-name liatrio-otel --commit-hash '${{ github.sha }}' --print-tags
+          git config --global user.email "$USER_ID+octo-sts[bot]@users.noreply.github.com"
+          ./.tools/multimod tag --module-set-name liatrio-otel --commit-hash "$GITHUB_SHA" --print-tags
           git push --tags
 
+      # Must use the octo-sts token: releases created with GITHUB_TOKEN don't trigger release.yml.
       - name: Create GitHub Release
+        if: steps.version.outputs.skip == 'false'
         env:
-          # GH_TOKEN: ${{ secrets.TEST_PAT_TRIGGER }}
           GH_TOKEN: ${{ steps.octo-sts.outputs.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PREVIOUS: ${{ steps.version.outputs.previous }}
         run: |
-          gh release create '${{  steps.get_tag.outputs.new_tag }}' \
-            --notes "${{ steps.get_tag.outputs.changelog }}" \
-            --target "$(git rev-parse HEAD)"
+          gh release create "$VERSION" --generate-notes --notes-start-tag "$PREVIOUS" --target "$GITHUB_SHA"

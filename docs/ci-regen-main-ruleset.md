@@ -45,12 +45,17 @@ achievable** here:
   entry is the octo-sts App; GitHub cannot distinguish a token minted by the `regen` policy from one
   minted by the `semantic-release` policy — both are "a token from the octo-sts App installation."
 - `semantic-release` (`.github/chainguard/semantic-release.sts.yaml`, subject
-  `…:ref:refs/heads/main`) mints through the **same octo-sts App** and pushes release-prep commits to
-  `main` (the `multimod-prepare-release` job in `build.yml`). So octo-sts **must** be on `main`'s
-  bypass list for releases to work.
+  `…:ref:refs/heads/main`) mints through the **same octo-sts App**. It used to push release-prep
+  commits straight to `main`, which is why octo-sts was put on `main`'s bypass list.
 - Therefore octo-sts being on the bypass list transitively grants `regen`-minted tokens bypass of the
-  `main` ruleset. Removing octo-sts from the bypass list would break releases; scoping one identity's
-  bypass independently is not supported by GitHub.
+  `main` ruleset. Removing octo-sts from the bypass list would have broken releases; scoping one
+  identity's bypass independently is not supported by GitHub.
+
+> **Update (release PRs):** releases now go through a PR opened by `cut-release.yml` and only push
+> tags (`create-release.yml`), so `semantic-release` no longer pushes to `main`. Admins should
+> re-check whether anything still needs the octo-sts bypass (`regen` and `fix` push only to renovate
+> branches) and remove it if not, which would restore the ruleset as a backstop for `regen`. The
+> rest of this doc records the state when the bypass was required.
 
 The originally-planned "ruleset excludes `regen` from bypass" control is thus **not in place**, and
 `regen`'s inability to reach `main` rests on Defense layers 1 and 2.

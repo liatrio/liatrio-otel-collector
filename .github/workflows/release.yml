@@ -54,3 +54,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+          # Several module tags share the commit; release the root tag.
+          GORELEASER_CURRENT_TAG: ${{ github.ref_name }}
