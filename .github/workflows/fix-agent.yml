@@ -178,7 +178,7 @@ jobs:
       - name: Run /fix
         id: fix
         continue-on-error: true
-        uses: anthropics/claude-code-action/base-action@6b6870e649b5ff408753befeaee5fc7989d4e6a9 # v1.0.258
+        uses: anthropics/claude-code-action/base-action@16f9f71ab9c490faf367f94dd294897edc25be33 # v1.0.261
         env:
           CLAUDE_WORKING_DIR: ${{ github.workspace }}/pr
           CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: '1'
