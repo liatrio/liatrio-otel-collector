@@ -14,7 +14,7 @@ import (
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/cenkalti/backoff/v5"
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v93/github"
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 	"go.uber.org/zap"
 )

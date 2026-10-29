@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v93/github"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -177,40 +177,40 @@ func TestNewUniqueSteps(t *testing.T) {
 		{
 			name: "no duplicate steps",
 			steps: []*github.TaskStep{
-				{Name: github.Ptr("Build")},
-				{Name: github.Ptr("Test")},
-				{Name: github.Ptr("Deploy")},
+				{Name: new("Build")},
+				{Name: new("Test")},
+				{Name: new("Deploy")},
 			},
 			expected: []string{"Build", "Test", "Deploy"},
 		},
 		{
 			name: "with duplicate steps",
 			steps: []*github.TaskStep{
-				{Name: github.Ptr("Setup")},
-				{Name: github.Ptr("Build")},
-				{Name: github.Ptr("Test")},
-				{Name: github.Ptr("Build")},
-				{Name: github.Ptr("Test")},
-				{Name: github.Ptr("Deploy")},
+				{Name: new("Setup")},
+				{Name: new("Build")},
+				{Name: new("Test")},
+				{Name: new("Build")},
+				{Name: new("Test")},
+				{Name: new("Deploy")},
 			},
 			expected: []string{"Setup", "Build", "Test", "Build-1", "Test-1", "Deploy"},
 		},
 		{
 			name: "multiple duplicates of same step",
 			steps: []*github.TaskStep{
-				{Name: github.Ptr("Build")},
-				{Name: github.Ptr("Build")},
-				{Name: github.Ptr("Build")},
-				{Name: github.Ptr("Build")},
+				{Name: new("Build")},
+				{Name: new("Build")},
+				{Name: new("Build")},
+				{Name: new("Build")},
 			},
 			expected: []string{"Build", "Build-1", "Build-2", "Build-3"},
 		},
 		{
 			name: "with empty step names",
 			steps: []*github.TaskStep{
-				{Name: github.Ptr("")},
-				{Name: github.Ptr("")},
-				{Name: github.Ptr("Build")},
+				{Name: new("")},
+				{Name: new("")},
+				{Name: new("Build")},
 			},
 			expected: []string{"", "-1", "Build"},
 		},
@@ -241,10 +241,10 @@ func TestCreateStepSpans(t *testing.T) {
 	createTestWorkflowJobEvent := func(steps []*github.TaskStep) *github.WorkflowJobEvent {
 		return &github.WorkflowJobEvent{
 			WorkflowJob: &github.WorkflowJob{
-				ID:         github.Ptr(int64(123)),
-				RunID:      github.Ptr(int64(456)),
-				RunAttempt: github.Ptr(int64(1)),
-				Name:       github.Ptr("Test Job"),
+				ID:         new(int64(123)),
+				RunID:      new(int64(456)),
+				RunAttempt: new(int64(1)),
+				Name:       new("Test Job"),
 				Steps:      steps,
 			},
 		}
@@ -266,10 +266,10 @@ func TestCreateStepSpans(t *testing.T) {
 			name: "single step",
 			event: createTestWorkflowJobEvent([]*github.TaskStep{
 				{
-					Name:        github.Ptr("Build"),
-					Status:      github.Ptr("completed"),
-					Conclusion:  github.Ptr("success"),
-					Number:      github.Ptr(int64(1)),
+					Name:        new("Build"),
+					Status:      new("completed"),
+					Conclusion:  new("success"),
+					Number:      new(int64(1)),
 					StartedAt:   createTimestamp(0),
 					CompletedAt: createTimestamp(5),
 				},
@@ -286,26 +286,26 @@ func TestCreateStepSpans(t *testing.T) {
 			name: "multiple steps with different states",
 			event: createTestWorkflowJobEvent([]*github.TaskStep{
 				{
-					Name:        github.Ptr("Setup"),
-					Status:      github.Ptr("completed"),
-					Conclusion:  github.Ptr("success"),
-					Number:      github.Ptr(int64(1)),
+					Name:        new("Setup"),
+					Status:      new("completed"),
+					Conclusion:  new("success"),
+					Number:      new(int64(1)),
 					StartedAt:   createTimestamp(0),
 					CompletedAt: createTimestamp(2),
 				},
 				{
-					Name:        github.Ptr("Build"),
-					Status:      github.Ptr("completed"),
-					Conclusion:  github.Ptr("failure"),
-					Number:      github.Ptr(int64(2)),
+					Name:        new("Build"),
+					Status:      new("completed"),
+					Conclusion:  new("failure"),
+					Number:      new(int64(2)),
 					StartedAt:   createTimestamp(2),
 					CompletedAt: createTimestamp(5),
 				},
 				{
-					Name:        github.Ptr("Test"),
-					Status:      github.Ptr("completed"),
-					Conclusion:  github.Ptr("skipped"),
-					Number:      github.Ptr(int64(3)),
+					Name:        new("Test"),
+					Status:      new("completed"),
+					Conclusion:  new("skipped"),
+					Number:      new(int64(3)),
 					StartedAt:   createTimestamp(5),
 					CompletedAt: createTimestamp(6),
 				},
@@ -334,18 +334,18 @@ func TestCreateStepSpans(t *testing.T) {
 			name: "duplicate step names",
 			event: createTestWorkflowJobEvent([]*github.TaskStep{
 				{
-					Name:        github.Ptr("Build"),
-					Status:      github.Ptr("completed"),
-					Conclusion:  github.Ptr("success"),
-					Number:      github.Ptr(int64(1)),
+					Name:        new("Build"),
+					Status:      new("completed"),
+					Conclusion:  new("success"),
+					Number:      new(int64(1)),
 					StartedAt:   createTimestamp(0),
 					CompletedAt: createTimestamp(2),
 				},
 				{
-					Name:        github.Ptr("Build"),
-					Status:      github.Ptr("completed"),
-					Conclusion:  github.Ptr("success"),
-					Number:      github.Ptr(int64(2)),
+					Name:        new("Build"),
+					Status:      new("completed"),
+					Conclusion:  new("success"),
+					Number:      new(int64(2)),
 					StartedAt:   createTimestamp(2),
 					CompletedAt: createTimestamp(4),
 				},
