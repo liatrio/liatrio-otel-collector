@@ -12,7 +12,7 @@ import (
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/metadata"
 	"github.com/stretchr/testify/assert"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 
 	"github.com/Khan/genqlient/graphql"
@@ -156,8 +156,8 @@ func TestGetProjects(t *testing.T) {
 						{
 							Name:              "project1",
 							PathWithNamespace: "project1",
-							CreatedAt:         gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
-							LastActivityAt:    gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+							CreatedAt:         new(time.Now().AddDate(0, 0, -1)),
+							LastActivityAt:    new(time.Now().AddDate(0, 0, -1)),
 						},
 					},
 					responseCode: http.StatusOK,
@@ -174,20 +174,20 @@ func TestGetProjects(t *testing.T) {
 						{
 							Name:              "project1",
 							PathWithNamespace: "project1",
-							CreatedAt:         gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
-							LastActivityAt:    gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+							CreatedAt:         new(time.Now().AddDate(0, 0, -1)),
+							LastActivityAt:    new(time.Now().AddDate(0, 0, -1)),
 						},
 						{
 							Name:              "project2",
 							PathWithNamespace: "project2",
-							CreatedAt:         gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
-							LastActivityAt:    gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+							CreatedAt:         new(time.Now().AddDate(0, 0, -1)),
+							LastActivityAt:    new(time.Now().AddDate(0, 0, -1)),
 						},
 						{
 							Name:              "project3",
 							PathWithNamespace: "project3",
-							CreatedAt:         gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
-							LastActivityAt:    gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+							CreatedAt:         new(time.Now().AddDate(0, 0, -1)),
+							LastActivityAt:    new(time.Now().AddDate(0, 0, -1)),
 						},
 					},
 					responseCode: http.StatusOK,

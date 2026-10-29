@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/cenkalti/backoff/v5"
@@ -28,10 +28,10 @@ func (gls *gitlabScraper) getProjects(ctx context.Context, restClient *gitlab.Cl
 	operation := func() (string, error) {
 		for nextPage := 1; nextPage > 0; {
 			projects, res, err := restClient.Groups.ListGroupProjects(gls.cfg.GitLabOrg, &gitlab.ListGroupProjectsOptions{
-				IncludeSubGroups: gitlab.Ptr(true),
-				Topic:            gitlab.Ptr(gls.cfg.SearchTopic),
-				Search:           gitlab.Ptr(gls.cfg.SearchQuery),
-				Archived:         gitlab.Ptr(false),
+				IncludeSubGroups: new(true),
+				Topic:            new(gls.cfg.SearchTopic),
+				Search:           new(gls.cfg.SearchQuery),
+				Archived:         new(false),
 				ListOptions: gitlab.ListOptions{
 					Page:    int64(nextPage),
 					PerPage: 100,

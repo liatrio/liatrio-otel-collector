@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/cenkalti/backoff/v5"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 )
 
 var sourceLineRegex = regexp.MustCompile(`(?m)^\s*source\s*=\s*"([^"]*)"`)
@@ -29,7 +29,7 @@ func (gts *gitlabTerraformScraper) getModules(ctx context.Context, restClient *g
 		var attemptModules []terraformModule
 		for nextPage := 1; nextPage > 0; {
 			packages, res, err := restClient.Packages.ListGroupPackages(gts.cfg.GitLabOrg, &gitlab.ListGroupPackagesOptions{
-				PackageType: gitlab.Ptr("terraform_module"),
+				PackageType: new("terraform_module"),
 				ListOptions: gitlab.ListOptions{
 					Page:    int64(nextPage),
 					PerPage: 100,
