@@ -18,7 +18,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/pmetrictest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/receivertest"
@@ -64,8 +64,8 @@ func TestScrape(t *testing.T) {
 							Name:              "project",
 							ID:                1,
 							PathWithNamespace: "project",
-							CreatedAt:         gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
-							LastActivityAt:    gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+							CreatedAt:         new(time.Now().AddDate(0, 0, -1)),
+							LastActivityAt:    new(time.Now().AddDate(0, 0, -1)),
 						},
 					},
 					responseCode: http.StatusOK,
@@ -138,7 +138,7 @@ func TestScrape(t *testing.T) {
 						Commits: []*gitlab.Commit{
 							{
 								Title:     "commit1",
-								CreatedAt: gitlab.Ptr(time.Now().AddDate(0, 0, -1)),
+								CreatedAt: new(time.Now().AddDate(0, 0, -1)),
 							},
 						},
 					},
