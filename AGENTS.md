@@ -193,6 +193,13 @@ register, and the package-upgrade/OCB/Renovate runbook live in
   `make test`), plus `make generate` if you touched generated inputs. Do not claim a change works
   without building it.
 
+## Cursor Cloud specific instructions
+
+- Distro packages on the default image ship Go 1.22. CI and `internal/tools` need Go 1.27. The environment install places Go 1.27.3 at `/usr/local/go` and symlinks it into `/usr/local/bin` (ahead of `/usr/bin`). Keep `GOTOOLCHAIN=local`. The Go 1.22 wrapper cannot download a newer toolchain (`toolchain not available`).
+- `make install-tools` writes pinned binaries to `.tools/`. `make build` writes `./build/otelcol-custom`. Both are part of environment install, so a booted agent already has them until a dependency change forces a rebuild.
+- `make run` loads `config/config.yaml`. That file does not boot as committed: pipelines reference the undefined exporter `otlphttp/openobserve`, and bearer-token extensions require `ADO_PAT`, `GH_PAT`, and `GL_PAT` (scrapers also read `ADO_ORG`, `ADO_PROJECT`, `GH_ORG`, and `GL_ORG`). To smoke-test the binary, point `--config` at a local file with an `otlp` receiver (gRPC `4317`, HTTP `4318`), a `debug` exporter, and `health_check` on `0.0.0.0:13133`. `curl` `http://127.0.0.1:13133/` should return 200, and `POST` an OTLP/HTTP record to `http://127.0.0.1:4318/v1/logs` (or `/v1/metrics`, `/v1/traces`).
+- `pre-commit install` refuses to run while `core.hooksPath` points at Cursor's managed hooks. Do not unset `core.hooksPath`. The `pre-commit` binary is on `PATH`; run `pre-commit run` when you need those hooks.
+
 ## Keeping docs current
 
 When you add or rename a component, change a build/test command, alter the codegen or scraper
