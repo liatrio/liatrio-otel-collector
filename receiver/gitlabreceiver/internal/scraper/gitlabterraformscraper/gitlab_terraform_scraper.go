@@ -37,7 +37,7 @@ func (gts *gitlabTerraformScraper) start(ctx context.Context, host component.Hos
 		extensions = host.GetExtensions()
 	}
 
-	gts.client, err = gts.cfg.ToClient(ctx, extensions, gts.settings)
+	gts.client, err = gts.cfg.ClientConfig.ToClient(ctx, extensions, gts.settings)
 	return
 }
 
@@ -64,9 +64,9 @@ func (gts *gitlabTerraformScraper) scrape(ctx context.Context) (pmetric.Metrics,
 
 	// Build the REST client URL, supporting self-hosted GitLab instances
 	restCURL := "https://gitlab.com/"
-	if gts.cfg.Endpoint != "" {
+	if gts.cfg.ClientConfig.Endpoint != "" {
 		var err error
-		restCURL, err = url.JoinPath(gts.cfg.Endpoint, "/")
+		restCURL, err = url.JoinPath(gts.cfg.ClientConfig.Endpoint, "/")
 		if err != nil {
 			gts.logger.Sugar().Errorf("error building REST URL: %v", err)
 			return gts.mb.Emit(), err

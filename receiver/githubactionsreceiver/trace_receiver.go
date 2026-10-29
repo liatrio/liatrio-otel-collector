@@ -35,7 +35,7 @@ func newTracesReceiver(
 	config *Config,
 	nextConsumer consumer.Traces,
 ) (*githubActionsReceiver, error) {
-	if config.NetAddr.Endpoint == "" {
+	if config.ServerConfig.NetAddr.Endpoint == "" {
 		return nil, errMissingEndpoint
 	}
 
@@ -61,14 +61,14 @@ func newTracesReceiver(
 }
 
 func (gar *githubActionsReceiver) Start(ctx context.Context, host component.Host) error {
-	endpoint := fmt.Sprintf("%s%s", gar.config.NetAddr.Endpoint, gar.config.Path)
+	endpoint := fmt.Sprintf("%s%s", gar.config.ServerConfig.NetAddr.Endpoint, gar.config.Path)
 	gar.logger.Info("Starting GithubActions server", zap.String("endpoint", endpoint))
-	ln, err := gar.config.ToListener(ctx)
+	ln, err := gar.config.ServerConfig.ToListener(ctx)
 	if err != nil {
 		return err
 	}
 
-	gar.server, err = gar.config.ToServer(ctx, nil, gar.createSettings.TelemetrySettings, gar)
+	gar.server, err = gar.config.ServerConfig.ToServer(ctx, nil, gar.createSettings.TelemetrySettings, gar)
 	if err != nil {
 		return err
 	}

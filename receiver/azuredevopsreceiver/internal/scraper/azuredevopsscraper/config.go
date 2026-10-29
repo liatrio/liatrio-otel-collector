@@ -12,7 +12,9 @@ import (
 
 // Config defines configuration for Azure DevOps scraper
 type Config struct {
-	confighttp.ClientConfig           `mapstructure:",squash"`
+	// Named, not embedded. ClientConfig implements confmap.Unmarshaler; embedding it
+	// promotes Unmarshal onto Config, and confmap then drops sibling fields (collector v0.164+).
+	ClientConfig                      confighttp.ClientConfig `mapstructure:",squash"`
 	metadata.MetricsBuilderConfig     `mapstructure:",squash"`
 	metadata.ResourceAttributesConfig `mapstructure:"resource_attributes"`
 

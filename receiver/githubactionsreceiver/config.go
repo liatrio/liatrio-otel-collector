@@ -16,12 +16,14 @@ var errMissingEndpointFromConfig = errors.New("missing receiver server endpoint 
 
 // Config defines configuration for GitHub Actions receiver
 type Config struct {
-	confighttp.ServerConfig `mapstructure:",squash"` // squash ensures fields are correctly decoded in embedded struct
-	Path                    string                   `mapstructure:"path"`                // path for data collection. Default is <host>:<port>/events
-	Secret                  string                   `mapstructure:"secret"`              // github webhook hash signature. Default is empty
-	CustomServiceName       string                   `mapstructure:"custom_service_name"` // custom service name. Default is empty
-	ServiceNamePrefix       string                   `mapstructure:"service_name_prefix"` // service name prefix. Default is empty
-	ServiceNameSuffix       string                   `mapstructure:"service_name_suffix"` // service name suffix. Default is empty
+	// Named, not embedded. ServerConfig implements confmap.Unmarshaler; embedding it
+	// promotes Unmarshal onto Config, and confmap then drops sibling fields (collector v0.164+).
+	ServerConfig      confighttp.ServerConfig `mapstructure:",squash"`
+	Path              string                  `mapstructure:"path"`                // path for data collection. Default is <host>:<port>/events
+	Secret            string                  `mapstructure:"secret"`              // github webhook hash signature. Default is empty
+	CustomServiceName string                  `mapstructure:"custom_service_name"` // custom service name. Default is empty
+	ServiceNamePrefix string                  `mapstructure:"service_name_prefix"` // service name prefix. Default is empty
+	ServiceNameSuffix string                  `mapstructure:"service_name_suffix"` // service name suffix. Default is empty
 }
 
 var _ component.Config = (*Config)(nil)
@@ -30,7 +32,7 @@ var _ component.Config = (*Config)(nil)
 func (cfg *Config) Validate() error {
 	var errs error
 
-	if cfg.NetAddr.Endpoint == "" {
+	if cfg.ServerConfig.NetAddr.Endpoint == "" {
 		errs = multierr.Append(errs, errMissingEndpointFromConfig)
 	}
 

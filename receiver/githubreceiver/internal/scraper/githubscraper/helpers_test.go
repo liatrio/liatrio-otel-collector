@@ -1744,7 +1744,7 @@ func TestCreateClients(t *testing.T) {
 		ghs.client = &http.Client{}
 		// A control character makes the endpoint unparseable, so building the
 		// enterprise GraphQL URL fails.
-		ghs.cfg.Endpoint = "http://\x7f"
+		ghs.cfg.ClientConfig.Endpoint = "http://\x7f"
 		_, _, err := ghs.createClients()
 		assert.Error(t, err)
 	})

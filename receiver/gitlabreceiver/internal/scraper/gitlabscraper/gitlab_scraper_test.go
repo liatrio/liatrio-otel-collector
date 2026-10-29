@@ -158,7 +158,7 @@ func TestScrape(t *testing.T) {
 
 			gls := newGitLabScraper(context.Background(), receivertest.NewNopSettings(metadata.Type), cfg)
 			gls.cfg.GitLabOrg = "project"
-			gls.cfg.Endpoint = server.URL
+			gls.cfg.ClientConfig.Endpoint = server.URL
 
 			err := gls.start(context.Background(), componenttest.NewNopHost())
 			require.NoError(t, err)

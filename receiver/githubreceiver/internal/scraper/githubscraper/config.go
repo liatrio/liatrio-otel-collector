@@ -13,7 +13,9 @@ import (
 // Config relating to GitHub Metric Scraper.
 type Config struct {
 	metadata.MetricsBuilderConfig `mapstructure:",squash"`
-	confighttp.ClientConfig       `mapstructure:",squash"`
+	// Named, not embedded. ClientConfig implements confmap.Unmarshaler; embedding it
+	// promotes Unmarshal onto Config, and confmap then drops sibling fields (collector v0.164+).
+	ClientConfig confighttp.ClientConfig `mapstructure:",squash"`
 	internal.ScraperConfig
 	// GitHubOrg is the name of the GitHub organization to scrape (github scraper only)
 	GitHubOrg string `mapstructure:"github_org"`

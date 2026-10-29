@@ -321,7 +321,7 @@ func TestScrape(t *testing.T) {
 
 			ghs := newGitHubScraper(receivertest.NewNopSettings(metadata.Type), cfg)
 			ghs.cfg.GitHubOrg = "liatrio"
-			ghs.cfg.Endpoint = server.URL
+			ghs.cfg.ClientConfig.Endpoint = server.URL
 			ghs.cfg.ConcurrencyLimit = 1000
 
 			// TestHappyPathWithTeam is a special case where we need to set the team name
@@ -487,7 +487,7 @@ func TestScrapeRecoversFromPanic(t *testing.T) {
 
 	ghs := newGitHubScraper(settings, cfg)
 	ghs.cfg.GitHubOrg = "liatrio"
-	ghs.cfg.Endpoint = server.URL
+	ghs.cfg.ClientConfig.Endpoint = server.URL
 	ghs.cfg.ConcurrencyLimit = 1000
 
 	require.NoError(t, ghs.start(ctx, componenttest.NewNopHost()))
@@ -536,7 +536,7 @@ func TestScrapeLogsRecoveredPanic(t *testing.T) {
 
 	ghs := newGitHubScraper(settings, cfg)
 	ghs.cfg.GitHubOrg = "liatrio"
-	ghs.cfg.Endpoint = server.URL
+	ghs.cfg.ClientConfig.Endpoint = server.URL
 	ghs.cfg.ConcurrencyLimit = 1000
 
 	require.NoError(t, ghs.start(ctx, componenttest.NewNopHost()))
@@ -621,7 +621,7 @@ func TestScrapeDoesNotDeadlockAfterRecoveredPanic(t *testing.T) {
 
 	ghs := newGitHubScraper(settings, cfg)
 	ghs.cfg.GitHubOrg = "liatrio"
-	ghs.cfg.Endpoint = server.URL
+	ghs.cfg.ClientConfig.Endpoint = server.URL
 	// Force sequential execution so the second goroutine only starts after
 	// the first has panicked-and-recovered, removing any timing ambiguity.
 	ghs.cfg.ConcurrencyLimit = 1

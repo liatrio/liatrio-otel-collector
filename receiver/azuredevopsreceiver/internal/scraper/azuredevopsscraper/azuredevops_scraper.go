@@ -75,7 +75,7 @@ func (ados *azuredevopsScraper) start(ctx context.Context, host component.Host) 
 		extensions = host.GetExtensions()
 	}
 
-	ados.client, err = ados.cfg.ToClient(ctx, extensions, ados.settings)
+	ados.client, err = ados.cfg.ClientConfig.ToClient(ctx, extensions, ados.settings)
 
 	if ados.cfg.Metrics.WorkItemTagCount.Enabled && len(ados.cfg.WorkItemTagAllowlist) == 0 {
 		ados.logger.Sugar().Warn("work_item.tag.count is enabled but work_item_tag_allowlist is empty — no tag " +

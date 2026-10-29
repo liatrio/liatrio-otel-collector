@@ -42,7 +42,7 @@ func (ghs *githubScraper) start(ctx context.Context, host component.Host) (err e
 		extensions = host.GetExtensions()
 	}
 
-	ghs.client, err = ghs.cfg.ToClient(ctx, extensions, ghs.settings)
+	ghs.client, err = ghs.cfg.ClientConfig.ToClient(ctx, extensions, ghs.settings)
 	return
 }
 
