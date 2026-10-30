@@ -7,7 +7,7 @@ toolchain go1.27.3
 require (
 	github.com/Khan/genqlient v0.8.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden v0.158.0
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/collector/component v1.64.0
 	go.opentelemetry.io/collector/component/componenttest v0.158.0
 	go.opentelemetry.io/collector/config/confighttp v0.158.0
@@ -25,7 +25,6 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/foxboron/go-tpm-keyfiles v0.0.0-20251226215517-609e4778396f // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
@@ -47,7 +46,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.158.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.27 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rs/cors v1.11.1 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.19 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
