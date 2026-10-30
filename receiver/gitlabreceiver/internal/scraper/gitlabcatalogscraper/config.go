@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"go.opentelemetry.io/collector/config/confighttp"
+	"go.opentelemetry.io/collector/confmap"
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal"
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/metadata"
@@ -21,6 +22,17 @@ type Config struct {
 	GitLabOrg string `mapstructure:"gitlab_org"`
 	// ConcurrencyLimit controls the maximum number of concurrent API requests.
 	ConcurrencyLimit int `mapstructure:"concurrency_limit"`
+}
+
+// Unmarshal decodes scraper settings, including fields beside the embedded client
+// config. confighttp.ClientConfig implements confmap.Unmarshaler, and embedding
+// promotes that method onto Config. confmap would then decode only the client
+// config and drop gitlab_org and concurrency_limit.
+func (cfg *Config) Unmarshal(conf *confmap.Conf) error {
+	if conf == nil {
+		return nil
+	}
+	return conf.Unmarshal(cfg, confmap.WithIgnoreUnused())
 }
 
 func (cfg *Config) Validate() error {
