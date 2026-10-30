@@ -13,7 +13,7 @@ import (
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/google/go-github/v89/github"
+	"github.com/google/go-github/v93/github"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/receiver/receivertest"
 )
@@ -829,10 +829,10 @@ func TestGetContributors(t *testing.T) {
 					contribs: [][]*github.Contributor{
 						{
 							{
-								ID: github.Ptr(int64(1)),
+								ID: new(int64(1)),
 							},
 							{
-								ID: github.Ptr(int64(2)),
+								ID: new(int64(2)),
 							},
 						},
 					},
@@ -851,18 +851,18 @@ func TestGetContributors(t *testing.T) {
 					contribs: [][]*github.Contributor{
 						{
 							{
-								ID: github.Ptr(int64(1)),
+								ID: new(int64(1)),
 							},
 							{
-								ID: github.Ptr(int64(2)),
+								ID: new(int64(2)),
 							},
 						},
 						{
 							{
-								ID: github.Ptr(int64(3)),
+								ID: new(int64(3)),
 							},
 							{
-								ID: github.Ptr(int64(4)),
+								ID: new(int64(4)),
 							},
 						},
 					},
@@ -1358,7 +1358,7 @@ func TestGetCVEs(t *testing.T) {
 						{
 							{
 								Rule: &github.Rule{
-									SecuritySeverityLevel: github.Ptr("HIGH"),
+									SecuritySeverityLevel: new("HIGH"),
 								},
 							},
 						},
@@ -1392,19 +1392,19 @@ func TestGetCVEs(t *testing.T) {
 						{
 							{
 								Rule: &github.Rule{
-									SecuritySeverityLevel: github.Ptr("HIGH"),
+									SecuritySeverityLevel: new("HIGH"),
 								},
 							},
 						},
 						{
 							{
 								Rule: &github.Rule{
-									SecuritySeverityLevel: github.Ptr("HIGH"),
+									SecuritySeverityLevel: new("HIGH"),
 								},
 							},
 							{
 								Rule: &github.Rule{
-									SecuritySeverityLevel: github.Ptr("MEDIUM"),
+									SecuritySeverityLevel: new("MEDIUM"),
 								},
 							},
 						},
@@ -1454,12 +1454,12 @@ func TestGetCVEs(t *testing.T) {
 						{
 							{
 								Rule: &github.Rule{
-									SecuritySeverityLevel: github.Ptr("HIGH"),
+									SecuritySeverityLevel: new("HIGH"),
 								},
 							},
 							{
 								Rule: &github.Rule{
-									SecuritySeverityLevel: github.Ptr("MEDIUM"),
+									SecuritySeverityLevel: new("MEDIUM"),
 								},
 							},
 						},
@@ -1529,24 +1529,24 @@ func TestGetCVEs(t *testing.T) {
 						{
 							{
 								Rule: &github.Rule{
-									SecuritySeverityLevel: github.Ptr("CRITICAL"),
+									SecuritySeverityLevel: new("CRITICAL"),
 								},
 							},
 							{
 								Rule: &github.Rule{
-									SecuritySeverityLevel: github.Ptr("LOW"),
+									SecuritySeverityLevel: new("LOW"),
 								},
 							},
 						},
 						{
 							{
 								Rule: &github.Rule{
-									SecuritySeverityLevel: github.Ptr("HIGH"),
+									SecuritySeverityLevel: new("HIGH"),
 								},
 							},
 							{
 								Rule: &github.Rule{
-									SecuritySeverityLevel: github.Ptr("MEDIUM"),
+									SecuritySeverityLevel: new("MEDIUM"),
 								},
 							},
 						},
@@ -1707,8 +1707,8 @@ func TestMapSeveritiesCodeScanAlerts(t *testing.T) {
 			alerts: []*github.Alert{
 				{Rule: nil},
 				{Rule: &github.Rule{SecuritySeverityLevel: nil}},
-				{Rule: &github.Rule{SecuritySeverityLevel: github.Ptr("HIGH")}},
-				{Rule: &github.Rule{SecuritySeverityLevel: github.Ptr("CRITICAL")}},
+				{Rule: &github.Rule{SecuritySeverityLevel: new("HIGH")}},
+				{Rule: &github.Rule{SecuritySeverityLevel: new("CRITICAL")}},
 			},
 			expected: map[metadata.AttributeCveSeverity]int64{
 				metadata.AttributeCveSeverityHigh:     1,
