@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/google/go-github/v93 v93.0.0
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/collector/component v1.64.0
 	go.opentelemetry.io/collector/component/componenttest v0.158.0
 	go.opentelemetry.io/collector/config/confighttp v0.158.0
