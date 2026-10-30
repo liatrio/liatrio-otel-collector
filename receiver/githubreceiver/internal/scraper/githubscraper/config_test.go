@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/config/confighttp"
+	"go.opentelemetry.io/collector/confmap"
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/githubreceiver/internal/metadata"
 )
@@ -28,4 +30,17 @@ func TestConfig(t *testing.T) {
 	}
 
 	assert.Equal(t, expectedConfig, defaultConfig)
+}
+
+func TestConfigUnmarshalKeepsSiblingFields(t *testing.T) {
+	cfg := &Config{}
+	conf := confmap.NewFromStringMap(map[string]any{
+		"github_org": "liatrio",
+		"timeout":    "15s",
+		"endpoint":   "https://api.github.com",
+	})
+	require.NoError(t, conf.Unmarshal(cfg))
+	assert.Equal(t, "liatrio", cfg.GitHubOrg)
+	assert.Equal(t, 15*time.Second, cfg.Timeout)
+	assert.Equal(t, "https://api.github.com", cfg.Endpoint)
 }

@@ -54,6 +54,17 @@ type GitHubHeaders struct {
 	Fixed        map[string]string `mapstructure:","` // are not allowed to be overwritten
 }
 
+// Unmarshal decodes webhook settings, including fields beside the embedded server
+// config. confighttp.ServerConfig implements confmap.Unmarshaler, and embedding
+// promotes that method onto WebHook. confmap would then decode only the server
+// config and drop path, health_path, and required_headers.
+func (wh *WebHook) Unmarshal(conf *confmap.Conf) error {
+	if conf == nil {
+		return nil
+	}
+	return conf.Unmarshal(wh, confmap.WithIgnoreUnused())
+}
+
 var (
 	_ component.Config    = (*Config)(nil)
 	_ confmap.Unmarshaler = (*Config)(nil)
