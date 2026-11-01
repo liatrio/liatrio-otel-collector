@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cenkalti/backoff/v5"
+	"github.com/cenkalti/backoff/v7"
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/metadata"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/golden"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatatest/pmetrictest"
@@ -166,18 +166,16 @@ func TestScrape(t *testing.T) {
 			actualMetrics, err := gls.scrape(context.Background())
 			if tc.expectedErr != nil {
 				require.Error(t, err)
-				// Compare error messages directly since backoff.Retry may unwrap PermanentError
-				var expectedMsg, actualMsg string
-				if permErr, ok := tc.expectedErr.(*backoff.PermanentError); ok && permErr.Err != nil {
-					expectedMsg = permErr.Err.Error()
-				} else {
-					expectedMsg = tc.expectedErr.Error()
+				// v7 Retry returns *RetryError instead of the unwrapped permanent error.
+				expectedMsg := tc.expectedErr.Error()
+				if errors.Is(tc.expectedErr, backoff.ErrPermanent) {
+					if inner := errors.Unwrap(tc.expectedErr); inner != nil {
+						expectedMsg = inner.Error()
+					}
 				}
-
-				if permErr, ok := err.(*backoff.PermanentError); ok && permErr.Err != nil {
-					actualMsg = permErr.Err.Error()
-				} else {
-					actualMsg = err.Error()
+				actualMsg := err.Error()
+				if re := backoff.AsRetryError(err); re != nil && re.LastErr != nil {
+					actualMsg = re.LastErr.Error()
 				}
 
 				require.Equal(t, expectedMsg, actualMsg)
