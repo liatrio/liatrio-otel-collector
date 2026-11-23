@@ -8,7 +8,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/confighttp"
-
+	"go.opentelemetry.io/collector/confmap"
 	"go.uber.org/multierr"
 )
 
@@ -25,6 +25,17 @@ type Config struct {
 }
 
 var _ component.Config = (*Config)(nil)
+
+// Unmarshal decodes receiver settings, including fields beside the embedded server
+// config. confighttp.ServerConfig implements confmap.Unmarshaler, and embedding
+// promotes that method onto Config. confmap would then decode only the server
+// config and drop path, secret, and the service-name fields.
+func (cfg *Config) Unmarshal(conf *confmap.Conf) error {
+	if conf == nil {
+		return nil
+	}
+	return conf.Unmarshal(cfg, confmap.WithIgnoreUnused())
+}
 
 // Validate checks the receiver configuration is valid
 func (cfg *Config) Validate() error {

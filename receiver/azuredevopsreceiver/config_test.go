@@ -73,6 +73,21 @@ func TestLoadConfig(t *testing.T) {
 	assert.Equal(t, expectedConfig, r1)
 }
 
+func TestWebHookUnmarshalKeepsSiblingFields(t *testing.T) {
+	cfg := createDefaultConfig().(*Config)
+	conf := confmap.NewFromStringMap(map[string]any{
+		"webhook": map[string]any{
+			"endpoint":    "localhost:9090",
+			"path":        "/ado",
+			"health_path": "/ado-health",
+		},
+	})
+	require.NoError(t, cfg.Unmarshal(conf))
+	assert.Equal(t, "/ado", cfg.WebHook.Path)
+	assert.Equal(t, "/ado-health", cfg.WebHook.HealthPath)
+	assert.Equal(t, "localhost:9090", cfg.WebHook.NetAddr.Endpoint)
+}
+
 func TestLoadInvalidConfig_NoScrapers(t *testing.T) {
 	factories, err := otelcoltest.NopFactories()
 	require.NoError(t, err)

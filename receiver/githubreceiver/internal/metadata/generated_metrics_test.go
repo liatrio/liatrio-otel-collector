@@ -90,60 +90,90 @@ func TestMetricsBuilder(t *testing.T) {
 			mb.RecordVcsChangeCountDataPoint(ts, 1, "vcs.repository.url.full-val", AttributeVcsChangeStateOpen, "vcs.repository.name-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordVcsChangeCountDataPoint(ts, 3, "vcs.repository.url.full-val-2", AttributeVcsChangeStateMerged, "vcs.repository.name-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordVcsChangeCountDataPoint(ts+1, 3, "vcs.repository.url.full-val-2", AttributeVcsChangeStateMerged, "vcs.repository.name-val-2")
+				assert.Equal(t, 2, mb.metricVcsChangeCount.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordVcsChangeDurationDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.ref.head.name-val", AttributeVcsChangeStateOpen)
 			if tt.name == "reaggregate_set" {
 				mb.RecordVcsChangeDurationDataPoint(ts, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.ref.head.name-val-2", AttributeVcsChangeStateMerged)
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordVcsChangeDurationDataPoint(ts+1, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.ref.head.name-val-2", AttributeVcsChangeStateMerged)
+				assert.Equal(t, 2, mb.metricVcsChangeDuration.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordVcsChangeTimeToApprovalDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.ref.head.name-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordVcsChangeTimeToApprovalDataPoint(ts, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.ref.head.name-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordVcsChangeTimeToApprovalDataPoint(ts+1, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.ref.head.name-val-2")
+				assert.Equal(t, 2, mb.metricVcsChangeTimeToApproval.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordVcsChangeTimeToMergeDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.ref.head.name-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordVcsChangeTimeToMergeDataPoint(ts, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.ref.head.name-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordVcsChangeTimeToMergeDataPoint(ts+1, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.ref.head.name-val-2")
+				assert.Equal(t, 2, mb.metricVcsChangeTimeToMerge.data.Gauge().DataPoints().Len())
 			}
 
 			allMetricsCount++
 			mb.RecordVcsContributorCountDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val")
 			if tt.name == "reaggregate_set" {
 				mb.RecordVcsContributorCountDataPoint(ts, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2")
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordVcsContributorCountDataPoint(ts+1, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2")
+				assert.Equal(t, 2, mb.metricVcsContributorCount.data.Gauge().DataPoints().Len())
 			}
 
 			allMetricsCount++
 			mb.RecordVcsCveCountDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", AttributeCveSeverityCritical)
 			if tt.name == "reaggregate_set" {
 				mb.RecordVcsCveCountDataPoint(ts, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", AttributeCveSeverityHigh)
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordVcsCveCountDataPoint(ts+1, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", AttributeCveSeverityHigh)
+				assert.Equal(t, 2, mb.metricVcsCveCount.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordVcsRefCountDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", AttributeVcsRefHeadTypeBranch)
 			if tt.name == "reaggregate_set" {
 				mb.RecordVcsRefCountDataPoint(ts, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", AttributeVcsRefHeadTypeTag)
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordVcsRefCountDataPoint(ts+1, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", AttributeVcsRefHeadTypeTag)
+				assert.Equal(t, 2, mb.metricVcsRefCount.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordVcsRefLinesDeltaDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.ref.head.name-val", AttributeVcsRefHeadTypeBranch, "vcs.ref.base.name-val", AttributeVcsRefBaseTypeBranch, AttributeVcsLineChangeTypeAdded)
 			if tt.name == "reaggregate_set" {
 				mb.RecordVcsRefLinesDeltaDataPoint(ts, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.ref.head.name-val-2", AttributeVcsRefHeadTypeTag, "vcs.ref.base.name-val-2", AttributeVcsRefBaseTypeTag, AttributeVcsLineChangeTypeRemoved)
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordVcsRefLinesDeltaDataPoint(ts+1, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.ref.head.name-val-2", AttributeVcsRefHeadTypeTag, "vcs.ref.base.name-val-2", AttributeVcsRefBaseTypeTag, AttributeVcsLineChangeTypeRemoved)
+				assert.Equal(t, 2, mb.metricVcsRefLinesDelta.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordVcsRefRevisionsDeltaDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.ref.head.name-val", AttributeVcsRefHeadTypeBranch, AttributeVcsRevisionDeltaDirectionAhead)
 			if tt.name == "reaggregate_set" {
 				mb.RecordVcsRefRevisionsDeltaDataPoint(ts, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.ref.head.name-val-2", AttributeVcsRefHeadTypeTag, AttributeVcsRevisionDeltaDirectionBehind)
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordVcsRefRevisionsDeltaDataPoint(ts+1, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.ref.head.name-val-2", AttributeVcsRefHeadTypeTag, AttributeVcsRevisionDeltaDirectionBehind)
+				assert.Equal(t, 2, mb.metricVcsRefRevisionsDelta.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordVcsRefTimeDataPoint(ts, 1, "vcs.repository.url.full-val", "vcs.repository.name-val", "vcs.ref.head.name-val", AttributeVcsRefHeadTypeBranch)
 			if tt.name == "reaggregate_set" {
 				mb.RecordVcsRefTimeDataPoint(ts, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.ref.head.name-val-2", AttributeVcsRefHeadTypeTag)
+				// a different timestamp is a different key: must not merge with the above.
+				mb.RecordVcsRefTimeDataPoint(ts+1, 3, "vcs.repository.url.full-val-2", "vcs.repository.name-val-2", "vcs.ref.head.name-val-2", AttributeVcsRefHeadTypeTag)
+				assert.Equal(t, 2, mb.metricVcsRefTime.data.Gauge().DataPoints().Len())
 			}
 			defaultMetricsCount++
 			allMetricsCount++
@@ -219,7 +249,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["vcs.change.count"], "Found a duplicate in the metrics slice: vcs.change.count")
 						validatedMetrics["vcs.change.count"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "The number of changes (pull requests) in a repository, categorized by their state (either open or merged).", mi.Description())
 						assert.Equal(t, "{change}", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -272,7 +304,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["vcs.change.duration"], "Found a duplicate in the metrics slice: vcs.change.duration")
 						validatedMetrics["vcs.change.duration"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "The time duration a change (pull request/merge request/changelist) has been in an open state.", mi.Description())
 						assert.Equal(t, "s", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -324,7 +358,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["vcs.change.time_to_approval"], "Found a duplicate in the metrics slice: vcs.change.time_to_approval")
 						validatedMetrics["vcs.change.time_to_approval"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "The amount of time it took a change (pull request) to go from open to approved.", mi.Description())
 						assert.Equal(t, "s", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -374,7 +410,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["vcs.change.time_to_merge"], "Found a duplicate in the metrics slice: vcs.change.time_to_merge")
 						validatedMetrics["vcs.change.time_to_merge"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "The amount of time it took a change (pull request) to go from open to merged.", mi.Description())
 						assert.Equal(t, "s", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -421,7 +459,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["vcs.contributor.count"], "Found a duplicate in the metrics slice: vcs.contributor.count")
 						validatedMetrics["vcs.contributor.count"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "The number of unique contributors to a repository.", mi.Description())
 						assert.Equal(t, "{contributor}", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -469,7 +509,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["vcs.cve.count"], "Found a duplicate in the metrics slice: vcs.cve.count")
 						validatedMetrics["vcs.cve.count"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "The number of Common Vulnerabilities and Exposures (CVEs) in the repository.", mi.Description())
 						assert.Equal(t, "{cve}", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -519,7 +561,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["vcs.ref.count"], "Found a duplicate in the metrics slice: vcs.ref.count")
 						validatedMetrics["vcs.ref.count"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "The number of refs of type branch in a repository.", mi.Description())
 						assert.Equal(t, "{ref}", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -581,7 +625,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["vcs.ref.lines_delta"], "Found a duplicate in the metrics slice: vcs.ref.lines_delta")
 						validatedMetrics["vcs.ref.lines_delta"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "The number of lines added/removed in a ref (branch) relative to the default branch (trunk).", mi.Description())
 						assert.Equal(t, "{line}", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -645,7 +691,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["vcs.ref.revisions_delta"], "Found a duplicate in the metrics slice: vcs.ref.revisions_delta")
 						validatedMetrics["vcs.ref.revisions_delta"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "The number of revisions (commits) a ref (branch) is ahead/behind the branch from trunk (default).", mi.Description())
 						assert.Equal(t, "{revision}", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)
@@ -702,7 +750,9 @@ func TestMetricsBuilder(t *testing.T) {
 						assert.False(t, validatedMetrics["vcs.ref.time"], "Found a duplicate in the metrics slice: vcs.ref.time")
 						validatedMetrics["vcs.ref.time"] = true
 						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
-						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						// 2 points: the merged one above, plus one with a different timestamp that must not have merged with it.
+						assert.Equal(t, 2, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, ts+1, mi.Gauge().DataPoints().At(1).Timestamp())
 						assert.Equal(t, "Time a ref (branch) created from the default branch (trunk) has existed. The `vcs.ref.head.type` attribute will always be `branch`.", mi.Description())
 						assert.Equal(t, "s", mi.Unit())
 						dp := mi.Gauge().DataPoints().At(0)

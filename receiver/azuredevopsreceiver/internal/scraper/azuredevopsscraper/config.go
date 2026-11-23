@@ -5,6 +5,7 @@ package azuredevopsscraper
 
 import (
 	"go.opentelemetry.io/collector/config/confighttp"
+	"go.opentelemetry.io/collector/confmap"
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/azuredevopsreceiver/internal"
 	"github.com/liatrio/liatrio-otel-collector/receiver/azuredevopsreceiver/internal/metadata"
@@ -55,6 +56,17 @@ type Config struct {
 	// When empty (default), no tag metrics are emitted to prevent cardinality explosion
 	// from arbitrary tags. Only tags listed here will be tracked.
 	WorkItemTagAllowlist []string `mapstructure:"work_item_tag_allowlist"`
+}
+
+// Unmarshal decodes scraper settings, including fields beside the embedded client
+// config. confighttp.ClientConfig implements confmap.Unmarshaler, and embedding
+// promotes that method onto Config. confmap would then decode only the client
+// config and drop organization, project, and the other scraper keys.
+func (cfg *Config) Unmarshal(conf *confmap.Conf) error {
+	if conf == nil {
+		return nil
+	}
+	return conf.Unmarshal(cfg, confmap.WithIgnoreUnused())
 }
 
 var _ internal.Config = (*Config)(nil)

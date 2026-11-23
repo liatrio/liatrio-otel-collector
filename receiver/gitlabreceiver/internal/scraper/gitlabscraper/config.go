@@ -5,6 +5,7 @@ package gitlabscraper
 
 import (
 	"go.opentelemetry.io/collector/config/confighttp"
+	"go.opentelemetry.io/collector/confmap"
 
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal"
 	"github.com/liatrio/liatrio-otel-collector/receiver/gitlabreceiver/internal/metadata"
@@ -22,4 +23,15 @@ type Config struct {
 	SearchQuery        string `mapstructure:"search_query"`
 	LimitMergeRequests int    `mapstructure:"limit_merge_requests"`
 	ConcurrencyLimit   int    `mapstructure:"concurrency_limit"`
+}
+
+// Unmarshal decodes scraper settings, including fields beside the embedded client
+// config. confighttp.ClientConfig implements confmap.Unmarshaler, and embedding
+// promotes that method onto Config. confmap would then decode only the client
+// config and drop gitlab_org and the other scraper keys.
+func (cfg *Config) Unmarshal(conf *confmap.Conf) error {
+	if conf == nil {
+		return nil
+	}
+	return conf.Unmarshal(cfg, confmap.WithIgnoreUnused())
 }

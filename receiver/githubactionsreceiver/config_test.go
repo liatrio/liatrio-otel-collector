@@ -6,9 +6,11 @@ package githubactionsreceiver
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/config/confignet"
+	"go.opentelemetry.io/collector/confmap"
 )
 
 // only one validate check so far
@@ -57,4 +59,19 @@ func TestValidateConfig(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestConfigUnmarshalKeepsSiblingFields(t *testing.T) {
+	t.Parallel()
+
+	cfg := createDefaultConfig().(*Config)
+	conf := confmap.NewFromStringMap(map[string]any{
+		"endpoint": "localhost:8080",
+		"path":     "/hooks",
+		"secret":   "s3cret",
+	})
+	require.NoError(t, conf.Unmarshal(cfg))
+	assert.Equal(t, "/hooks", cfg.Path)
+	assert.Equal(t, "s3cret", cfg.Secret)
+	assert.Equal(t, "localhost:8080", cfg.NetAddr.Endpoint)
 }
